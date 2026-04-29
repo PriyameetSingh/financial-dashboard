@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, User, Bot } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Bell, Bot } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
@@ -18,11 +18,8 @@ export default function AppShell({ children, title }: Props) {
   const { mounted } = useTheme();
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
-
-  const topLabel = useMemo(() => {
-    if (!user) return "HUDD";
-    return `${user.name.split(" ")[0]} — ${user.role.replace("_", " ")}`;
-  }, [user]);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
 
   const isViewer = user?.role === UserRole.VIEWER;
 
@@ -39,37 +36,64 @@ export default function AppShell({ children, title }: Props) {
     });
   }, []);
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (notificationMenuOpen && notificationsRef.current && !notificationsRef.current.contains(target)) {
+        setNotificationMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [notificationMenuOpen]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-6 py-4 flex items-center justify-between gap-6">
-          <div>
+        <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+            <div className="min-w-0 flex-1">
             {/* <p className="text-[10px] uppercase tracking-[0.5em] text-[var(--text-muted)]">Government of Odisha</p> */}
-            <p className="text-lg font-medium text-[var(--sidebar-text-primary)]">Housing & Urban Development Department</p>
-            {/* {title && <p className="text-sm text-[var(--text-muted)]">{title} xxcc</p>} */}
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 text-sm text-[var(--text-on-dark-muted)]">
-            <TextSizeToolbarControl />
-            <button
-              className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
-              onClick={() => setChatOpen(true)}
-              type="button"
-            >
-              <Bot size={14} /> Urban Assistant
-            </button>
-            {/* <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[var(--alert-success)]" />
-              Live
-            </div> */}
-            <span>{mounted ? nowLabel : ""}</span>
-            <button className="relative text-[var(--text-on-dark-muted)]" aria-label="Notifications" type="button">
-              <Bell size={18} />
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[var(--alert-critical)]" />
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center">
-                <User size={16} className="text-[var(--text-secondary)]" />
+              <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
+                Housing & Urban Development Department
+              </p>
+              {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:flex-nowrap lg:justify-end">
+              <TextSizeToolbarControl />
+              <button
+                className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
+                onClick={() => setChatOpen(true)}
+                type="button"
+              >
+                <Bot size={14} />
+                <span className="hidden xl:inline">Urban Assistant</span>
+              </button>
+              <span className="hidden text-xs text-[var(--text-muted)] 2xl:inline">{mounted ? nowLabel : ""}</span>
+              <div className="relative" ref={notificationsRef}>
+                <button
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)]"
+                  aria-label="Notifications"
+                  aria-expanded={notificationMenuOpen}
+                  onClick={() => {
+                    setNotificationMenuOpen((open) => !open);
+                  }}
+                  type="button"
+                >
+                  <Bell size={16} />
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--alert-critical)]" />
+                </button>
+                {notificationMenuOpen && (
+                  <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Notifications</p>
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--sidebar-text-primary)]">
+                      <li className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
+                        No new notifications.
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>

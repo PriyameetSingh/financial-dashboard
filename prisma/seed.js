@@ -98,6 +98,7 @@ const ROLES = [
       "UPDATE_ACTION_ITEMS",
       "APPROVE_ACTION_ITEMS",
       "VIEW_ANALYTICS",
+      "MANAGE_USERS",
       "MANAGE_PERMISSIONS",
     ],
   },

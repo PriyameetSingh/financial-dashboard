@@ -24,6 +24,7 @@ export async function GET() {
     await requirePermission("MANAGE_PERMISSIONS");
 
     const users = await prisma.user.findMany({
+      where: { isActive: true },
       orderBy: { name: "asc" },
       include: {
         userRoles: {
@@ -43,15 +44,15 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      users: users.map((u: any) => {
-        const roles = u.userRoles.map((ur: any) => ({
-          code: ur.role.code as string,
-          permissions: ur.role.rolePermissions.map((rp: any) => rp.permission.code as string),
+      users: users.map((u) => {
+        const roles = u.userRoles.map((ur) => ({
+          code: ur.role.code,
+          permissions: ur.role.rolePermissions.map((rp) => rp.permission.code),
         }));
 
-        const overrides = u.permissionOverrides.map((o: any) => ({
-          code: o.permission.code as string,
-          effect: o.effect as string,
+        const overrides = u.permissionOverrides.map((o) => ({
+          code: o.permission.code,
+          effect: o.effect,
         }));
 
         const assignedSchemes = [...new Set((u.schemeAssignments as { scheme: { code: string } }[]).map((sa) => sa.scheme.code))];
@@ -61,7 +62,7 @@ export async function GET() {
           name: u.name,
           email: u.email,
           department: u.department,
-          roles: roles.map((r: any) => r.code as string),
+          roles: roles.map((r) => r.code),
           overrides,
           effectivePermissions: computeEffective(roles, overrides),
           assignedSchemes,

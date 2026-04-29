@@ -1,5 +1,26 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Keycloak SSO setup
+
+This app uses Auth.js (`next-auth`) with Keycloak for authentication and keeps local database RBAC for authorization.
+
+1. Copy `.env.example` to `.env` and provide real values.
+2. Create a Keycloak confidential client and set:
+   - `KEYCLOAK_ISSUER` as your realm issuer URL (for example `http://localhost:8080/realms/hudd`)
+   - `KEYCLOAK_CLIENT_ID`
+   - `KEYCLOAK_CLIENT_SECRET`
+3. Set redirect URIs in Keycloak:
+   - `http://localhost:8765/api/auth/callback/keycloak`
+   - Add your production host equivalent as needed
+4. Set post-logout redirect URI in Keycloak:
+   - `http://localhost:8765/login`
+   - If your app is behind a different host/proxy, optionally set `KEYCLOAK_POST_LOGOUT_REDIRECT_URI` in `.env` to the exact registered URL
+5. Generate an auth secret:
+   - `openssl rand -base64 32`
+   - Put it in `AUTH_SECRET`
+
+After SSO login, app permissions still come from local RBAC (`/api/v1/rbac/me`).
+
 ## Getting Started
 
 First, run the development server:

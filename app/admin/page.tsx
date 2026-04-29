@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { useRequireRole } from "@/src/lib/route-guards";
-import { UserRole } from "@/lib/auth";
+import { Permission } from "@/lib/auth";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
 
 export default function AdminOverviewPage() {
-  useRequireRole([UserRole.ACS, UserRole.PS_HUDD, UserRole.AS], "/dashboard");
+  useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
 
   return (
     <AppShell title="Administration">

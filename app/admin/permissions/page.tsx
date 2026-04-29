@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { MockUser, Permission, UserRole, MOCK_USERS } from "@/lib/auth";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import PendingBadge from "@/src/components/ui/PendingBadge";
@@ -10,6 +11,8 @@ import PendingBadge from "@/src/components/ui/PendingBadge";
 const PERMISSION_LIST = Object.values(Permission);
 
 export default function AdminPermissionsPage() {
+  useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
+
   const [users, setUsers] = useState<MockUser[]>(() => MOCK_USERS.map((user) => ({ ...user, permissions: [] as Permission[] })));
   const [rolePermissionsByCode, setRolePermissionsByCode] = useState<Record<string, Permission[]>>({});
 

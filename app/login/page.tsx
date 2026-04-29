@@ -4,7 +4,7 @@ import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
 
 export const metadata: Metadata = {
   title: "HUDD Login",
-  description: "Role-based entry to the HUDD dashboard",
+  description: "Single sign-on entry to the HUDD dashboard",
 };
 
 export default function Page() {
@@ -17,13 +17,10 @@ export default function Page() {
           </div>
           <header className="space-y-3 text-center">
             <p className="text-xs uppercase tracking-[0.5em] text-slate-300">Government of Odisha</p>
-            <h1 className="text-4xl font-semibold tracking-[0.15em]">HUDD </h1>
-            <p className="text-sm text-slate-300">Select your role to continue (Prototype Mode)</p>
+            <h1 className="text-4xl font-semibold tracking-[0.15em]">Housing & Urban Development Department </h1>
+            <p className="text-sm text-slate-300">Sign in with provided credentials to continue</p>
           </header>
           <LoginGrid />
-          <p className="text-center text-[11px] text-slate-400">
-            Prototype version — mock authentication only. Production system will use HUDD organisational credentials.
-          </p>
         </div>
       </div>
     </main>

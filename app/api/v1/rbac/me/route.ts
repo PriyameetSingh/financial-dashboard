@@ -9,8 +9,21 @@ export const runtime = "nodejs";
 const USER_ROLE_VALUES = new Set<string>(Object.values(UserRole));
 const PERMISSION_VALUES = new Set<string>(Object.values(Permission));
 
-function parseUserRole(code: string | null | undefined): UserRole {
+function parseUserRole(code: string | null | undefined, context: { source: string; userId: string }): UserRole {
   if (code && USER_ROLE_VALUES.has(code)) return code as UserRole;
+  if (code) {
+    console.warn("[rbac/me] Invalid role, falling back to VIEWER", {
+      source: context.source,
+      userId: context.userId,
+      receivedRole: code,
+      acceptedRoles: [...USER_ROLE_VALUES],
+    });
+  } else {
+    console.warn("[rbac/me] Missing role, falling back to VIEWER", {
+      source: context.source,
+      userId: context.userId,
+    });
+  }
   return UserRole.VIEWER;
 }
 
@@ -29,23 +42,42 @@ export async function GET() {
       return NextResponse.json({ user: null });
     }
 
-    const dbUser = await prisma.user.findFirst({
-      where: { code: sessionUser.id },
+    const dbUserByCode = await prisma.user.findFirst({
+      where: { code: { equals: sessionUser.id, mode: "insensitive" } },
       include: {
         userRoles: {
           include: { role: { select: { code: true } } },
         },
       },
     });
+    const dbUser =
+      dbUserByCode ??
+      (sessionUser.email
+        ? await prisma.user.findFirst({
+            where: { email: { equals: sessionUser.email, mode: "insensitive" } },
+            include: {
+              userRoles: {
+                include: { role: { select: { code: true } } },
+              },
+            },
+          })
+        : null);
 
     if (!dbUser) {
+      console.warn("[rbac/me] DB user not found for session identity", {
+        sessionUserId: sessionUser.id,
+        sessionEmail: sessionUser.email ?? null,
+      });
       return NextResponse.json({
         user: {
           id: sessionUser.id,
           dbId: null as string | null,
           name: sessionUser.name ?? "",
           email: sessionUser.email ?? "",
-          role: parseUserRole(sessionUser.role),
+          role: parseUserRole(sessionUser.role, {
+            source: "session",
+            userId: sessionUser.id,
+          }),
           department: "",
           assignedSchemes: [] as string[],
           permissions: [] as Permission[],
@@ -64,7 +96,10 @@ export async function GET() {
     const assignedSchemes = [...new Set(schemeRows.map((r) => r.scheme.code))];
 
     const roleCodes = dbUser.userRoles.map((ur) => ur.role.code).sort();
-    const primaryRole = parseUserRole(roleCodes[0] ?? sessionUser.role);
+    const primaryRole = parseUserRole(roleCodes[0] ?? sessionUser.role, {
+      source: roleCodes[0] ? "database" : "session",
+      userId: dbUser.code ?? sessionUser.id,
+    });
 
     const permissions = codesToPermissions(effectiveCodes);
 

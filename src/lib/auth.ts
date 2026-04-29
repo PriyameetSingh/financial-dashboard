@@ -1,36 +1,48 @@
-import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { MockUser, Permission, UserRole } from "@/types";
 
 export { Permission, UserRole };
 export type { MockUser };
 
-const COOKIE_NAME = "hudd_mock_user";
-const MAX_AGE_SECONDS = 8 * 60 * 60;
+const SESSION_USER_STORAGE_KEY = "hudd_session_user";
+let memoryUser: MockUser | null = null;
 
-function serializeUser(user: MockUser) {
-  return encodeURIComponent(JSON.stringify(user));
-}
-
-function parseUser(payload: string) {
+function readStoredUser(): MockUser | null {
+  if (typeof window === "undefined") return memoryUser;
   try {
-    return JSON.parse(decodeURIComponent(payload)) as MockUser;
+    const payload = window.localStorage.getItem(SESSION_USER_STORAGE_KEY);
+    if (!payload) return null;
+    return JSON.parse(payload) as MockUser;
   } catch {
     return null;
   }
 }
 
+function writeStoredUser(user: MockUser | null) {
+  memoryUser = user;
+  if (typeof window === "undefined") return;
+  try {
+    if (!user) {
+      window.localStorage.removeItem(SESSION_USER_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(SESSION_USER_STORAGE_KEY, JSON.stringify(user));
+  } catch {
+    // Ignore storage errors in private mode / disabled storage.
+  }
+}
+
 export function setCurrentUser(user: MockUser) {
-  setCookie(COOKIE_NAME, serializeUser(user), { path: "/", maxAge: MAX_AGE_SECONDS });
+  writeStoredUser(user);
 }
 
 export function getCurrentUser(): MockUser | null {
-  const payload = getCookie(COOKIE_NAME);
-  if (!payload || typeof payload !== "string") return null;
-  return parseUser(payload);
+  const stored = readStoredUser();
+  if (stored) memoryUser = stored;
+  return memoryUser;
 }
 
 export function clearCurrentUser() {
-  deleteCookie(COOKIE_NAME, { path: "/" });
+  writeStoredUser(null);
 }
 
 /** Prototype login cards — identities must exist in DB with matching `users.code`. Permissions always come from `/api/v1/rbac/me`. */
@@ -113,14 +125,24 @@ type MeApiUser = {
 
 /**
  * Loads the signed-in user profile and effective permissions from the database (via `/api/v1/rbac/me`)
- * and refreshes the session cookie. Call after login or when opening a guarded page.
+ * and refreshes local client state. Call after login or when opening a guarded page.
  */
 export async function refreshSessionUserFromApi(): Promise<MockUser | null> {
   try {
-    const res = await fetch("/api/v1/rbac/me", { credentials: "include" });
-    if (!res.ok) return getCurrentUser();
+    const res = await fetch("/api/v1/rbac/me", {
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        clearCurrentUser();
+        return null;
+      }
+      return getCurrentUser();
+    }
     const data = (await res.json()) as { user: MeApiUser | null };
     if (!data.user) {
+      clearCurrentUser();
       return null;
     }
     const next: MockUser = {

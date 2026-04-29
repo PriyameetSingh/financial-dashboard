@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { UserRole, hasPermission, Permission, type MockUser } from "@/lib/auth";
 import {
   canSeeMyTasksNav,
@@ -25,7 +25,9 @@ import {
   Layers,
   Gauge,
   CheckSquare,
+  User,
 } from "lucide-react";
+import LogoutButton from "@/components/LogoutButton";
 
 function isPendingAction(item: ActionItem) {
   return item.status !== "COMPLETED";
@@ -348,6 +350,8 @@ function MeetingScopeSelect() {
 export default function Sidebar() {
   const pathname = usePathname();
   const user = useHydratedCurrentUser();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
   const [assigneeDbUserId, setAssigneeDbUserId] = useState<string | null>(null);
@@ -392,6 +396,17 @@ export default function Sidebar() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [userMenuOpen]);
+
   const actionItemsBadge = useMemo(() => {
     if (!user) return null;
     return pendingAssignedBadgeState(actionItems, user);
@@ -430,6 +445,7 @@ export default function Sidebar() {
           item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
       )
     : [];
+  const roleLabel = user?.role.replaceAll("_", " ");
 
   return (
     <aside className="w-64 h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0">
@@ -521,7 +537,39 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="px-4 py-3 border-t border-[var(--sidebar-border)] text-[11px] text-[var(--sidebar-text-muted)]">HUDD Identifier</div>
+      <div className="space-y-3 border-t border-[var(--sidebar-border)] px-3 py-3">
+        <div className="relative" ref={userMenuRef}>
+          <button
+            className="flex w-full items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-left transition hover:bg-[var(--bg-surface)]"
+            type="button"
+            aria-label="Open user menu"
+            aria-expanded={userMenuOpen}
+            onClick={() => setUserMenuOpen((open) => !open)}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--border)]">
+              <User size={16} className="text-[var(--text-secondary)]" />
+            </div>
+            <div className="min-w-0 flex-1 pr-2">
+              <p className="truncate text-xs font-semibold text-[var(--text-primary)] hover:text-[var(--sidebar-text-primary)]">
+                {user?.name ?? roleLabel ?? "User"}
+              </p>
+            </div>
+          </button>
+          {userMenuOpen && (
+            <div className="absolute bottom-full left-0 z-40 mb-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
+              <div className="space-y-1 border-b border-[var(--border)] pb-3">
+                <p className="text-sm font-semibold text-[var(--sidebar-text-primary)]">{user?.name ?? "Signed in user"}</p>
+                <p className="text-xs text-[var(--text-muted)]">{user?.email ?? "Email unavailable"}</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">{roleLabel ?? "Member"}</p>
+                <p className="text-xs text-[var(--text-muted)]">{user?.department ?? "Housing & Urban Development Department"}</p>
+              </div>
+              <div className="pt-3">
+                <LogoutButton />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </aside>
   );
 }

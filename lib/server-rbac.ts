@@ -20,25 +20,46 @@ export function toAuthErrorResponse(error: unknown): { status: number; detail: s
   return toDatabaseErrorResponse(error);
 }
 
+async function findDbUserByIdentity(sessionUser: NonNullable<Awaited<ReturnType<typeof getSessionUser>>>) {
+  const byCode = await prisma.user.findFirst({
+    where: { code: { equals: sessionUser.id, mode: "insensitive" } },
+    include: {
+      userRoles: {
+        include: {
+          role: {
+            include: {
+              rolePermissions: { include: { permission: true } },
+            },
+          },
+        },
+      },
+      permissionOverrides: { include: { permission: true } },
+    },
+  });
+  if (byCode) return byCode;
+  if (!sessionUser.email) return null;
+  return prisma.user.findFirst({
+    where: { email: { equals: sessionUser.email, mode: "insensitive" } },
+    include: {
+      userRoles: {
+        include: {
+          role: {
+            include: {
+              rolePermissions: { include: { permission: true } },
+            },
+          },
+        },
+      },
+      permissionOverrides: { include: { permission: true } },
+    },
+  });
+}
+
 async function loadDbUserBySession() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return null;
   try {
-    return await prisma.user.findFirst({
-      where: { code: sessionUser.id },
-      include: {
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: { include: { permission: true } },
-              },
-            },
-          },
-        },
-        permissionOverrides: { include: { permission: true } },
-      },
-    });
+    return await findDbUserByIdentity(sessionUser);
   } catch (e) {
     const mapped = asDatabaseUnavailableError(e);
     if (mapped) throw mapped;
@@ -110,10 +131,18 @@ async function loadEffectivePermissionCodes(): Promise<Set<string>> {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return new Set();
   try {
-    const row = await prisma.user.findFirst({
-      where: { code: sessionUser.id },
+    const rowByCode = await prisma.user.findFirst({
+      where: { code: { equals: sessionUser.id, mode: "insensitive" } },
       select: { id: true },
     });
+    const row =
+      rowByCode ??
+      (sessionUser.email
+        ? await prisma.user.findFirst({
+            where: { email: { equals: sessionUser.email, mode: "insensitive" } },
+            select: { id: true },
+          })
+        : null);
     if (!row) return new Set();
     return await getEffectivePermissionCodesFromUserId(row.id);
   } catch (e) {
