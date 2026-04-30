@@ -100,12 +100,13 @@ enum FinanceYearBudgetCategory {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  code       String?  @unique
-  name       String
-  email      String   @unique
-  department String?
-  isActive   Boolean  @default(true)
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String?  @unique
+  name         String
+  email        String   @unique
+  department   String?
+  designation  String?
+  isActive     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -120,16 +121,16 @@ model User {
   createdExpenditureSnapshots FinanceExpenditureSnapshot[] @relation("FinanceSnapshotCreatedBy")
   createdFinanceSummaryHeads FinanceSummaryHead[] @relation("FinanceSummaryCreatedBy")
   createdKpiDefinitions KpiDefinition[]        @relation("KpiDefinitionCreatedBy")
-  assignedKpiDefinitions KpiDefinition[]       @relation("KpiDefinitionAssignedTo")
-  reviewerKpiDefinitions KpiDefinition[]       @relation("KpiDefinitionReviewer")
+  kpiDefinitionPerformers KpiDefinitionPerformer[]
+  kpiDefinitionReviewerUsers KpiDefinitionReviewerUser[]
   createdKpiMeasurements KpiMeasurement[]      @relation("KpiMeasurementCreatedBy")
   reviewedKpiMeasurements KpiMeasurement[]     @relation("KpiMeasurementReviewedBy")
   createdMeetings       DashboardMeeting[]     @relation("MeetingCreatedBy")
   createdMeetingTopics  MeetingTopic[]         @relation("MeetingTopicCreatedBy")
   uploadedMeetingMaterials MeetingMaterial[]   @relation("MeetingMaterialUploadedBy")
   createdActionItems    ActionItem[]           @relation("ActionItemCreatedBy")
-  assignedActionItems   ActionItem[]           @relation("ActionItemAssignedTo")
-  reviewedActionItems   ActionItem[]           @relation("ActionItemReviewedBy")
+  actionItemPerformers  ActionItemPerformer[]
+  actionItemReviewerUsers ActionItemReviewerUser[]
   createdActionItemUpdates ActionItemUpdate[]  @relation("ActionItemUpdateCreatedBy")
   uploadedFiles         File[]                 @relation("FileUploadedBy")
   actionItemProofs      ActionItemProof[]      @relation("ActionItemProofUploadedBy")
@@ -215,7 +216,6 @@ model Vertical {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  schemes     Scheme[]
   actionItems ActionItem[]
 
   @@map("verticals")
@@ -243,13 +243,12 @@ model Scheme {
   id              String          @id @default(uuid()) @db.Uuid
   code            String          @unique
   name            String
-  verticalId      String          @db.Uuid
+  verticalName    String
   sponsorshipType SponsorshipType
   createdById     String?         @db.Uuid
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  vertical   Vertical @relation(fields: [verticalId], references: [id], onDelete: Restrict)
   createdBy  User?    @relation("SchemeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   subschemes          Subscheme[]
@@ -261,7 +260,6 @@ model Scheme {
   actionItems         ActionItem[]
   supplements FinanceBudgetSupplement[]
 
-  @@index([verticalId])
   @@map("schemes")
 }
 
@@ -413,22 +411,47 @@ model KpiDefinition {
   kpiType        KPIType
   numeratorUnit  String?
   denominatorUnit String?
-  assignedToId   String?     @db.Uuid
-  reviewerId     String?     @db.Uuid
   createdById    String?     @db.Uuid
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
   scheme     Scheme     @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme  Subscheme? @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
-  assignedTo User?      @relation("KpiDefinitionAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  reviewer   User?      @relation("KpiDefinitionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
   createdBy  User?      @relation("KpiDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  performers KpiDefinitionPerformer[]
+  reviewerUsers KpiDefinitionReviewerUser[]
 
   targets KpiTarget[]
 
   @@index([schemeId])
   @@map("kpi_definitions")
+}
+
+/// Users who may enter / update KPI measurements for this definition (when non-empty, overrides scheme-level kpi_owner_1).
+model KpiDefinitionPerformer {
+  kpiDefinitionId String @db.Uuid
+  userId          String @db.Uuid
+  sortOrder       Int    @default(0)
+
+  kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([kpiDefinitionId, userId])
+  @@map("kpi_definition_performers")
+}
+
+/// Users who may review KPI submissions for this definition (when non-empty, overrides scheme-level kpi_owner_2).
+model KpiDefinitionReviewerUser {
+  kpiDefinitionId String @db.Uuid
+  userId          String @db.Uuid
+  sortOrder       Int    @default(0)
+
+  kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([kpiDefinitionId, userId])
+  @@map("kpi_definition_reviewers")
 }
 
 model KpiTarget {
@@ -532,8 +555,6 @@ model ActionItem {
   priority     ActionItemPriority
   dueDate      DateTime         @db.Date
   status       ActionItemStatus
-  assignedToId String?          @db.Uuid
-  reviewerId   String?          @db.Uuid
   createdById  String?          @db.Uuid
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
@@ -543,9 +564,9 @@ model ActionItem {
   subscheme Subscheme?       @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
   vertical  Vertical?        @relation(fields: [verticalId], references: [id], onDelete: SetNull)
 
-  assignedTo User? @relation("ActionItemAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  reviewer   User? @relation("ActionItemReviewedBy", fields: [reviewerId], references: [id], onDelete: SetNull)
-  createdBy  User? @relation("ActionItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  performers    ActionItemPerformer[]
+  reviewerUsers ActionItemReviewerUser[]
+  createdBy   User? @relation("ActionItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   updates ActionItemUpdate[]
   proofs  ActionItemProof[]
@@ -553,6 +574,30 @@ model ActionItem {
   @@index([status, dueDate])
   @@index([meetingId])
   @@map("action_items")
+}
+
+model ActionItemPerformer {
+  actionItemId String @db.Uuid
+  userId       String @db.Uuid
+  sortOrder    Int    @default(0)
+
+  actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([actionItemId, userId])
+  @@map("action_item_performers")
+}
+
+model ActionItemReviewerUser {
+  actionItemId String @db.Uuid
+  userId       String @db.Uuid
+  sortOrder    Int    @default(0)
+
+  actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([actionItemId, userId])
+  @@map("action_item_reviewers")
 }
 
 model ActionItemUpdate {

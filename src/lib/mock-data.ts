@@ -1,71 +1,4 @@
-import { ActionItem, FinancialEntry, KPISubmission, MockUser, PendingApprovalSummary, UserRole } from "@/types";
-
-export const mockUsers: MockUser[] = [
-  {
-    id: "acs",
-    name: "Smt. Anjali Sharma",
-    email: "anjali.sharma@hudd.ori",
-    role: UserRole.ACS,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "ps",
-    name: "Shri Pradeep Jena",
-    email: "pradeep.jena@hudd.ori",
-    role: UserRole.PS_HUDD,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "as",
-    name: "Shri Suvendu Das",
-    email: "suvendu.das@hudd.ori",
-    role: UserRole.AS,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "fa",
-    name: "Shri Rakesh Mohanty",
-    email: "rakesh.mohanty@hudd.ori",
-    role: UserRole.FA,
-    department: "Finance & Planning",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "tasu",
-    name: "Ms. Priya Nair",
-    email: "priya.nair@hudd.ori",
-    role: UserRole.TASU,
-    department: "Technical & Advisory Support Unit",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "nodal",
-    name: "Shri Amit Kumar",
-    email: "amit.kumar@hudd.ori",
-    role: UserRole.NODAL_OFFICER,
-    department: "HUDD Field Unit",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "director",
-    name: "Shri B.K. Mishra",
-    email: "bk.mishra@hudd.ori",
-    role: UserRole.DIRECTOR,
-    department: "Directorate of DMA",
-    assignedSchemes: ["DMA", "All schemes"],
-  },
-  {
-    id: "viewer",
-    name: "Shri Ramesh Patnaik",
-    email: "ramesh.patnaik@hudd.ori",
-    role: UserRole.VIEWER,
-    department: "Audit & Compliance",
-    assignedSchemes: ["All schemes"],
-  },
-];
+import { ActionItem, FinancialEntry, KPISubmission, PendingApprovalSummary, UserRole } from "@/types";
 
 export const mockActionItems: ActionItem[] = [
   {
@@ -427,7 +360,6 @@ export const mockFinancialEntries: FinancialEntry[] = [
 
 export const pendingApprovalSummaries: PendingApprovalSummary[] = [
   { role: UserRole.ACS, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.PS_HUDD, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.AS, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.VIEWER, financial: 0, kpi: 0, actionItems: 0 },
+  { role: UserRole.PROGRAMME_MANAGER, financial: 2, kpi: 4, actionItems: 2 },
+  { role: UserRole.NODAL_OFFICER, financial: 0, kpi: 2, actionItems: 1 },
 ];

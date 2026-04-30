@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { seedRolesAndPermissions } = require("./seed_roles_core.cjs");
 
 const datasourceUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
 const prisma = new PrismaClient(
@@ -13,118 +14,13 @@ const prisma = new PrismaClient(
     : undefined
 );
 
-const PERMISSIONS = [
-  { code: "VIEW_ALL_DATA", name: "View all data" },
-  { code: "VIEW_ASSIGNED_DATA", name: "View assigned data" },
-  { code: "ENTER_FINANCIAL_DATA", name: "Enter financial data" },
-  { code: "ENTER_KPI_DATA", name: "Enter KPI data" },
-  { code: "CREATE_ACTION_ITEMS", name: "Create action items" },
-  { code: "UPDATE_ACTION_ITEMS", name: "Update action items" },
-  { code: "UPLOAD_PROOF", name: "Upload proof" },
-  { code: "APPROVE_FINANCIAL", name: "Approve financial" },
-  { code: "APPROVE_KPI", name: "Approve KPI" },
-  { code: "APPROVE_ACTION_ITEMS", name: "Approve action items" },
-  { code: "MANAGE_USERS", name: "Manage users" },
-  { code: "MANAGE_SCHEMES", name: "Manage schemes" },
-  { code: "EXPORT_REPORTS", name: "Export reports" },
-  { code: "VIEW_COMMAND_CENTRE", name: "View command centre" },
-  { code: "VIEW_ANALYTICS", name: "View analytics" },
-  { code: "MANAGE_PERMISSIONS", name: "Manage permissions" },
-];
-
-const ROLES = [
-  {
-    code: "ACS",
-    name: "Additional Chief Secretary",
-    permissions: [
-      "VIEW_ALL_DATA",
-      "ENTER_FINANCIAL_DATA",
-      "ENTER_KPI_DATA",
-      "CREATE_ACTION_ITEMS",
-      "UPDATE_ACTION_ITEMS",
-      "UPLOAD_PROOF",
-      "MANAGE_USERS",
-      "MANAGE_SCHEMES",
-      "MANAGE_PERMISSIONS",
-      "EXPORT_REPORTS",
-      "VIEW_COMMAND_CENTRE",
-      "VIEW_ANALYTICS",
-      "APPROVE_KPI",
-      "APPROVE_ACTION_ITEMS",
-    ],
-  },
-  {
-    code: "PS_HUDD",
-    name: "Principal Secretary HUDD",
-    permissions: [
-      "VIEW_ALL_DATA",
-      "ENTER_FINANCIAL_DATA",
-      "CREATE_ACTION_ITEMS",
-      "UPDATE_ACTION_ITEMS",
-      "MANAGE_PERMISSIONS",
-      "MANAGE_USERS",
-      "MANAGE_SCHEMES",
-      "EXPORT_REPORTS",
-      "VIEW_COMMAND_CENTRE",
-      "VIEW_ANALYTICS",
-      "APPROVE_KPI",
-      "APPROVE_ACTION_ITEMS",
-    ],
-  },
-  {
-    code: "AS",
-    name: "Additional Secretary",
-    permissions: [
-      "VIEW_ALL_DATA",
-      "ENTER_FINANCIAL_DATA",
-      "MANAGE_SCHEMES",
-      "EXPORT_REPORTS",
-      "VIEW_ANALYTICS",
-      "APPROVE_KPI",
-      "APPROVE_ACTION_ITEMS",
-    ],
-  },
-  {
-    code: "FA",
-    name: "Finance Advisor",
-    permissions: ["VIEW_ALL_DATA", "ENTER_FINANCIAL_DATA", "UPLOAD_PROOF"],
-  },
-  {
-    code: "TASU",
-    name: "TASU",
-    permissions: [
-      "VIEW_ASSIGNED_DATA",
-      "CREATE_ACTION_ITEMS",
-      "UPDATE_ACTION_ITEMS",
-      "APPROVE_ACTION_ITEMS",
-      "VIEW_ANALYTICS",
-      "MANAGE_USERS",
-      "MANAGE_PERMISSIONS",
-    ],
-  },
-  {
-    code: "NODAL_OFFICER",
-    name: "Nodal Officer",
-    permissions: ["VIEW_ASSIGNED_DATA", "ENTER_KPI_DATA", "UPLOAD_PROOF", "VIEW_ANALYTICS"],
-  },
-  {
-    code: "DIRECTOR",
-    name: "Director",
-    permissions: ["VIEW_ALL_DATA", "VIEW_ANALYTICS", "EXPORT_REPORTS", "APPROVE_KPI"],
-  },
-  {
-    code: "VIEWER",
-    name: "Viewer",
-    permissions: ["VIEW_ALL_DATA", "VIEW_COMMAND_CENTRE", "VIEW_ANALYTICS"],
-  },
-];
-
 const USERS = [
   {
     code: "acs",
     name: "Smt. Anjali Sharma",
     email: "anjali.sharma@hudd.ori",
     department: "Housing & Urban Development Department",
+    designation: "Additional Chief Secretary",
     role: "ACS",
   },
   {
@@ -132,20 +28,23 @@ const USERS = [
     name: "Shri Pradeep Jena",
     email: "pradeep.jena@hudd.ori",
     department: "Housing & Urban Development Department",
-    role: "PS_HUDD",
+    designation: "Principal Secretary, HUDD",
+    role: "PROGRAMME_MANAGER",
   },
   {
     code: "as",
     name: "Shri Suvendu Das",
     email: "suvendu.das@hudd.ori",
     department: "Housing & Urban Development Department",
-    role: "AS",
+    designation: "Additional Secretary",
+    role: "PROGRAMME_MANAGER",
   },
   {
     code: "fa",
     name: "Shri Rakesh Mohanty",
     email: "rakesh.mohanty@hudd.ori",
     department: "Finance & Planning",
+    designation: "Finance Advisor",
     role: "FA",
   },
   {
@@ -153,6 +52,7 @@ const USERS = [
     name: "Ms. Priya Nair",
     email: "priya.nair@hudd.ori",
     department: "Technical & Advisory Support Unit",
+    designation: "Programme Officer, TASU",
     role: "TASU",
   },
   {
@@ -160,6 +60,7 @@ const USERS = [
     name: "Shri Amit Kumar",
     email: "amit.kumar@hudd.ori",
     department: "HUDD Field Unit",
+    designation: "Nodal Officer",
     role: "NODAL_OFFICER",
   },
   {
@@ -167,14 +68,16 @@ const USERS = [
     name: "Shri B.K. Mishra",
     email: "bk.mishra@hudd.ori",
     department: "Directorate of DMA",
-    role: "DIRECTOR",
+    designation: "Director",
+    role: "PROGRAMME_MANAGER",
   },
   {
     code: "viewer",
     name: "Shri Ramesh Patnaik",
     email: "ramesh.patnaik@hudd.ori",
     department: "Audit & Compliance",
-    role: "VIEWER",
+    designation: "Administrative Officer",
+    role: "PROGRAMME_MANAGER",
   },
 ];
 
@@ -320,30 +223,7 @@ async function ensureFinanceYearBudgetAllocationForYear(financialYearId) {
 async function main() {
   const now = new Date();
 
-  for (const p of PERMISSIONS) {
-    await prisma.permission.upsert({
-      where: { code: p.code },
-      update: { name: p.name },
-      create: { code: p.code, name: p.name },
-    });
-  }
-
-  for (const r of ROLES) {
-    const role = await prisma.role.upsert({
-      where: { code: r.code },
-      update: { name: r.name },
-      create: { code: r.code, name: r.name },
-    });
-
-    const permissionRows = await prisma.permission.findMany({ where: { code: { in: r.permissions } } });
-    for (const perm of permissionRows) {
-      await prisma.rolePermission.upsert({
-        where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
-        update: {},
-        create: { roleId: role.id, permissionId: perm.id },
-      });
-    }
-  }
+  await seedRolesAndPermissions(prisma);
 
   for (const v of VERTICALS) {
     await prisma.vertical.upsert({
@@ -377,8 +257,19 @@ async function main() {
   for (const u of USERS) {
     const user = await prisma.user.upsert({
       where: { email: u.email },
-      update: { name: u.name, department: u.department, code: u.code },
-      create: { name: u.name, email: u.email, department: u.department, code: u.code },
+      update: {
+        name: u.name,
+        department: u.department,
+        code: u.code,
+        designation: u.designation ?? null,
+      },
+      create: {
+        name: u.name,
+        email: u.email,
+        department: u.department,
+        code: u.code,
+        designation: u.designation ?? null,
+      },
     });
 
     const role = await prisma.role.findUnique({ where: { code: u.role } });
@@ -474,6 +365,12 @@ async function main() {
     }
   }
 
+  const nodalUser = usersByName.find((u) => u.code === "nodal");
+  const acsUser = usersByName.find((u) => u.code === "acs");
+  if (!nodalUser || !acsUser) {
+    throw new Error("Seed requires users with code nodal and acs for KPI assignees");
+  }
+
   for (const row of KPI_SUBMISSIONS) {
     const scheme = await ensureScheme(row.scheme, row.verticalCode);
     const existingDefinition = await prisma.kpiDefinition.findFirst({
@@ -489,6 +386,8 @@ async function main() {
             kpiType: row.type,
             numeratorUnit: row.unit,
             denominatorUnit: row.unit,
+            performers: { deleteMany: {}, create: [{ userId: nodalUser.id, sortOrder: 0 }] },
+            reviewerUsers: { deleteMany: {}, create: [{ userId: acsUser.id, sortOrder: 0 }] },
           },
         })
       : await prisma.kpiDefinition.create({
@@ -499,6 +398,8 @@ async function main() {
             kpiType: row.type,
             numeratorUnit: row.unit,
             denominatorUnit: row.unit,
+            performers: { create: [{ userId: nodalUser.id, sortOrder: 0 }] },
+            reviewerUsers: { create: [{ userId: acsUser.id, sortOrder: 0 }] },
           },
         });
 
@@ -585,8 +486,8 @@ async function main() {
             priority: item.priority,
             dueDate,
             status: item.status,
-            assignedToId,
-            reviewerId,
+            performers: { deleteMany: {}, create: [{ userId: assignedToId, sortOrder: 0 }] },
+            reviewerUsers: { deleteMany: {}, create: [{ userId: reviewerId, sortOrder: 0 }] },
           },
         })
       : await prisma.actionItem.create({
@@ -601,8 +502,8 @@ async function main() {
             priority: item.priority,
             dueDate,
             status: item.status,
-            assignedToId,
-            reviewerId,
+            performers: { create: [{ userId: assignedToId, sortOrder: 0 }] },
+            reviewerUsers: { create: [{ userId: reviewerId, sortOrder: 0 }] },
           },
         });
 

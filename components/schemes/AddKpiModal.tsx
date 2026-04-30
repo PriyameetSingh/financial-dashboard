@@ -29,6 +29,7 @@ export function SearchableKpiUserField({
   onChange,
   disabled,
   excludeUserId,
+  excludeUserIds,
 }: {
   label: string;
   hint?: string;
@@ -37,12 +38,23 @@ export function SearchableKpiUserField({
   onChange: (id: string) => void;
   disabled?: boolean;
   excludeUserId: string;
+  /** Extra user ids (directory ids / DB user ids) that cannot be selected. */
+  excludeUserIds?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const selected = useMemo(() => users.find((u) => u.id === value) ?? null, [users, value]);
+
+  const excludedIdSet = useMemo(() => {
+    const s = new Set<string>();
+    if (excludeUserId) s.add(excludeUserId);
+    for (const x of excludeUserIds ?? []) {
+      if (x) s.add(x);
+    }
+    return s;
+  }, [excludeUserId, excludeUserIds]);
 
   const filtered = useMemo(() => {
     return users.filter((u) => matchesUserSearch(u, query));
@@ -134,7 +146,7 @@ export function SearchableKpiUserField({
                 <li className="px-2 py-2 text-[var(--text-muted)] normal-case">No matches.</li>
               ) : (
                 filtered.map((u) => {
-                  const excluded = excludeUserId !== "" && u.id === excludeUserId;
+                  const excluded = excludedIdSet.has(u.id);
                   return (
                     <li key={u.id}>
                       <button
@@ -142,7 +154,7 @@ export function SearchableKpiUserField({
                         role="option"
                         disabled={excluded}
                         aria-selected={value === u.id}
-                        title={excluded ? "Already chosen for the other role" : undefined}
+                        title={excluded ? "Already assigned in another slot" : undefined}
                         className="w-full rounded-lg px-2 py-1.5 text-left text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => {
                           if (excluded) return;
@@ -183,8 +195,8 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   const [subschemeId, setSubschemeId] = useState<string>("");
   const [unit, setUnit] = useState("");
   const [denominator, setDenominator] = useState("");
-  const [assignedToId, setAssignedToId] = useState("");
-  const [reviewerId, setReviewerId] = useState("");
+  const [performerIds, setPerformerIds] = useState<string[]>([""]);
+  const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
 
   useEffect(() => {
     if (!open || !scheme) return;
@@ -194,8 +206,8 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setSubschemeId("");
     setUnit("");
     setDenominator("");
-    setAssignedToId("");
-    setReviewerId("");
+    setPerformerIds([""]);
+    setReviewerIds([""]);
     setAlert(null);
   }, [open, scheme]);
 
@@ -206,12 +218,15 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
       setAlert("Description is required.");
       return;
     }
-    if (!assignedToId || !reviewerId) {
-      setAlert("Select both an action owner and a reviewer.");
+    const performers = performerIds.map((id) => id.trim()).filter(Boolean);
+    const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
+    if (performers.length === 0 || reviewers.length === 0) {
+      setAlert("Select at least one action owner and one reviewer.");
       return;
     }
-    if (assignedToId === reviewerId) {
-      setAlert("Action owner and reviewer must be different users.");
+    const overlap = performers.filter((id) => reviewers.includes(id));
+    if (overlap.length > 0) {
+      setAlert("Action owners and reviewers must not include the same user.");
       return;
     }
     setSaving(true);
@@ -228,8 +243,8 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
         numeratorUnit: unitTrimmed,
         denominatorUnit: unitTrimmed,
         denominatorValue: isNaN(denominatorValue as number) ? null : denominatorValue,
-        assignedToId,
-        reviewerId,
+        performerUserIds: performers,
+        reviewerUserIds: reviewers,
       });
       onSaved();
       onClose();
@@ -243,6 +258,10 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   if (!open || !scheme) return null;
 
   const userPickerDisabled = users.length < 2;
+  const allExcludedForPerformers = (index: number) =>
+    [...reviewerIds.filter(Boolean), ...performerIds.filter((pid, i) => i !== index && Boolean(pid))];
+  const allExcludedForReviewers = (index: number) =>
+    [...performerIds.filter(Boolean), ...reviewerIds.filter((rid, i) => i !== index && Boolean(rid))];
 
   return (
     <div
@@ -284,7 +303,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
 
         {userPickerDisabled && (
           <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
-            At least two active users are required in the directory to assign an action owner and reviewer.
+            At least two active users are required in the directory to assign owners and reviewers.
           </div>
         )}
 
@@ -338,25 +357,89 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
               </select>
             </label>
           )}
-          <div className="grid gap-3 md:grid-cols-2">
-            <SearchableKpiUserField
-              label="Action owner"
-              hint="Enters and updates KPI progress"
-              users={users}
-              value={assignedToId}
-              onChange={setAssignedToId}
-              disabled={userPickerDisabled}
-              excludeUserId={reviewerId}
-            />
-            <SearchableKpiUserField
-              label="Reviewer"
-              hint="Confirms submitted updates"
-              users={users}
-              value={reviewerId}
-              onChange={setReviewerId}
-              disabled={userPickerDisabled}
-              excludeUserId={assignedToId}
-            />
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Action owners</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Anyone listed may enter or update KPI progress.</p>
+              <button
+                type="button"
+                disabled={userPickerDisabled}
+                onClick={() => setPerformerIds((prev) => [...prev, ""])}
+                className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+              >
+                Add owner
+              </button>
+              <div className="mt-3 space-y-3">
+                {performerIds.map((pid, index) => (
+                  <div key={`perf-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                    <div className="min-w-0 flex-1">
+                      <SearchableKpiUserField
+                        label={index === 0 ? "Action owner" : `Action owner (${index + 1})`}
+                        hint={index === 0 ? "Enters and updates KPI progress" : undefined}
+                        users={users}
+                        value={pid}
+                        onChange={(id) =>
+                          setPerformerIds((prev) => prev.map((v, i) => (i === index ? id : v)))
+                        }
+                        disabled={userPickerDisabled}
+                        excludeUserId=""
+                        excludeUserIds={allExcludedForPerformers(index)}
+                      />
+                    </div>
+                    {performerIds.length > 1 && (
+                      <button
+                        type="button"
+                        disabled={userPickerDisabled}
+                        onClick={() => setPerformerIds((prev) => prev.filter((_, i) => i !== index))}
+                        className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Anyone listed may approve or reject submissions.</p>
+              <button
+                type="button"
+                disabled={userPickerDisabled}
+                onClick={() => setReviewerIds((prev) => [...prev, ""])}
+                className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+              >
+                Add reviewer
+              </button>
+              <div className="mt-3 space-y-3">
+                {reviewerIds.map((rid, index) => (
+                  <div key={`rev-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                    <div className="min-w-0 flex-1">
+                      <SearchableKpiUserField
+                        label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
+                        hint={index === 0 ? "Confirms submitted updates" : undefined}
+                        users={users}
+                        value={rid}
+                        onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                        disabled={userPickerDisabled}
+                        excludeUserId=""
+                        excludeUserIds={allExcludedForReviewers(index)}
+                      />
+                    </div>
+                    {reviewerIds.length > 1 && (
+                      <button
+                        type="button"
+                        disabled={userPickerDisabled}
+                        onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
+                        className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">

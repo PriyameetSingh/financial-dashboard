@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ActionItemStatus } from "@prisma/client";
+import { ActionItemStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { getDbUserBySession, hasPermissionForUser, requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -11,6 +11,8 @@ type Body = {
   note?: string;
   reviewerDecision?: "approve" | "reject";
   rejectionReason?: string;
+  performerUserCodes?: string[];
+  reviewerUserCodes?: string[];
   assignedToUserCode?: string;
   reviewerUserCode?: string;
 };
@@ -19,44 +21,67 @@ function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
-function mapActionItem(item: {
-  id: string;
-  title: string;
-  description: string;
-  vertical: { name: string } | null;
-  priority: string;
-  dueDate: Date;
-  status: ActionItemStatus;
-  assignedTo: { name: string; id: string; code: string | null } | null;
-  reviewer: { name: string; id: string; code: string | null } | null;
-  scheme: { code: string } | null;
-  updates: Array<{
-    id: string;
-    timestamp: Date;
-    status: ActionItemStatus;
-    note: string;
-    createdBy: { name: string } | null;
-  }>;
-  proofs: Array<{ file: { name: string; url: string } }>;
-}) {
+function normalizeCodes(codes: unknown): string[] {
+  if (!Array.isArray(codes)) return [];
+  const out: string[] = [];
+  for (const c of codes) {
+    if (typeof c !== "string") continue;
+    const t = c.trim();
+    if (t) out.push(t);
+  }
+  return [...new Set(out)];
+}
+
+const actionInclude = {
+  scheme: { select: { code: true, verticalName: true } },
+  vertical: { select: { name: true } },
+  performers: {
+    orderBy: { sortOrder: "asc" as const },
+    include: { user: { select: { id: true, name: true, code: true } } },
+  },
+  reviewerUsers: {
+    orderBy: { sortOrder: "asc" as const },
+    include: { user: { select: { id: true, name: true, code: true } } },
+  },
+  updates: {
+    orderBy: { timestamp: "asc" as const },
+    include: {
+      createdBy: { select: { name: true } },
+    },
+  },
+  proofs: {
+    include: {
+      file: { select: { name: true, url: true } },
+    },
+  },
+} satisfies Prisma.ActionItemInclude;
+
+type ActionItemWithRelations = Prisma.ActionItemGetPayload<{ include: typeof actionInclude }>;
+
+function mapActionItem(item: ActionItemWithRelations) {
   const now = Date.now();
   const dueTime = item.dueDate.getTime();
   const overdueDays = dueTime < now ? Math.floor((now - dueTime) / (24 * 60 * 60 * 1000)) : undefined;
+
+  const perfUsers = item.performers.map((p) => p.user);
+  const revUsers = item.reviewerUsers.map((r) => r.user);
 
   return {
     id: item.id,
     title: item.title,
     description: item.description,
-    vertical: item.vertical?.name ?? "",
+    vertical: item.vertical?.name ?? item.scheme?.verticalName ?? "",
     priority: item.priority,
     dueDate: toIsoDate(item.dueDate),
     status: item.status,
-    assignedTo: item.assignedTo?.name ?? "",
-    reviewer: item.reviewer?.name ?? "",
-    assignedToUserId: item.assignedTo?.id,
-    reviewerUserId: item.reviewer?.id,
-    assignedToUserCode: item.assignedTo?.code ?? null,
-    reviewerUserCode: item.reviewer?.code ?? null,
+    assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
+    reviewer: revUsers.map((u) => u.name).join(", ") || "",
+    performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
+    reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
+    assignedToUserIds: perfUsers.map((u) => u.id),
+    reviewerUserIds: revUsers.map((u) => u.id),
+    assignedToUserCode: perfUsers[0]?.code ?? null,
+    reviewerUserCode: revUsers[0]?.code ?? null,
     schemeId: item.scheme?.code ?? "",
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
@@ -76,23 +101,7 @@ function mapActionItem(item: {
 async function getActionItemById(id: string) {
   return prisma.actionItem.findUnique({
     where: { id },
-    include: {
-      scheme: { select: { code: true } },
-      vertical: { select: { name: true } },
-      assignedTo: { select: { name: true, id: true, code: true } },
-      reviewer: { select: { name: true, id: true, code: true } },
-      updates: {
-        orderBy: { timestamp: "asc" },
-        include: {
-          createdBy: { select: { name: true } },
-        },
-      },
-      proofs: {
-        include: {
-          file: { select: { name: true, url: true } },
-        },
-      },
-    },
+    include: actionInclude,
   });
 }
 
@@ -122,7 +131,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     const current = await prisma.actionItem.findUnique({
       where: { id },
-      include: { assignedTo: true, reviewer: true },
+      include: {
+        performers: { select: { userId: true } },
+        reviewerUsers: { select: { userId: true } },
+      },
     });
     if (!current) {
       return NextResponse.json({ detail: "Action item not found" }, { status: 404 });
@@ -136,8 +148,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const auditContext = getAuditRequestContext(request);
     const beforeStatus = current.status;
 
-    const isAssignee = current.assignedToId === actor.id;
-    const isReviewer = current.reviewerId === actor.id;
+    const performerIds = new Set(current.performers.map((p) => p.userId));
+    const reviewerIds = new Set(current.reviewerUsers.map((r) => r.userId));
+    const isAssignee = performerIds.has(actor.id);
+    const isReviewer = reviewerIds.has(actor.id);
     const canApprove = hasPermissionForUser(actor, "APPROVE_ACTION_ITEMS");
 
     if (body.reviewerDecision === "approve" || body.reviewerDecision === "reject") {
@@ -177,42 +191,77 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ item: item ? mapActionItem(item) : null });
     }
 
-    if (body.assignedToUserCode !== undefined || body.reviewerUserCode !== undefined) {
+    if (
+      body.performerUserCodes !== undefined ||
+      body.reviewerUserCodes !== undefined ||
+      body.assignedToUserCode !== undefined ||
+      body.reviewerUserCode !== undefined
+    ) {
       const canReassign = hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS");
       if (!canReassign) {
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
-      const assignCode = body.assignedToUserCode?.trim();
-      const reviewCode = body.reviewerUserCode?.trim();
-      if (!assignCode || !reviewCode) {
+
+      let performerCodes = normalizeCodes(body.performerUserCodes);
+      let reviewerCodes = normalizeCodes(body.reviewerUserCodes);
+      if (performerCodes.length === 0 && body.assignedToUserCode?.trim()) {
+        performerCodes = [body.assignedToUserCode.trim()];
+      }
+      if (reviewerCodes.length === 0 && body.reviewerUserCode?.trim()) {
+        reviewerCodes = [body.reviewerUserCode.trim()];
+      }
+
+      if (performerCodes.length === 0 || reviewerCodes.length === 0) {
         return NextResponse.json(
-          { detail: "assignedToUserCode and reviewerUserCode are required" },
+          { detail: "performerUserCodes and reviewerUserCodes (non-empty arrays), or legacy single-code fields, are required" },
           { status: 400 },
         );
       }
-      if (assignCode === reviewCode) {
-        return NextResponse.json(
-          { detail: "Assignee and reviewer must be different users" },
-          { status: 400 },
-        );
-      }
-      const assigneeUser = await prisma.user.findFirst({ where: { code: assignCode } });
-      const reviewerUser = await prisma.user.findFirst({ where: { code: reviewCode } });
-      if (!assigneeUser || !reviewerUser) {
+
+      const performers = await prisma.user.findMany({
+        where: { code: { in: performerCodes } },
+        select: { id: true, code: true, name: true },
+      });
+      const reviewers = await prisma.user.findMany({
+        where: { code: { in: reviewerCodes } },
+        select: { id: true, code: true, name: true },
+      });
+      if (performers.length !== performerCodes.length || reviewers.length !== reviewerCodes.length) {
         return NextResponse.json({ detail: "Assignee or reviewer user not found" }, { status: 400 });
       }
-      const prevAssignName = current.assignedTo?.name ?? "—";
-      const prevReviewName = current.reviewer?.name ?? "—";
-      await prisma.actionItem.update({
-        where: { id },
-        data: { assignedToId: assigneeUser.id, reviewerId: reviewerUser.id },
+
+      const nextPerformerIds = performerCodes.map((code) => performers.find((u) => u.code === code)!.id);
+      const nextReviewerIds = reviewerCodes.map((code) => reviewers.find((u) => u.code === code)!.id);
+      const combined = new Set([...nextPerformerIds, ...nextReviewerIds]);
+      if (combined.size !== nextPerformerIds.length + nextReviewerIds.length) {
+        return NextResponse.json({ detail: "Performers and reviewers must be distinct users" }, { status: 400 });
+      }
+
+      const prevItem = await getActionItemById(id);
+      const prevAssignName = prevItem
+        ? prevItem.performers.map((p) => p.user.name).join(", ") || "—"
+        : "—";
+      const prevReviewName = prevItem
+        ? prevItem.reviewerUsers.map((r) => r.user.name).join(", ") || "—"
+        : "—";
+
+      await prisma.$transaction(async (tx) => {
+        await tx.actionItemPerformer.deleteMany({ where: { actionItemId: id } });
+        await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
+        await tx.actionItemPerformer.createMany({
+          data: nextPerformerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
+        });
+        await tx.actionItemReviewerUser.createMany({
+          data: nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
+        });
       });
+
       await prisma.actionItemUpdate.create({
         data: {
           actionItemId: id,
           timestamp: new Date(),
           status: current.status,
-          note: `Reassigned: assignee ${prevAssignName} → ${assigneeUser.name}; reviewer ${prevReviewName} → ${reviewerUser.name}`,
+          note: `Reassigned: performers ${prevAssignName} → ${performers.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${reviewers.map((u) => u.name).join(", ")}`,
           createdById: actor.id,
         },
       });
@@ -221,8 +270,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         "action_item.update",
         "action_item",
         id,
-        { assignedToId: current.assignedToId, reviewerId: current.reviewerId },
-        { assignedToId: assigneeUser.id, reviewerId: reviewerUser.id },
+        { performerIds: [...performerIds], reviewerIds: [...reviewerIds] },
+        { performerIds: nextPerformerIds, reviewerIds: nextReviewerIds },
         { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
       );
       const item = await getActionItemById(id);

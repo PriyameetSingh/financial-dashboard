@@ -7,7 +7,10 @@ import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { addActionItemProof, getActionItemById, updateActionItem } from "@/src/lib/services/actionItemService";
 import { ActionItem, UserRole } from "@/types";
-import { MOCK_USERS, hasPermission, Permission } from "@/lib/auth";
+import { hasPermission, Permission } from "@/lib/auth";
+import type { SessionUser } from "@/types";
+import { fetchDirectoryUsers } from "@/src/lib/directory-users";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
@@ -17,34 +20,45 @@ import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const DESIGNATIONS: Record<UserRole, string> = {
   [UserRole.ACS]: "Additional Chief Secretary",
-  [UserRole.PS_HUDD]: "Principal Secretary",
-  [UserRole.AS]: "Additional Secretary",
+  [UserRole.PROGRAMME_MANAGER]: "Programme Manager",
   [UserRole.FA]: "Finance Advisor",
   [UserRole.TASU]: "TASU Lead",
   [UserRole.NODAL_OFFICER]: "Nodal Officer",
-  [UserRole.DIRECTOR]: "Director",
-  [UserRole.VIEWER]: "Audit Viewer",
 };
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
-const matchUser = (name: string) => {
+function matchUser(catalog: SessionUser[], name: string) {
   const target = normalize(name);
   return (
-    MOCK_USERS.find((user) => {
+    catalog.find((user) => {
       const normalized = normalize(user.name);
       return normalized.includes(target) || target.includes(normalized);
     }) ?? null
   );
-};
+}
 
 function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
+  if (item.reviewers?.length) {
+    return item.reviewers.some(
+      (r) =>
+        (!!r.code && r.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
+        normalize(r.name) === normalize(u.name),
+    );
+  }
   const code = item.reviewerUserCode?.trim().toLowerCase();
   if (code && code === u.id.trim().toLowerCase()) return true;
   return normalize(item.reviewer) === normalize(u.name);
 }
 
 function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): boolean {
+  if (item.performers?.length) {
+    return item.performers.some(
+      (p) =>
+        (!!p.code && p.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
+        normalize(p.name) === normalize(u.name),
+    );
+  }
   const code = item.assignedToUserCode?.trim().toLowerCase();
   if (code && code === u.id.trim().toLowerCase()) return true;
   return normalize(item.assignedTo) === normalize(u.name);
@@ -57,6 +71,7 @@ export default function ActionItemDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [item, setItem] = useState<ActionItem | null>(null);
+  const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
@@ -75,9 +90,10 @@ export default function ActionItemDetailPage() {
     let active = true;
     const load = async () => {
       try {
-        const data = await getActionItemById(id);
+        const [data, roster] = await Promise.all([getActionItemById(id), fetchDirectoryUsers()]);
         if (!active) return;
         setItem(data ?? null);
+        setDirectoryUsers(roster);
       } finally {
         if (active) setLoading(false);
       }
@@ -88,15 +104,12 @@ export default function ActionItemDetailPage() {
     };
   }, [id]);
 
-  const assignedUser = useMemo(() => (item ? matchUser(item.assignedTo) : null), [item]);
-  const reviewerUser = useMemo(() => (item ? matchUser(item.reviewer) : null), [item]);
-
-  const isViewer = user?.role === UserRole.VIEWER;
+  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
   const isNodal = user?.role === UserRole.NODAL_OFFICER;
   const canReviewerAct = Boolean(
     item &&
       user &&
-      [UserRole.AS, UserRole.PS_HUDD, UserRole.ACS].includes(user.role) &&
+      hasPermission(user, Permission.APPROVE_ACTION_ITEMS) &&
       item.status === "UNDER_REVIEW" &&
       isDesignatedReviewer(item, user),
   );
@@ -106,10 +119,7 @@ export default function ActionItemDetailPage() {
 
   const canAddManualUpdate = useMemo(() => {
     if (!item || !user || isViewer) return false;
-    return (
-      hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
-      matchUser(item.assignedTo)?.id === user.id
-    );
+    return hasPermission(user, Permission.UPDATE_ACTION_ITEMS) || isAssignedOfficer(item, user);
   }, [item, user, isViewer]);
 
   const closeLabel = actionSuccess ? "Completed" : "Mark Completed";
@@ -185,20 +195,52 @@ export default function ActionItemDetailPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {[{ label: "Assigned Officer", person: item.assignedTo, profile: assignedUser }, { label: "Reviewer", person: item.reviewer, profile: reviewerUser }].map((card) => (
-            <div key={card.label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{card.label}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">{card.profile?.name ?? card.person}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {card.profile ? DESIGNATIONS[card.profile.role] : "HUDD Officer"}
-                  </p>
-                </div>
-                {card.profile && <RoleBadge role={card.profile.role} />}
-              </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Assigned officers</p>
+            <div className="mt-3 space-y-4">
+              {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
+                const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
+                return (
+                  <div key={`perf-${p.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? p.name}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {profile?.designation?.trim()
+                          ? profile.designation
+                          : profile
+                            ? DESIGNATIONS[profile.role]
+                            : "HUDD Officer"}
+                      </p>
+                    </div>
+                    {profile && <RoleBadge role={profile.role} />}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Reviewers</p>
+            <div className="mt-3 space-y-4">
+              {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
+                const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
+                return (
+                  <div key={`rev-${r.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? r.name}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {profile?.designation?.trim()
+                          ? profile.designation
+                          : profile
+                            ? DESIGNATIONS[profile.role]
+                            : "HUDD Officer"}
+                      </p>
+                    </div>
+                    {profile && <RoleBadge role={profile.role} />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">

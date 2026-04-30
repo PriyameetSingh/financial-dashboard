@@ -62,6 +62,7 @@ export async function GET() {
           name: u.name,
           email: u.email,
           department: u.department,
+          designation: u.designation,
           roles: roles.map((r) => r.code),
           overrides,
           effectivePermissions: computeEffective(roles, overrides),

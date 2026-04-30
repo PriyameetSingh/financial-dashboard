@@ -16,8 +16,8 @@ type Props = {
 export default function ReassignKpiModal({ open, submission, onClose, onSaved }: Props) {
   const [users, setUsers] = useState<Array<{ id: string; code: string | null; name: string; email: string }> | null>(null);
   const [usersError, setUsersError] = useState<string | null>(null);
-  const [draftAssignedToId, setDraftAssignedToId] = useState("");
-  const [draftReviewerId, setDraftReviewerId] = useState("");
+  const [performerIds, setPerformerIds] = useState<string[]>([""]);
+  const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -25,8 +25,18 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
     if (!open || !submission) return;
     setUsers(null);
     setUsersError(null);
-    setDraftAssignedToId(submission.assignedToUserId ?? "");
-    setDraftReviewerId(submission.reviewerUserId ?? "");
+    const p =
+      submission.performerUserIds?.length ?
+        submission.performerUserIds
+      : submission.assignedToUserId ? [submission.assignedToUserId]
+      : [""];
+    const r =
+      submission.reviewerUserIds?.length ?
+        submission.reviewerUserIds
+      : submission.reviewerUserId ? [submission.reviewerUserId]
+      : [""];
+    setPerformerIds(p);
+    setReviewerIds(r);
     setMsg(null);
     let cancelled = false;
     fetchSchemesOverview()
@@ -43,21 +53,29 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
 
   if (!open || !submission) return null;
 
+  const allExcludedForPerformers = (index: number) =>
+    [...reviewerIds.filter(Boolean), ...performerIds.filter((pid, i) => i !== index && Boolean(pid))];
+  const allExcludedForReviewers = (index: number) =>
+    [...performerIds.filter(Boolean), ...reviewerIds.filter((rid, i) => i !== index && Boolean(rid))];
+
   const handleSave = async () => {
-    if (!draftAssignedToId || !draftReviewerId) {
-      setMsg("Select both an action owner and a reviewer.");
+    const performers = performerIds.map((id) => id.trim()).filter(Boolean);
+    const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
+    if (performers.length === 0 || reviewers.length === 0) {
+      setMsg("Select at least one action owner and one reviewer.");
       return;
     }
-    if (draftAssignedToId === draftReviewerId) {
-      setMsg("Action owner and reviewer must be different users.");
+    const overlap = performers.filter((id) => reviewers.includes(id));
+    if (overlap.length > 0) {
+      setMsg("Action owners and reviewers must not include the same user.");
       return;
     }
     setBusy(true);
     setMsg(null);
     try {
       await updateKpiDefinitionAssignments(submission.id, {
-        assignedToId: draftAssignedToId,
-        reviewerId: draftReviewerId,
+        performerUserIds: performers,
+        reviewerUserIds: reviewers,
       });
       onSaved();
       onClose();
@@ -67,6 +85,8 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
       setBusy(false);
     }
   };
+
+  const userPickerDisabled = !users || users.length < 2;
 
   return (
     <div
@@ -79,7 +99,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
       }}
     >
       <div
-        className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -101,7 +121,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
           </button>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-6">
           {usersError && <p className="text-sm text-[var(--alert-critical)]">{usersError}</p>}
           {!usersError && users === null && (
             <p className="text-sm text-[var(--text-muted)]">Loading user directory…</p>
@@ -111,29 +131,89 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
           )}
           {users && users.length >= 2 && (
             <>
-              <SearchableKpiUserField
-                label="Action owner"
-                users={users}
-                value={draftAssignedToId}
-                onChange={setDraftAssignedToId}
-                excludeUserId={draftReviewerId}
-                disabled={busy}
-              />
-              <SearchableKpiUserField
-                label="Reviewer"
-                users={users}
-                value={draftReviewerId}
-                onChange={setDraftReviewerId}
-                excludeUserId={draftAssignedToId}
-                disabled={busy}
-              />
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Action owners</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setPerformerIds((prev) => [...prev, ""])}
+                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                >
+                  Add owner
+                </button>
+                <div className="mt-3 space-y-3">
+                  {performerIds.map((pid, index) => (
+                    <div key={`p-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                      <div className="min-w-0 flex-1">
+                        <SearchableKpiUserField
+                          label={index === 0 ? "Action owner" : `Owner (${index + 1})`}
+                          users={users}
+                          value={pid}
+                          onChange={(id) => setPerformerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                          disabled={busy}
+                          excludeUserId=""
+                          excludeUserIds={allExcludedForPerformers(index)}
+                        />
+                      </div>
+                      {performerIds.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setPerformerIds((prev) => prev.filter((_, i) => i !== index))}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setReviewerIds((prev) => [...prev, ""])}
+                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                >
+                  Add reviewer
+                </button>
+                <div className="mt-3 space-y-3">
+                  {reviewerIds.map((rid, index) => (
+                    <div key={`r-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                      <div className="min-w-0 flex-1">
+                        <SearchableKpiUserField
+                          label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
+                          users={users}
+                          value={rid}
+                          onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                          disabled={busy}
+                          excludeUserId=""
+                          excludeUserIds={allExcludedForReviewers(index)}
+                        />
+                      </div>
+                      {reviewerIds.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </>
           )}
           {msg && <p className="text-sm text-[var(--text-muted)]">{msg}</p>}
           <div className="flex flex-wrap gap-2 pt-2">
             <button
               type="button"
-              disabled={busy || !users || users.length < 2}
+              disabled={busy || userPickerDisabled}
               onClick={handleSave}
               className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
             >

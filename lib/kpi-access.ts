@@ -29,9 +29,9 @@ export async function assertKpiReviewerForScheme(schemeId: string, userId: strin
   }
 }
 
-type DefinitionUpdater = { schemeId: string; assignedToId: string | null };
+type DefinitionUpdater = { schemeId: string; performerUserIds: string[] };
 
-/** Per-KPI assignee wins when set; otherwise scheme `kpi_owner_1` rules apply. */
+/** Per-KPI performers win when set; otherwise scheme `kpi_owner_1` rules apply. */
 export async function assertKpiUpdaterForDefinition(
   definition: DefinitionUpdater,
   userId: string | undefined,
@@ -39,16 +39,16 @@ export async function assertKpiUpdaterForDefinition(
   options: { canManageSchemes?: boolean } = {},
 ) {
   if (options.canManageSchemes) return;
-  if (definition.assignedToId) {
-    if (userId && definition.assignedToId === userId) return;
-    throw new AuthError(403, "Not assigned as the action owner for this KPI");
+  if (definition.performerUserIds.length > 0) {
+    if (userId && definition.performerUserIds.includes(userId)) return;
+    throw new AuthError(403, "Not assigned as an action owner for this KPI");
   }
   await assertKpiUpdaterForScheme(definition.schemeId, userId, userRoleIds);
 }
 
-type DefinitionReviewer = { schemeId: string; reviewerId: string | null };
+type DefinitionReviewer = { schemeId: string; reviewerUserIds: string[] };
 
-/** Per-KPI reviewer wins when set; otherwise scheme `kpi_owner_2` rules apply. */
+/** Per-KPI reviewers win when set; otherwise scheme `kpi_owner_2` rules apply. */
 export async function assertKpiReviewerForDefinition(
   definition: DefinitionReviewer,
   userId: string | undefined,
@@ -56,9 +56,9 @@ export async function assertKpiReviewerForDefinition(
   options: { canManageSchemes?: boolean } = {},
 ) {
   if (options.canManageSchemes) return;
-  if (definition.reviewerId) {
-    if (userId && definition.reviewerId === userId) return;
-    throw new AuthError(403, "Not assigned as the reviewer for this KPI");
+  if (definition.reviewerUserIds.length > 0) {
+    if (userId && definition.reviewerUserIds.includes(userId)) return;
+    throw new AuthError(403, "Not assigned as a reviewer for this KPI");
   }
   await assertKpiReviewerForScheme(definition.schemeId, userId, userRoleIds);
 }
@@ -102,8 +102,8 @@ export function userCanEnterKpiMeasurementSync(
   kpiOwner1BySchemeId: Map<string, Array<{ userId: string | null; roleId: string | null }>>,
 ): boolean {
   if (canManageSchemes) return true;
-  if (definition.assignedToId) {
-    return !!(userId && definition.assignedToId === userId);
+  if (definition.performerUserIds.length > 0) {
+    return !!(userId && definition.performerUserIds.includes(userId));
   }
   const owners = kpiOwner1BySchemeId.get(definition.schemeId) ?? [];
   return ownersMatchAssignment(owners, userId, userRoleIds);
@@ -118,8 +118,8 @@ export function userCanReviewKpiMeasurementSync(
   kpiOwner2BySchemeId: Map<string, Array<{ userId: string | null; roleId: string | null }>>,
 ): boolean {
   if (canManageSchemes) return true;
-  if (definition.reviewerId) {
-    return !!(userId && definition.reviewerId === userId);
+  if (definition.reviewerUserIds.length > 0) {
+    return !!(userId && definition.reviewerUserIds.includes(userId));
   }
   const owners = kpiOwner2BySchemeId.get(definition.schemeId) ?? [];
   return ownersMatchAssignment(owners, userId, userRoleIds);

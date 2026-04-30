@@ -2,21 +2,21 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { MockUser } from "@/types";
+import type { SessionUser } from "@/types";
 
 interface SearchableUserSelectorProps {
-  users: MockUser[];
+  users: SessionUser[];
   value: string;
   onChange: (value: string) => void;
   label?: string;
   className?: string;
   /** Used to show the current selection label when the selected user is not in `users` (e.g. edge cases). */
-  catalog?: MockUser[];
+  catalog?: SessionUser[];
 }
 
 const formatRole = (role: string) => role.replace(/_/g, " ");
 
-function matchesQuery(user: MockUser, q: string) {
+function matchesQuery(user: SessionUser, q: string) {
   if (!q.trim()) return true;
   const n = q.toLowerCase();
   return (

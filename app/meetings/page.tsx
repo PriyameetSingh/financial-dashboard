@@ -18,7 +18,7 @@ function normalizeMeetings(raw: MeetingListItem[]): MeetingListItem[] {
 }
 
 export default function MeetingsPage() {
-  useRequireRole([UserRole.TASU, UserRole.AS, UserRole.PS_HUDD, UserRole.ACS], "/dashboard");
+  useRequireRole([UserRole.TASU, UserRole.PROGRAMME_MANAGER, UserRole.ACS], "/dashboard");
 
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [loading, setLoading] = useState(true);

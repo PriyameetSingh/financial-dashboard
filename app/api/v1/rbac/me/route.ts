@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/server-auth";
 import { getEffectivePermissionCodesFromUserId, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -6,25 +7,38 @@ import { Permission, UserRole } from "@/types";
 
 export const runtime = "nodejs";
 
+/** Explicit select so `designation` and other scalars are present on the inferred type. */
+const rbacMeUserSelect = {
+  id: true,
+  code: true,
+  name: true,
+  email: true,
+  department: true,
+  designation: true,
+  userRoles: {
+    include: { role: { select: { code: true } } },
+  },
+} satisfies Prisma.UserSelect;
+
 const USER_ROLE_VALUES = new Set<string>(Object.values(UserRole));
 const PERMISSION_VALUES = new Set<string>(Object.values(Permission));
 
 function parseUserRole(code: string | null | undefined, context: { source: string; userId: string }): UserRole {
   if (code && USER_ROLE_VALUES.has(code)) return code as UserRole;
   if (code) {
-    console.warn("[rbac/me] Invalid role, falling back to VIEWER", {
+    console.warn("[rbac/me] Invalid role, falling back to NODAL_OFFICER", {
       source: context.source,
       userId: context.userId,
       receivedRole: code,
       acceptedRoles: [...USER_ROLE_VALUES],
     });
   } else {
-    console.warn("[rbac/me] Missing role, falling back to VIEWER", {
+    console.warn("[rbac/me] Missing role, falling back to NODAL_OFFICER", {
       source: context.source,
       userId: context.userId,
     });
   }
-  return UserRole.VIEWER;
+  return UserRole.NODAL_OFFICER;
 }
 
 function codesToPermissions(codes: Iterable<string>): Permission[] {
@@ -44,22 +58,14 @@ export async function GET() {
 
     const dbUserByCode = await prisma.user.findFirst({
       where: { code: { equals: sessionUser.id, mode: "insensitive" } },
-      include: {
-        userRoles: {
-          include: { role: { select: { code: true } } },
-        },
-      },
+      select: rbacMeUserSelect,
     });
     const dbUser =
       dbUserByCode ??
       (sessionUser.email
         ? await prisma.user.findFirst({
             where: { email: { equals: sessionUser.email, mode: "insensitive" } },
-            include: {
-              userRoles: {
-                include: { role: { select: { code: true } } },
-              },
-            },
+            select: rbacMeUserSelect,
           })
         : null);
 
@@ -79,18 +85,22 @@ export async function GET() {
             userId: sessionUser.id,
           }),
           department: "",
+          designation: null as string | null,
           assignedSchemes: [] as string[],
           permissions: [] as Permission[],
         },
       });
     }
 
+    const sessionRoleFallback =
+      dbUser.userRoles.length === 0 && sessionUser.role ? sessionUser.role : null;
+
     const [schemeRows, effectiveCodes] = await Promise.all([
       prisma.schemeAssignment.findMany({
         where: { userId: dbUser.id },
         select: { scheme: { select: { code: true } } },
       }),
-      getEffectivePermissionCodesFromUserId(dbUser.id),
+      getEffectivePermissionCodesFromUserId(dbUser.id, sessionRoleFallback),
     ]);
 
     const assignedSchemes = [...new Set(schemeRows.map((r) => r.scheme.code))];
@@ -111,6 +121,7 @@ export async function GET() {
         email: dbUser.email,
         role: primaryRole,
         department: dbUser.department ?? "",
+        designation: dbUser.designation ?? null,
         assignedSchemes,
         permissions,
       },

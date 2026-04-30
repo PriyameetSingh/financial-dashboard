@@ -73,10 +73,14 @@ export const getDbUserBySession = cache(loadDbUserBySession);
 export type DbUserWithRbac = NonNullable<Awaited<ReturnType<typeof loadDbUserBySession>>>;
 
 /**
- * Resolves effective permission codes with one SQL round-trip (no deep role graph).
- * Matches role grants + allow overrides, minus deny overrides.
+ * Resolves effective permission codes (user_roles + role_permissions, union allow overrides, minus deny overrides).
+ * When that set is empty and `sessionRoleFallback` is set (e.g. IdP role before admin assigns `user_roles`), grants
+ * permissions from that role row in the database so `/rbac/me` and API guards stay consistent.
  */
-export async function getEffectivePermissionCodesFromUserId(userId: string): Promise<Set<string>> {
+export async function getEffectivePermissionCodesFromUserId(
+  userId: string,
+  sessionRoleFallback?: string | null,
+): Promise<Set<string>> {
   try {
     const rows = await prisma.$queryRaw<Array<{ code: string }>>(
       Prisma.sql`
@@ -101,7 +105,31 @@ export async function getEffectivePermissionCodesFromUserId(userId: string): Pro
         )
       `,
     );
-    return new Set(rows.map((r) => r.code));
+    const codes = new Set(rows.map((r) => r.code));
+
+    if (codes.size === 0 && sessionRoleFallback) {
+      const role = await prisma.role.findUnique({
+        where: { code: sessionRoleFallback },
+        include: {
+          rolePermissions: { include: { permission: { select: { code: true } } } },
+        },
+      });
+      if (role) {
+        for (const rp of role.rolePermissions) {
+          codes.add(rp.permission.code);
+        }
+      }
+    }
+
+    const denyRows = await prisma.userPermissionOverride.findMany({
+      where: { userId, effect: "deny" },
+      select: { permission: { select: { code: true } } },
+    });
+    for (const d of denyRows) {
+      codes.delete(d.permission.code);
+    }
+
+    return codes;
   } catch (e) {
     const mapped = asDatabaseUnavailableError(e);
     if (mapped) throw mapped;
@@ -109,6 +137,7 @@ export async function getEffectivePermissionCodesFromUserId(userId: string): Pro
   }
 }
 
+/** In-memory role graph only; does not apply session fallback — prefer {@link hasPermissionForUserAsync}. */
 export function getEffectivePermissionCodesFromUser(user: DbUserWithRbac | null): Set<string> {
   if (!user) return new Set();
 
@@ -144,7 +173,7 @@ async function loadEffectivePermissionCodes(): Promise<Set<string>> {
           })
         : null);
     if (!row) return new Set();
-    return await getEffectivePermissionCodesFromUserId(row.id);
+    return await getEffectivePermissionCodesFromUserId(row.id, sessionUser.role);
   } catch (e) {
     const mapped = asDatabaseUnavailableError(e);
     if (mapped) throw mapped;
@@ -172,7 +201,13 @@ export async function requireAnyPermission(...permissionCodes: string[]) {
 /** Same as requirePermission but returns the loaded DB user for reuse (full graph once for actor fields). */
 export async function requirePermissionAndDbUser(permissionCode: string) {
   const user = await getDbUserBySession();
-  const effective = getEffectivePermissionCodesFromUser(user);
+  if (!user) {
+    throw new AuthError(401, "Unauthorized");
+  }
+  const sessionUser = await getSessionUser();
+  const fallback =
+    user.userRoles.length === 0 && sessionUser?.role ? sessionUser.role : null;
+  const effective = await getEffectivePermissionCodesFromUserId(user.id, fallback);
   if (!effective.has(permissionCode)) {
     throw new AuthError(403, "Forbidden");
   }
@@ -182,7 +217,13 @@ export async function requirePermissionAndDbUser(permissionCode: string) {
 /** Same as requireAnyPermission but returns the loaded DB user for reuse. */
 export async function requireAnyPermissionAndDbUser(...permissionCodes: string[]) {
   const user = await getDbUserBySession();
-  const effective = getEffectivePermissionCodesFromUser(user);
+  if (!user) {
+    throw new AuthError(401, "Unauthorized");
+  }
+  const sessionUser = await getSessionUser();
+  const fallback =
+    user.userRoles.length === 0 && sessionUser?.role ? sessionUser.role : null;
+  const effective = await getEffectivePermissionCodesFromUserId(user.id, fallback);
   if (!permissionCodes.some((code) => effective.has(code))) {
     throw new AuthError(403, "Forbidden");
   }
@@ -194,6 +235,19 @@ export async function hasPermission(permissionCode: string): Promise<boolean> {
   return effective.has(permissionCode);
 }
 
+export async function hasPermissionForUserAsync(
+  user: DbUserWithRbac | null,
+  permissionCode: string,
+): Promise<boolean> {
+  if (!user) return false;
+  const sessionUser = await getSessionUser();
+  const fallback =
+    user.userRoles.length === 0 && sessionUser?.role ? sessionUser.role : null;
+  const effective = await getEffectivePermissionCodesFromUserId(user.id, fallback);
+  return effective.has(permissionCode);
+}
+
+/** @deprecated Use {@link hasPermissionForUserAsync} — sync path ignores session fallback when `user_roles` is empty. */
 export function hasPermissionForUser(user: DbUserWithRbac | null, permissionCode: string): boolean {
   return getEffectivePermissionCodesFromUser(user).has(permissionCode);
 }

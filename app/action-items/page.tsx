@@ -7,7 +7,10 @@ import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchActionItems, updateActionItem } from "@/src/lib/services/actionItemService";
 import { ActionItem, ActionItemStatus } from "@/types";
-import { MOCK_USERS, UserRole, hasPermission, Permission } from "@/lib/auth";
+import { UserRole, hasPermission, Permission } from "@/lib/auth";
+import type { SessionUser } from "@/types";
+import { fetchDirectoryUsers } from "@/src/lib/directory-users";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
@@ -31,8 +34,15 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
-/** True when this user is the item's reviewer (API codes align with mock user ids, e.g. acs). */
+/** True when this user is one of the item's reviewers (`users.code` or display name). */
 function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
+  if (item.reviewers?.length) {
+    return item.reviewers.some(
+      (r) =>
+        (!!r.code && r.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
+        normalize(r.name) === normalize(u.name),
+    );
+  }
   const code = item.reviewerUserCode?.trim().toLowerCase();
   if (code && code === u.id.trim().toLowerCase()) return true;
   return normalize(item.reviewer) === normalize(u.name);
@@ -48,6 +58,7 @@ function lastActivityMs(item: ActionItem): number {
 export default function ActionItemsPage() {
   const user = useRequireAuth();
   const [items, setItems] = useState<ActionItem[]>([]);
+  const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -61,25 +72,33 @@ export default function ActionItemsPage() {
   >("all");
   const [trackerStatus, setTrackerStatus] = useState<string>("all");
   const [reassignItem, setReassignItem] = useState<ActionItem | null>(null);
-  const [reassignAssignee, setReassignAssignee] = useState("");
-  const [reassignReviewer, setReassignReviewer] = useState("");
+  const [reassignPerformers, setReassignPerformers] = useState<string[]>([""]);
+  const [reassignReviewers, setReassignReviewers] = useState<string[]>([""]);
   const [reassignBusy, setReassignBusy] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
 
+  const pickAnotherUserId = (exclude: string) => directoryUsers.find((u) => u.id !== exclude)?.id ?? "";
+
   const openReassignModal = (item: ActionItem) => {
+    const perfCodes =
+      item.performers?.map((p) => p.code).filter((c): c is string => Boolean(c)) ?? [];
+    const revCodes =
+      item.reviewers?.map((r) => r.code).filter((c): c is string => Boolean(c)) ?? [];
     const assign =
+      perfCodes[0] ||
       item.assignedToUserCode?.trim() ||
-      MOCK_USERS.find((u) => normalize(u.name) === normalize(item.assignedTo))?.id ||
-      MOCK_USERS[0]?.id ||
+      directoryUsers.find((u) => normalize(u.name) === normalize(item.assignedTo))?.id ||
+      directoryUsers[0]?.id ||
       "";
     let rev =
+      revCodes[0] ||
       item.reviewerUserCode?.trim() ||
-      MOCK_USERS.find((u) => normalize(u.name) === normalize(item.reviewer))?.id ||
+      directoryUsers.find((u) => normalize(u.name) === normalize(item.reviewer))?.id ||
       "";
-    if (!rev) rev = MOCK_USERS.find((u) => u.id !== assign)?.id ?? "";
-    if (rev === assign) rev = MOCK_USERS.find((u) => u.id !== assign)?.id ?? rev;
-    setReassignAssignee(assign);
-    setReassignReviewer(rev);
+    if (!rev) rev = pickAnotherUserId(assign);
+    if (rev === assign) rev = pickAnotherUserId(assign) || rev;
+    setReassignPerformers(perfCodes.length > 0 ? perfCodes : [assign]);
+    setReassignReviewers(revCodes.length > 0 ? revCodes : [rev]);
     setReassignError(null);
     setReassignItem(item);
   };
@@ -88,9 +107,10 @@ export default function ActionItemsPage() {
     let active = true;
     const load = async () => {
       try {
-        const data = await fetchActionItems();
+        const [data, roster] = await Promise.all([fetchActionItems(), fetchDirectoryUsers()]);
         if (!active) return;
         setItems(data);
+        setDirectoryUsers(roster);
       } finally {
         if (active) setLoading(false);
       }
@@ -168,7 +188,7 @@ export default function ActionItemsPage() {
   const assigneeOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.assignedTo)))], [items]);
   const priorityOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.priority)))], [items]);
 
-  const isViewer = user?.role === UserRole.VIEWER;
+  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
   const showStats = !!user;
   const canReassignActionItems =
     !!user && !isViewer && hasPermission(user, Permission.UPDATE_ACTION_ITEMS);
@@ -428,7 +448,7 @@ export default function ActionItemsPage() {
                       </button>
                     )}
                     {user &&
-                      [UserRole.AS, UserRole.PS_HUDD, UserRole.ACS].includes(user.role) &&
+                      hasPermission(user, Permission.APPROVE_ACTION_ITEMS) &&
                       !isViewer &&
                       item.status === "UNDER_REVIEW" &&
                       isDesignatedReviewer(item, user) && (
@@ -524,38 +544,96 @@ export default function ActionItemsPage() {
               Reassign
             </h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Update the assigned officer and reviewer for &ldquo;{reassignItem.title}&rdquo;.
+              Update performers and reviewers for &ldquo;{reassignItem.title}&rdquo;.
             </p>
             {reassignError && (
               <p className="mt-3 text-sm text-[var(--alert-critical)]">{reassignError}</p>
             )}
-            <div className="mt-4 space-y-4">
-              <SearchableUserSelector
-                label="Assigned to"
-                catalog={MOCK_USERS}
-                users={MOCK_USERS.filter((u) => u.id !== reassignReviewer)}
-                value={reassignAssignee}
-                onChange={(value) => {
-                  setReassignAssignee(value);
-                  if (value === reassignReviewer) {
-                    const next = MOCK_USERS.find((u) => u.id !== value)?.id ?? value;
-                    setReassignReviewer(next);
-                  }
-                }}
-              />
-              <SearchableUserSelector
-                label="Reviewer"
-                catalog={MOCK_USERS}
-                users={MOCK_USERS.filter((u) => u.id !== reassignAssignee)}
-                value={reassignReviewer}
-                onChange={(value) => {
-                  setReassignReviewer(value);
-                  if (value === reassignAssignee) {
-                    const next = MOCK_USERS.find((u) => u.id !== value)?.id ?? value;
-                    setReassignAssignee(next);
-                  }
-                }}
-              />
+            <div className="mt-4 max-h-[60vh] space-y-6 overflow-y-auto">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Performers</p>
+                <button
+                  type="button"
+                  disabled={reassignBusy}
+                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                  onClick={() => setReassignPerformers((prev) => [...prev, ""])}
+                >
+                  Add performer
+                </button>
+                <div className="mt-3 space-y-3">
+                  {reassignPerformers.map((pid, index) => (
+                    <div key={`rp-${index}`} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <div className="min-w-0 flex-1">
+                        <SearchableUserSelector
+                          label={index === 0 ? "Assigned to" : `Performer ${index + 1}`}
+                          catalog={directoryUsers}
+                          users={directoryUsers.filter((u) => {
+                            if (reassignReviewers.some((r) => r === u.id)) return false;
+                            if (reassignPerformers.some((p, i) => i !== index && p === u.id)) return false;
+                            return true;
+                          })}
+                          value={pid}
+                          onChange={(value) =>
+                            setReassignPerformers((prev) => prev.map((v, i) => (i === index ? value : v)))
+                          }
+                        />
+                      </div>
+                      {reassignPerformers.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={reassignBusy}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                          onClick={() => setReassignPerformers((prev) => prev.filter((_, i) => i !== index))}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Reviewers</p>
+                <button
+                  type="button"
+                  disabled={reassignBusy}
+                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                  onClick={() => setReassignReviewers((prev) => [...prev, ""])}
+                >
+                  Add reviewer
+                </button>
+                <div className="mt-3 space-y-3">
+                  {reassignReviewers.map((rid, index) => (
+                    <div key={`rr-${index}`} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <div className="min-w-0 flex-1">
+                        <SearchableUserSelector
+                          label={index === 0 ? "Reviewer" : `Reviewer ${index + 1}`}
+                          catalog={directoryUsers}
+                          users={directoryUsers.filter((u) => {
+                            if (reassignPerformers.some((p) => p === u.id)) return false;
+                            if (reassignReviewers.some((r, i) => i !== index && r === u.id)) return false;
+                            return true;
+                          })}
+                          value={rid}
+                          onChange={(value) =>
+                            setReassignReviewers((prev) => prev.map((v, i) => (i === index ? value : v)))
+                          }
+                        />
+                      </div>
+                      {reassignReviewers.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={reassignBusy}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                          onClick={() => setReassignReviewers((prev) => prev.filter((_, i) => i !== index))}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -569,18 +647,25 @@ export default function ActionItemsPage() {
               <button
                 type="button"
                 className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
-                disabled={reassignBusy || reassignAssignee === reassignReviewer}
+                disabled={reassignBusy}
                 onClick={async () => {
-                  if (reassignAssignee === reassignReviewer) {
-                    setReassignError("Assigned officer and reviewer must be different.");
+                  const perf = reassignPerformers.map((c) => c.trim()).filter(Boolean);
+                  const rev = reassignReviewers.map((c) => c.trim()).filter(Boolean);
+                  if (perf.length === 0 || rev.length === 0) {
+                    setReassignError("Select at least one performer and one reviewer.");
+                    return;
+                  }
+                  const overlap = perf.filter((c) => rev.includes(c));
+                  if (overlap.length > 0) {
+                    setReassignError("Performers and reviewers must be different users.");
                     return;
                   }
                   setReassignBusy(true);
                   setReassignError(null);
                   try {
                     const updated = await updateActionItem(reassignItem.id, {
-                      assignedToUserCode: reassignAssignee,
-                      reviewerUserCode: reassignReviewer,
+                      performerUserCodes: perf,
+                      reviewerUserCodes: rev,
                     });
                     setItems((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
                     setReassignItem(null);

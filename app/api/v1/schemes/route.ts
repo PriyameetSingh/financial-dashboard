@@ -25,19 +25,18 @@ type AssignmentInput = {
 type Body = {
   code: string;
   name: string;
-  verticalId: string;
+  verticalName: string;
   sponsorshipType: "STATE" | "CENTRAL" | "CENTRAL_SECTOR";
   subschemes?: Array<{ code: string; name: string }>;
   assignments?: AssignmentInput[];
 };
 
 async function getReferenceData() {
-  const [verticals, roles, users] = await Promise.all([
-    prisma.vertical.findMany({ orderBy: { name: "asc" }, select: { id: true, code: true, name: true } }),
+  const [roles, users] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
     prisma.user.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, email: true } }),
   ]);
-  return { verticals, roles, users };
+  return { roles, users };
 }
 
 export async function GET() {
@@ -47,7 +46,6 @@ export async function GET() {
     const [schemes, reference] = await Promise.all([
       prisma.scheme.findMany({
         include: {
-          vertical: { select: { name: true } },
           subschemes: { orderBy: { name: "asc" } },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
@@ -82,10 +80,11 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as Body;
     const code = body.code?.trim().toUpperCase();
     const name = body.name?.trim();
+    const verticalName = body.verticalName?.trim();
     const sponsorshipType = parseSponsorshipType(body.sponsorshipType);
 
-    if (!code || !name || !body.verticalId || !sponsorshipType) {
-      return NextResponse.json({ detail: "code, name, verticalId, and sponsorshipType are required" }, { status: 400 });
+    if (!code || !name || !verticalName || !sponsorshipType) {
+      return NextResponse.json({ detail: "code, name, verticalName, and sponsorshipType are required" }, { status: 400 });
     }
     const auditContext = getAuditRequestContext(request);
 
@@ -94,7 +93,7 @@ export async function POST(request: NextRequest) {
         data: {
           code,
           name,
-          verticalId: body.verticalId,
+          verticalName,
           sponsorshipType,
           createdById: actor?.id ?? null,
         },
@@ -132,7 +131,6 @@ export async function POST(request: NextRequest) {
       return tx.scheme.findUniqueOrThrow({
         where: { id: scheme.id },
         include: {
-          vertical: { select: { name: true } },
           subschemes: { orderBy: { name: "asc" } },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],

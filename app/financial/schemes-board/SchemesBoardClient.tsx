@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import SchemeModal from "@/components/schemes/SchemeModal";
-import { UserRole } from "@/lib/auth";
+import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { fetchFinancialBudgets } from "@/src/lib/services/financialService";
 import type { FinancialEntry } from "@/types";
 
@@ -116,9 +117,8 @@ const COLUMN_UI: Record<
   },
 };
 
-type Props = { userRole?: UserRole };
-
-export default function SchemesBoardClient({ userRole }: Props) {
+export default function SchemesBoardClient() {
+  const currentUser = useHydratedCurrentUser();
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,7 +180,7 @@ export default function SchemesBoardClient({ userRole }: Props) {
     return { totalRe, spent, overallPct, verticalCount };
   }, [filtered]);
 
-  const isViewer = userRole === UserRole.VIEWER;
+  const isViewer = isReadOnlyWatermarkUser(currentUser);
 
   const fmtCr = (n: number) =>
     n >= 100 ? n.toFixed(0) : n.toFixed(1);

@@ -19,7 +19,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     const target = await prisma.kpiTarget.findUnique({
       where: { id },
-      include: { kpiDefinition: true },
+      include: {
+        kpiDefinition: {
+          include: { performers: { select: { userId: true } } },
+        },
+      },
     });
 
     if (!target) {
@@ -33,7 +37,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const roleIds = userRoleIdsFromDbUser(actor);
     const canManageSchemes = hasPermissionForUser(actor, "MANAGE_SCHEMES");
     await assertKpiUpdaterForDefinition(
-      { schemeId: target.kpiDefinition.schemeId, assignedToId: target.kpiDefinition.assignedToId },
+      {
+        schemeId: target.kpiDefinition.schemeId,
+        performerUserIds: target.kpiDefinition.performers.map((p) => p.userId),
+      },
       actor.id,
       roleIds,
       { canManageSchemes },

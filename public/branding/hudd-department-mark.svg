@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" role="img" aria-label="Urban development">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c2340"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+  </defs>
+  <rect width="140" height="140" rx="14" fill="url(#bg)"/>
+  <!-- Stylised skyline / urban fabric -->
+  <path fill="#e2e8f0" opacity="0.95" d="M24 96V56h18v40H24zm22-24V44h16v52H46zm22 8V52h14v44H68zm18-32V36h20v60H86zm24 20V48h18v48h-18z"/>
+  <rect x="30" y="64" width="6" height="6" fill="#0c2340" opacity="0.35"/>
+  <rect x="52" y="56" width="6" height="6" fill="#0c2340" opacity="0.35"/>
+  <rect x="52" y="66" width="6" height="6" fill="#0c2340" opacity="0.35"/>
+  <rect x="74" y="68" width="5" height="5" fill="#0c2340" opacity="0.35"/>
+  <rect x="94" y="58" width="6" height="6" fill="#0c2340" opacity="0.35"/>
+</svg>

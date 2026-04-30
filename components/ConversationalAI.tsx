@@ -1,8 +1,9 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, Mic, Bot, User } from "lucide-react";
-import { UserRole } from "@/lib/auth";
+import { hasPermission, Permission } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import type { AssistantMeetingContext } from "@/lib/assistant-types";
 import { postAssistantQuery } from "@/src/lib/services/assistantService";
 
@@ -44,10 +45,10 @@ export default function ConversationalAI({
 
   const scopeLabel = useMemo(() => {
     if (!user) return "Guest";
-    if (user.role === UserRole.NODAL_OFFICER || user.role === UserRole.TASU) {
+    if (!hasPermission(user, Permission.VIEW_ALL_DATA)) {
       return "Assigned schemes only";
     }
-    if (user.role === UserRole.VIEWER) {
+    if (isReadOnlyWatermarkUser(user)) {
       return "Read-only (all schemes)";
     }
     return "All schemes";
@@ -71,10 +72,14 @@ export default function ConversationalAI({
       "Which financial entries are pending review?",
       "Command centre overview of schemes and lapse risk",
     ];
-    if (user?.role === UserRole.NODAL_OFFICER) {
+    if (user && hasPermission(user, Permission.ENTER_KPI_DATA) && !hasPermission(user, Permission.ENTER_FINANCIAL_DATA)) {
       return ["Which KPIs are pending for my schemes?", "Show KPI completion for PMAY-U", ...base];
     }
-    if (user?.role === UserRole.FA) {
+    if (
+      user &&
+      hasPermission(user, Permission.ENTER_FINANCIAL_DATA) &&
+      !hasPermission(user, Permission.ENTER_KPI_DATA)
+    ) {
       return ["Show expenditure status for SUJALA", "Which entries are overdue?", ...base];
     }
     return base;

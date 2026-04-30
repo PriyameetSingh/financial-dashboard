@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import type { FinanceSummaryBreakdown } from "@/lib/financial-budget-entries";
-import { UserRole } from "@/lib/auth";
+import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
 import { fetchFinanceSummary } from "@/src/lib/services/financialService";
 import {
@@ -100,15 +101,14 @@ type Props = {
   entries: FinancialEntry[];
   financialYearLabel: string | null;
   summary: FinanceSummaryBreakdown | null;
-  userRole?: UserRole;
 };
 
 export default function FinancialOverviewClient({
   entries,
   financialYearLabel,
   summary,
-  userRole,
 }: Props) {
+  const currentUser = useHydratedCurrentUser();
   const [preset, setPreset] = useState<ComparePreset>("none");
   const [snapshotDates, setSnapshotDates] = useState<string[]>([]);
   const [meetings, setMeetings] = useState<{ id: string; meetingDate: string; title: string | null }[]>([]);
@@ -292,7 +292,7 @@ export default function FinancialOverviewClient({
     };
   }, [baselineSummary, activeHeadSummary, preset]);
 
-  const isViewer = userRole === UserRole.VIEWER;
+  const isViewer = isReadOnlyWatermarkUser(currentUser);
   const fyDisplay = financialYearLabel ?? "—";
 
   const compareHint = useMemo(() => {

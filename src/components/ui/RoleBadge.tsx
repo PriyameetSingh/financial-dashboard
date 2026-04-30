@@ -7,20 +7,10 @@ const ROLE_STYLES: Record<UserRole, { color: string; background: string; border:
     background: "rgba(31, 58, 147, 0.15)",
     border: "rgba(31, 58, 147, 0.4)",
   },
-  [UserRole.PS_HUDD]: {
-    color: "#1f3a93",
-    background: "rgba(31, 58, 147, 0.15)",
-    border: "rgba(31, 58, 147, 0.4)",
-  },
-  [UserRole.AS]: {
-    color: "#4169e1",
-    background: "rgba(65, 105, 225, 0.15)",
-    border: "rgba(65, 105, 225, 0.4)",
-  },
-  [UserRole.DIRECTOR]: {
-    color: "#4169e1",
-    background: "rgba(65, 105, 225, 0.15)",
-    border: "rgba(65, 105, 225, 0.4)",
+  [UserRole.PROGRAMME_MANAGER]: {
+    color: "#5b4fcf",
+    background: "rgba(91, 79, 207, 0.15)",
+    border: "rgba(91, 79, 207, 0.4)",
   },
   [UserRole.FA]: {
     color: "#1abc9c",
@@ -37,11 +27,6 @@ const ROLE_STYLES: Record<UserRole, { color: string; background: string; border:
     background: "rgba(46, 204, 113, 0.15)",
     border: "rgba(46, 204, 113, 0.4)",
   },
-  [UserRole.VIEWER]: {
-    color: "#7f8c8d",
-    background: "rgba(127, 140, 141, 0.18)",
-    border: "rgba(127, 140, 141, 0.4)",
-  },
 };
 
 const SIZE_CLASSES = {
@@ -57,7 +42,8 @@ interface RoleBadgeProps {
   className?: string;
 }
 
-const formatRole = (role: UserRole) => role.replace(/_/g, " ");
+const formatRole = (role: UserRole) =>
+  role === UserRole.PROGRAMME_MANAGER ? "Programme Manager" : role.replace(/_/g, " ");
 
 export default function RoleBadge({ role, size = "sm", className }: RoleBadgeProps) {
   const style = ROLE_STYLES[role];

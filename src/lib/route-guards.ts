@@ -6,7 +6,7 @@ import type { ComponentProps, ComponentType } from "react";
 import {
   getCurrentUser,
   hasPermission,
-  MockUser,
+  type SessionUser,
   Permission,
   refreshSessionUserFromApi,
   UserRole,
@@ -17,7 +17,7 @@ import { hasPendingAssignedActionItems } from "@/src/lib/actionItemAssignment";
 
 export function useRequireAuth(redirectTo = "/login") {
   const router = useRouter();
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +40,7 @@ export function useRequireAuth(redirectTo = "/login") {
 
 export function useRequireRole(roles: UserRole[] = [], redirectTo = "/dashboard") {
   const router = useRouter();
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const rolesKey = roles.join(",");
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function useRequireRole(roles: UserRole[] = [], redirectTo = "/dashboard"
 
 export function useRequireAnyPermission(permissions: Permission[], redirectTo = "/dashboard") {
   const router = useRouter();
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const permKey = permissions.join(",");
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export function useRequireAnyPermission(permissions: Permission[], redirectTo = 
 /** /my-tasks — allowed when hub permissions apply, or when the user has pending decision items assigned to them. */
 export function useRequireMyTasksHub(redirectTo = "/dashboard") {
   const router = useRouter();
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;

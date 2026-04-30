@@ -9,6 +9,7 @@ import { fetchFinancialBudgets } from "@/src/lib/services/financialService";
 import { KPISubmission } from "@/types";
 import type { FinancialEntry } from "@/types";
 import { UserRole } from "@/lib/auth";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PendingBadge from "@/src/components/ui/PendingBadge";
 import ViewKpiModal from "@/components/kpis/ViewKpiModal";
@@ -136,7 +137,7 @@ export default function KPIsPage() {
     return { total, pending, approved, awaiting };
   }, [submissions]);
 
-  const isViewer = user?.role === UserRole.VIEWER;
+  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
 
   const pendingQueue = useMemo(
     () =>

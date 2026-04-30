@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { UserRole } from "@/lib/auth";
+import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { ArrowDown, ArrowUp, ArrowUpDown, Gauge, Lightbulb, Star, TriangleAlert } from "lucide-react";
 import {
   CartesianGrid,
@@ -357,13 +358,12 @@ function scatterColor(score: number | null): string {
   return "#e11d48";
 }
 
-type Props = { userRole?: UserRole };
-
-export default function ExecutionEfficiencyClient({ userRole }: Props) {
+export default function ExecutionEfficiencyClient() {
+  const currentUser = useHydratedCurrentUser();
   const [schemeFilter, setSchemeFilter] = useState<SchemeFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const isViewer = userRole === UserRole.VIEWER;
+  const isViewer = isReadOnlyWatermarkUser(currentUser);
 
   const visibleRows = useMemo(
     () => EXECUTION_ROWS.filter((r) => matchesFilter(r, schemeFilter)),

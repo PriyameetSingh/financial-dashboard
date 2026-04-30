@@ -2,6 +2,7 @@
 
 import { UserRole } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useEffect, useState, useCallback, Suspense } from "react";
 import {
@@ -267,7 +268,7 @@ function CommandCentreContent({ setActive }: Props) {
     return pendingSummaries.find((entry) => entry.role === user.role) ?? null;
   }, [user, pendingSummaries]);
 
-  const isViewer = user?.role === UserRole.VIEWER;
+  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
 
   const approvalCards = [
     {

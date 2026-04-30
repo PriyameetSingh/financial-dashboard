@@ -4,6 +4,9 @@ import { getToken } from "next-auth/jwt";
 
 const PUBLIC_PATHS = new Set(["/login"]);
 
+// Root-level files from `public/` (e.g. /logo.png) must not require a session; otherwise the proxy returns 307 to /login and the image breaks.
+const PUBLIC_STATIC_EXT = /\.(?:ico|png|jpe?g|gif|svg|webp|avif|woff2?|ttf|eot|txt|xml|webmanifest)$/i;
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -11,7 +14,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/favicon") ||
-    pathname.startsWith("/images")
+    pathname.startsWith("/images") ||
+    PUBLIC_STATIC_EXT.test(pathname)
   ) {
     return NextResponse.next();
   }

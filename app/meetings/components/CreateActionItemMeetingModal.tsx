@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import { MOCK_USERS } from "@/lib/auth";
+import type { SessionUser } from "@/types";
+import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { createActionItem } from "@/src/lib/services/actionItemService";
 import { fetchSchemesAdmin } from "@/src/lib/services/schemeService";
 import { ActionItemPriority } from "@/types";
@@ -25,13 +26,14 @@ export default function CreateActionItemMeetingModal({
   onCreated?: () => void;
 }) {
   const [schemes, setSchemes] = useState<string[]>([]);
+  const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheme, setScheme] = useState("");
   const [priority, setPriority] = useState<ActionItemPriority>("High");
-  const [assignee, setAssignee] = useState(MOCK_USERS[0]?.id ?? "");
-  const [reviewer, setReviewer] = useState(MOCK_USERS[1]?.id ?? "");
+  const [assignee, setAssignee] = useState("");
+  const [reviewer, setReviewer] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +45,6 @@ export default function CreateActionItemMeetingModal({
     setDescription("");
     setScheme("");
     setPriority("High");
-    setAssignee(MOCK_USERS[0]?.id ?? "");
-    setReviewer(MOCK_USERS[1]?.id ?? "");
     setDueDate("");
   }, [open]);
 
@@ -52,13 +52,18 @@ export default function CreateActionItemMeetingModal({
     if (!open) return;
     let active = true;
     setLoading(true);
-    fetchSchemesAdmin()
-      .then((schemeData) => {
+    Promise.all([fetchSchemesAdmin(), fetchDirectoryUsers()])
+      .then(([schemeData, roster]) => {
         if (!active) return;
         setSchemes(schemeData.schemes.map((s) => s.code));
+        setDirectoryUsers(roster);
+        const first = roster[0]?.id ?? "";
+        const second = roster.find((u) => u.id !== first)?.id ?? roster[1]?.id ?? first;
+        setAssignee(first);
+        setReviewer(second);
       })
       .catch(() => {
-        if (active) setError("Could not load schemes.");
+        if (active) setError("Could not load schemes or user directory.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -70,8 +75,8 @@ export default function CreateActionItemMeetingModal({
 
   const canSubmit = title.trim().length > 0 && description.trim().length > 0 && dueDate;
 
-  const selectedAssignee = useMemo(() => MOCK_USERS.find((user) => user.id === assignee), [assignee]);
-  const selectedReviewer = useMemo(() => MOCK_USERS.find((user) => user.id === reviewer), [reviewer]);
+  const selectedAssignee = useMemo(() => directoryUsers.find((user) => user.id === assignee), [assignee, directoryUsers]);
+  const selectedReviewer = useMemo(() => directoryUsers.find((user) => user.id === reviewer), [reviewer, directoryUsers]);
 
   if (!open) return null;
 
@@ -90,8 +95,8 @@ export default function CreateActionItemMeetingModal({
         description: description.trim(),
         priority,
         dueDate,
-        assignedToUserCode: assignee,
-        reviewerUserCode: reviewer,
+        performerUserCodes: [assignee],
+        reviewerUserCodes: [reviewer],
       });
       onCreated?.();
       onClose();
@@ -185,8 +190,8 @@ export default function CreateActionItemMeetingModal({
                 </label>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <UserSelector users={MOCK_USERS} value={assignee} onChange={setAssignee} label="Assigned officer" />
-                <UserSelector users={MOCK_USERS} value={reviewer} onChange={setReviewer} label="Reviewer" />
+                <UserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" />
+                <UserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
               </div>
               <p className="text-xs text-[var(--text-muted)]">
                 Assigned to <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? "—"}</span>

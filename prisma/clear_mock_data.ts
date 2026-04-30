@@ -1,10 +1,14 @@
 /**
  * Clears scheme, budget, KPI, meeting, and action-item data while keeping:
- *   users, roles, permissions, role_permissions, user_roles, user_permission_overrides,
- *   verticals, financial_years
+ *   users, verticals, financial_years
+ *
+ * With `--reset-rbac` (or RESET_RBAC=1), also truncates:
+ *   user_roles, user_permission_overrides, role_permissions, roles, permissions
+ * so you can re-run `node prisma/seed_roles.js` for a clean RBAC baseline.
  *
  * Run:
  *   npx tsx prisma/clear_mock_data.ts --yes
+ *   npx tsx prisma/clear_mock_data.ts --yes --reset-rbac
  *
  * Or set CLEAR_DB_YES=1 to skip the confirmation prompt (e.g. in CI).
  */
@@ -16,7 +20,7 @@ import { stdin as input, stdout as output } from "node:process";
 const prisma = new PrismaClient();
 
 /** Physical table names (@@map) — order does not matter when using CASCADE. */
-const TABLES_TO_TRUNCATE = [
+const TABLES_APP_DATA = [
   "audit_log",
   "action_item_proofs",
   "files",
@@ -41,7 +45,18 @@ const TABLES_TO_TRUNCATE = [
   "schemes",
 ] as const;
 
+const TABLES_RBAC_RESET = [
+  "user_roles",
+  "user_permission_overrides",
+  "role_permissions",
+  "roles",
+  "permissions",
+] as const;
+
 async function main() {
+  const resetRbac =
+    process.argv.includes("--reset-rbac") || process.env.RESET_RBAC === "1";
+
   const yes =
     process.argv.includes("--yes") ||
     process.argv.includes("-y") ||
@@ -59,7 +74,10 @@ async function main() {
     }
   }
 
-  const quoted = TABLES_TO_TRUNCATE.map((t) => `"${t}"`).join(", ");
+  const tables = resetRbac
+    ? [...TABLES_APP_DATA, ...TABLES_RBAC_RESET]
+    : [...TABLES_APP_DATA];
+  const quoted = tables.map((t) => `"${t}"`).join(", ");
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe(
@@ -67,8 +85,11 @@ async function main() {
     );
   });
 
+  const rbacNote = resetRbac
+    ? " RBAC tables cleared — run `node prisma/seed_roles.js`."
+    : " roles/permissions/user_roles preserved.";
   console.log(
-    `Done. Truncated ${TABLES_TO_TRUNCATE.length} tables (users, roles, permissions, verticals, financial_years preserved).`,
+    `Done. Truncated ${tables.length} tables (users, verticals, financial_years preserved).${rbacNote}`,
   );
 }
 

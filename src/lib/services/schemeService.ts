@@ -36,7 +36,7 @@ export async function fetchSchemesOverview(): Promise<SchemeOverviewResponse> {
 export async function createScheme(input: {
   code: string;
   name: string;
-  verticalId: string;
+  verticalName: string;
   sponsorshipType: SponsorshipType;
   subschemes?: Array<{ code: string; name: string }>;
   assignments?: Array<{
@@ -59,7 +59,7 @@ export async function createScheme(input: {
 export async function updateScheme(id: string, input: {
   code?: string;
   name?: string;
-  verticalId?: string;
+  verticalName?: string;
   sponsorshipType?: SponsorshipType;
   assignments?: Array<{
     assignmentKind: "dashboard_owner" | "kpi_owner_1" | "kpi_owner_2" | "action_item_owner_1" | "action_item_owner_2";

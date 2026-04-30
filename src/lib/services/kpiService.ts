@@ -102,7 +102,7 @@ export async function fetchKpiHistory(kpiDefinitionId: string): Promise<KpiHisto
 
 export async function updateKpiDefinitionAssignments(
   kpiDefinitionId: string,
-  input: { assignedToId: string; reviewerId: string },
+  input: { performerUserIds: string[]; reviewerUserIds: string[] },
 ): Promise<void> {
   const response = await fetch(`/api/v1/kpis/definitions/${kpiDefinitionId}`, {
     method: "PATCH",
@@ -121,8 +121,8 @@ export async function createKpiDefinition(input: {
   numeratorUnit?: string | null;
   denominatorUnit?: string | null;
   denominatorValue?: number | null;
-  assignedToId: string;
-  reviewerId: string;
+  performerUserIds: string[];
+  reviewerUserIds: string[];
 }): Promise<void> {
   const response = await fetch("/api/v1/kpis/definitions", {
     method: "POST",

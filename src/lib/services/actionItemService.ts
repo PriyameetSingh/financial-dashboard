@@ -38,6 +38,8 @@ export async function updateActionItem(
     note?: string;
     reviewerDecision?: "approve" | "reject";
     rejectionReason?: string;
+    performerUserCodes?: string[];
+    reviewerUserCodes?: string[];
     assignedToUserCode?: string;
     reviewerUserCode?: string;
   },
@@ -59,8 +61,8 @@ export async function createActionItem(input: {
   description: string;
   priority: ActionItem["priority"];
   dueDate: string;
-  assignedToUserCode: string;
-  reviewerUserCode: string;
+  performerUserCodes: string[];
+  reviewerUserCodes: string[];
 }): Promise<{ id: string }> {
   const response = await fetch("/api/v1/action-items", {
     method: "POST",

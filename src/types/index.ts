@@ -1,20 +1,21 @@
 export enum UserRole {
   ACS = "ACS",
-  PS_HUDD = "PS_HUDD",
-  AS = "AS",
+  /** Former AS / Principal Secretary–class desk roles; permission profile aligned with Nodal Officer. */
+  PROGRAMME_MANAGER = "PROGRAMME_MANAGER",
   FA = "FA",
   TASU = "TASU",
   NODAL_OFFICER = "NODAL_OFFICER",
-  DIRECTOR = "DIRECTOR",
-  VIEWER = "VIEWER",
 }
 
-export interface MockUser {
+/** Signed-in client profile from `/api/v1/rbac/me` (and directory rows for pickers). */
+export interface SessionUser {
   id: string;
   name: string;
   email: string;
   role: UserRole;
   department: string;
+  /** Job title or post (e.g. Principal Secretary, HUDD); distinct from application role. */
+  designation?: string | null;
   assignedSchemes: string[];
   permissions?: Permission[];
 }
@@ -36,6 +37,8 @@ export enum Permission {
   VIEW_COMMAND_CENTRE = "VIEW_COMMAND_CENTRE",
   VIEW_ANALYTICS = "VIEW_ANALYTICS",
   MANAGE_PERMISSIONS = "MANAGE_PERMISSIONS",
+  /** Create/update FY rows; TASU / administration — see seed role grants. */
+  MANAGE_FINANCIAL_YEARS = "MANAGE_FINANCIAL_YEARS",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";
@@ -63,9 +66,15 @@ export interface ActionItem {
   priority: ActionItemPriority;
   dueDate: string;
   status: ActionItemStatus;
+  /** Comma-separated display names of performers. */
   assignedTo: string;
+  /** Comma-separated display names of reviewers. */
   reviewer: string;
-  /** User `code` when loaded from API; used for reassignment UI. */
+  performers?: Array<{ id: string; name: string; code: string | null }>;
+  reviewers?: Array<{ id: string; name: string; code: string | null }>;
+  assignedToUserIds?: string[];
+  reviewerUserIds?: string[];
+  /** User `code` when loaded from API; first performer / reviewer for legacy single-code flows. */
   assignedToUserCode?: string | null;
   reviewerUserCode?: string | null;
   assignedToUserId?: string;
@@ -101,11 +110,13 @@ export interface KPISubmission {
   measurementProgressStatus?: KPIMeasurementProgressStatus | null;
   lastUpdated: string;
   remarks?: string;
-  /** Present when KPI has a named action owner (same as assignedToUserId). */
+  /** Present when KPI has named action owners (comma-separated in assignedToName). */
   assignedToName?: string | null;
   reviewerName?: string | null;
   assignedToUserId?: string | null;
   reviewerUserId?: string | null;
+  performerUserIds?: string[];
+  reviewerUserIds?: string[];
   /** Server-computed for the current session (ENTER_KPI_DATA + assignment). */
   currentUserCanEnter?: boolean;
   /** Server-computed for the current session (APPROVE_KPI + assignment). */
@@ -256,7 +267,6 @@ export interface SchemeView {
   id: string;
   code: string;
   name: string;
-  verticalId: string;
   verticalName: string;
   sponsorshipType: SponsorshipType;
   subschemes: SubschemeView[];
@@ -264,7 +274,6 @@ export interface SchemeView {
 }
 
 export interface SchemeReferenceData {
-  verticals: Array<{ id: string; code: string; name: string }>;
   roles: Array<{ id: string; code: string; name: string }>;
   users: Array<{ id: string; code: string | null; name: string; email: string }>;
 }

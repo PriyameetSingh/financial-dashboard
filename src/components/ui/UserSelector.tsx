@@ -1,10 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { MockUser } from "@/types";
+import type { SessionUser } from "@/types";
 
 interface UserSelectorProps {
-  users: MockUser[];
+  users: SessionUser[];
   value: string;
   onChange: (value: string) => void;
   label?: string;
@@ -22,9 +22,15 @@ export default function UserSelector({ users, value, onChange, label = "Assignee
         onChange={(event) => onChange(event.target.value)}
         className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none"
       >
+        {users.length === 0 && (
+          <option value="" disabled>
+            Loading officers…
+          </option>
+        )}
         {users.map((user) => (
           <option key={user.id} value={user.id}>
-            {user.name} — {formatRole(user.role)}
+            {user.name}
+            {user.designation?.trim() ? ` — ${user.designation}` : ` — ${formatRole(user.role)}`}
           </option>
         ))}
       </select>

@@ -16,12 +16,11 @@ function toNumber(value: unknown): number {
 }
 
 async function getReferenceData() {
-  const [verticals, roles, users] = await Promise.all([
-    prisma.vertical.findMany({ orderBy: { name: "asc" }, select: { id: true, code: true, name: true } }),
+  const [roles, users] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
     prisma.user.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, email: true } }),
   ]);
-  return { verticals, roles, users };
+  return { roles, users };
 }
 
 function rollupExpenditure(
@@ -122,7 +121,6 @@ export async function GET() {
   const [schemesRaw, reference, budgets, snapshots] = await Promise.all([
     prisma.scheme.findMany({
       include: {
-        vertical: { select: { name: true } },
         subschemes: { orderBy: { name: "asc" } },
         assignments: {
           orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],

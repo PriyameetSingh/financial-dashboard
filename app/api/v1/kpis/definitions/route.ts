@@ -44,9 +44,15 @@ export async function GET() {
 
     const definitions = await prisma.kpiDefinition.findMany({
       include: {
-        scheme: { include: { vertical: true } },
-        assignedTo: { select: { id: true, name: true } },
-        reviewer: { select: { id: true, name: true } },
+        scheme: { select: { name: true, verticalName: true } },
+        performers: {
+          orderBy: { sortOrder: "asc" },
+          include: { user: { select: { id: true, name: true } } },
+        },
+        reviewerUsers: {
+          orderBy: { sortOrder: "asc" },
+          include: { user: { select: { id: true, name: true } } },
+        },
         targets: fy
           ? {
               where: { financialYearId: fy.id },
@@ -97,10 +103,12 @@ export async function GET() {
         const target = definition.targets[0] ?? null;
         const measurement = target?.measurements[0] ?? null;
 
+        const performerUserIds = definition.performers.map((p) => p.userId);
+        const reviewerUserIds = definition.reviewerUsers.map((r) => r.userId);
         const defPick = {
           schemeId: definition.schemeId,
-          assignedToId: definition.assignedToId,
-          reviewerId: definition.reviewerId,
+          performerUserIds,
+          reviewerUserIds,
         };
 
         const currentUserCanEnter =
@@ -115,7 +123,7 @@ export async function GET() {
           kpiTargetId: target?.id ?? null,
           latestMeasurementId: measurement?.id ?? null,
           scheme: definition.scheme.name,
-          vertical: definition.scheme.vertical.name,
+          vertical: definition.scheme.verticalName,
           category: definition.category,
           description: definition.description,
           type: definition.kpiType,
@@ -127,10 +135,14 @@ export async function GET() {
           measurementProgressStatus: measurement?.progressStatus ?? null,
           lastUpdated: (measurement?.measuredAt ?? definition.updatedAt).toISOString().slice(0, 10),
           remarks: measurement?.remarks ?? undefined,
-          assignedToUserId: definition.assignedTo?.id ?? null,
-          assignedToName: definition.assignedTo?.name ?? null,
-          reviewerUserId: definition.reviewer?.id ?? null,
-          reviewerName: definition.reviewer?.name ?? null,
+          assignedToUserId: definition.performers[0]?.userId ?? null,
+          assignedToName:
+            definition.performers.map((p) => p.user.name).join(", ") || null,
+          reviewerUserId: definition.reviewerUsers[0]?.userId ?? null,
+          reviewerName:
+            definition.reviewerUsers.map((r) => r.user.name).join(", ") || null,
+          performerUserIds,
+          reviewerUserIds,
           currentUserCanEnter,
           currentUserCanReview,
           currentUserCanReassignOwners: canManageSchemes,
@@ -160,6 +172,17 @@ function parseKpiType(value: unknown): KPIType | null {
   return null;
 }
 
+function normalizeUuidList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const v of value) {
+    if (typeof v !== "string") continue;
+    const t = v.trim();
+    if (t) out.push(t);
+  }
+  return [...new Set(out)];
+}
+
 type CreateBody = {
   schemeId?: string;
   subschemeId?: string | null;
@@ -169,7 +192,11 @@ type CreateBody = {
   numeratorUnit?: string | null;
   denominatorUnit?: string | null;
   denominatorValue?: number | null;
+  performerUserIds?: string[] | null;
+  reviewerUserIds?: string[] | null;
+  /** @deprecated Use performerUserIds / reviewerUserIds arrays */
   assignedToId?: string | null;
+  /** @deprecated Use performerUserIds / reviewerUserIds arrays */
   reviewerId?: string | null;
 };
 
@@ -183,8 +210,14 @@ export async function POST(request: NextRequest) {
     const category = parseCategory(body.category);
     const kpiType = parseKpiType(body.kpiType);
 
-    const assignedToId = body.assignedToId?.trim() || null;
-    const reviewerId = body.reviewerId?.trim() || null;
+    let performerUserIds = normalizeUuidList(body.performerUserIds);
+    let reviewerUserIds = normalizeUuidList(body.reviewerUserIds);
+    if (performerUserIds.length === 0 && body.assignedToId?.trim()) {
+      performerUserIds = [body.assignedToId.trim()];
+    }
+    if (reviewerUserIds.length === 0 && body.reviewerId?.trim()) {
+      reviewerUserIds = [body.reviewerId.trim()];
+    }
 
     if (!schemeId || !description || !category || !kpiType) {
       return NextResponse.json(
@@ -193,23 +226,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!assignedToId || !reviewerId) {
+    if (performerUserIds.length === 0 || reviewerUserIds.length === 0) {
       return NextResponse.json(
-        { detail: "assignedToId and reviewerId (user ids) are required" },
+        { detail: "performerUserIds and reviewerUserIds (non-empty arrays of user ids) are required" },
         { status: 400 },
       );
     }
 
-    if (assignedToId === reviewerId) {
-      return NextResponse.json({ detail: "Action owner and reviewer must be different users" }, { status: 400 });
+    const overlap = performerUserIds.filter((id) => reviewerUserIds.includes(id));
+    if (overlap.length > 0) {
+      return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
     }
 
-    const [assigneeUser, reviewerUser] = await Promise.all([
-      prisma.user.findFirst({ where: { id: assignedToId, isActive: true }, select: { id: true } }),
-      prisma.user.findFirst({ where: { id: reviewerId, isActive: true }, select: { id: true } }),
-    ]);
-    if (!assigneeUser || !reviewerUser) {
-      return NextResponse.json({ detail: "Assignee or reviewer user not found or inactive" }, { status: 400 });
+    const allIds = [...performerUserIds, ...reviewerUserIds];
+    const usersFound = await prisma.user.findMany({
+      where: { id: { in: allIds }, isActive: true },
+      select: { id: true },
+    });
+    if (usersFound.length !== allIds.length) {
+      return NextResponse.json({ detail: "One or more users not found or inactive" }, { status: 400 });
     }
 
     const scheme = await prisma.scheme.findUnique({
@@ -244,9 +279,13 @@ export async function POST(request: NextRequest) {
         kpiType,
         numeratorUnit: body.numeratorUnit?.trim() || null,
         denominatorUnit: body.denominatorUnit?.trim() || null,
-        assignedToId,
-        reviewerId,
         createdById: actor?.id ?? null,
+        performers: {
+          create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+        },
+        reviewerUsers: {
+          create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+        },
       },
     });
 

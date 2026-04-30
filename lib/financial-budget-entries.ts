@@ -125,7 +125,6 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
   const [schemes, budgets, snapshots, supplements] = await Promise.all([
     prisma.scheme.findMany({
       include: {
-        vertical: true,
         subschemes: { orderBy: { name: "asc" } },
       },
       orderBy: { name: "asc" },
@@ -133,7 +132,7 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
     prisma.financeBudget.findMany({
       where: { financialYearId: fy.id },
       include: {
-        scheme: { include: { vertical: true } },
+        scheme: { select: { id: true, code: true, name: true, verticalName: true, sponsorshipType: true, subschemes: { orderBy: { name: "asc" } } } },
         createdBy: { select: { name: true } },
         financialYear: { select: { label: true } },
         revisions: {
@@ -352,7 +351,7 @@ function buildEntry(params: {
     id: string;
     code: string;
     name: string;
-    vertical: { name: string };
+    verticalName: string;
     sponsorshipType: SponsorshipType;
     subschemes: Array<{ id: string; code: string; name: string }>;
   };
@@ -435,7 +434,7 @@ function buildEntry(params: {
     id: scheme.code,
     schemeId: scheme.id,
     scheme: scheme.name,
-    vertical: scheme.vertical.name,
+    vertical: scheme.verticalName,
     status,
     annualBudget,
     totalSupplementCr,

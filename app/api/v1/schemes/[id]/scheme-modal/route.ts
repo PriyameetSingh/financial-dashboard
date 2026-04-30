@@ -126,7 +126,6 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   const scheme = await prisma.scheme.findUnique({
     where: { id: schemeId },
     include: {
-      vertical: { select: { name: true } },
       subschemes: { orderBy: { name: "asc" } },
     },
   });
@@ -423,7 +422,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
       id: scheme.id,
       code: scheme.code,
       name: scheme.name,
-      verticalName: scheme.vertical.name,
+      verticalName: scheme.verticalName,
     },
     financialYearLabel: fyLabel,
     expenditure,

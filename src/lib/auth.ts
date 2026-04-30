@@ -1,23 +1,23 @@
-import { MockUser, Permission, UserRole } from "@/types";
+import { SessionUser, Permission, UserRole } from "@/types";
 
 export { Permission, UserRole };
-export type { MockUser };
+export type { SessionUser };
 
 const SESSION_USER_STORAGE_KEY = "hudd_session_user";
-let memoryUser: MockUser | null = null;
+let memoryUser: SessionUser | null = null;
 
-function readStoredUser(): MockUser | null {
+function readStoredUser(): SessionUser | null {
   if (typeof window === "undefined") return memoryUser;
   try {
     const payload = window.localStorage.getItem(SESSION_USER_STORAGE_KEY);
     if (!payload) return null;
-    return JSON.parse(payload) as MockUser;
+    return JSON.parse(payload) as SessionUser;
   } catch {
     return null;
   }
 }
 
-function writeStoredUser(user: MockUser | null) {
+function writeStoredUser(user: SessionUser | null) {
   memoryUser = user;
   if (typeof window === "undefined") return;
   try {
@@ -31,11 +31,11 @@ function writeStoredUser(user: MockUser | null) {
   }
 }
 
-export function setCurrentUser(user: MockUser) {
+export function setCurrentUser(user: SessionUser) {
   writeStoredUser(user);
 }
 
-export function getCurrentUser(): MockUser | null {
+export function getCurrentUser(): SessionUser | null {
   const stored = readStoredUser();
   if (stored) memoryUser = stored;
   return memoryUser;
@@ -45,80 +45,13 @@ export function clearCurrentUser() {
   writeStoredUser(null);
 }
 
-/** Prototype login cards — identities must exist in DB with matching `users.code`. Permissions always come from `/api/v1/rbac/me`. */
-export const MOCK_USERS: MockUser[] = [
-  {
-    id: "acs",
-    name: "Smt. Ushaa Padhee",
-    email: "usha.padhee@hudd.ori",
-    role: UserRole.ACS,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "ps",
-    name: "Shri Pradeep Jena",
-    email: "pradeep.jena@hudd.ori",
-    role: UserRole.PS_HUDD,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "as",
-    name: "Shri Suvendu Das",
-    email: "suvendu.das@hudd.ori",
-    role: UserRole.AS,
-    department: "Housing & Urban Development Department",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "fa",
-    name: "Shri Rakesh Mohanty",
-    email: "rakesh.mohanty@hudd.ori",
-    role: UserRole.FA,
-    department: "Finance & Planning",
-    assignedSchemes: ["All schemes"],
-  },
-  {
-    id: "tasu",
-    name: "Ms. Priya Nair",
-    email: "priya.nair@hudd.ori",
-    role: UserRole.TASU,
-    department: "Technical & Advisory Support Unit",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "nodal",
-    name: "Shri Amit Kumar",
-    email: "amit.kumar@hudd.ori",
-    role: UserRole.NODAL_OFFICER,
-    department: "HUDD Field Unit",
-    assignedSchemes: ["PMAY-U", "SUJALA", "GARIMA"],
-  },
-  {
-    id: "director",
-    name: "Shri B.K. Mishra",
-    email: "bk.mishra@hudd.ori",
-    role: UserRole.DIRECTOR,
-    department: "Directorate of DMA",
-    assignedSchemes: ["DMA", "All schemes"],
-  },
-  {
-    id: "viewer",
-    name: "Shri Ramesh Patnaik",
-    email: "ramesh.patnaik@hudd.ori",
-    role: UserRole.VIEWER,
-    department: "Audit & Compliance",
-    assignedSchemes: ["All schemes"],
-  },
-];
-
 type MeApiUser = {
   id: string;
   name: string;
   email: string;
   role: UserRole;
   department: string;
+  designation?: string | null;
   assignedSchemes: string[];
   permissions: Permission[];
 };
@@ -127,7 +60,7 @@ type MeApiUser = {
  * Loads the signed-in user profile and effective permissions from the database (via `/api/v1/rbac/me`)
  * and refreshes local client state. Call after login or when opening a guarded page.
  */
-export async function refreshSessionUserFromApi(): Promise<MockUser | null> {
+export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
   try {
     const res = await fetch("/api/v1/rbac/me", {
       credentials: "include",
@@ -145,12 +78,13 @@ export async function refreshSessionUserFromApi(): Promise<MockUser | null> {
       clearCurrentUser();
       return null;
     }
-    const next: MockUser = {
+    const next: SessionUser = {
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
       role: data.user.role,
       department: data.user.department,
+      designation: data.user.designation ?? undefined,
       assignedSchemes: data.user.assignedSchemes,
       permissions: data.user.permissions,
     };
@@ -161,7 +95,7 @@ export async function refreshSessionUserFromApi(): Promise<MockUser | null> {
   }
 }
 
-export function hasPermission(user: MockUser | null, permission: Permission) {
+export function hasPermission(user: SessionUser | null, permission: Permission) {
   if (!user?.permissions?.length) return false;
   return user.permissions.includes(permission);
 }
@@ -173,17 +107,17 @@ export const MY_TASKS_HUB_ACCESS_PERMISSIONS: Permission[] = [
   Permission.CREATE_ACTION_ITEMS,
 ];
 
-export function canAccessMyTasksHub(user: MockUser | null): boolean {
+export function canAccessMyTasksHub(user: SessionUser | null): boolean {
   if (!user) return false;
   return MY_TASKS_HUB_ACCESS_PERMISSIONS.some((p) => hasPermission(user, p));
 }
 
-export function canAccessScheme(user: MockUser | null, schemeCode: string) {
+export function canAccessScheme(user: SessionUser | null, schemeCode: string) {
   if (!user) return false;
   if (roleHasViewAll(user)) return true;
   return user.assignedSchemes.some((s) => s.toLowerCase() === schemeCode.toLowerCase());
 }
 
-function roleHasViewAll(user: MockUser) {
+function roleHasViewAll(user: SessionUser) {
   return hasPermission(user, Permission.VIEW_ALL_DATA);
 }

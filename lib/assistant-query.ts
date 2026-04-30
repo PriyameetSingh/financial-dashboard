@@ -97,7 +97,7 @@ async function answerKpi(): Promise<string> {
   if (!fy) return "No financial year configured — KPI targets are unavailable.";
   const definitions = await prisma.kpiDefinition.findMany({
     include: {
-      scheme: { select: { name: true, vertical: { select: { name: true } } } },
+      scheme: { select: { name: true, verticalName: true } },
       targets: {
         where: { financialYearId: fy.id },
         take: 1,
@@ -138,12 +138,17 @@ async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<strin
     where: { meetingId: ctx.meetingId },
     orderBy: { dueDate: "asc" },
     take: 25,
-    include: { assignedTo: { select: { name: true } } },
+    include: {
+      performers: {
+        orderBy: { sortOrder: "asc" },
+        include: { user: { select: { name: true } } },
+      },
+    },
   });
   if (items.length === 0) return "No action items are linked to this meeting yet.";
   const lines = items.map(
     (a) =>
-      `- **${a.title}** — ${a.status} · due ${a.dueDate.toISOString().slice(0, 10)} · ${a.assignedTo?.name ?? "Unassigned"}`,
+      `- **${a.title}** — ${a.status} · due ${a.dueDate.toISOString().slice(0, 10)} · ${a.performers.map((p) => p.user.name).join(", ") || "Unassigned"}`,
   );
   return ["**Action items for this meeting**", "", ...lines].join("\n");
 }
@@ -153,12 +158,17 @@ async function answerOverdue(): Promise<string> {
     where: { status: "OVERDUE" },
     orderBy: { dueDate: "asc" },
     take: 12,
-    include: { assignedTo: { select: { name: true } } },
+    include: {
+      performers: {
+        orderBy: { sortOrder: "asc" },
+        include: { user: { select: { name: true } } },
+      },
+    },
   });
   if (items.length === 0) return "There are **no overdue** action items right now.";
   const lines = items.map((a) => {
     const days = Math.max(0, Math.floor((Date.now() - a.dueDate.getTime()) / (24 * 60 * 60 * 1000)));
-    return `- **${a.title}** — ${days}d overdue · ${a.assignedTo?.name ?? "—"}`;
+    return `- **${a.title}** — ${days}d overdue · ${a.performers.map((p) => p.user.name).join(", ") || "—"}`;
   });
   return ["**Overdue action items** (sample up to 12)", "", ...lines].join("\n");
 }

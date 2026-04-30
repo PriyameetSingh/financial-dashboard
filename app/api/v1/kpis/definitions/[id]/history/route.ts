@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const definition = await prisma.kpiDefinition.findUnique({
     where: { id },
     include: {
-      scheme: { include: { vertical: true } },
+      scheme: { select: { name: true, verticalName: true } },
       targets: {
         include: {
           financialYear: true,
@@ -81,7 +81,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       category: definition.category,
       unit: definition.numeratorUnit ?? definition.denominatorUnit ?? "value",
       scheme: definition.scheme.name,
-      vertical: definition.scheme.vertical.name,
+      vertical: definition.scheme.verticalName,
     },
     measurements,
   });

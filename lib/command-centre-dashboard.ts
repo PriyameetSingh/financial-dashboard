@@ -152,7 +152,10 @@ export async function getCommandCentreDashboard(
         orderBy: { dueDate: "asc" },
         take: 5,
         include: {
-          assignedTo: { select: { name: true } },
+          performers: {
+            orderBy: { sortOrder: "asc" },
+            include: { user: { select: { name: true } } },
+          },
         },
       }),
       fyRow
@@ -255,7 +258,7 @@ export async function getCommandCentreDashboard(
   const overdueActionsPreview: CommandCentreOverduePreview[] = overdueItems.map((item) => ({
     id: item.id,
     title: item.title,
-    officer: item.assignedTo?.name ?? "—",
+    officer: item.performers.map((p) => p.user.name).join(", ") || "—",
     daysOverdue: Math.max(
       0,
       Math.floor((Date.now() - item.dueDate.getTime()) / (24 * 60 * 60 * 1000)),

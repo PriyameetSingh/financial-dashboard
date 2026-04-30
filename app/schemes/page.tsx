@@ -100,7 +100,7 @@ export default function SchemesPage() {
               All schemes with KPI definitions, latest expenditure ({financialYearLabel ?? "current FY"}), and subschemes.
             </p>
           </div>
-          {canManageSchemes && reference && reference.verticals.length > 0 && (
+          {canManageSchemes && reference && (
             <button
               type="button"
               onClick={openCreateScheme}

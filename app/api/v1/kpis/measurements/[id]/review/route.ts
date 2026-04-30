@@ -27,7 +27,9 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       include: {
         kpiTarget: {
           include: {
-            kpiDefinition: true,
+            kpiDefinition: {
+              include: { reviewerUsers: { select: { userId: true } } },
+            },
           },
         },
       },
@@ -45,7 +47,10 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     const roleIds = userRoleIdsFromDbUser(actor);
     const canManageSchemes = hasPermissionForUser(actor, "MANAGE_SCHEMES");
     await assertKpiReviewerForDefinition(
-      { schemeId: def.schemeId, reviewerId: def.reviewerId },
+      {
+        schemeId: def.schemeId,
+        reviewerUserIds: def.reviewerUsers.map((r) => r.userId),
+      },
       actor.id,
       roleIds,
       { canManageSchemes },

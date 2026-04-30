@@ -363,7 +363,6 @@ export const mockFinancialEntries: FinancialEntry[] = [
 
 export const pendingApprovalSummaries: PendingApprovalSummary[] = [
   { role: UserRole.ACS, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.PS_HUDD, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.AS, financial: 3, kpi: 5, actionItems: 2 },
-  { role: UserRole.VIEWER, financial: 0, kpi: 0, actionItems: 0 },
+  { role: UserRole.PROGRAMME_MANAGER, financial: 2, kpi: 4, actionItems: 2 },
+  { role: UserRole.NODAL_OFFICER, financial: 0, kpi: 2, actionItems: 1 },
 ];

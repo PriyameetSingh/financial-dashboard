@@ -6,14 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 8765",
-    "redeploy": "pid=$(ss -ltnp | awk '/:8765 / { if (match($0,/pid=[0-9]+/)) print substr($0,RSTART+4,RLENGTH-4) }' | awk 'NR==1{print}'); if [ -n \"$pid\" ]; then kill \"$pid\"; sleep 1; fi; npm run build && npm run start",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart hudd-dashboard",
+    "pm2:logs": "pm2 logs hudd-dashboard",
+    "redeploy": "npm run build && (pm2 restart hudd-dashboard || pm2 start ecosystem.config.cjs)",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
+    "db:seed:roles": "node prisma/seed_roles.js",
     "db:clear-mock": "tsx prisma/clear_mock_data.ts",
+    "db:clear-and-reseed-roles": "tsx prisma/clear_mock_data.ts --yes --reset-rbac && node prisma/seed_roles.js",
     "verify:behaviors": "node scripts/verify-behaviors.mjs"
   },
   "prisma": {
@@ -46,6 +51,7 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "pm2": "^6.0.14"
   }
 }

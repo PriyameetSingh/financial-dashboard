@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Body;
 
-    const definition = await prisma.kpiDefinition.findUnique({ where: { id: body.kpiDefinitionId } });
+    const definition = await prisma.kpiDefinition.findUnique({
+      where: { id: body.kpiDefinitionId },
+      include: { performers: { select: { userId: true } } },
+    });
     if (!definition) {
       return NextResponse.json({ detail: "KPI definition not found" }, { status: 404 });
     }
@@ -35,7 +38,10 @@ export async function POST(request: NextRequest) {
     const roleIds = userRoleIdsFromDbUser(actor);
     const canManageSchemes = hasPermissionForUser(actor, "MANAGE_SCHEMES");
     await assertKpiUpdaterForDefinition(
-      { schemeId: definition.schemeId, assignedToId: definition.assignedToId },
+      {
+        schemeId: definition.schemeId,
+        performerUserIds: definition.performers.map((p) => p.userId),
+      },
       actor.id,
       roleIds,
       { canManageSchemes },

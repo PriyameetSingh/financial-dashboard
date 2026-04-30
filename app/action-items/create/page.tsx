@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { useRequireRole } from "@/src/lib/route-guards";
-import { UserRole, MOCK_USERS } from "@/lib/auth";
+import { UserRole } from "@/lib/auth";
+import type { SessionUser } from "@/types";
+import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { createActionItem } from "@/src/lib/services/actionItemService";
 import { fetchMeetings } from "@/src/lib/services/meetingService";
 import { fetchSchemesAdmin } from "@/src/lib/services/schemeService";
@@ -19,13 +21,14 @@ export default function ActionItemCreatePage() {
 
   const [schemes, setSchemes] = useState<string[]>([]);
   const [meetings, setMeetings] = useState<Array<{ id: string; label: string }>>([]);
+  const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheme, setScheme] = useState("");
   const [priority, setPriority] = useState<ActionItemPriority>("High");
-  const [assignee, setAssignee] = useState(MOCK_USERS[0]?.id ?? "");
-  const [reviewer, setReviewer] = useState(MOCK_USERS[1]?.id ?? "");
+  const [assignee, setAssignee] = useState("");
+  const [reviewer, setReviewer] = useState("");
   const [meetingId, setMeetingId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -38,8 +41,10 @@ export default function ActionItemCreatePage() {
     setDescription("");
     setScheme("");
     setPriority("High");
-    setAssignee(MOCK_USERS[0]?.id ?? "");
-    setReviewer(MOCK_USERS[1]?.id ?? "");
+    const first = directoryUsers[0]?.id ?? "";
+    const second = directoryUsers.find((u) => u.id !== first)?.id ?? directoryUsers[1]?.id ?? first;
+    setAssignee(first);
+    setReviewer(second);
     setMeetingId("");
     setDueDate("");
   }
@@ -48,8 +53,17 @@ export default function ActionItemCreatePage() {
     let active = true;
     const load = async () => {
       try {
-        const [schemeData, meetingData] = await Promise.all([fetchSchemesAdmin(), fetchMeetings()]);
+        const [schemeData, meetingData, roster] = await Promise.all([
+          fetchSchemesAdmin(),
+          fetchMeetings(),
+          fetchDirectoryUsers(),
+        ]);
         if (!active) return;
+        setDirectoryUsers(roster);
+        const first = roster[0]?.id ?? "";
+        const second = roster.find((u) => u.id !== first)?.id ?? roster[1]?.id ?? first;
+        setAssignee(first);
+        setReviewer(second);
         const codes = schemeData.schemes.map((s) => s.code);
         setSchemes(codes);
         const meetingOptions = meetingData.map((m) => ({
@@ -71,8 +85,8 @@ export default function ActionItemCreatePage() {
 
   const canSubmit = title.trim().length > 0 && description.trim().length > 0 && dueDate;
 
-  const selectedAssignee = useMemo(() => MOCK_USERS.find((user) => user.id === assignee), [assignee]);
-  const selectedReviewer = useMemo(() => MOCK_USERS.find((user) => user.id === reviewer), [reviewer]);
+  const selectedAssignee = useMemo(() => directoryUsers.find((user) => user.id === assignee), [assignee, directoryUsers]);
+  const selectedReviewer = useMemo(() => directoryUsers.find((user) => user.id === reviewer), [reviewer, directoryUsers]);
 
   return (
     <AppShell title="Create Action Item">
@@ -161,8 +175,8 @@ export default function ActionItemCreatePage() {
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
                 />
               </label>
-              <UserSelector users={MOCK_USERS} value={assignee} onChange={setAssignee} label="Assigned Officer" />
-              <UserSelector users={MOCK_USERS} value={reviewer} onChange={setReviewer} label="Reviewer" />
+              <UserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" />
+              <UserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
               <div className="md:col-span-2">
                 <ProofUpload label="Attach initial notes" onUpload={() => undefined} />
               </div>
@@ -220,8 +234,8 @@ export default function ActionItemCreatePage() {
               description: description.trim(),
               priority,
               dueDate,
-              assignedToUserCode: assignee,
-              reviewerUserCode: reviewer,
+              performerUserCodes: [assignee],
+              reviewerUserCodes: [reviewer],
             });
             resetForm();
             setSuccess(true);

@@ -109,7 +109,7 @@ async function main() {
       create: {
         code: s.code,
         name: s.name,
-        verticalId: vertical.id,
+        verticalName: vertical.name,
         sponsorshipType: s.sponsorshipType,
       },
     });
@@ -724,9 +724,9 @@ async function main() {
         priority: ActionItemPriority.Medium,
         dueDate: new Date(ai.dueDate),
         status: ai.status,
-        assignedToId: NODAL_OFFICER_ID,
-        reviewerId: ACS_ID,
         createdById: NODAL_OFFICER_ID,
+        performers: { create: [{ userId: NODAL_OFFICER_ID, sortOrder: 0 }] },
+        reviewerUsers: { create: [{ userId: ACS_ID, sortOrder: 0 }] },
       },
     });
     if (ai.update) {
@@ -888,9 +888,9 @@ async function main() {
         kpiType: row.kpiType,
         numeratorUnit: row.numeratorUnit,
         denominatorUnit: row.denominatorUnit,
-        assignedToId: NODAL_OFFICER_ID,
-        reviewerId: ACS_ID,
         createdById: NODAL_OFFICER_ID,
+        performers: { create: [{ userId: NODAL_OFFICER_ID, sortOrder: 0 }] },
+        reviewerUsers: { create: [{ userId: ACS_ID, sortOrder: 0 }] },
       },
     });
 

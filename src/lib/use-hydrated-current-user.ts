@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { MockUser } from "@/types";
+import type { SessionUser } from "@/types";
 import { getCurrentUser, refreshSessionUserFromApi } from "@/lib/auth";
 
 /** Loads `/api/v1/rbac/me` once on mount and returns the current signed-in user (with DB permissions). */
 export function useHydratedCurrentUser() {
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;

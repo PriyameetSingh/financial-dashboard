@@ -17,7 +17,7 @@ type AssignmentInput = {
 type Body = {
   code?: string;
   name?: string;
-  verticalId?: string;
+  verticalName?: string;
   sponsorshipType?: "STATE" | "CENTRAL" | "CENTRAL_SECTOR";
   assignments?: AssignmentInput[];
 };
@@ -35,7 +35,6 @@ async function loadScheme(id: string) {
   return prisma.scheme.findUnique({
     where: { id },
     include: {
-      vertical: { select: { name: true } },
       subschemes: { orderBy: { name: "asc" } },
       assignments: {
         orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
@@ -85,6 +84,9 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     if (body.sponsorshipType && !sponsorshipType) {
       return NextResponse.json({ detail: "Invalid sponsorshipType" }, { status: 400 });
     }
+    if (body.verticalName !== undefined && !body.verticalName.trim()) {
+      return NextResponse.json({ detail: "verticalName cannot be empty" }, { status: 400 });
+    }
 
     const after = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.scheme.update({
@@ -92,7 +94,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         data: {
           code: body.code?.trim().toUpperCase(),
           name: body.name?.trim(),
-          verticalId: body.verticalId,
+          verticalName: body.verticalName?.trim(),
           ...(sponsorshipType !== undefined && sponsorshipType !== null ? { sponsorshipType } : {}),
         },
       });
@@ -118,7 +120,6 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return tx.scheme.findUniqueOrThrow({
         where: { id },
         include: {
-          vertical: { select: { name: true } },
           subschemes: { orderBy: { name: "asc" } },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],

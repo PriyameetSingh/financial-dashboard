@@ -20,6 +20,7 @@ type DbUserRow = {
   name: string;
   email: string;
   department: string | null;
+  designation: string | null;
   roles: UserRole[];
   overrides: DbUserPermissionOverride[];
   effectivePermissions: Permission[];
@@ -29,8 +30,9 @@ type DbUserRow = {
 type CreateUserFormState = {
   name: string;
   email: string;
-  username: string;
+  phone: string;
   department: string;
+  designation: string;
   defaultPassword: string;
   roleCode: UserRole;
 };
@@ -40,22 +42,20 @@ type RoleFilterValue = UserRole | "ALL";
 const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   name: "",
   email: "",
-  username: "",
+  phone: "",
   department: "",
+  designation: "",
   defaultPassword: "",
-  roleCode: UserRole.VIEWER,
+  roleCode: UserRole.NODAL_OFFICER,
 };
 
-function normalizeUsername(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function deriveUsernameFromEmail(email: string): string {
-  const localPart = email.split("@")[0] ?? "";
-  return normalizeUsername(localPart);
+/** Digits from phone — matches API / Keycloak username. */
+function usernameDigitsFromPhone(phone: string): string {
+  return phone.replace(/\D/g, "");
 }
 
 function formatRoleLabel(role: UserRole): string {
+  if (role === UserRole.PROGRAMME_MANAGER) return "Programme Manager";
   return role.replace(/_/g, " ");
 }
 
@@ -84,7 +84,7 @@ function PermissionsModal({ user, onToggle, onClose, alert }: PermissionsModalPr
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Permissions</p>
             <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">{user.name}</h2>
             <div className="mt-1 flex items-center gap-3">
-              <RoleBadge role={user.roles[0] ?? UserRole.VIEWER} />
+              <RoleBadge role={user.roles[0] ?? UserRole.NODAL_OFFICER} />
               <span className="text-xs text-[var(--text-muted)]">
                 {grantedCount} granted
                 {overrideCount > 0 && (
@@ -176,7 +176,7 @@ interface CreateUserModalProps {
   isOpen: boolean;
   form: CreateUserFormState;
   roleOptions: UserRole[];
-  generatedUsernamePreview: string;
+  phoneUsernamePreview: string;
   isCreatingUser: boolean;
   alert: string;
   onChange: (key: Exclude<keyof CreateUserFormState, "roleCode">, value: string) => void;
@@ -189,7 +189,7 @@ function CreateUserModal({
   isOpen,
   form,
   roleOptions,
-  generatedUsernamePreview,
+  phoneUsernamePreview,
   isCreatingUser,
   alert,
   onChange,
@@ -248,17 +248,20 @@ function CreateUserModal({
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Username (optional)
+              Phone number
               <input
-                value={form.username}
-                onChange={(e) => onChange("username", e.target.value)}
-                placeholder="Auto-derived from email if empty"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={form.phone}
+                onChange={(e) => onChange("phone", e.target.value)}
+                placeholder="e.g. +91 98765 43210"
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
               <span className="text-[10px] text-[var(--text-muted)]">
-                {generatedUsernamePreview
-                  ? `Preview: ${generatedUsernamePreview}`
-                  : "Preview: enter email or username"}
+                {phoneUsernamePreview.length >= 10
+                  ? `Login username (digits): ${phoneUsernamePreview}`
+                  : "Enter at least 10 digits; spaces and symbols are stripped for the username."}
               </span>
             </label>
 
@@ -268,6 +271,17 @@ function CreateUserModal({
                 value={form.department}
                 onChange={(e) => onChange("department", e.target.value)}
                 placeholder="Department"
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] md:col-span-2">
+              Designation
+              <input
+                required
+                value={form.designation}
+                onChange={(e) => onChange("designation", e.target.value)}
+                placeholder="e.g. Principal Secretary, HUDD"
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
             </label>
@@ -292,7 +306,7 @@ function CreateUserModal({
               >
                 {roleOptions.map((role) => (
                   <option key={`create-role-${role}`} value={role}>
-                    {role}
+                    {formatRoleLabel(role)}
                   </option>
                 ))}
               </select>
@@ -398,17 +412,16 @@ export default function AdminUsersPage() {
     return Object.values(UserRole);
   }, [rolePermissions]);
 
-  const generatedUsernamePreview = useMemo(() => {
-    const explicit = normalizeUsername(createUserForm.username);
-    if (explicit) return explicit;
-    return deriveUsernameFromEmail(createUserForm.email);
-  }, [createUserForm.email, createUserForm.username]);
+  const phoneUsernamePreview = useMemo(
+    () => usernameDigitsFromPhone(createUserForm.phone),
+    [createUserForm.phone],
+  );
 
   const filteredUsers = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
 
     return users.filter((user) => {
-      const role = user.roles[0] ?? UserRole.VIEWER;
+      const role = user.roles[0] ?? UserRole.NODAL_OFFICER;
       if (roleFilter !== "ALL" && role !== roleFilter) return false;
       if (!needle) return true;
 
@@ -418,6 +431,7 @@ export default function AdminUsersPage() {
         user.email,
         user.code ?? "",
         user.department ?? "",
+        user.designation ?? "",
         role,
         assignedSchemes,
       ]
@@ -432,7 +446,7 @@ export default function AdminUsersPage() {
     return users.reduce((count, user) => {
       const userCode = user.code ?? "";
       if (!userCode) return count;
-      const currentRole = user.roles[0] ?? UserRole.VIEWER;
+      const currentRole = user.roles[0] ?? UserRole.NODAL_OFFICER;
       const nextRole = pendingRoleChanges[userCode];
       if (!nextRole || nextRole === currentRole) return count;
       return count + 1;
@@ -456,6 +470,17 @@ export default function AdminUsersPage() {
       return;
     }
 
+    if (!createUserForm.designation.trim()) {
+      setCreateUserAlert("Designation is required for every new user.");
+      return;
+    }
+
+    const phoneDigits = usernameDigitsFromPhone(createUserForm.phone);
+    if (phoneDigits.length < 10) {
+      setCreateUserAlert("Phone number is required: at least 10 digits. Digits are used as the login username.");
+      return;
+    }
+
     setIsCreatingUser(true);
     try {
       const response = await fetch("/api/v1/admin/users", {
@@ -464,8 +489,9 @@ export default function AdminUsersPage() {
         body: JSON.stringify({
           name: createUserForm.name.trim(),
           email: createUserForm.email.trim().toLowerCase(),
-          username: createUserForm.username.trim() || undefined,
+          phone: createUserForm.phone.trim(),
           department: createUserForm.department.trim() || undefined,
+          designation: createUserForm.designation.trim(),
           defaultPassword: createUserForm.defaultPassword,
           roleCode: createUserForm.roleCode,
         }),
@@ -496,7 +522,7 @@ export default function AdminUsersPage() {
     const userCode = user.code ?? "";
     if (!userCode) return;
 
-    const currentRole = user.roles[0] ?? UserRole.VIEWER;
+    const currentRole = user.roles[0] ?? UserRole.NODAL_OFFICER;
     const nextRole = pendingRoleChanges[userCode] ?? currentRole;
     if (nextRole === currentRole) {
       return;
@@ -668,7 +694,7 @@ export default function AdminUsersPage() {
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name, email, code, department, scheme"
+                placeholder="Search by name, email, phone/code, designation, department, scheme"
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
             </label>
@@ -698,10 +724,11 @@ export default function AdminUsersPage() {
 
         <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
           <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full text-left text-sm">
+            <table className="min-w-[1080px] w-full text-left text-sm">
               <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 <tr>
                   <th className="px-4 py-3">Officer</th>
+                  <th className="px-4 py-3">Designation</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Department</th>
                   <th className="px-4 py-3">Assigned Schemes</th>
@@ -711,7 +738,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {filteredUsers.map((user) => {
                   const userCode = user.code ?? "";
-                  const currentRole = user.roles[0] ?? UserRole.VIEWER;
+                  const currentRole = user.roles[0] ?? UserRole.NODAL_OFFICER;
                   const selectedRole = pendingRoleChanges[userCode] ?? currentRole;
                   const roleChanged = selectedRole !== currentRole;
                   const isUpdatingRole = Boolean(roleUpdateLoadingCodes[userCode]);
@@ -719,7 +746,7 @@ export default function AdminUsersPage() {
                   const shownSchemes = user.assignedSchemes?.slice(0, 2) ?? [];
                   const hiddenSchemeCount = Math.max((user.assignedSchemes?.length ?? 0) - shownSchemes.length, 0);
                   return (
-                    <tr key={user.code ?? user.email} className="border-t border-[var(--border)] align-top transition-colors hover:bg-[var(--bg-surface)]/40">
+                    <tr key={user.code ?? user.email} className="border-t border-[var(--border)] align-top transition-colors hover:bg-[var(--bg-hover)]">
                       <td className="px-4 py-4">
                         <p className="font-medium text-[var(--text-primary)]">{user.name}</p>
                         <p className="mt-0.5 text-xs text-[var(--text-muted)]">{user.email}</p>
@@ -728,6 +755,9 @@ export default function AdminUsersPage() {
                             {user.code}
                           </p>
                         )}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-[var(--text-muted)]">
+                        {user.designation?.trim() ? user.designation : "—"}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex max-w-[220px] flex-col gap-2">
@@ -810,7 +840,7 @@ export default function AdminUsersPage() {
                 })}
                 {filteredUsers.length === 0 && (
                   <tr className="border-t border-[var(--border)]">
-                    <td colSpan={5} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+                    <td colSpan={6} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
                       No users match the current search/filter criteria.
                     </td>
                   </tr>
@@ -834,7 +864,7 @@ export default function AdminUsersPage() {
         isOpen={isCreateUserOpen}
         form={createUserForm}
         roleOptions={roleOptions}
-        generatedUsernamePreview={generatedUsernamePreview}
+        phoneUsernamePreview={phoneUsernamePreview}
         isCreatingUser={isCreatingUser}
         alert={createUserAlert}
         onChange={handleCreateUserChange}

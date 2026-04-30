@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { UserRole, hasPermission, Permission, type MockUser } from "@/lib/auth";
+import { UserRole, hasPermission, Permission, type SessionUser } from "@/lib/auth";
 import {
   canSeeMyTasksNav,
   hasPendingAssignedActionItems,
@@ -22,6 +22,7 @@ import {
   UserCog,
   ClipboardList,
   CalendarDays,
+  Calendar,
   Layers,
   Gauge,
   CheckSquare,
@@ -48,7 +49,7 @@ function isDueWithinWeek(item: ActionItem) {
   return due >= now && due <= week;
 }
 
-function pendingAssignedBadgeState(items: ActionItem[], user: MockUser): { count: number; tone: "red" | "yellow" | "green" | null } {
+function pendingAssignedBadgeState(items: ActionItem[], user: SessionUser): { count: number; tone: "red" | "yellow" | "green" | null } {
   const mine = items.filter((item) => isAssignedActionOfficer(item, user) && isPendingAction(item));
   const count = mine.length;
   if (count === 0) return { count: 0, tone: null };
@@ -60,8 +61,13 @@ function pendingAssignedBadgeState(items: ActionItem[], user: MockUser): { count
 }
 
 function isPendingKpiEntryForAssignee(submission: KPISubmission, assigneeDbUserId: string | null) {
-  if (!assigneeDbUserId || !submission.assignedToUserId) return false;
-  if (submission.assignedToUserId !== assigneeDbUserId) return false;
+  if (!assigneeDbUserId) return false;
+  const ids = submission.performerUserIds?.length
+    ? submission.performerUserIds
+    : submission.assignedToUserId
+      ? [submission.assignedToUserId]
+      : [];
+  if (!ids.includes(assigneeDbUserId)) return false;
   return submission.status === "not_submitted" || submission.status === "draft";
 }
 
@@ -186,7 +192,7 @@ const items: NavItem[] = [
     label: "Meetings",
     href: "/meetings",
     icon: CalendarDays,
-    roles: [UserRole.TASU, UserRole.AS, UserRole.PS_HUDD, UserRole.ACS],
+        roles: [UserRole.TASU, UserRole.PROGRAMME_MANAGER, UserRole.ACS],
   },
   // {
   //   label: "Reports & Export",
@@ -204,14 +210,20 @@ const items: NavItem[] = [
     label: "Administration",
     href: "/admin",
     icon: UserCog,
-    roles: [UserRole.PS_HUDD, UserRole.AS, UserRole.TASU],
+    roles: [UserRole.TASU,],
     children: [
       {
         label: "Users",
         href: "/admin/users",
         icon: UserCog,
-        roles: [UserRole.PS_HUDD, UserRole.TASU],
+        roles: [UserRole.TASU],
       },
+      {
+        label: "Financial years",
+        href: "/admin/financial-years",
+        icon: Calendar,
+        roles: [UserRole.TASU,],
+      }
     ],
   },
   {
@@ -224,13 +236,10 @@ const items: NavItem[] = [
 
 const badgeColors: Record<UserRole, string> = {
   [UserRole.ACS]: "bg-[#1f3a93]",
-  [UserRole.PS_HUDD]: "bg-[#1f3a93]",
-  [UserRole.AS]: "bg-[#4169e1]",
-  [UserRole.DIRECTOR]: "bg-[#4169e1]",
+  [UserRole.PROGRAMME_MANAGER]: "bg-[#5b4fcf]",
   [UserRole.FA]: "bg-[#1abc9c]",
   [UserRole.TASU]: "bg-[#1abc9c]",
   [UserRole.NODAL_OFFICER]: "bg-[#2ecc71]",
-  [UserRole.VIEWER]: "bg-[#7f8c8d]",
 };
 
 /** Dashboard merged from legacy `/command-centre`; keep both paths highlighting the same nav item. */
@@ -538,27 +547,30 @@ export default function Sidebar() {
       </nav>
 
       <div className="space-y-3 border-t border-[var(--sidebar-border)] px-3 py-3">
-        <div className="relative" ref={userMenuRef}>
+        <div className="relative z-10" ref={userMenuRef}>
           <button
-            className="flex w-full items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-left transition hover:bg-[var(--bg-surface)]"
+            className={[
+              "group flex w-full items-center gap-2 overflow-hidden border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-left transition hover:bg-[var(--bg-surface)] hover:text-[var(--sidebar-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-text-muted)]/40",
+              userMenuOpen ? "rounded-b-full rounded-t-none border-t-0" : "rounded-full",
+            ].join(" ")}
             type="button"
             aria-label="Open user menu"
             aria-expanded={userMenuOpen}
             onClick={() => setUserMenuOpen((open) => !open)}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--border)]">
-              <User size={16} className="text-[var(--text-secondary)]" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--border)] group-hover:bg-[var(--sidebar-hover-bg)]">
+              <User size={16} className="text-[var(--text-secondary)] group-hover:text-[var(--sidebar-text-primary)]" />
             </div>
             <div className="min-w-0 flex-1 pr-2">
-              <p className="truncate text-xs font-semibold text-[var(--text-primary)] hover:text-[var(--sidebar-text-primary)]">
+              <p className="truncate text-xs font-semibold text-[var(--text-primary)] group-hover:text-[var(--sidebar-text-primary)]">
                 {user?.name ?? roleLabel ?? "User"}
               </p>
             </div>
           </button>
           {userMenuOpen && (
-            <div className="absolute bottom-full left-0 z-40 mb-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
+            <div className="absolute bottom-full left-0 z-40 w-full rounded-t-xl rounded-b-none border border-b-0 border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
               <div className="space-y-1 border-b border-[var(--border)] pb-3">
-                <p className="text-sm font-semibold text-[var(--sidebar-text-primary)]">{user?.name ?? "Signed in user"}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{user?.name ?? "Signed in user"}</p>
                 <p className="text-xs text-[var(--text-muted)]">{user?.email ?? "Email unavailable"}</p>
                 <p className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">{roleLabel ?? "Member"}</p>
                 <p className="text-xs text-[var(--text-muted)]">{user?.department ?? "Housing & Urban Development Department"}</p>

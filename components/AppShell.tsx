@@ -5,8 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
-import { UserRole } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
+import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
 
 interface Props {
@@ -21,7 +21,7 @@ export default function AppShell({ children, title }: Props) {
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
 
-  const isViewer = user?.role === UserRole.VIEWER;
+  const isViewer = isReadOnlyWatermarkUser(user);
 
   const nowLabel = useMemo(() => {
     const now = new Date();

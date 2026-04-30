@@ -2,11 +2,21 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { Permission } from "@/lib/auth";
+import { Permission, hasPermission } from "@/lib/auth";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
+import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 
 export default function AdminOverviewPage() {
-  useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
+  useRequireAnyPermission(
+    [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_FINANCIAL_YEARS],
+    "/dashboard",
+  );
+
+  const user = useHydratedCurrentUser();
+  const showUsers = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
+  const showPermissions = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
+  const showSchemes = user && hasPermission(user, Permission.MANAGE_SCHEMES);
+  const showFinancialYears = user && hasPermission(user, Permission.MANAGE_FINANCIAL_YEARS);
 
   return (
     <AppShell title="Administration">
@@ -18,30 +28,46 @@ export default function AdminOverviewPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Link
-            href="/admin/users"
-            className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
-          >
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Users</p>
-            <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">User Directory</h3>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">Assign roles and verify access scopes.</p>
-          </Link>
-          <Link
-            href="/admin/permissions"
-            className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
-          >
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Permissions</p>
-            <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Grant & roles</h3>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">Add/remove people and assign permission templates.</p>
-          </Link>
-          <Link
-            href="/schemes"
-            className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
-          >
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Schemes</p>
-            <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Scheme Registry</h3>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">Review scheme coverage and approval flags.</p>
-          </Link>
+          {showUsers && (
+            <Link
+              href="/admin/users"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Users</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">User Directory</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Assign roles and verify access scopes.</p>
+            </Link>
+          )}
+          {showPermissions && (
+            <Link
+              href="/admin/users"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Permissions</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Roles & overrides</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Open the user directory to edit permission overrides per officer.</p>
+            </Link>
+          )}
+          {showSchemes && (
+            <Link
+              href="/schemes"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Schemes</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Scheme Registry</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Review scheme coverage and approval flags.</p>
+            </Link>
+          )}
+          {showFinancialYears && (
+            <Link
+              href="/admin/financial-years"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial years</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">FY calendar</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Add or edit financial year rows used across finance and KPIs.</p>
+            </Link>
+          )}
         </div>
       </div>
     </AppShell>
