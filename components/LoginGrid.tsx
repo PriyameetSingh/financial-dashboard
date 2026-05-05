@@ -18,6 +18,8 @@ export default function LoginGrid() {
     const redirect = new URLSearchParams(window.location.search).get("redirect");
     const relativePath = redirect?.startsWith("/") ? redirect : `${basePath}/dashboard`;
     const fullPath = relativePath.startsWith(basePath) ? relativePath : `${basePath}${relativePath}`;
+    console.log("fullPath", fullPath);
+    console.log("origin", origin);
     return `${origin}${fullPath}`; // absolute URL avoids Auth.js misresolution
   }, []);
 

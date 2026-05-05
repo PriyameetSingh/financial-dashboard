@@ -70,8 +70,8 @@ export interface ActionItem {
   assignedTo: string;
   /** Comma-separated display names of reviewers. */
   reviewer: string;
-  performers?: Array<{ id: string; name: string; code: string | null }>;
-  reviewers?: Array<{ id: string; name: string; code: string | null }>;
+  performers?: Array<{ id: string; name: string; code: string | null; designation?: string }>;
+  reviewers?: Array<{ id: string; name: string; code: string | null; designation?: string }>;
   assignedToUserIds?: string[];
   reviewerUserIds?: string[];
   /** User `code` when loaded from API; first performer / reviewer for legacy single-code flows. */

@@ -453,17 +453,12 @@ export default function ActionItemDetailPage() {
             <div className="mt-3 space-y-4">
               {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
                 const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
+                const designation = profile?.designation?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
                 return (
                   <div key={`perf-${p.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
                     <div>
                       <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? p.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {profile?.designation?.trim()
-                          ? profile.designation
-                          : profile
-                            ? DESIGNATIONS[profile.role]
-                            : "HUDD Officer"}
-                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">{designation}</p>
                     </div>
                     {profile && <RoleBadge role={profile.role} />}
                   </div>
@@ -476,17 +471,12 @@ export default function ActionItemDetailPage() {
             <div className="mt-3 space-y-4">
               {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
                 const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
+                const designation = profile?.designation?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
                 return (
                   <div key={`rev-${r.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
                     <div>
                       <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? r.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {profile?.designation?.trim()
-                          ? profile.designation
-                          : profile
-                            ? DESIGNATIONS[profile.role]
-                            : "HUDD Officer"}
-                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">{designation}</p>
                     </div>
                     {profile && <RoleBadge role={profile.role} />}
                   </div>

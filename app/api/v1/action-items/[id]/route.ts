@@ -48,11 +48,11 @@ const actionInclude = {
   vertical: { select: { name: true } },
   performers: {
     orderBy: { sortOrder: "asc" as const },
-    include: { user: { select: { id: true, name: true, code: true } } },
+    include: { user: { select: { id: true, name: true, code: true, designation: true } } },
   },
   reviewerUsers: {
     orderBy: { sortOrder: "asc" as const },
-    include: { user: { select: { id: true, name: true, code: true } } },
+    include: { user: { select: { id: true, name: true, code: true, designation: true } } },
   },
   updates: {
     orderBy: { timestamp: "asc" as const },
@@ -87,8 +87,8 @@ function mapActionItem(item: ActionItemWithRelations) {
     status: item.status,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
-    performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
-    reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
+    performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designation ?? "" })),
+    reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designation ?? "" })),
     assignedToUserIds: perfUsers.map((u) => u.id),
     reviewerUserIds: revUsers.map((u) => u.id),
     assignedToUserCode: perfUsers[0]?.code ?? null,

@@ -408,12 +408,12 @@ export default function KPIEntryPage() {
                   </div>
                 </div>
 
-                {/* Approved-decrease warning */}
+                {/* Approved-decrease warning
                 {isApproved && approvedNum != null && (
                   <div className="rounded-xl border border-[var(--alert-warning,#f59e0b)] bg-[rgba(245,158,11,0.08)] px-4 py-3 text-xs text-[var(--alert-warning,#f59e0b)]">
                     Last approved value: <strong>{approvedNum} {item.unit}</strong>. New numerator cannot be set lower than this.
                   </div>
-                )}
+                )} */}
 
                 {!canEditSelected && (
                   <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
