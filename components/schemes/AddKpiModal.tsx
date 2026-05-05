@@ -186,11 +186,43 @@ type Props = {
   onSaved: () => void;
 };
 
+const KPI_TYPE_META: Record<
+  "OUTPUT" | "OUTCOME" | "BINARY",
+  { label: string; description: string; entry: string; unitLabel: string; unitHint: string; denominatorLabel: string; denominatorHint: string }
+> = {
+  OUTPUT: {
+    label: "Output",
+    description: "A numeric value — absolute count or percentage. Action owners enter a number each time they update progress.",
+    entry: "numeric",
+    unitLabel: "Unit",
+    unitHint: "What is being measured (e.g. households, km, %)",
+    denominatorLabel: "Target",
+    denominatorHint: "The total target value to reach",
+  },
+  OUTCOME: {
+    label: "Outcome",
+    description: "A written update describing what was achieved. Action owners type a short qualitative note — no number is recorded.",
+    entry: "text",
+    unitLabel: "",
+    unitHint: "",
+    denominatorLabel: "",
+    denominatorHint: "",
+  },
+  BINARY: {
+    label: "Binary",
+    description: "A yes / no milestone. Action owners mark it complete or not — no number or text entry required.",
+    entry: "none",
+    unitLabel: "",
+    unitHint: "",
+    denominatorLabel: "",
+    denominatorHint: "",
+  },
+};
+
 export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<"STATE" | "CENTRAL">("STATE");
   const [kpiType, setKpiType] = useState<"OUTPUT" | "OUTCOME" | "BINARY">("OUTPUT");
   const [subschemeId, setSubschemeId] = useState<string>("");
   const [unit, setUnit] = useState("");
@@ -198,10 +230,11 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
   const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
 
+  const derivedCategory: "STATE" | "CENTRAL" = scheme?.sponsorshipType === "STATE" ? "STATE" : "CENTRAL";
+
   useEffect(() => {
     if (!open || !scheme) return;
     setDescription("");
-    setCategory("STATE");
     setKpiType("OUTPUT");
     setSubschemeId("");
     setUnit("");
@@ -220,11 +253,11 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     }
     const performers = performerIds.map((id) => id.trim()).filter(Boolean);
     const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
-    if (performers.length === 0 || reviewers.length === 0) {
-      setAlert("Select at least one action owner and one reviewer.");
+    if (performers.length === 0) {
+      setAlert("Select at least one action owner.");
       return;
     }
-    const overlap = performers.filter((id) => reviewers.includes(id));
+    const overlap = reviewers.length > 0 ? performers.filter((id) => reviewers.includes(id)) : [];
     if (overlap.length > 0) {
       setAlert("Action owners and reviewers must not include the same user.");
       return;
@@ -232,12 +265,12 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setSaving(true);
     setAlert(null);
     try {
-      const unitTrimmed = unit.trim() || null;
-      const denominatorValue = denominator.trim() ? Number(denominator.trim()) : null;
+      const unitTrimmed = kpiType === "OUTPUT" ? (unit.trim() || null) : null;
+      const denominatorValue = kpiType === "OUTPUT" && denominator.trim() ? Number(denominator.trim()) : null;
       await createKpiDefinition({
         schemeId: scheme.id,
         subschemeId: subschemeId || null,
-        category,
+        category: derivedCategory,
         description: d,
         kpiType,
         numeratorUnit: unitTrimmed,
@@ -257,7 +290,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
 
   if (!open || !scheme) return null;
 
-  const userPickerDisabled = users.length < 2;
+  const userPickerDisabled = users.length < 1;
   const allExcludedForPerformers = (index: number) =>
     [...reviewerIds.filter(Boolean), ...performerIds.filter((pid, i) => i !== index && Boolean(pid))];
   const allExcludedForReviewers = (index: number) =>
@@ -303,7 +336,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
 
         {userPickerDisabled && (
           <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
-            At least two active users are required in the directory to assign owners and reviewers.
+            At least one active user is required in the directory to assign owners.
           </div>
         )}
 
@@ -317,29 +350,59 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
               className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
             />
           </label>
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-            Category
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as "STATE" | "CENTRAL")}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-            >
-              <option value="STATE">STATE</option>
-              <option value="CENTRAL">CENTRAL</option>
-            </select>
-          </label>
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-            KPI type
-            <select
-              value={kpiType}
-              onChange={(e) => setKpiType(e.target.value as "OUTPUT" | "OUTCOME" | "BINARY")}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-            >
-              <option value="OUTPUT">OUTPUT</option>
-              <option value="OUTCOME">OUTCOME</option>
-              <option value="BINARY">BINARY</option>
-            </select>
-          </label>
+
+          <div className="flex justify between">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Category</p>
+            <span className="mt-2 inline-block rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]">
+              {derivedCategory}
+            </span>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Type</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {(["OUTPUT", "OUTCOME", "BINARY"] as const).map((type) => {
+                const meta = KPI_TYPE_META[type];
+                const selected = kpiType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => {
+                      setKpiType(type);
+                      if (type !== "OUTPUT") {
+                        setUnit("");
+                        setDenominator("");
+                      }
+                    }}
+                    className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      selected
+                        ? "border-[var(--text-primary)] bg-[var(--bg-hover)]"
+                        : "border-[var(--border)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]"
+                    }`}
+                  >
+                    <p className={`text-xs font-semibold uppercase tracking-widest ${selected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>
+                      {meta.label}
+                    </p>
+                    <p className="mt-1 text-[11px] font-normal normal-case tracking-normal text-[var(--text-muted)] leading-snug">
+                      {meta.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {kpiType === "OUTCOME" && (
+            <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-[11px] normal-case tracking-normal text-[var(--text-muted)]">
+              When updating this KPI, the action owner will write a short text note describing what was achieved — no number is entered or stored.
+            </p>
+          )}
+          {kpiType === "BINARY" && (
+            <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-[11px] normal-case tracking-normal text-[var(--text-muted)]">
+              When updating this KPI, the action owner simply marks it as complete or incomplete — no number or text is entered.
+            </p>
+          )}
+
           {scheme.subschemes.length > 0 && (
             <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
               Subscheme (optional)
@@ -402,7 +465,10 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Anyone listed may approve or reject submissions.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                Optional. Anyone listed may approve or reject submissions. If none are listed, submissions are marked
+                complete when saved (no separate review).
+              </p>
               <button
                 type="button"
                 disabled={userPickerDisabled}
@@ -441,27 +507,43 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
               </div>
             </div>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-              Unit
-              <input
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="e.g. households"
-                className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-              />
-            </label>
-            <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-              Denominator
-              <input
-                type="number"
-                value={denominator}
-                onChange={(e) => setDenominator(e.target.value)}
-                placeholder="e.g. 100"
-                className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-              />
-            </label>
-          </div>
+          {kpiType === "OUTPUT" && (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Measurement</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  Unit
+                  <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                    What is being measured (e.g. households, km, %)
+                  </span>
+                  <input
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="e.g. households"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
+                  />
+                </label>
+                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  Target
+                  <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                    The total target value to reach
+                  </span>
+                  <input
+                    type="number"
+                    value={denominator}
+                    onChange={(e) => setDenominator(e.target.value)}
+                    placeholder="e.g. 500"
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
+                  />
+                </label>
+              </div>
+              {unit && denominator && (
+                <p className="text-[11px] text-[var(--text-muted)] normal-case tracking-normal">
+                  Progress will show as: <span className="font-medium text-[var(--text-primary)]">__ / {denominator} {unit}</span>
+                </p>
+              )}
+            </div>
+          )}
           <button
             type="button"
             disabled={saving || userPickerDisabled}

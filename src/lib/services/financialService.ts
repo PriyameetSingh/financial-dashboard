@@ -1,3 +1,4 @@
+import { withNextBasePath } from "@/lib/next-base-path";
 import { FinanceSummaryRow, FinancialEntry, FinanceYearBudgetAllocationLineRow } from "@/types";
 
 type FinancialEntriesResponse = {
@@ -14,7 +15,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchFinancialBudgets(): Promise<FinancialEntriesResponse> {
-  const response = await fetch("/api/v1/financial/budgets", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/financial/budgets"), { cache: "no-store" });
   return parseResponse<FinancialEntriesResponse>(response);
 }
 
@@ -37,8 +38,9 @@ export async function submitFinancialSnapshot(input: {
   remarks?: string;
   financialYearLabel?: string;
   workflowStatus: "draft" | "submitted";
+  meetingId: string;
 }): Promise<void> {
-  const response = await fetch("/api/v1/financial/snapshots", {
+  const response = await fetch(withNextBasePath("/api/v1/financial/snapshots"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -56,7 +58,10 @@ export async function fetchFinanceSummary(params?: { asOfDate?: string; financia
   if (params?.asOfDate) search.set("asOfDate", params.asOfDate);
   if (params?.financialYearLabel) search.set("financialYearLabel", params.financialYearLabel);
   const q = search.toString();
-  const response = await fetch(`/api/v1/financial/summary${q ? `?${q}` : ""}`, { cache: "no-store" });
+  const response = await fetch(
+    `${withNextBasePath("/api/v1/financial/summary")}${q ? `?${q}` : ""}`,
+    { cache: "no-store" },
+  );
   return parseResponse(response);
 }
 
@@ -67,7 +72,10 @@ export async function fetchIfmsTimeseries(params?: { financialYearLabel?: string
   const search = new URLSearchParams();
   if (params?.financialYearLabel) search.set("financialYearLabel", params.financialYearLabel);
   const q = search.toString();
-  const response = await fetch(`/api/v1/financial/ifms-timeseries${q ? `?${q}` : ""}`, { cache: "no-store" });
+  const response = await fetch(
+    `${withNextBasePath("/api/v1/financial/ifms-timeseries")}${q ? `?${q}` : ""}`,
+    { cache: "no-store" },
+  );
   return parseResponse(response);
 }
 
@@ -78,7 +86,7 @@ export async function patchFinancialBudget(input: {
   reason: string;
   financialYearLabel?: string;
 }): Promise<void> {
-  const response = await fetch("/api/v1/financial/budgets", {
+  const response = await fetch(withNextBasePath("/api/v1/financial/budgets"), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -96,7 +104,7 @@ export async function saveFinanceSummary(input: {
     ifmsExpenditureCr: number;
   }>;
 }): Promise<void> {
-  const response = await fetch("/api/v1/financial/summary", {
+  const response = await fetch(withNextBasePath("/api/v1/financial/summary"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -114,7 +122,10 @@ export async function fetchFyBudgetAllocation(params?: { financialYearLabel?: st
   const search = new URLSearchParams();
   if (params?.financialYearLabel) search.set("financialYearLabel", params.financialYearLabel);
   const q = search.toString();
-  const response = await fetch(`/api/v1/financial/fy-budget-allocation${q ? `?${q}` : ""}`, { cache: "no-store" });
+  const response = await fetch(
+    `${withNextBasePath("/api/v1/financial/fy-budget-allocation")}${q ? `?${q}` : ""}`,
+    { cache: "no-store" },
+  );
   return parseResponse(response);
 }
 
@@ -128,7 +139,7 @@ export async function saveFyBudgetAllocation(input: {
     ifmsExpenditureCr: number;
   }>;
 }): Promise<void> {
-  const response = await fetch("/api/v1/financial/fy-budget-allocation", {
+  const response = await fetch(withNextBasePath("/api/v1/financial/fy-budget-allocation"), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -158,7 +169,7 @@ export async function createFinanceBudgetSupplement(input: {
   reason: string;
   referenceNo?: string;
 }): Promise<FinanceBudgetSupplementCreated> {
-  const response = await fetch("/api/v1/financial/supplements", {
+  const response = await fetch(withNextBasePath("/api/v1/financial/supplements"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

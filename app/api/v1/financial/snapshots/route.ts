@@ -16,6 +16,8 @@ type Body = {
   remarks?: string;
   financialYearLabel?: string;
   workflowStatus?: "draft" | "submitted";
+  /** Required — ties this expenditure snapshot to a dashboard meeting. */
+  meetingId: string;
 };
 
 export async function POST(request: NextRequest) {
@@ -23,6 +25,17 @@ export async function POST(request: NextRequest) {
     const createdBy = await requireAnyPermissionAndDbUser("ENTER_FINANCIAL_DATA");
 
     const body = (await request.json()) as Body;
+
+    if (!body.meetingId?.trim()) {
+      return NextResponse.json({ detail: "Meeting is required" }, { status: 400 });
+    }
+    const meeting = await prisma.dashboardMeeting.findUnique({
+      where: { id: body.meetingId.trim() },
+      select: { id: true },
+    });
+    if (!meeting) {
+      return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+    }
 
     const scheme = await prisma.scheme.findUnique({
       where: { code: body.schemeCode },
@@ -83,6 +96,7 @@ export async function POST(request: NextRequest) {
       await prisma.financeExpenditureSnapshot.update({
         where: { id: existing.id },
         data: {
+          meetingId: meeting.id,
           soExpenditureCr: body.soExpenditureCr,
           ifmsExpenditureCr: body.ifmsExpenditureCr,
           remarks: body.remarks,
@@ -96,6 +110,7 @@ export async function POST(request: NextRequest) {
           schemeId: scheme.id,
           subschemeId,
           financialYearId: fy.id,
+          meetingId: meeting.id,
           asOfDate,
           soExpenditureCr: body.soExpenditureCr,
           ifmsExpenditureCr: body.ifmsExpenditureCr,
@@ -131,6 +146,7 @@ export async function POST(request: NextRequest) {
         : null,
       {
         ...auditContext,
+        meetingId: meeting.id,
         schemeId: scheme.id,
         subschemeId,
         financialYearId: fy.id,

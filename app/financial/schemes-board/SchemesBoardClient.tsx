@@ -117,6 +117,10 @@ const COLUMN_UI: Record<
   },
 };
 
+type ViewTab = "board" | "list";
+type SortKey = "scheme" | "vertical" | "re" | "spent" | "pct" | "bucket";
+type SortDir = "asc" | "desc";
+
 export default function SchemesBoardClient() {
   const currentUser = useHydratedCurrentUser();
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
@@ -125,6 +129,9 @@ export default function SchemesBoardClient() {
   const [query, setQuery] = useState("");
   const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
   const [schemeModalEntry, setSchemeModalEntry] = useState<FinancialEntry | null>(null);
+  const [activeTab, setActiveTab] = useState<ViewTab>("board");
+  const [sortKey, setSortKey] = useState<SortKey>("pct");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   useEffect(() => {
     let alive = true;
@@ -185,6 +192,51 @@ export default function SchemesBoardClient() {
   const fmtCr = (n: number) =>
     n >= 100 ? n.toFixed(0) : n.toFixed(1);
 
+  const sortedList = useMemo(() => {
+    const rows = [...filtered];
+    rows.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "scheme":
+          cmp = a.scheme.localeCompare(b.scheme);
+          break;
+        case "vertical":
+          cmp = a.vertical.localeCompare(b.vertical);
+          break;
+        case "re":
+          cmp = effBudget(a) - effBudget(b);
+          break;
+        case "spent":
+          cmp = a.ifms - b.ifms;
+          break;
+        case "pct":
+          cmp = utilPct(a) - utilPct(b);
+          break;
+        case "bucket": {
+          const order: Record<Bucket, number> = { critical: 0, at_risk: 1, on_track: 2 };
+          cmp = order[bucketFor(utilPct(a))] - order[bucketFor(utilPct(b))];
+          break;
+        }
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return rows;
+  }, [filtered, sortKey, sortDir]);
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  function SortIcon({ col }: { col: SortKey }) {
+    if (sortKey !== col) return <span className="ml-1 opacity-30">↕</span>;
+    return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
+  }
+
   return (
     <AppShell title="Scheme utilisation board">
       <div className="relative space-y-6 px-6 py-6">
@@ -239,6 +291,35 @@ export default function SchemesBoardClient() {
           </div>
         </div>
 
+        {/* Tab switcher */}
+        <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1 w-fit">
+          {(["board", "list"] as ViewTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
+                activeTab === tab
+                  ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {tab === "board" ? (
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="1" y="1" width="4" height="14" rx="1" />
+                  <rect x="6" y="1" width="4" height="14" rx="1" />
+                  <rect x="11" y="1" width="4" height="14" rx="1" />
+                </svg>
+              ) : (
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M1 4h14M1 8h14M1 12h14" strokeLinecap="round" />
+                </svg>
+              )}
+              {tab === "board" ? "Board" : "List"}
+            </button>
+          ))}
+        </div>
+
         {error && (
           <div className="rounded-lg border border-[var(--alert-warning)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-primary)]">
             {error}
@@ -249,7 +330,7 @@ export default function SchemesBoardClient() {
           <p className="text-sm text-[var(--text-muted)]">Loading schemes…</p>
         )}
 
-        {!loading && !error && (
+        {!loading && !error && activeTab === "board" && (
           <div className="grid gap-4 lg:grid-cols-3">
             {BUCKET_ORDER.map((key) => {
               const ui = COLUMN_UI[key];
@@ -419,6 +500,117 @@ export default function SchemesBoardClient() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {!loading && !error && activeTab === "list" && (
+          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px] text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)] text-xs uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                    {(
+                      [
+                        { key: "scheme" as SortKey, label: "Scheme" },
+                        { key: "vertical" as SortKey, label: "Vertical" },
+                        { key: "re" as SortKey, label: "RE (Cr)" },
+                        { key: "spent" as SortKey, label: "Spent (Cr)" },
+                        { key: "pct" as SortKey, label: "Utilisation" },
+                      ] as { key: SortKey; label: string }[]
+                    ).map(({ key, label }) => (
+                      <th
+                        key={key}
+                        scope="col"
+                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--text-primary)] ${
+                          key === "re" || key === "spent" || key === "pct"
+                            ? "text-right"
+                            : ""
+                        }`}
+                        onClick={() => handleSort(key)}
+                      >
+                        {label}
+                        <SortIcon col={key} />
+                      </th>
+                    ))}
+                    <th scope="col" className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {sortedList.map((entry) => {
+                    const pct = utilPct(entry);
+                    const bucket = bucketFor(pct);
+                    const kind = sponsorshipKind(entry);
+
+                    const barFill =
+                      bucket === "critical"
+                        ? "bg-rose-500"
+                        : bucket === "at_risk"
+                          ? "bg-amber-500"
+                          : "bg-emerald-500";
+
+                    return (
+                      <tr
+                        key={entry.id}
+                        className="group cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
+                        onClick={() => setSchemeModalEntry(entry)}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : "bg-orange-500"}`}
+                              title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
+                            />
+                            <div>
+                              <p className="font-medium leading-snug text-[var(--text-primary)]">
+                                {entry.scheme}
+                              </p>
+                              <p className="text-[11px] text-[var(--text-muted)]">{entry.id}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">
+                          {entry.vertical}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                          ₹{fmtCr(effBudget(entry))}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                          ₹{fmtCr(entry.ifms)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--border)]">
+                              <div
+                                className={`h-full rounded-full ${barFill}`}
+                                style={{ width: `${Math.min(100, pct)}%` }}
+                              />
+                            </div>
+                            <span className="w-12 text-right text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                              {pct.toFixed(1)}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-xs font-medium text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100">
+                            View →
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {sortedList.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center text-xs text-[var(--text-muted)]"
+                      >
+                        No schemes match your search.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

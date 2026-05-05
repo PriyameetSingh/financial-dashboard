@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission } from "@/lib/auth";
+import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { fetchKPISubmissions, submitKPIMeasurement } from "@/src/lib/services/kpiService";
 import { KPISubmission } from "@/types";
 import StatusBadge from "@/src/components/ui/StatusBadge";
@@ -45,10 +46,19 @@ export default function KPIEntryPage() {
   const [binaryResponses, setBinaryResponses] = useState<Record<string, boolean | null>>({});
   const [numeratorById, setNumeratorById] = useState<Record<string, number | "">>({});
   const [remarksById, setRemarksById] = useState<Record<string, string>>({});
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+  const [meetingId, setMeetingId] = useState("");
+
+  const meetingLabel = (m: MeetingListItem) => {
+    const t = m.title?.trim();
+    return t ? `${m.meetingDate} — ${t}` : m.meetingDate;
+  };
 
   const reload = async () => {
     const data = await fetchKPISubmissions();
-    setSubmissions(data.submissions);
+    // Only show KPIs the current user is assigned to enter. Admins with
+    // MANAGE_SCHEMES have currentUserCanEnter=true for every KPI.
+    setSubmissions(data.submissions.filter((s) => s.currentUserCanEnter === true));
     setFinancialYearLabel(data.financialYearLabel);
     const num: Record<string, number | ""> = {};
     const rem: Record<string, string> = {};
@@ -64,7 +74,9 @@ export default function KPIEntryPage() {
     let active = true;
     const load = async () => {
       try {
-        await reload();
+        const [, list] = await Promise.all([reload(), fetchMeetings()]);
+        if (!active) return;
+        setMeetings(list);
       } catch (e: unknown) {
         if (!active) return;
         setLoadError(e instanceof Error ? e.message : "Failed to load KPIs");
@@ -76,8 +88,15 @@ export default function KPIEntryPage() {
     return () => { active = false; };
   }, []);
 
-  // Group all API-returned submissions by scheme (no client-side user filter —
-  // the API already scopes data to the session user's assignments)
+  // Default to latest meeting (GET /meetings returns newest `meetingDate` first).
+  useEffect(() => {
+    if (meetings.length === 0) return;
+    setMeetingId((prev) => {
+      if (prev && meetings.some((m) => m.id === prev)) return prev;
+      return meetings[0].id;
+    });
+  }, [meetings]);
+
   const grouped = useMemo(() => {
     const schemeNames = Array.from(new Set(submissions.map((s) => s.scheme)));
     return schemeNames.map((scheme) => ({
@@ -168,6 +187,14 @@ export default function KPIEntryPage() {
     if (!item || !financialYearLabel) return;
     if (item.currentUserCanEnter === false) return;
 
+    if (!meetingId.trim()) {
+      setRowState((prev) => ({
+        ...prev,
+        [id]: { error: "Select the meeting this KPI progress should be attributed to." },
+      }));
+      return;
+    }
+
     if (item.type !== "BINARY") {
       const err = getValidationError(item, numeratorById[id] ?? "");
       if (err) {
@@ -184,6 +211,7 @@ export default function KPIEntryPage() {
         kpiDefinitionId: item.id,
         financialYearLabel,
         measuredAt,
+        meetingId: meetingId.trim(),
         numeratorValue: Number.isFinite(num as number) ? num : null,
         // denominator is always read-only here; do not send it
         yesValue: item.type === "BINARY" ? (binaryResponses[id] ?? null) : null,
@@ -396,6 +424,29 @@ export default function KPIEntryPage() {
                 <div
                   className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-6 ${!canEditSelected ? "pointer-events-none opacity-50" : ""}`}
                 >
+                  <div className="mb-5 space-y-2 border-b border-[var(--border)] pb-5">
+                    <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                      Meeting <span className="text-[var(--alert-critical)]">*</span>
+                    </label>
+                    <select
+                      value={meetingId}
+                      onChange={(e) => setMeetingId(e.target.value)}
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
+                    >
+                      <option value="">Select meeting…</option>
+                      {meetings.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {meetingLabel(m)}
+                        </option>
+                      ))}
+                    </select>
+                    {meetings.length === 0 && (
+                      <p className="text-[11px] text-[var(--text-muted)]">
+                        No meetings found. Create one under Meetings first.
+                      </p>
+                    )}
+                  </div>
+
                   {item.type === "BINARY" ? (
                     <div className="space-y-4">
                       <p className="text-xs font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
@@ -523,14 +574,14 @@ export default function KPIEntryPage() {
                   {/* Actions */}
                   <div className="mt-6 flex flex-wrap items-center gap-3">
                     <button
-                      disabled={row.saving || !!validationError}
+                      disabled={row.saving || !!validationError || !meetingId.trim()}
                       onClick={() => handleRowAction(item.id, "draft")}
                       className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {row.saving ? "Saving…" : row.saved ? "Draft Saved ✓" : "Save Draft"}
                     </button>
                     <button
-                      disabled={row.saving || !!validationError}
+                      disabled={row.saving || !!validationError || !meetingId.trim()}
                       onClick={() => handleRowAction(item.id, "submit")}
                       className="rounded-xl bg-[var(--text-primary)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--bg-primary)] transition disabled:cursor-not-allowed disabled:opacity-50"
                     >

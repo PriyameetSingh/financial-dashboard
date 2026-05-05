@@ -7,7 +7,7 @@ import { useRequireRole } from "@/src/lib/route-guards";
 import { UserRole } from "@/lib/auth";
 
 export default function FinancialEntryLanding() {
-  useRequireRole([UserRole.FA], "/");
+  useRequireRole([UserRole.FA, UserRole.TASU], "/");
 
   return (
     <AppShell title="Financial Data Entry">

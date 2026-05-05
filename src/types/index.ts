@@ -80,6 +80,8 @@ export interface ActionItem {
   assignedToUserId?: string;
   reviewerUserId?: string;
   schemeId: string;
+  /** Source meeting when the action item was created from a meeting; used to default progress attribution. */
+  meetingId?: string | null;
   daysOverdue?: number;
   updates: ActionItemUpdate[];
   proofFiles: ActionItemProof[];

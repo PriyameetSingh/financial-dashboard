@@ -170,19 +170,31 @@ export default function ActionItemsPage() {
     });
   }, [listItems, trackerActivity, trackerStatus]);
 
+  const now = useMemo(() => new Date(), []);
+
+  /** True when due date has passed and the item is not completed. */
+  const isItemOverdue = (item: ActionItem) =>
+    item.status !== "COMPLETED" && new Date(item.dueDate) < now;
+
+  /** Number of days past the due date (0 if not overdue). */
+  const daysOverdueFor = (item: ActionItem): number => {
+    if (!isItemOverdue(item)) return 0;
+    return Math.ceil((now.getTime() - new Date(item.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   const stats = useMemo(() => {
     const total = listItems.length;
-    const overdue = listItems.filter((item) => item.status === "OVERDUE").length;
+    const overdue = listItems.filter(isItemOverdue).length;
     const completed = listItems.filter((item) => item.status === "COMPLETED").length;
     const dueThisWeek = listItems.filter((item) => {
       const due = new Date(item.dueDate);
-      const now = new Date();
-      const week = new Date();
+      const week = new Date(now);
       week.setDate(now.getDate() + 7);
       return due >= now && due <= week;
     }).length;
     return { total, overdue, dueThisWeek, completed };
-  }, [listItems]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listItems, now]);
 
   const verticalOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.vertical)))], [items]);
   const assigneeOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.assignedTo)))], [items]);
@@ -191,7 +203,10 @@ export default function ActionItemsPage() {
   const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
   const showStats = !!user;
   const canReassignActionItems =
-    !!user && !isViewer && hasPermission(user, Permission.UPDATE_ACTION_ITEMS);
+    !!user &&
+    !isViewer &&
+    (hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
+      hasPermission(user, Permission.CREATE_ACTION_ITEMS));
 
   return (
     <AppShell title="Action Items">
@@ -372,6 +387,8 @@ export default function ActionItemsPage() {
             {filtered.map((item, index) => {
               const currentStatus = item.status === "OVERDUE" ? "OPEN" : item.status;
               const currentIndex = STATUS_STEPS.indexOf(currentStatus);
+              const overdue = isItemOverdue(item);
+              const daysOv = daysOverdueFor(item);
               const cardToneClasses =
                 index % 2 === 0
                   ? "border-[var(--border)] bg-[var(--bg-card)]"
@@ -390,9 +407,9 @@ export default function ActionItemsPage() {
                         <span className="inline-flex max-w-full items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--accent-text)]">
                           {item.vertical}
                         </span>
-                        {item.status === "OVERDUE" && (
+                        {overdue && (
                           <span className="inline-flex items-center rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide text-[var(--alert-critical)]">
-                            {item.daysOverdue ?? 1} days overdue
+                            {daysOv} {daysOv === 1 ? "day" : "days"} overdue
                           </span>
                         )}
                       </div>
@@ -409,7 +426,9 @@ export default function ActionItemsPage() {
                     <span>·</span>
                     <span>Reviewer {item.reviewer}</span>
                     <span>·</span>
-                    <span>Due {item.dueDate}</span>
+                    <span className={overdue ? "font-semibold text-[var(--alert-critical)]" : ""}>
+                      Due {item.dueDate}
+                    </span>
                     <span>·</span>
                     <span>{item.vertical}</span>
                   </div>

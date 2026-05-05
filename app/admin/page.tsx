@@ -40,12 +40,14 @@ export default function AdminOverviewPage() {
           )}
           {showPermissions && (
             <Link
-              href="/admin/users"
+              href="/admin/roles"
               className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Permissions</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Roles & overrides</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Open the user directory to edit permission overrides per officer.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Roles</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Role-wide permissions</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                Edit default permission bundles for each application role (ACS, TASU, Nodal, etc.).
+              </p>
             </Link>
           )}
           {showSchemes && (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 export const runtime = "nodejs";
 
@@ -27,7 +28,7 @@ function resolvePostLogoutRedirectUri(request: NextRequest): string {
   if (configured) return configured;
   const callbackParam = request.nextUrl.searchParams.get("callbackUrl") ?? "/login";
   const callbackPath = callbackParam.startsWith("/") ? callbackParam : "/login";
-  return new URL(callbackPath, normalizedBaseUrl(request)).toString();
+  return new URL(withNextBasePath(callbackPath), normalizedBaseUrl(request)).toString();
 }
 
 function buildKeycloakLogoutUrl(request: NextRequest, idTokenHint?: string): string | null {
@@ -45,13 +46,23 @@ function buildKeycloakLogoutUrl(request: NextRequest, idTokenHint?: string): str
   return `${issuer}/protocol/openid-connect/logout?${params.toString()}`;
 }
 
+function isSecureRequest(request: NextRequest): boolean {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  if (forwardedProto) return forwardedProto.split(",")[0].trim() === "https";
+  return request.nextUrl.protocol === "https:";
+}
+
 export async function GET(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: isSecureRequest(request),
+  });
   const idTokenHint = typeof token?.id_token === "string" ? token.id_token : undefined;
   const keycloakLogoutUrl = buildKeycloakLogoutUrl(request, idTokenHint);
 
   if (keycloakLogoutUrl) {
     return NextResponse.redirect(keycloakLogoutUrl);
   }
-  return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
+  return NextResponse.redirect(new URL(withNextBasePath("/login"), request.nextUrl.origin));
 }

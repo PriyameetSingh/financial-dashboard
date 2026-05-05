@@ -5,6 +5,7 @@ import { Permission } from "@/lib/auth";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 type FyRow = {
   id: string;
@@ -35,7 +36,7 @@ export default function AdminFinancialYearsPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/admin/financial-years", { credentials: "include" });
+      const res = await fetch(withNextBasePath("/api/v1/admin/financial-years"), { credentials: "include" });
       const data = (await res.json().catch(() => ({}))) as { items?: FyRow[]; detail?: string };
       if (!res.ok) throw new Error(data.detail ?? res.statusText);
       setItems(data.items ?? []);
@@ -55,7 +56,7 @@ export default function AdminFinancialYearsPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/admin/financial-years", {
+      const res = await fetch(withNextBasePath("/api/v1/admin/financial-years"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +86,7 @@ export default function AdminFinancialYearsPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/admin/financial-years/${id}`, {
+      const res = await fetch(withNextBasePath(`/api/v1/admin/financial-years/${id}`), {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

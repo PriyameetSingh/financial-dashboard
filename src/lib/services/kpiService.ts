@@ -1,3 +1,4 @@
+import { withNextBasePath } from "@/lib/next-base-path";
 import { KPISubmission } from "@/types";
 
 export type KpiMeasurementHistory = {
@@ -42,7 +43,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchKPISubmissions(): Promise<{ submissions: KPISubmission[]; financialYearLabel: string | null }> {
-  const response = await fetch("/api/v1/kpis/definitions", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/kpis/definitions"), { cache: "no-store" });
   return parseResponse<KPIResponse>(response);
 }
 
@@ -60,13 +61,14 @@ export async function submitKPIMeasurement(input: {
   kpiDefinitionId: string;
   financialYearLabel: string;
   measuredAt: string;
+  meetingId: string;
   numeratorValue?: number | null;
   yesValue?: boolean | null;
   denominatorValue?: number | null;
   remarks?: string;
   workflowStatus?: "draft" | "submitted";
 }): Promise<void> {
-  const response = await fetch("/api/v1/kpis/measurements", {
+  const response = await fetch(withNextBasePath("/api/v1/kpis/measurements"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -78,7 +80,7 @@ export async function reviewKpiMeasurement(
   measurementId: string,
   input: { decision: "approve" | "reject"; note?: string },
 ): Promise<void> {
-  const response = await fetch(`/api/v1/kpis/measurements/${measurementId}/review`, {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/measurements/${measurementId}/review`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -87,7 +89,7 @@ export async function reviewKpiMeasurement(
 }
 
 export async function setKpiTargetDenominator(targetId: string, denominatorValue: number): Promise<void> {
-  const response = await fetch(`/api/v1/kpis/targets/${targetId}`, {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/targets/${targetId}`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ denominatorValue }),
@@ -96,7 +98,9 @@ export async function setKpiTargetDenominator(targetId: string, denominatorValue
 }
 
 export async function fetchKpiHistory(kpiDefinitionId: string): Promise<KpiHistoryResponse> {
-  const response = await fetch(`/api/v1/kpis/definitions/${kpiDefinitionId}/history`, { cache: "no-store" });
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}/history`), {
+    cache: "no-store",
+  });
   return parseResponse<KpiHistoryResponse>(response);
 }
 
@@ -104,7 +108,7 @@ export async function updateKpiDefinitionAssignments(
   kpiDefinitionId: string,
   input: { performerUserIds: string[]; reviewerUserIds: string[] },
 ): Promise<void> {
-  const response = await fetch(`/api/v1/kpis/definitions/${kpiDefinitionId}`, {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -124,7 +128,7 @@ export async function createKpiDefinition(input: {
   performerUserIds: string[];
   reviewerUserIds: string[];
 }): Promise<void> {
-  const response = await fetch("/api/v1/kpis/definitions", {
+  const response = await fetch(withNextBasePath("/api/v1/kpis/definitions"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

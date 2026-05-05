@@ -11,6 +11,7 @@ import {
   patchFinancialBudget,
   createFinanceBudgetSupplement,
 } from "@/src/lib/services/financialService";
+import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { FinancialEntry } from "@/types";
 
 import {
@@ -131,7 +132,7 @@ function getSubschemeBudgetProgress(sub: {
 }
 
 export default function SchemeEntryPage() {
-  useRequireRole([UserRole.FA, UserRole.NODAL_OFFICER], "/");
+  useRequireRole([UserRole.FA, UserRole.NODAL_OFFICER, UserRole.TASU], "/");
 
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
@@ -150,6 +151,13 @@ export default function SchemeEntryPage() {
   const [ifmsValue, setIfmsValue] = useState<number | "">("");
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
   const [remarks, setRemarks] = useState("");
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+  const [ifmsMeetingId, setIfmsMeetingId] = useState("");
+
+  const formatMeetingLabel = (m: MeetingListItem) => {
+    const t = m.title?.trim();
+    return t ? `${m.meetingDate} — ${t}` : m.meetingDate;
+  };
 
   // Card 2 state : SO Edit
   const [isEditingSO, setIsEditingSO] = useState(false);
@@ -179,9 +187,11 @@ export default function SchemeEntryPage() {
 
   const loadEntries = useCallback(async () => {
     try {
-      const data = await fetchFinancialBudgets();
+      const [data, meetingList] = await Promise.all([fetchFinancialBudgets(), fetchMeetings()]);
       setEntries(data.entries);
       setFinancialYearLabel(data.financialYearLabel);
+      setMeetings(meetingList);
+      if (meetingList.length > 0) setIfmsMeetingId(meetingList[0].id);
       return data;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to load financial data";
@@ -246,10 +256,12 @@ export default function SchemeEntryPage() {
     let active = true;
     const init = async () => {
       try {
-        const data = await fetchFinancialBudgets();
+        const [data, meetingList] = await Promise.all([fetchFinancialBudgets(), fetchMeetings()]);
         if (!active) return;
         setEntries(data.entries);
         setFinancialYearLabel(data.financialYearLabel);
+        setMeetings(meetingList);
+        if (meetingList.length > 0) setIfmsMeetingId(meetingList[0].id);
         applyEntry(data.entries[0] ?? null);
       } catch (e: unknown) {
         if (!active) return;
@@ -327,6 +339,10 @@ export default function SchemeEntryPage() {
       triggerAlert("error", "IFMS value must be a non-negative number.");
       return;
     }
+    if (!ifmsMeetingId.trim()) {
+      triggerAlert("error", "Select the meeting this IFMS update is attributed to.");
+      return;
+    }
 
     setIsSubmitting(true);
     setPendingSubmit(workflowStatus);
@@ -341,6 +357,7 @@ export default function SchemeEntryPage() {
         remarks,
         financialYearLabel,
         workflowStatus,
+        meetingId: ifmsMeetingId.trim(),
       });
 
       if (workflowStatus === "draft") {
@@ -469,6 +486,10 @@ export default function SchemeEntryPage() {
       triggerAlert("error", "Enter a valid non-negative SO amount.");
       return;
     }
+    if (!ifmsMeetingId.trim()) {
+      triggerAlert("error", "Select the meeting this financial update is attributed to.");
+      return;
+    }
     setIsSubmitting(true);
     setPendingSubmit("so");
     try {
@@ -482,6 +503,7 @@ export default function SchemeEntryPage() {
         remarks: editSoRemarks,
         financialYearLabel,
         workflowStatus: "submitted",
+        meetingId: ifmsMeetingId.trim(),
       });
       setIsEditingSO(false);
       setEditSoValue("");
@@ -826,7 +848,7 @@ export default function SchemeEntryPage() {
                                 <button
                                   type="button"
                                   onClick={handleUpdateSO}
-                                  disabled={isSubmitting}
+                                  disabled={isSubmitting || !ifmsMeetingId.trim()}
                                   className="inline-flex items-center justify-center gap-1.5 min-w-[5.25rem] text-xs font-semibold text-white bg-[#3498db] px-4 py-1.5 rounded shadow-sm hover:bg-[#2980b9] transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3498db]"
                                 >
                                   {pendingSubmit === "so" ? (
@@ -911,21 +933,104 @@ export default function SchemeEntryPage() {
                   <div className="px-5 py-4 border-b border-[var(--border)]">
                     <h2 className="text-sm font-semibold text-[var(--text-primary)]">Add IFMS Update</h2>
                   </div>
-                  <div className="p-5 flex gap-4 items-end">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Updated IFMS Expenditure (₹ Cr)</label>
-                      <input type="number" min="0" step="0.01" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
+                  <div className="p-5 flex flex-col gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">
+                        Meeting <span className="text-[var(--alert-critical)]">*</span>
+                      </label>
+                      <select
+                        value={ifmsMeetingId}
+                        onChange={(e) => setIfmsMeetingId(e.target.value)}
+                        className="w-full max-w-md p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]"
+                      >
+                        <option value="">Select meeting…</option>
+                        {meetings.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {formatMeetingLabel(m)}
+                          </option>
+                        ))}
+                      </select>
+                      {meetings.length === 0 && (
+                        <p className="mt-1 text-[11px] text-[var(--text-muted)]">Create a meeting under Meetings before recording IFMS progress.</p>
+                      )}
                     </div>
-                    <div className="w-48">
-                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Data as of Date</label>
-                      <input type="date" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={asOfDate} onChange={e => setAsOfDate(e.target.value)} />
-                    </div>
-                    <div className="flex-[2]">
-                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Remarks</label>
-                      <textarea rows={1} className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm resize-none shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" placeholder="Provide context..." value={remarks} onChange={e => setRemarks(e.target.value)} />
+                    <div className="flex gap-4 items-end flex-wrap">
+                      <div className="flex-1 min-w-[8rem]">
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Updated IFMS Expenditure (₹ Cr)</label>
+                        <input type="number" min="0" step="0.01" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
+                      </div>
+                      <div className="w-48">
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Data as of Date</label>
+                        <input type="date" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={asOfDate} onChange={e => setAsOfDate(e.target.value)} />
+                      </div>
+                      <div className="flex-[2] min-w-[12rem]">
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Remarks</label>
+                        <textarea rows={1} className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm resize-none shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" placeholder="Provide context..." value={remarks} onChange={e => setRemarks(e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* CARD 4: Update History */}
+                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--bg-content-surface)]">
+                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">Update History</h2>
+                  </div>
+                  {activeHistory.length === 0 ? (
+                    <div className="px-5 py-8 text-center text-sm text-[var(--text-muted)]">No updates recorded yet.</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[var(--border)] bg-[var(--bg-content-surface)]">
+                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">#</th>
+                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">As of Date</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS (₹ Cr)</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">SO (₹ Cr)</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS Change</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...activeHistory].reverse().map((h, idx, arr) => {
+                            const prev = arr[idx + 1];
+                            const delta = prev !== undefined ? h.ifms - prev.ifms : null;
+                            const isLatest = idx === 0;
+                            return (
+                              <tr
+                                key={`${h.asOfDate}-${idx}`}
+                                className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[rgba(46,204,113,0.04)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
+                              >
+                                <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
+                                <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
+                                  {new Date(h.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                  {isLatest && (
+                                    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
+                                  {h.ifms.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td className="px-5 py-3 text-right text-[var(--text-secondary)]">
+                                  {h.so.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td className="px-5 py-3 text-right">
+                                  {delta === null ? (
+                                    <span className="text-[var(--text-muted)] text-xs">—</span>
+                                  ) : (
+                                    <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
+                                      {delta > 0 ? '+' : ''}{delta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
               {/* FOOTER BAR */}
@@ -937,7 +1042,7 @@ export default function SchemeEntryPage() {
                   <button
                     type="button"
                     onClick={handleSaveDraft}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !ifmsMeetingId.trim()}
                     className="inline-flex items-center justify-center gap-2 min-w-[7.5rem] px-5 py-2 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-primary)] hover:bg-[rgba(0,0,0,0.02)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {pendingSubmit === "draft" ? (
@@ -952,7 +1057,7 @@ export default function SchemeEntryPage() {
                   <button
                     type="button"
                     onClick={handleSaveSubmit}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !ifmsMeetingId.trim()}
                     className="inline-flex items-center justify-center gap-2 min-w-[8.5rem] px-6 py-2 rounded-lg text-sm font-semibold border border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-text)] shadow hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:opacity-90"
                   >
                     {pendingSubmit === "submitted" ? (

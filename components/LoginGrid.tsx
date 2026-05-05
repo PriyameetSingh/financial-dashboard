@@ -8,9 +8,17 @@ export default function LoginGrid() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const callbackUrl = useMemo(() => {
     if (typeof window === "undefined") return "/dashboard";
+    const envBase = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+    const path = window.location.pathname;
+    const inferred =
+      envBase ||
+      (path.includes("/login") ? path.replace(/\/?login\/?$/, "").replace(/\/$/, "") : "");
+    const basePath = inferred;
+    const origin = window.location.origin; // e.g. https://product.airawat.org
     const redirect = new URLSearchParams(window.location.search).get("redirect");
-    if (!redirect) return "/dashboard";
-    return redirect.startsWith("/") ? redirect : "/dashboard";
+    const relativePath = redirect?.startsWith("/") ? redirect : `${basePath}/dashboard`;
+    const fullPath = relativePath.startsWith(basePath) ? relativePath : `${basePath}${relativePath}`;
+    return `${origin}${fullPath}`; // absolute URL avoids Auth.js misresolution
   }, []);
 
   const handleSignIn = async () => {

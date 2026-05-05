@@ -6,7 +6,8 @@ import type { FinanceSummaryBreakdown } from "@/lib/financial-budget-entries";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
-import { fetchFinanceSummary } from "@/src/lib/services/financialService";
+import { withNextBasePath } from "@/lib/next-base-path";
+import { fetchFinanceSummary, fetchIfmsTimeseries } from "@/src/lib/services/financialService";
 import {
   Bar,
   BarChart,
@@ -115,18 +116,26 @@ export default function FinancialOverviewClient({
   const [baselineSummary, setBaselineSummary] = useState<Awaited<ReturnType<typeof fetchFinanceSummary>> | null>(null);
   const [currentHeadSummary, setCurrentHeadSummary] = useState<Awaited<ReturnType<typeof fetchFinanceSummary>> | null>(null);
   const [loadingCompare, setLoadingCompare] = useState(false);
+  const [ifmsTimeseriesPoints, setIfmsTimeseriesPoints] = useState<{ asOfDate: string; ifmsCr: number }[]>([]);
   const [customBaseline, setCustomBaseline] = useState("");
   const [customCurrent, setCustomCurrent] = useState("");
   const [meetingA, setMeetingA] = useState("");
   const [meetingB, setMeetingB] = useState("");
 
   const summaryTotals = useMemo(() => {
+    // Prefer FA summary totals (includes all heads: schemes + transfers + admin) over scheme-only entries
+    if (summary?.totals && summary.totals.budgetEstimateCr > 0) {
+      const { budgetEstimateCr: totalBudget, soExpenditureCr: totalSo, ifmsExpenditureCr: totalIfms } = summary.totals;
+      const pct = totalBudget ? ((totalIfms / totalBudget) * 100).toFixed(1) : "0.0";
+      return { totalBudget, totalSo, totalIfms, pct, fromSummary: true };
+    }
+    // Fallback: sum scheme entries only (no FA summary data entered yet)
     const totalBudget = entries.reduce((sum, entry) => sum + effBudget(entry), 0);
     const totalSo = entries.reduce((sum, entry) => sum + entry.so, 0);
     const totalIfms = entries.reduce((sum, entry) => sum + entry.ifms, 0);
     const pct = totalBudget ? ((totalIfms / totalBudget) * 100).toFixed(1) : "0.0";
-    return { totalBudget, totalSo, totalIfms, pct };
-  }, [entries]);
+    return { totalBudget, totalSo, totalIfms, pct, fromSummary: false };
+  }, [entries, summary]);
 
   const currentSummaryAsOf = summary?.asOfDate ?? null;
 
@@ -177,9 +186,10 @@ export default function FinancialOverviewClient({
 
   const loadMeta = useCallback(async () => {
     try {
-      const [dRes, mRes] = await Promise.all([
-        fetch("/api/v1/financial/snapshot-dates", { cache: "no-store" }),
-        fetch("/api/v1/meetings", { cache: "no-store" }),
+      const [dRes, mRes, tsData] = await Promise.all([
+        fetch(withNextBasePath("/api/v1/financial/snapshot-dates"), { cache: "no-store" }),
+        fetch(withNextBasePath("/api/v1/meetings"), { cache: "no-store" }),
+        fetchIfmsTimeseries({ financialYearLabel: financialYearLabel ?? undefined }).catch(() => null),
       ]);
       if (dRes.ok) {
         const j = (await dRes.json()) as { dates: string[] };
@@ -191,13 +201,16 @@ export default function FinancialOverviewClient({
         };
         setMeetings(j.meetings ?? []);
       }
+      if (tsData?.points?.length) {
+        setIfmsTimeseriesPoints(tsData.points);
+      }
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [financialYearLabel]);
 
   useEffect(() => {
-    loadMeta();
+    void loadMeta();
   }, [loadMeta]);
 
   useEffect(() => {
@@ -335,18 +348,16 @@ export default function FinancialOverviewClient({
     ];
   }, [activeHeadSummary]);
 
-  /** Placeholder IFMS trend: smooth progression by meeting until backend timeseries is reliable. */
   const ifmsMeetingTrendChartData = useMemo(() => {
-    const sorted = [...meetings].sort((a, b) => a.meetingDate.localeCompare(b.meetingDate));
-    if (sorted.length === 0) return [];
-    const startCr = 2000;
-    const endCr = 8000;
-    const denom = Math.max(1, sorted.length - 1);
-    return sorted.map((m, i) => ({
-      label: m.meetingDate.slice(5),
-      ifmsCr: startCr + ((endCr - startCr) * i) / denom,
-    }));
-  }, [meetings]);
+    if (!ifmsTimeseriesPoints.length) return [];
+    return [...ifmsTimeseriesPoints]
+      .sort((a, b) => a.asOfDate.localeCompare(b.asOfDate))
+      .map((p) => ({
+        label: p.asOfDate.slice(5),
+        fullDate: p.asOfDate,
+        ifmsCr: p.ifmsCr,
+      }));
+  }, [ifmsTimeseriesPoints]);
 
   const transferDistributionRows = useMemo(() => {
     if (!activeHeadSummary?.rows.length) return [];
@@ -492,19 +503,25 @@ export default function FinancialOverviewClient({
         <div className="grid gap-4 md:grid-cols-3">
           {[
             {
-              label: "Total Budget",
+              label: "Total Budget Estimate",
               value: formatCurrency(summaryTotals.totalBudget),
-              sub: "All schemes (effective budget)",
+              sub: summaryTotals.fromSummary
+                ? "All heads incl. transfers & admin (FA summary)"
+                : "Scheme entries only (no FA summary yet)",
             },
             {
-              label: "SO Orders",
+              label: "S.O. Orders",
               value: formatCurrency(summaryTotals.totalSo),
-              sub: `${summaryTotals.pct}% utilisation (scheme roll-up)`,
+              sub: summaryTotals.fromSummary
+                ? "All heads incl. transfers & admin (FA summary)"
+                : `${summaryTotals.pct}% utilisation (scheme entries only)`,
             },
             {
-              label: "IFMS Actual",
+              label: "IFMS Actual Expenditure",
               value: formatCurrency(summaryTotals.totalIfms),
-              sub: "Utilised (scheme roll-up)",
+              sub: summaryTotals.fromSummary
+                ? `${summaryTotals.pct}% of budget — all heads (FA summary)`
+                : "Scheme entries only (no FA summary yet)",
             },
           ].map((card) => (
             <div key={card.label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
@@ -522,7 +539,11 @@ export default function FinancialOverviewClient({
                 Budget estimate vs S.O. order vs expenditure (IFMS)
               </p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">All funding sources • ₹ in Crores</p>
-              <div className="mt-4 h-[340px] w-full min-w-0">
+              <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
+                <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> Funding source</span>
+                <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Amount (₹ Crores)</span>
+              </div>
+              <div className="mt-3 h-[340px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height={340}>
                   <BarChart
                     layout="vertical"
@@ -652,23 +673,37 @@ export default function FinancialOverviewClient({
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Department IFMS trend</p>
             <p className="text-sm text-[var(--text-muted)]">
-              Illustrative IFMS by meeting date (₹ Cr; demo progression until live timeseries is available).
+              Cumulative IFMS expenditure by snapshot date (₹ Crores) — {fyDisplay}
             </p>
-            <div className="mt-4 h-56 w-full">
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
+              <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Snapshot date (MM-DD)</span>
+              <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
+            </div>
+            <div className="mt-3 h-56 w-full">
               <ResponsiveContainer width="100%" height={224}>
-                <LineChart data={ifmsMeetingTrendChartData}>
+                <LineChart data={ifmsMeetingTrendChartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
                       fontSize: 12,
                     }}
-                    formatter={(v) => [`${Number(v ?? 0).toFixed(1)} Cr`, "IFMS"]}
+                    labelFormatter={(label, payload) => {
+                      const fullDate = (payload?.[0]?.payload as { fullDate?: string } | undefined)?.fullDate;
+                      return `Date: ${fullDate ?? label}`;
+                    }}
+                    formatter={(v) => [`₹${Number(v ?? 0).toFixed(1)} Cr`, "IFMS Expenditure"]}
                   />
-                  <Line type="natural" dataKey="ifmsCr" stroke="var(--text-primary)" dot />
+                  <Line type="monotone" dataKey="ifmsCr" name="IFMS Expenditure (₹ Cr)" stroke={CHART_IFMS} strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -678,22 +713,33 @@ export default function FinancialOverviewClient({
         {headChartData.length > 0 && (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Summary heads — IFMS baseline vs current</p>
-            <div className="mt-4 h-64 w-full">
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
+              <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Finance head</span>
+              <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
+            </div>
+            <div className="mt-3 h-64 w-full">
               <ResponsiveContainer width="100%" height={256}>
-                <BarChart data={headChartData}>
+                <BarChart data={headChartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
                       fontSize: 12,
                     }}
+                    formatter={(v, name) => [`₹${Number(v ?? 0).toFixed(1)} Cr`, String(name ?? "")]}
                   />
                   <Legend />
-                  <Bar dataKey="baseline" name="Baseline IFMS" fill="var(--text-muted)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="current" name="Current IFMS" fill="var(--text-primary)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="baseline" name="Baseline IFMS (₹ Cr)" fill="var(--text-muted)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="current" name="Current IFMS (₹ Cr)" fill="var(--text-primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

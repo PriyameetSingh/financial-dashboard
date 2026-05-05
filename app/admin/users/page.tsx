@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission, UserRole } from "@/lib/auth";
 import RoleBadge from "@/src/components/ui/RoleBadge";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 const PERMISSION_LIST = Object.values(Permission);
 
@@ -363,7 +364,7 @@ export default function AdminUsersPage() {
   );
 
   const refreshRoles = useCallback(async () => {
-    const response = await fetch("/api/v1/rbac/roles");
+    const response = await fetch(withNextBasePath("/api/v1/rbac/roles"));
     if (!response.ok) throw new Error("Failed to load roles");
     const data = (await response.json()) as { roles: Array<{ code: UserRole; permissions: Permission[] }> };
 
@@ -377,7 +378,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const refreshUsers = useCallback(async () => {
-    const response = await fetch("/api/v1/rbac/users");
+    const response = await fetch(withNextBasePath("/api/v1/rbac/users"));
     if (!response.ok) throw new Error("Failed to load users");
     const data = (await response.json()) as { users: DbUserRow[] };
     setUsers(data.users);
@@ -483,7 +484,7 @@ export default function AdminUsersPage() {
 
     setIsCreatingUser(true);
     try {
-      const response = await fetch("/api/v1/admin/users", {
+      const response = await fetch(withNextBasePath("/api/v1/admin/users"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -531,7 +532,7 @@ export default function AdminUsersPage() {
     setRoleUpdateLoadingCodes((prev) => ({ ...prev, [userCode]: true }));
     setAlert("");
     try {
-      const response = await fetch(`/api/v1/admin/users/${encodeURIComponent(userCode)}`, {
+      const response = await fetch(withNextBasePath(`/api/v1/admin/users/${encodeURIComponent(userCode)}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roleCode: nextRole }),
@@ -566,7 +567,7 @@ export default function AdminUsersPage() {
     setDeleteLoadingCodes((prev) => ({ ...prev, [userCode]: true }));
     setAlert("");
     try {
-      const response = await fetch(`/api/v1/admin/users/${encodeURIComponent(userCode)}`, {
+      const response = await fetch(withNextBasePath(`/api/v1/admin/users/${encodeURIComponent(userCode)}`), {
         method: "DELETE",
       });
 
@@ -613,7 +614,7 @@ export default function AdminUsersPage() {
 
     setAlert("");
 
-    const response = await fetch(`/api/v1/rbac/users/${userCode}/permissions`, {
+    const response = await fetch(withNextBasePath(`/api/v1/rbac/users/${userCode}/permissions`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ permissionCode: permission, effect: nextEffect }),

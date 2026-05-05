@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Check, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { addActionItemProof, getActionItemById, updateActionItem } from "@/src/lib/services/actionItemService";
+import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { ActionItem, UserRole } from "@/types";
 import { hasPermission, Permission } from "@/lib/auth";
 import type { SessionUser } from "@/types";
@@ -80,6 +81,23 @@ export default function ActionItemDetailPage() {
   const [rejectComment, setRejectComment] = useState("");
   const [manualUpdateText, setManualUpdateText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+  const [progressMeetingId, setProgressMeetingId] = useState("");
+  const [editingDueDate, setEditingDueDate] = useState(false);
+  const [dueDateValue, setDueDateValue] = useState("");
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null);
+  const [editingUpdateNote, setEditingUpdateNote] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState("");
+  const [editingPriority, setEditingPriority] = useState(false);
+  const [priorityValue, setPriorityValue] = useState("");
+
+  const formatMeetingLabel = (m: MeetingListItem) => {
+    const t = m.title?.trim();
+    return t ? `${m.meetingDate} — ${t}` : m.meetingDate;
+  };
 
   const refresh = async () => {
     const data = await getActionItemById(id);
@@ -90,10 +108,18 @@ export default function ActionItemDetailPage() {
     let active = true;
     const load = async () => {
       try {
-        const [data, roster] = await Promise.all([getActionItemById(id), fetchDirectoryUsers()]);
+        const [data, roster, meetingList] = await Promise.all([
+          getActionItemById(id),
+          fetchDirectoryUsers(),
+          fetchMeetings(),
+        ]);
         if (!active) return;
         setItem(data ?? null);
         setDirectoryUsers(roster);
+        setMeetings(meetingList);
+        if (data?.meetingId) {
+          setProgressMeetingId(data.meetingId);
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -117,10 +143,22 @@ export default function ActionItemDetailPage() {
     item && isNodal && !isViewer && user && isAssignedOfficer(item, user),
   );
 
+  const canEdit = useMemo(() => {
+    if (!user || isViewer) return false;
+    return (
+      hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
+      hasPermission(user, Permission.CREATE_ACTION_ITEMS)
+    );
+  }, [user, isViewer]);
+
   const canAddManualUpdate = useMemo(() => {
     if (!item || !user || isViewer) return false;
-    return hasPermission(user, Permission.UPDATE_ACTION_ITEMS) || isAssignedOfficer(item, user);
-  }, [item, user, isViewer]);
+    return canEdit || isAssignedOfficer(item, user);
+  }, [item, user, isViewer, canEdit]);
+
+  const needsProgressMeetingUi = Boolean(
+    item && user && !isViewer && (canAddManualUpdate || showNodalActions),
+  );
 
   const closeLabel = actionSuccess ? "Completed" : "Mark Completed";
 
@@ -175,19 +213,234 @@ export default function ActionItemDetailPage() {
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{item.schemeId}</p>
-              <h1 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{item.title}</h1>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">{item.description}</p>
+
+              {/* Title */}
+              {editingTitle ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={titleValue}
+                    onChange={(e) => setTitleValue(e.target.value)}
+                    className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xl font-semibold text-[var(--text-primary)]"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || !titleValue.trim()}
+                    className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-primary)] disabled:opacity-50"
+                    onClick={async () => {
+                      if (!titleValue.trim()) return;
+                      setBusy(true);
+                      try {
+                        await updateActionItem(id, { title: titleValue.trim() });
+                        await refresh();
+                        setEditingTitle(false);
+                        setActionSuccess("Title updated.");
+                      } catch (e: unknown) {
+                        setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)]"
+                    onClick={() => setEditingTitle(false)}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-2 flex items-start gap-2">
+                  <h1 className="text-2xl font-semibold text-[var(--text-primary)]">{item.title}</h1>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="mt-1 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      onClick={() => { setTitleValue(item.title); setEditingTitle(true); }}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Description */}
+              {editingDescription ? (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    autoFocus
+                    value={descriptionValue}
+                    onChange={(e) => setDescriptionValue(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
+                      onClick={async () => {
+                        setBusy(true);
+                        try {
+                          await updateActionItem(id, { description: descriptionValue });
+                          await refresh();
+                          setEditingDescription(false);
+                          setActionSuccess("Description updated.");
+                        } catch (e: unknown) {
+                          setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                      onClick={() => setEditingDescription(false)}
+                    >
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 flex items-start gap-2">
+                  <p className="text-sm text-[var(--text-muted)]">{item.description}</p>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      onClick={() => { setDescriptionValue(item.description); setEditingDescription(true); }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex flex-col items-end gap-2">
+
+            <div className="flex shrink-0 flex-col items-end gap-2">
               <StatusBadge status={item.status} />
-              <PriorityBadge priority={item.priority} />
+              {/* Priority */}
+              {editingPriority ? (
+                <div className="flex items-center gap-1.5">
+                  <select
+                    autoFocus
+                    value={priorityValue}
+                    onChange={(e) => setPriorityValue(e.target.value)}
+                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                  >
+                    {(["Critical", "High", "Medium", "Low"] as const).map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await updateActionItem(id, { priority: priorityValue });
+                        await refresh();
+                        setEditingPriority(false);
+                        setActionSuccess("Priority updated.");
+                      } catch (e: unknown) {
+                        setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    <Check size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
+                    onClick={() => setEditingPriority(false)}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <PriorityBadge priority={item.priority} />
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      onClick={() => { setPriorityValue(item.priority); setEditingPriority(true); }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
             <span>Vertical: {item.vertical}</span>
-            <span>Due {item.dueDate}</span>
+            {editingDueDate ? (
+              <span className="flex items-center gap-2">
+                <span>Due</span>
+                <input
+                  type="date"
+                  value={dueDateValue}
+                  onChange={(e) => setDueDateValue(e.target.value)}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                />
+                <button
+                  type="button"
+                  disabled={busy || !dueDateValue}
+                  className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
+                  onClick={async () => {
+                    if (!dueDateValue) return;
+                    setBusy(true);
+                    try {
+                      await updateActionItem(id, { dueDate: dueDateValue });
+                      await refresh();
+                      setEditingDueDate(false);
+                      setActionSuccess("Due date updated.");
+                    } catch (e: unknown) {
+                      setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
+                  onClick={() => setEditingDueDate(false)}
+                >
+                  <X size={14} />
+                </button>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <span>Due {item.dueDate}</span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    onClick={() => {
+                      setDueDateValue(item.dueDate);
+                      setEditingDueDate(true);
+                    }}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                )}
+              </span>
+            )}
             {item.daysOverdue && item.daysOverdue > 0 && (
               <span className="text-[var(--alert-critical)]">{item.daysOverdue} days overdue</span>
             )}
@@ -243,6 +496,32 @@ export default function ActionItemDetailPage() {
           </div>
         </div>
 
+        {needsProgressMeetingUi && (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
+            </p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Required when posting updates or changing status from this page.
+            </p>
+            <select
+              value={progressMeetingId}
+              onChange={(e) => setProgressMeetingId(e.target.value)}
+              className="mt-3 w-full max-w-lg rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            >
+              <option value="">Select meeting…</option>
+              {meetings.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {formatMeetingLabel(m)}
+                </option>
+              ))}
+            </select>
+            {meetings.length === 0 && (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
+            )}
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Status Timeline</p>
@@ -270,11 +549,15 @@ export default function ActionItemDetailPage() {
               <>
                 <button
                   className="w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                  disabled={busy}
+                  disabled={busy || !progressMeetingId.trim()}
                   onClick={async () => {
                     setBusy(true);
                     try {
-                      await updateActionItem(id, { status: "IN_PROGRESS", note: "Marked in progress" });
+                      await updateActionItem(id, {
+                        status: "IN_PROGRESS",
+                        note: "Marked in progress",
+                        meetingId: progressMeetingId.trim(),
+                      });
                       await refresh();
                       setActionSuccess("Marked as in progress.");
                     } catch (e: unknown) {
@@ -359,13 +642,13 @@ export default function ActionItemDetailPage() {
               <button
                 type="button"
                 className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
-                disabled={busy || !manualUpdateText.trim().length}
+                disabled={busy || !manualUpdateText.trim().length || !progressMeetingId.trim()}
                 onClick={async () => {
                   const note = manualUpdateText.trim();
-                  if (!note) return;
+                  if (!note || !progressMeetingId.trim()) return;
                   setBusy(true);
                   try {
-                    await updateActionItem(id, { note });
+                    await updateActionItem(id, { note, meetingId: progressMeetingId.trim() });
                     await refresh();
                     setManualUpdateText("");
                     setActionSuccess("Update posted.");
@@ -388,7 +671,65 @@ export default function ActionItemDetailPage() {
                   <span>{entry.author}</span>
                   <span>{entry.timestamp}</span>
                 </div>
-                <div className="mt-2 text-sm text-[var(--text-primary)]">{entry.note}</div>
+                {editingUpdateId === entry.id ? (
+                  <div className="mt-2 space-y-2">
+                    <textarea
+                      value={editingUpdateNote}
+                      onChange={(e) => setEditingUpdateNote(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={busy || !editingUpdateNote.trim()}
+                        className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
+                        onClick={async () => {
+                          if (!editingUpdateNote.trim() || !entry.id) return;
+                          setBusy(true);
+                          try {
+                            await updateActionItem(id, {
+                              updateId: entry.id,
+                              updateNote: editingUpdateNote.trim(),
+                            });
+                            await refresh();
+                            setEditingUpdateId(null);
+                            setActionSuccess("Update history edited.");
+                          } catch (e: unknown) {
+                            setActionSuccess(e instanceof Error ? e.message : "Edit failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        <Check size={12} /> Save
+                      </button>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                        onClick={() => setEditingUpdateId(null)}
+                      >
+                        <X size={12} /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-start justify-between gap-2">
+                    <span className="text-sm text-[var(--text-primary)]">{entry.note}</span>
+                    {canEdit && entry.id && (
+                      <button
+                        type="button"
+                        className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        onClick={() => {
+                          setEditingUpdateId(entry.id!);
+                          setEditingUpdateNote(entry.note ?? "");
+                        }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{entry.status.replace(/_/g, " ")}</div>
               </div>
             ))}
@@ -404,9 +745,17 @@ export default function ActionItemDetailPage() {
         onCancel={() => setConfirmClose(false)}
         onConfirm={async () => {
           setConfirmClose(false);
+          if (!progressMeetingId.trim()) {
+            setActionSuccess("Select a meeting before submitting for review.");
+            return;
+          }
           setBusy(true);
           try {
-            await updateActionItem(id, { status: "UNDER_REVIEW", note: "Submitted for reviewer approval" });
+            await updateActionItem(id, {
+              status: "UNDER_REVIEW",
+              note: "Submitted for reviewer approval",
+              meetingId: progressMeetingId.trim(),
+            });
             await refresh();
             setActionSuccess("Submitted for review.");
           } catch (e: unknown) {

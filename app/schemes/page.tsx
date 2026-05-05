@@ -9,6 +9,7 @@ import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchSchemesOverview } from "@/src/lib/services/schemeService";
 import { SchemeOverview, SchemeReferenceData } from "@/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 function formatCurrency(value: number) {
   return `₹${value.toFixed(1)} Cr`;
@@ -49,7 +50,7 @@ export default function SchemesPage() {
       try {
         const [overviewRes, rbacRes] = await Promise.all([
           fetchSchemesOverview(),
-          fetch("/api/v1/rbac/me", { cache: "no-store" }).then((r) => r.json()),
+          fetch(withNextBasePath("/api/v1/rbac/me"), { cache: "no-store" }).then((r) => r.json()),
         ]);
         if (!active) return;
         setSchemes(overviewRes.schemes);

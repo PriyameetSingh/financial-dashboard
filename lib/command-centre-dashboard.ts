@@ -1,7 +1,7 @@
 import type { SponsorshipType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/financial-budget-entries";
-import { getFinancialBudgetEntriesOverview } from "@/lib/financial-budget-entries";
+import { getFinancialBudgetEntriesOverview, getFinanceSummaryBreakdownForOverview } from "@/lib/financial-budget-entries";
 import { sponsorshipToSchemeBudgetCategory } from "@/lib/scheme-fy-bucket-metrics";
 import type { DbUserWithRbac } from "@/lib/server-rbac";
 import type { FinancialEntry } from "@/types";
@@ -144,7 +144,7 @@ export async function getCommandCentreDashboard(
 
   const verticalNames = verticalRows.map((v) => v.name);
 
-  const [{ entries, financialYearLabel }, overdueItems, trendRows, lastMeetingRow, latestSnapshot, overdueCount] =
+  const [{ entries, financialYearLabel, financialYearId }, overdueItems, trendRows, lastMeetingRow, latestSnapshot, overdueCount] =
     await Promise.all([
       getFinancialBudgetEntriesOverview(actor),
       prisma.actionItem.findMany({
@@ -182,9 +182,20 @@ export async function getCommandCentreDashboard(
   const lastSnapshotDate: string | null =
     latestSnapshot?.asOfDate.toISOString().slice(0, 10) ?? null;
 
-  const totalBudgetCr = entries.reduce((s, e) => s + (e.effectiveBudgetCr ?? e.annualBudget + (e.totalSupplementCr ?? 0)), 0);
-  const totalSoCr = entries.reduce((s, e) => s + e.so, 0);
-  const totalIfmsCr = entries.reduce((s, e) => s + e.ifms, 0);
+  const summary =
+    financialYearId && financialYearLabel
+      ? await getFinanceSummaryBreakdownForOverview(entries, financialYearId, financialYearLabel)
+      : null;
+
+  const totalBudgetCr =
+    summary?.totals.budgetEstimateCr ??
+    entries.reduce((s, e) => s + (e.effectiveBudgetCr ?? e.annualBudget + (e.totalSupplementCr ?? 0)), 0);
+  const totalSoCr =
+    summary?.totals.soExpenditureCr ??
+    entries.reduce((s, e) => s + e.so, 0);
+  const totalIfmsCr =
+    summary?.totals.ifmsExpenditureCr ??
+    entries.reduce((s, e) => s + e.ifms, 0);
   const utilisationPct = totalBudgetCr > 0 ? (totalIfmsCr / totalBudgetCr) * 100 : 0;
   const lapseRiskCr = Math.max(0, totalBudgetCr - totalIfmsCr);
 

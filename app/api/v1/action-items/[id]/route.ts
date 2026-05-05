@@ -9,12 +9,23 @@ export const runtime = "nodejs";
 type Body = {
   status?: ActionItemStatus;
   note?: string;
+  /** Required when posting a `note` — links the update to a meeting. */
+  meetingId?: string;
   reviewerDecision?: "approve" | "reject";
   rejectionReason?: string;
   performerUserCodes?: string[];
   reviewerUserCodes?: string[];
   assignedToUserCode?: string;
   reviewerUserCode?: string;
+  /** ISO date string (YYYY-MM-DD) to update the due date. */
+  dueDate?: string;
+  /** ID of an existing ActionItemUpdate whose note text should be edited. */
+  updateId?: string;
+  /** Replacement text for the update identified by `updateId`. */
+  updateNote?: string;
+  title?: string;
+  description?: string;
+  priority?: string;
 };
 
 function toIsoDate(value: Date): string {
@@ -83,6 +94,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     assignedToUserCode: perfUsers[0]?.code ?? null,
     reviewerUserCode: revUsers[0]?.code ?? null,
     schemeId: item.scheme?.code ?? "",
+    meetingId: item.meetingId,
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,
@@ -153,6 +165,9 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const isAssignee = performerIds.has(actor.id);
     const isReviewer = reviewerIds.has(actor.id);
     const canApprove = hasPermissionForUser(actor, "APPROVE_ACTION_ITEMS");
+    const canEdit =
+      hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS") ||
+      hasPermissionForUser(actor, "CREATE_ACTION_ITEMS");
 
     if (body.reviewerDecision === "approve" || body.reviewerDecision === "reject") {
       if (!isReviewer && !canApprove) {
@@ -169,6 +184,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       await prisma.actionItemUpdate.create({
         data: {
           actionItemId: id,
+          meetingId: body.meetingId?.trim() ?? current.meetingId,
           timestamp: new Date(),
           status: nextStatus,
           note:
@@ -197,8 +213,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       body.assignedToUserCode !== undefined ||
       body.reviewerUserCode !== undefined
     ) {
-      const canReassign = hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS");
-      if (!canReassign) {
+      if (!canEdit) {
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
 
@@ -259,6 +274,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       await prisma.actionItemUpdate.create({
         data: {
           actionItemId: id,
+          meetingId: current.meetingId,
           timestamp: new Date(),
           status: current.status,
           note: `Reassigned: performers ${prevAssignName} → ${performers.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${reviewers.map((u) => u.name).join(", ")}`,
@@ -278,10 +294,118 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ item: item ? mapActionItem(item) : null });
     }
 
-    if (body.status || (body.note && body.note.trim())) {
-      const canUpdate = isAssignee || hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS");
-      if (!canUpdate) {
+    if (
+      body.dueDate ||
+      (body.updateId && body.updateNote !== undefined) ||
+      body.title !== undefined ||
+      body.description !== undefined ||
+      body.priority !== undefined
+    ) {
+      if (!canEdit) {
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
+      }
+
+      const VALID_PRIORITIES = ["Critical", "High", "Medium", "Low"];
+      const fieldData: Record<string, unknown> = {};
+      if (body.title !== undefined) {
+        const t = body.title.trim();
+        if (!t) return NextResponse.json({ detail: "title must not be empty" }, { status: 400 });
+        fieldData.title = t;
+      }
+      if (body.description !== undefined) {
+        fieldData.description = body.description.trim();
+      }
+      if (body.priority !== undefined) {
+        if (!VALID_PRIORITIES.includes(body.priority)) {
+          return NextResponse.json({ detail: `priority must be one of: ${VALID_PRIORITIES.join(", ")}` }, { status: 400 });
+        }
+        fieldData.priority = body.priority;
+      }
+      if (Object.keys(fieldData).length > 0) {
+        await prisma.actionItem.update({ where: { id }, data: fieldData });
+        const beforeFields: Record<string, string | null> = Object.fromEntries(
+          Object.keys(fieldData).map((k) => {
+            const v = (current as Record<string, unknown>)[k];
+            return [k, v != null ? String(v) : null];
+          }),
+        );
+        const afterFields: Record<string, string> = Object.fromEntries(
+          Object.entries(fieldData).map(([k, v]) => [k, String(v)]),
+        );
+        await logAudit(
+          actor.id,
+          "action_item.update",
+          "action_item",
+          id,
+          beforeFields,
+          afterFields,
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
+      }
+
+      if (body.dueDate) {
+        const parsed = new Date(body.dueDate);
+        if (isNaN(parsed.getTime())) {
+          return NextResponse.json({ detail: "Invalid dueDate" }, { status: 400 });
+        }
+        await prisma.actionItem.update({ where: { id }, data: { dueDate: parsed } });
+        await logAudit(
+          actor.id,
+          "action_item.update",
+          "action_item",
+          id,
+          { dueDate: toIsoDate(current.dueDate) },
+          { dueDate: body.dueDate },
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
+      }
+
+      if (body.updateId) {
+        const noteTrimmed = (body.updateNote ?? "").trim();
+        if (!noteTrimmed) {
+          return NextResponse.json({ detail: "updateNote must not be empty" }, { status: 400 });
+        }
+        const existing = await prisma.actionItemUpdate.findUnique({ where: { id: body.updateId } });
+        if (!existing || existing.actionItemId !== id) {
+          return NextResponse.json({ detail: "Update not found" }, { status: 404 });
+        }
+        await prisma.actionItemUpdate.update({
+          where: { id: body.updateId },
+          data: { note: noteTrimmed },
+        });
+        await logAudit(
+          actor.id,
+          "action_item.update_edit",
+          "action_item_update",
+          body.updateId,
+          { note: existing.note },
+          { note: noteTrimmed },
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
+      }
+
+      const item = await getActionItemById(id);
+      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+    }
+
+    if (body.status || (body.note && body.note.trim())) {
+      if (!isAssignee && !canEdit) {
+        return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
+      }
+      const noteTrimmed = body.note?.trim() ?? "";
+      let noteMeetingId: string | null = null;
+      if (noteTrimmed.length > 0) {
+        if (!body.meetingId?.trim()) {
+          return NextResponse.json({ detail: "Meeting is required to post an update" }, { status: 400 });
+        }
+        const meeting = await prisma.dashboardMeeting.findUnique({
+          where: { id: body.meetingId.trim() },
+          select: { id: true },
+        });
+        if (!meeting) {
+          return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+        }
+        noteMeetingId = meeting.id;
       }
       if (body.status && body.status !== current.status) {
         await prisma.actionItem.update({
@@ -289,13 +413,14 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           data: { status: body.status },
         });
       }
-      if (body.note && body.note.trim().length > 0) {
+      if (noteTrimmed.length > 0 && noteMeetingId) {
         await prisma.actionItemUpdate.create({
           data: {
             actionItemId: id,
+            meetingId: noteMeetingId,
             timestamp: new Date(),
             status: body.status ?? current.status,
-            note: body.note,
+            note: noteTrimmed,
             createdById: actor.id,
           },
         });
@@ -307,7 +432,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         id,
         { status: beforeStatus },
         { status: body.status ?? current.status },
-        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        {
+          ...auditContext,
+          meetingId: noteMeetingId ?? current.meetingId,
+          schemeId: current.schemeId,
+        },
       );
     }
 

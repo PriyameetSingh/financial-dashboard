@@ -3,6 +3,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { UserRole, hasPermission, Permission, type SessionUser } from "@/lib/auth";
+import { HUDD_LOGO_PUBLIC_PATH } from "@/lib/hudd-logo";
+import { withNextBasePath } from "@/lib/next-base-path";
 import {
   canSeeMyTasksNav,
   hasPendingAssignedActionItems,
@@ -27,6 +29,7 @@ import {
   Gauge,
   CheckSquare,
   User,
+  Shield,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -87,7 +90,7 @@ function pendingKpiEntryBadgeState(
 }
 
 async function fetchSessionDbUserId(): Promise<string | null> {
-  const response = await fetch("/api/v1/rbac/me", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/rbac/me"), { cache: "no-store" });
   if (!response.ok) return null;
   const data = (await response.json()) as { user: { dbId: string | null } | null };
   return data.user?.dbId ?? null;
@@ -144,15 +147,6 @@ const items: NavItem[] = [
     href: "/financial",
     icon: IndianRupee,
     roles: Object.values(UserRole),
-    children: [
-      {
-        label: "Summary",
-        href: "/financial/entry/summary",
-        icon: UserCog,
-        roles: [UserRole.FA],
-        emphasis: true,
-      },
-    ],
   },
   {
     label: "Scheme Budget vs Expense",
@@ -200,12 +194,12 @@ const items: NavItem[] = [
   //   icon: FileText,
   //   roles: [UserRole.AS, UserRole.PS_HUDD, UserRole.ACS],
   // },
-  {
-    label: "Execution Efficiency",
-    href: "/financial/execution-efficiency",
-    icon: Gauge,
-    roles: Object.values(UserRole),
-  },
+  // {
+  //   label: "Execution Efficiency",
+  //   href: "/financial/execution-efficiency",
+  //   icon: Gauge,
+  //   roles: Object.values(UserRole),
+  // },
   {
     label: "Administration",
     href: "/admin",
@@ -216,6 +210,12 @@ const items: NavItem[] = [
         label: "Users",
         href: "/admin/users",
         icon: UserCog,
+        roles: [UserRole.TASU],
+      },
+      {
+        label: "Roles",
+        href: "/admin/roles",
+        icon: Shield,
         roles: [UserRole.TASU],
       },
       {
@@ -257,6 +257,18 @@ function formatMeetingSidebarLabel(m: MeetingListItem) {
   return title ? `${label} — ${title}` : label;
 }
 
+/** Returns the Indian financial year label for a meetingDate string (YYYY-MM-DD).
+ *  April–March cycle: April 2024 → "2024-25", January 2025 → "2024-25". */
+function getMeetingFinancialYear(meetingDate: string): string {
+  const [yearStr, monthStr] = meetingDate.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  if (month >= 4) {
+    return `${year}-${String(year + 1).slice(-2)}`;
+  }
+  return `${year - 1}-${String(year).slice(-2)}`;
+}
+
 function MeetingScopeSelectInner() {
   const pathname = usePathname();
   const router = useRouter();
@@ -286,9 +298,39 @@ function MeetingScopeSelectInner() {
     [meetings],
   );
 
+  /** Unique financial years, most-recent first. */
+  const financialYears = useMemo(() => {
+    const seen = new Set<string>();
+    const years: string[] = [];
+    for (const m of sorted) {
+      const fy = getMeetingFinancialYear(m.meetingDate);
+      if (!seen.has(fy)) {
+        seen.add(fy);
+        years.push(fy);
+      }
+    }
+    return years;
+  }, [sorted]);
+
+  const [selectedFY, setSelectedFY] = useState<string>("");
+
+  /** Initialise selectedFY once data is ready. */
+  useEffect(() => {
+    if (financialYears.length > 0 && !selectedFY) {
+      setSelectedFY(financialYears[0]);
+    }
+  }, [financialYears, selectedFY]);
+
+  const meetingsInFY = useMemo(
+    () => (selectedFY ? sorted.filter((m) => getMeetingFinancialYear(m.meetingDate) === selectedFY) : sorted),
+    [sorted, selectedFY],
+  );
+
   const param = searchParams.get("meeting");
-  const selectedId =
-    param && sorted.some((m) => m.id === param) ? param : sorted[0]?.id ?? "";
+  const selectedId = useMemo(() => {
+    if (param && meetingsInFY.some((m) => m.id === param)) return param;
+    return meetingsInFY[0]?.id ?? "";
+  }, [param, meetingsInFY]);
 
   useEffect(() => {
     if (!sorted.length) return;
@@ -298,6 +340,19 @@ function MeetingScopeSelectInner() {
       router.replace(`/dashboard?meeting=${encodeURIComponent(sorted[0].id)}`, { scroll: false });
     }
   }, [sorted, pathname, searchParams, router]);
+
+  /** When the FY changes, auto-select the first meeting in the new FY. */
+  const onFYChange = (fy: string) => {
+    setSelectedFY(fy);
+    const first = sorted.find((m) => getMeetingFinancialYear(m.meetingDate) === fy);
+    if (first) {
+      if (pathname === "/dashboard" || pathname === "/command-centre") {
+        router.replace(`/dashboard?meeting=${encodeURIComponent(first.id)}`, { scroll: false });
+      } else {
+        router.push(`/dashboard?meeting=${encodeURIComponent(first.id)}`);
+      }
+    }
+  };
 
   const onSelect = (id: string) => {
     if (!id) return;
@@ -323,25 +378,34 @@ function MeetingScopeSelectInner() {
   }
 
   return (
-    <div className="mx-3 mb-3">
-      <label className="flex flex-col gap-1.5">
-        {/* <span className="flex items-center gap-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--sidebar-text-muted)]">
-          <CalendarDays size={12} className="shrink-0 opacity-80" aria-hidden />
-          Meeting scope
-        </span> */}
-        <select
-          className="w-full rounded-md border border-(--sidebar-border) bg-(--bg-surface) px-2 py-1.5 text-[12px] font-medium text-[var(--sidebar-text-primary)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--sidebar-active-bg)]/40"
-          value={selectedId}
-          onChange={(e) => onSelect(e.target.value)}
-          title="Topics, presentations, and meeting context on the dashboard follow this meeting (latest by default)."
-        >
-          {sorted.map((m) => (
-            <option key={m.id} value={m.id}>
-              {formatMeetingSidebarLabel(m)}
-            </option>
-          ))}
-        </select>
-      </label>
+    <div className="mx-3 mb-3 flex flex-col gap-1.5">
+      {/* Financial year selector */}
+      <select
+        className="w-full rounded-md border border-(--sidebar-border) bg-(--bg-surface) px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--sidebar-text-muted)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--sidebar-active-bg)]/40"
+        value={selectedFY}
+        onChange={(e) => onFYChange(e.target.value)}
+        title="Filter meetings by financial year"
+      >
+        {financialYears.map((fy) => (
+          <option key={fy} value={fy}>
+            FY {fy}
+          </option>
+        ))}
+      </select>
+
+      {/* Meeting selector */}
+      <select
+        className="w-full rounded-md border border-(--sidebar-border) bg-(--bg-surface) px-2 py-1.5 text-[12px] font-medium text-[var(--sidebar-text-primary)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--sidebar-active-bg)]/40"
+        value={selectedId}
+        onChange={(e) => onSelect(e.target.value)}
+        title="Topics, presentations, and meeting context on the dashboard follow this meeting (latest by default)."
+      >
+        {meetingsInFY.map((m) => (
+          <option key={m.id} value={m.id}>
+            {formatMeetingSidebarLabel(m)}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -462,7 +526,11 @@ export default function Sidebar() {
         {/* <div className="text-sm font-semibold tracking-[0.6em] text-[var(--sidebar-text-muted)]">HUDD</div> */}
         {/* <div className="text-xs uppercase text-[var(--sidebar-text-muted)] mt-1">Government of Odisha</div> */}
         <div className="flex size-24 shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5">
-          <img src="/logo.png" alt="HUDD Logo" className="h-full w-full object-contain" />
+          <img
+            src={withNextBasePath(HUDD_LOGO_PUBLIC_PATH)}
+            alt="HUDD Logo"
+            className="h-full w-full object-contain"
+          />
         </div>
         {/* {user && (
           <div className="mt-3 flex flex-col gap-1">

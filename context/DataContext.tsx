@@ -12,6 +12,7 @@ import {
   nbaRecommendations as defaultNBA,
 } from "@/lib/data";
 import { DashboardSpec, DEFAULT_SPEC, applyPatch } from "@/lib/dashboardSpec";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 export type FinancialRow = typeof defaultFinancial[number];
 export type SchemeRow = typeof defaultSchemes[number];
@@ -173,7 +174,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const pollStatus = useCallback(async (uploadId: number, key: DatasetKey) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/v1/uploads/${uploadId}`);
+        const res = await fetch(withNextBasePath(`/api/v1/uploads/${uploadId}`));
         const data = await res.json();
         
         if (data.status === "review_pending") {
@@ -223,7 +224,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const formData = new FormData();
       formData.append("file", file);
       
-      const uploadRes = await fetch("/api/v1/uploads", {
+      const uploadRes = await fetch(withNextBasePath("/api/v1/uploads"), {
         method: "POST",
         body: formData,
       });
@@ -234,7 +235,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const uploadId = uploadData.upload_id;
       setStatus(key, { status: "processing", fileName: file.name, uploadId });
       
-      const processRes = await fetch(`/api/v1/uploads/${uploadId}/process`, {
+      const processRes = await fetch(withNextBasePath(`/api/v1/uploads/${uploadId}/process`), {
         method: "POST",
       });
       if (!processRes.ok) {
@@ -251,7 +252,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const approveUpload = useCallback(async (uploadId: number, key: DatasetKey, mappings: any) => {
     setStatus(key, { status: "processing", uploadId });
     try {
-      const res = await fetch(`/api/v1/uploads/${uploadId}/approve`, {
+      const res = await fetch(withNextBasePath(`/api/v1/uploads/${uploadId}/approve`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mappings),
@@ -262,7 +263,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       // After approval, start processing again
-      await fetch(`/api/v1/uploads/${uploadId}/process`, { method: "POST" });
+      await fetch(withNextBasePath(`/api/v1/uploads/${uploadId}/process`), { method: "POST" });
       pollStatus(uploadId, key);
     } catch (err: any) {
       setStatus(key, { status: "error", uploadId, error: err.message });

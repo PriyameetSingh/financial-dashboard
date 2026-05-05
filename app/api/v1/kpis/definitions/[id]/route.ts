@@ -48,16 +48,18 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ detail: "performerUserIds and reviewerUserIds are required" }, { status: 400 });
     }
 
-    if (performerUserIds.length === 0 || reviewerUserIds.length === 0) {
+    if (performerUserIds.length === 0) {
       return NextResponse.json(
-        { detail: "At least one performer and one reviewer must be set (active user ids)" },
+        { detail: "At least one performer must be set (active user ids)" },
         { status: 400 },
       );
     }
 
-    const overlap = performerUserIds.filter((uid) => reviewerUserIds.includes(uid));
-    if (overlap.length > 0) {
-      return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
+    if (reviewerUserIds.length > 0) {
+      const overlap = performerUserIds.filter((uid) => reviewerUserIds.includes(uid));
+      if (overlap.length > 0) {
+        return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
+      }
     }
 
     const existing = await prisma.kpiDefinition.findUnique({
@@ -98,9 +100,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       await tx.kpiDefinitionPerformer.createMany({
         data: performerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
       });
-      await tx.kpiDefinitionReviewerUser.createMany({
-        data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
-      });
+      if (reviewerUserIds.length > 0) {
+        await tx.kpiDefinitionReviewerUser.createMany({
+          data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+        });
+      }
       return tx.kpiDefinition.findUniqueOrThrow({
         where: { id },
         include: {

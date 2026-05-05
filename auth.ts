@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
+import { authApiBasePath } from "@/lib/auth-api-path";
 import { UserRole } from "@/types";
 
 type KeycloakProfile = {
@@ -66,6 +67,7 @@ const keycloakClientId = requiredEnv("KEYCLOAK_CLIENT_ID");
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  basePath: authApiBasePath(),
   session: {
     strategy: "jwt",
   },
@@ -136,6 +138,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       return session;
+    },
+    redirect({ url, baseUrl }) {
+      const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+      // Prefer AUTH_URL so origin matches production even when `baseUrl` is only the host
+      // (common with `trustHost` + reverse proxies).
+      const authBase = process.env.AUTH_URL?.trim() || process.env.NEXTAUTH_URL?.trim();
+      let appOrigin: string;
+      try {
+        appOrigin = authBase ? new URL(authBase).origin : new URL(baseUrl).origin;
+      } catch {
+        appOrigin = new URL(baseUrl).origin;
+      }
+
+      const withBasePath = (pathname: string) => {
+        const p = pathname && pathname !== "" ? pathname : "/";
+        if (!basePath) return p === "/" ? "/dashboard" : p;
+        if (p === "/") return `${basePath}/dashboard`;
+        if (p.startsWith(basePath)) return p;
+        return `${basePath}${p.startsWith("/") ? p : `/${p}`}`;
+      };
+
+      if (/^https?:\/\//i.test(url)) {
+        try {
+          const target = new URL(url);
+          if (target.origin === appOrigin) {
+            target.pathname = withBasePath(target.pathname);
+            return target.href;
+          }
+        } catch {
+          /* fall through */
+        }
+        return `${appOrigin}${withBasePath("/dashboard")}`;
+      }
+
+      if (url.startsWith(baseUrl)) {
+        const rest = url.slice(baseUrl.length) || "/";
+        const pathOnly = rest.startsWith("/") ? rest : `/${rest}`;
+        return `${appOrigin}${withBasePath(pathOnly)}`;
+      }
+
+      if (url.startsWith("/")) {
+        return `${appOrigin}${withBasePath(url)}`;
+      }
+
+      return `${appOrigin}${withBasePath("/dashboard")}`;
     },
   },
 });

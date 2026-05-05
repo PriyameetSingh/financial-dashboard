@@ -1,3 +1,4 @@
+import { withNextBasePath } from "@/lib/next-base-path";
 import { SessionUser, Permission, UserRole } from "@/types";
 
 export { Permission, UserRole };
@@ -62,7 +63,7 @@ type MeApiUser = {
  */
 export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
   try {
-    const res = await fetch("/api/v1/rbac/me", {
+    const res = await fetch(withNextBasePath("/api/v1/rbac/me"), {
       credentials: "include",
       cache: "no-store",
     });

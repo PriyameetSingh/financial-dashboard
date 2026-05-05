@@ -364,6 +364,7 @@ model FinanceExpenditureSnapshot {
   schemeId         String   @db.Uuid
   subschemeId      String?  @db.Uuid
   financialYearId  String   @db.Uuid
+  meetingId        String?  @db.Uuid
   asOfDate         DateTime @db.Date
   soExpenditureCr  Decimal  @db.Decimal(16, 2)
   ifmsExpenditureCr Decimal @db.Decimal(16, 2)
@@ -375,10 +376,12 @@ model FinanceExpenditureSnapshot {
   scheme        Scheme        @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme     Subscheme?    @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
+  meeting       DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
   createdBy     User?         @relation("FinanceSnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([schemeId, financialYearId, asOfDate])
   @@index([financialYearId, asOfDate])
+  @@index([meetingId])
   @@map("finance_expenditure_snapshots")
 }
 
@@ -473,6 +476,7 @@ model KpiTarget {
 model KpiMeasurement {
   id             String            @id @default(uuid()) @db.Uuid
   kpiTargetId    String            @db.Uuid
+  meetingId      String?           @db.Uuid
   measuredAt     DateTime
   numeratorValue Decimal?          @db.Decimal(16, 2)
   yesValue       Boolean?
@@ -486,10 +490,12 @@ model KpiMeasurement {
   reviewNote     String?
 
   kpiTarget  KpiTarget @relation(fields: [kpiTargetId], references: [id], onDelete: Cascade)
+  meeting    DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
   createdBy  User?     @relation("KpiMeasurementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   reviewedBy User?     @relation("KpiMeasurementReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   @@index([kpiTargetId, measuredAt])
+  @@index([meetingId])
   @@map("kpi_measurements")
 }
 
@@ -506,6 +512,9 @@ model DashboardMeeting {
   topics     MeetingTopic[]
   actionItems ActionItem[]
   materials  MeetingMaterial[]
+  kpiMeasurements            KpiMeasurement[]
+  financeExpenditureSnapshots FinanceExpenditureSnapshot[]
+  actionItemProgressUpdates  ActionItemUpdate[]
 
   @@index([meetingDate])
   @@map("dashboard_meetings")
@@ -603,6 +612,7 @@ model ActionItemReviewerUser {
 model ActionItemUpdate {
   id           String         @id @default(uuid()) @db.Uuid
   actionItemId String         @db.Uuid
+  meetingId    String?        @db.Uuid
   timestamp    DateTime
   status       ActionItemStatus
   note         String
@@ -610,9 +620,11 @@ model ActionItemUpdate {
   createdAt    DateTime       @default(now())
 
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  meeting    DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
   createdBy  User?      @relation("ActionItemUpdateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([actionItemId, timestamp])
+  @@index([meetingId])
   @@map("action_item_updates")
 }
 

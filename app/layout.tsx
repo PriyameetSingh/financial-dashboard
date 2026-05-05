@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import AuthSessionProvider from "@/components/AuthSessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { FontScaleProvider } from "@/components/FontScaleProvider";
 import { DataProvider } from "@/context/DataContext";
@@ -14,14 +15,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full" data-scroll-behavior="smooth">
       <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        <ThemeProvider>
-          <FontScaleProvider>
-            <DataProvider>
-              {children}
-              <SpeedInsights />
-            </DataProvider>
-          </FontScaleProvider>
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider>
+            <FontScaleProvider>
+              <DataProvider>
+                {children}
+                <SpeedInsights />
+              </DataProvider>
+            </FontScaleProvider>
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

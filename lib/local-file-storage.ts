@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 /**
  * Local file storage for meeting materials.
@@ -85,5 +86,5 @@ export async function deleteFile(storagePath: string): Promise<void> {
  * @returns Public URL path
  */
 export function getPublicUrlPath(storagePath: string): string {
-  return `/api/v1/meeting-materials/${encodeURIComponent(storagePath)}`;
+  return withNextBasePath(`/api/v1/meeting-materials/${encodeURIComponent(storagePath)}`);
 }

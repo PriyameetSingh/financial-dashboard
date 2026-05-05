@@ -1,3 +1,4 @@
+import { withNextBasePath } from "@/lib/next-base-path";
 import { ActionItem } from "@/types";
 
 type ActionItemsResponse = {
@@ -19,13 +20,13 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchActionItems(): Promise<ActionItem[]> {
-  const response = await fetch("/api/v1/action-items", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/action-items"), { cache: "no-store" });
   const data = await parseResponse<ActionItemsResponse>(response);
   return data.items;
 }
 
 export async function getActionItemById(id: string): Promise<ActionItem | undefined> {
-  const response = await fetch(`/api/v1/action-items/${id}`, { cache: "no-store" });
+  const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}`), { cache: "no-store" });
   if (response.status === 404) return undefined;
   const data = await parseResponse<ActionItemResponse>(response);
   return data.item;
@@ -36,15 +37,26 @@ export async function updateActionItem(
   input: {
     status?: ActionItem["status"];
     note?: string;
+    /** Required when `note` is set — dashboard meeting this progress is attributed to. */
+    meetingId?: string;
     reviewerDecision?: "approve" | "reject";
     rejectionReason?: string;
     performerUserCodes?: string[];
     reviewerUserCodes?: string[];
     assignedToUserCode?: string;
     reviewerUserCode?: string;
+    /** ISO date string (YYYY-MM-DD) to update the due date. */
+    dueDate?: string;
+    /** ID of an existing update entry whose note text should be edited. */
+    updateId?: string;
+    /** Replacement note text for the update identified by `updateId`. */
+    updateNote?: string;
+    title?: string;
+    description?: string;
+    priority?: string;
   },
 ): Promise<ActionItem> {
-  const response = await fetch(`/api/v1/action-items/${id}`, {
+  const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -64,7 +76,7 @@ export async function createActionItem(input: {
   performerUserCodes: string[];
   reviewerUserCodes: string[];
 }): Promise<{ id: string }> {
-  const response = await fetch("/api/v1/action-items", {
+  const response = await fetch(withNextBasePath("/api/v1/action-items"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -76,7 +88,7 @@ export async function addActionItemProof(id: string, input: {
   name: string;
   url: string;
 }): Promise<void> {
-  const response = await fetch(`/api/v1/action-items/${id}/proofs`, {
+  const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}/proofs`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

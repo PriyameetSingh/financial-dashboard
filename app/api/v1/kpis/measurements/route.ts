@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { KPIWorkflowStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assertKpiUpdaterForDefinition, userRoleIdsFromDbUser } from "@/lib/kpi-access";
@@ -10,6 +11,8 @@ type Body = {
   kpiDefinitionId: string;
   financialYearLabel: string;
   measuredAt: string;
+  /** Required — ties this measurement to a dashboard meeting. */
+  meetingId: string;
   numeratorValue?: number | null;
   yesValue?: boolean | null;
   denominatorValue?: number | null;
@@ -23,9 +26,23 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Body;
 
+    if (!body.meetingId?.trim()) {
+      return NextResponse.json({ detail: "Meeting is required" }, { status: 400 });
+    }
+    const meeting = await prisma.dashboardMeeting.findUnique({
+      where: { id: body.meetingId.trim() },
+      select: { id: true },
+    });
+    if (!meeting) {
+      return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+    }
+
     const definition = await prisma.kpiDefinition.findUnique({
       where: { id: body.kpiDefinitionId },
-      include: { performers: { select: { userId: true } } },
+      include: {
+        performers: { select: { userId: true } },
+        reviewerUsers: { select: { userId: true } },
+      },
     });
     if (!definition) {
       return NextResponse.json({ detail: "KPI definition not found" }, { status: 404 });
@@ -106,29 +123,49 @@ export async function POST(request: NextRequest) {
       ? await prisma.kpiMeasurement.findUnique({ where: { id: existingMeasurement.id } })
       : null;
 
+    const requestedWorkflow = body.workflowStatus ?? "submitted";
+    const isDraft = requestedWorkflow === "draft";
+    const kpiHasReviewers = definition.reviewerUsers.length > 0;
+    const resolvedWorkflowStatus: KPIWorkflowStatus = isDraft
+      ? KPIWorkflowStatus.draft
+      : kpiHasReviewers
+        ? KPIWorkflowStatus.submitted
+        : KPIWorkflowStatus.reviewed;
+
+    const reviewFields =
+      resolvedWorkflowStatus === KPIWorkflowStatus.draft
+        ? { reviewedById: null, reviewedAt: null, reviewNote: null }
+        : resolvedWorkflowStatus === KPIWorkflowStatus.reviewed
+          ? { reviewedById: null, reviewedAt: new Date(), reviewNote: null }
+          : { reviewedById: null, reviewedAt: null, reviewNote: null };
+
     if (existingMeasurement) {
       await prisma.kpiMeasurement.update({
         where: { id: existingMeasurement.id },
         data: {
+          meetingId: meeting.id,
           numeratorValue: body.numeratorValue ?? null,
           yesValue: body.yesValue ?? null,
-          workflowStatus: body.workflowStatus ?? "submitted",
+          workflowStatus: resolvedWorkflowStatus,
           progressStatus: "on_track",
           remarks: body.remarks,
           createdById: actor.id,
+          ...reviewFields,
         },
       });
     } else {
       await prisma.kpiMeasurement.create({
         data: {
           kpiTargetId: target.id,
+          meetingId: meeting.id,
           measuredAt,
           numeratorValue: body.numeratorValue ?? null,
           yesValue: body.yesValue ?? null,
-          workflowStatus: body.workflowStatus ?? "submitted",
+          workflowStatus: resolvedWorkflowStatus,
           progressStatus: "on_track",
           remarks: body.remarks,
           createdById: actor.id,
+          ...reviewFields,
         },
       });
     }
@@ -156,9 +193,10 @@ export async function POST(request: NextRequest) {
         : null,
       {
         ...auditContext,
+        meetingId: meeting.id,
         kpiDefinitionId: definition.id,
         schemeId: definition.schemeId,
-        workflowStatus: body.workflowStatus ?? "submitted",
+        workflowStatus: resolvedWorkflowStatus,
       },
     );
 

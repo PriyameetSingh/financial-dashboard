@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { fetchFinanceSummary } from "@/src/lib/services/financialService";
 import type { MeetingListItem } from "@/src/lib/services/meetingService";
 import { getFinancialYear } from "../meetingUtils";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 export default function SinceLastMeetingPanel({
   meeting,
@@ -35,7 +36,7 @@ export default function SinceLastMeetingPanel({
 
     const run = async () => {
       try {
-        const dRes = await fetch("/api/v1/financial/snapshot-dates", { cache: "no-store" });
+        const dRes = await fetch(withNextBasePath("/api/v1/financial/snapshot-dates"), { cache: "no-store" });
         if (!dRes.ok) throw new Error("Could not load snapshot dates");
         const { dates } = (await dRes.json()) as { dates: string[] };
         const md = prevMeeting.meetingDate;

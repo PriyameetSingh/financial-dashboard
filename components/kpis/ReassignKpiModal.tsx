@@ -61,11 +61,11 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
   const handleSave = async () => {
     const performers = performerIds.map((id) => id.trim()).filter(Boolean);
     const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
-    if (performers.length === 0 || reviewers.length === 0) {
-      setMsg("Select at least one action owner and one reviewer.");
+    if (performers.length === 0) {
+      setMsg("Select at least one action owner.");
       return;
     }
-    const overlap = performers.filter((id) => reviewers.includes(id));
+    const overlap = reviewers.length > 0 ? performers.filter((id) => reviewers.includes(id)) : [];
     if (overlap.length > 0) {
       setMsg("Action owners and reviewers must not include the same user.");
       return;
@@ -86,7 +86,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
     }
   };
 
-  const userPickerDisabled = !users || users.length < 2;
+  const userPickerDisabled = !users || users.length < 1;
 
   return (
     <div
@@ -126,10 +126,10 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
           {!usersError && users === null && (
             <p className="text-sm text-[var(--text-muted)]">Loading user directory…</p>
           )}
-          {users && users.length < 2 && (
-            <p className="text-sm text-[var(--text-muted)]">At least two active users are required to reassign.</p>
+          {users && users.length < 1 && (
+            <p className="text-sm text-[var(--text-muted)]">The user directory is empty.</p>
           )}
-          {users && users.length >= 2 && (
+          {users && users.length >= 1 && (
             <>
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Action owners</p>
@@ -171,6 +171,9 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  Optional. If none are listed, submitted updates are marked complete without a separate review step.
+                </p>
                 <button
                   type="button"
                   disabled={busy}

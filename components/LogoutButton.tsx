@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { authApiBasePath } from "@/lib/auth-api-path";
 import { clearCurrentUser } from "@/lib/auth";
 
 export default function LogoutButton() {
@@ -13,7 +14,11 @@ export default function LogoutButton() {
     try {
       clearCurrentUser();
       await signOut({ redirect: false });
-      window.location.assign("/api/auth/keycloak/logout?callbackUrl=%2Flogin");
+      const base = process.env.__NEXT_ROUTER_BASEPATH ?? "";
+      const loginPath = base ? `${base}/login` : "/login";
+      window.location.assign(
+        `${authApiBasePath()}/keycloak/logout?${new URLSearchParams({ callbackUrl: loginPath })}`,
+      );
     } finally {
       setPending(false);
     }

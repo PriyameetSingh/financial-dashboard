@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { fetchSchemeModalData, type SchemeModalPayload } from "@/src/lib/services/schemeService";
 import type { SchemeOverview } from "@/types";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 type Props = {
   open: boolean;
@@ -136,7 +137,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
     try {
       const [modal, mRes] = await Promise.all([
         fetchSchemeModalData(scheme.id),
-        fetch("/api/v1/meetings", { cache: "no-store" }).then((r) => r.json()),
+        fetch(withNextBasePath("/api/v1/meetings"), { cache: "no-store" }).then((r) => r.json()),
       ]);
       setData(modal);
       if (mRes?.meetings) setMeetings(mRes.meetings);

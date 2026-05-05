@@ -83,21 +83,14 @@ export async function GET() {
     const canApprovePermission = hasPermissionForUser(actor, "APPROVE_KPI");
 
     const schemeIds = [...new Set(definitions.map((d) => d.schemeId))];
-    const [kpiOwner1Rows, kpiOwner2Rows] =
+    const kpiOwner1Rows =
       schemeIds.length === 0
-        ? [[], []]
-        : await Promise.all([
-            prisma.schemeAssignment.findMany({
-              where: { schemeId: { in: schemeIds }, assignmentKind: "kpi_owner_1" },
-              select: { schemeId: true, userId: true, roleId: true },
-            }),
-            prisma.schemeAssignment.findMany({
-              where: { schemeId: { in: schemeIds }, assignmentKind: "kpi_owner_2" },
-              select: { schemeId: true, userId: true, roleId: true },
-            }),
-          ]);
+        ? []
+        : await prisma.schemeAssignment.findMany({
+            where: { schemeId: { in: schemeIds }, assignmentKind: "kpi_owner_1" },
+            select: { schemeId: true, userId: true, roleId: true },
+          });
     const kpiOwner1BySchemeId = groupKpiAssignmentsBySchemeId(kpiOwner1Rows);
-    const kpiOwner2BySchemeId = groupKpiAssignmentsBySchemeId(kpiOwner2Rows);
 
     const submissions = definitions.map((definition: (typeof definitions)[number]) => {
         const target = definition.targets[0] ?? null;
@@ -115,8 +108,7 @@ export async function GET() {
           canEnterPermission &&
           userCanEnterKpiMeasurementSync(defPick, actor?.id, roleIds, canManageSchemes, kpiOwner1BySchemeId);
         const currentUserCanReview =
-          canApprovePermission &&
-          userCanReviewKpiMeasurementSync(defPick, actor?.id, roleIds, canManageSchemes, kpiOwner2BySchemeId);
+          canApprovePermission && userCanReviewKpiMeasurementSync(defPick, actor?.id, canManageSchemes);
 
         return {
           id: definition.id,
@@ -226,16 +218,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (performerUserIds.length === 0 || reviewerUserIds.length === 0) {
+    if (performerUserIds.length === 0) {
       return NextResponse.json(
-        { detail: "performerUserIds and reviewerUserIds (non-empty arrays of user ids) are required" },
+        { detail: "performerUserIds (non-empty array of user ids) is required" },
         { status: 400 },
       );
     }
 
-    const overlap = performerUserIds.filter((id) => reviewerUserIds.includes(id));
-    if (overlap.length > 0) {
-      return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
+    if (reviewerUserIds.length > 0) {
+      const overlap = performerUserIds.filter((id) => reviewerUserIds.includes(id));
+      if (overlap.length > 0) {
+        return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
+      }
     }
 
     const allIds = [...performerUserIds, ...reviewerUserIds];
@@ -283,9 +277,13 @@ export async function POST(request: NextRequest) {
         performers: {
           create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
         },
-        reviewerUsers: {
-          create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
-        },
+        ...(reviewerUserIds.length > 0
+          ? {
+              reviewerUsers: {
+                create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+              },
+            }
+          : {}),
       },
     });
 

@@ -50,6 +50,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     assignedToUserCode: perfUsers[0]?.code ?? null,
     reviewerUserCode: revUsers[0]?.code ?? null,
     schemeId: item.scheme?.code ?? "",
+    meetingId: item.meetingId,
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,

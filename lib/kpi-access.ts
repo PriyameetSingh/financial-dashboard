@@ -48,7 +48,7 @@ export async function assertKpiUpdaterForDefinition(
 
 type DefinitionReviewer = { schemeId: string; reviewerUserIds: string[] };
 
-/** Per-KPI reviewers win when set; otherwise scheme `kpi_owner_2` rules apply. */
+/** Only users listed as reviewers on the KPI may review (scheme `kpi_owner_2` is not used). */
 export async function assertKpiReviewerForDefinition(
   definition: DefinitionReviewer,
   userId: string | undefined,
@@ -56,11 +56,11 @@ export async function assertKpiReviewerForDefinition(
   options: { canManageSchemes?: boolean } = {},
 ) {
   if (options.canManageSchemes) return;
-  if (definition.reviewerUserIds.length > 0) {
-    if (userId && definition.reviewerUserIds.includes(userId)) return;
-    throw new AuthError(403, "Not assigned as a reviewer for this KPI");
+  if (definition.reviewerUserIds.length === 0) {
+    throw new AuthError(403, "This KPI has no assigned reviewer");
   }
-  await assertKpiReviewerForScheme(definition.schemeId, userId, userRoleIds);
+  if (userId && definition.reviewerUserIds.includes(userId)) return;
+  throw new AuthError(403, "Not assigned as a reviewer for this KPI");
 }
 
 export type KpiSchemeAssignmentRow = {
@@ -109,20 +109,15 @@ export function userCanEnterKpiMeasurementSync(
   return ownersMatchAssignment(owners, userId, userRoleIds);
 }
 
-/** In-memory equivalent of {@link userCanReviewKpiMeasurement} using preloaded kpi_owner_2 rows. */
+/** In-memory equivalent of {@link userCanReviewKpiMeasurement} — per-KPI reviewers only. */
 export function userCanReviewKpiMeasurementSync(
   definition: DefinitionReviewer,
   userId: string | undefined,
-  userRoleIds: string[],
   canManageSchemes: boolean,
-  kpiOwner2BySchemeId: Map<string, Array<{ userId: string | null; roleId: string | null }>>,
 ): boolean {
+  if (definition.reviewerUserIds.length === 0) return false;
   if (canManageSchemes) return true;
-  if (definition.reviewerUserIds.length > 0) {
-    return !!(userId && definition.reviewerUserIds.includes(userId));
-  }
-  const owners = kpiOwner2BySchemeId.get(definition.schemeId) ?? [];
-  return ownersMatchAssignment(owners, userId, userRoleIds);
+  return !!(userId && definition.reviewerUserIds.includes(userId));
 }
 
 export function userRoleIdsFromDbUser(user: { userRoles: Array<{ roleId: string }> } | null | undefined): string[] {
@@ -145,7 +140,7 @@ export async function userCanEnterKpiMeasurement(
   }
 }
 
-/** For UI: whether this user may review measurements (assignment), without throwing. */
+/** For UI: whether this user may review measurements (per-KPI reviewer list + permission), without throwing. */
 export async function userCanReviewKpiMeasurement(
   definition: DefinitionReviewer,
   userId: string | undefined,

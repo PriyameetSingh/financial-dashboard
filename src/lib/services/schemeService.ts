@@ -1,3 +1,4 @@
+import { withNextBasePath } from "@/lib/next-base-path";
 import { SchemeOverview, SchemeReferenceData, SchemeView, SponsorshipType } from "@/types";
 
 type SchemeListResponse = {
@@ -24,12 +25,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchSchemesAdmin(): Promise<SchemeListResponse> {
-  const response = await fetch("/api/v1/schemes", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/schemes"), { cache: "no-store" });
   return parseResponse<SchemeListResponse>(response);
 }
 
 export async function fetchSchemesOverview(): Promise<SchemeOverviewResponse> {
-  const response = await fetch("/api/v1/schemes/overview", { cache: "no-store" });
+  const response = await fetch(withNextBasePath("/api/v1/schemes/overview"), { cache: "no-store" });
   return parseResponse<SchemeOverviewResponse>(response);
 }
 
@@ -47,7 +48,7 @@ export async function createScheme(input: {
     roleId?: string | null;
   }>;
 }): Promise<SchemeView> {
-  const response = await fetch("/api/v1/schemes", {
+  const response = await fetch(withNextBasePath("/api/v1/schemes"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -69,7 +70,7 @@ export async function updateScheme(id: string, input: {
     roleId?: string | null;
   }>;
 }): Promise<SchemeView> {
-  const response = await fetch(`/api/v1/schemes/${id}`, {
+  const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -79,12 +80,12 @@ export async function updateScheme(id: string, input: {
 }
 
 export async function deleteScheme(id: string): Promise<void> {
-  const response = await fetch(`/api/v1/schemes/${id}`, { method: "DELETE" });
+  const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), { method: "DELETE" });
   await parseResponse<{ ok: boolean }>(response);
 }
 
 export async function addSubscheme(schemeId: string, input: { code: string; name: string }): Promise<void> {
-  const response = await fetch(`/api/v1/schemes/${schemeId}/subschemes`, {
+  const response = await fetch(withNextBasePath(`/api/v1/schemes/${schemeId}/subschemes`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -148,6 +149,8 @@ export type SchemeModalPayload = {
 };
 
 export async function fetchSchemeModalData(schemeId: string): Promise<SchemeModalPayload> {
-  const response = await fetch(`/api/v1/schemes/${schemeId}/scheme-modal`, { cache: "no-store" });
+  const response = await fetch(withNextBasePath(`/api/v1/schemes/${schemeId}/scheme-modal`), {
+    cache: "no-store",
+  });
   return parseResponse<SchemeModalPayload>(response);
 }
