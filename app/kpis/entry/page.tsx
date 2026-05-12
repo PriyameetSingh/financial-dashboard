@@ -8,7 +8,7 @@ import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission } from "@/lib/auth";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { fetchKPISubmissions, submitKPIMeasurement } from "@/src/lib/services/kpiService";
-import { KPISubmission } from "@/types";
+import { KPISubmission, KpiEscalationFlag } from "@/types";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 
 function formatKpiPercentage(
@@ -46,6 +46,8 @@ export default function KPIEntryPage() {
   const [binaryResponses, setBinaryResponses] = useState<Record<string, boolean | null>>({});
   const [numeratorById, setNumeratorById] = useState<Record<string, number | "">>({});
   const [remarksById, setRemarksById] = useState<Record<string, string>>({});
+  const [bottleneckById, setBottleneckById] = useState<Record<string, string>>({});
+  const [escalationById, setEscalationById] = useState<Record<string, KpiEscalationFlag | "">>({});
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [meetingId, setMeetingId] = useState("");
 
@@ -67,8 +69,7 @@ export default function KPIEntryPage() {
       rem[s.id] = s.remarks ?? "";
     }
     setNumeratorById(num);
-    setRemarksById(rem);
-  };
+    setRemarksById(rem);  };
 
   useEffect(() => {
     let active = true;
@@ -217,6 +218,8 @@ export default function KPIEntryPage() {
         yesValue: item.type === "BINARY" ? (binaryResponses[id] ?? null) : null,
         remarks: remarksById[id] ?? "",
         workflowStatus: mode === "draft" ? "draft" : "submitted",
+        bottleneckReason: bottleneckById[id]?.trim() || null,
+        escalationFlag: (escalationById[id] || null) as KpiEscalationFlag | null,
       });
       await reload();
       setRowState((prev) => ({
@@ -365,6 +368,7 @@ export default function KPIEntryPage() {
             const approvedNum = item.numerator;
             const validationError =
               item.type !== "BINARY" ? getValidationError(item, numVal ?? "") : null;
+            const canFlagEscalation = item.canFlagEscalation === true;
 
             return (
               <div className="mx-auto max-w-3xl space-y-5">
@@ -563,6 +567,71 @@ export default function KPIEntryPage() {
                       className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
                     />
                   </div>
+
+                  {/* Bottleneck & escalation — restricted to FLAG_KPI_ESCALATION */}
+                  {canFlagEscalation && (
+                    <div className="mt-5 space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-content-surface)] p-4">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                        Meeting signals
+                      </p>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                          Escalation status
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {(
+                            [
+                              { value: "on_track", label: "On track" },
+                              { value: "needs_coordination", label: "Needs coordination" },
+                              { value: "needs_acs_decision", label: "Needs ACS decision" },
+                            ] as const
+                          ).map(({ value, label }) => {
+                            const active = (escalationById[item.id] || "") === value;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() =>
+                                  setEscalationById((prev) => ({
+                                    ...prev,
+                                    [item.id]: active ? "" : value,
+                                  }))
+                                }
+                                className={`rounded-lg border px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] transition ${
+                                  active
+                                    ? value === "needs_acs_decision"
+                                      ? "border-[var(--alert-critical)] bg-[rgba(239,68,68,0.1)] text-[var(--alert-critical)]"
+                                      : value === "needs_coordination"
+                                        ? "border-[var(--alert-warning)] bg-[rgba(245,158,11,0.1)] text-[var(--alert-warning)]"
+                                        : "border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] text-[var(--alert-success)]"
+                                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                          Bottleneck reason{" "}
+                          <span className="normal-case tracking-normal opacity-60">(optional)</span>
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={bottleneckById[item.id] ?? ""}
+                          onChange={(e) =>
+                            setBottleneckById((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                          placeholder="e.g. Awaiting circular from HQ / tender not yet floated…"
+                          className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Error message */}
                   {row.error && (

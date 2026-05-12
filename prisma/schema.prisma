@@ -67,6 +67,18 @@ enum KPIProgressStatus {
   overdue
 }
 
+enum KpiEscalationFlag {
+  on_track
+  needs_coordination
+  needs_acs_decision
+}
+
+enum KpiMonitoringLevel {
+  CS
+  ACS
+  CM
+}
+
 enum ActionItemType {
   action_item
   meeting_decision
@@ -406,17 +418,18 @@ model FinanceSummaryHead {
 }
 
 model KpiDefinition {
-  id            String      @id @default(uuid()) @db.Uuid
-  schemeId       String      @db.Uuid
-  subschemeId    String?     @db.Uuid
-  category       KPICategory
-  description    String
-  kpiType        KPIType
-  numeratorUnit  String?
+  id              String              @id @default(uuid()) @db.Uuid
+  schemeId        String              @db.Uuid
+  subschemeId     String?             @db.Uuid
+  category        KPICategory
+  description     String
+  kpiType         KPIType
+  numeratorUnit   String?
   denominatorUnit String?
-  createdById    String?     @db.Uuid
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  monitoringLevel KpiMonitoringLevel?
+  createdById     String?             @db.Uuid
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   scheme     Scheme     @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme  Subscheme? @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
@@ -480,9 +493,11 @@ model KpiMeasurement {
   measuredAt     DateTime
   numeratorValue Decimal?          @db.Decimal(16, 2)
   yesValue       Boolean?
-  progressStatus KPIProgressStatus
-  workflowStatus KPIWorkflowStatus
-  remarks        String?
+  progressStatus   KPIProgressStatus
+  workflowStatus   KPIWorkflowStatus
+  remarks          String?
+  bottleneckReason String?
+  escalationFlag   KpiEscalationFlag?
   createdById    String?           @db.Uuid
   createdAt      DateTime          @default(now())
   reviewedById   String?           @db.Uuid

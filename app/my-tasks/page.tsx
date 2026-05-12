@@ -11,7 +11,7 @@ import {
 } from "@/src/lib/actionItemAssignment";
 import { fetchActionItems } from "@/src/lib/services/actionItemService";
 import type { ActionItem } from "@/types";
-import { ArrowRight, ClipboardList, IndianRupee, ListChecks } from "lucide-react";
+import { ArrowRight, ClipboardList, IndianRupee, Layers, ListChecks } from "lucide-react";
 
 export default function MyTasksHubPage() {
   const user = useRequireMyTasksHub();
@@ -149,6 +149,14 @@ export default function MyTasksHubPage() {
                       className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
                     >
                       Summary entry
+                      <ArrowRight size={14} aria-hidden />
+                    </Link>
+                    <Link
+                      href="/financial/entry/bulk"
+                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                    >
+                      <Layers size={13} aria-hidden />
+                      Bulk entry
                       <ArrowRight size={14} aria-hidden />
                     </Link>
                   </div>

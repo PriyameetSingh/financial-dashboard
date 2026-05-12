@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { KpiMonitoringLevel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -16,11 +17,18 @@ function normalizeUuidList(value: unknown): string[] {
   return [...new Set(out)];
 }
 
+function parseMonitoringLevel(value: unknown): KpiMonitoringLevel | null {
+  if (value === "CS" || value === "ACS" || value === "CM") return value;
+  return null;
+}
+
 type PatchBody = {
   performerUserIds?: string[] | null;
   reviewerUserIds?: string[] | null;
   assignedToId?: string | null;
   reviewerId?: string | null;
+  description?: string | null;
+  monitoringLevel?: string | null;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -43,12 +51,15 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       body.performerUserIds === undefined &&
       body.reviewerUserIds === undefined &&
       body.assignedToId === undefined &&
-      body.reviewerId === undefined
+      body.reviewerId === undefined &&
+      body.description === undefined &&
+      body.monitoringLevel === undefined
     ) {
-      return NextResponse.json({ detail: "performerUserIds and reviewerUserIds are required" }, { status: 400 });
+      return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
     }
 
-    if (performerUserIds.length === 0) {
+    const isAssignmentUpdate = body.performerUserIds !== undefined || body.reviewerUserIds !== undefined || body.assignedToId !== undefined || body.reviewerId !== undefined;
+    if (isAssignmentUpdate && performerUserIds.length === 0) {
       return NextResponse.json(
         { detail: "At least one performer must be set (active user ids)" },
         { status: 400 },
@@ -68,6 +79,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         id: true,
         schemeId: true,
         description: true,
+        monitoringLevel: true,
         scheme: { select: { code: true } },
         performers: { select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
@@ -88,21 +100,36 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
 
     const auditContext = getAuditRequestContext(request);
+    const newDescription = typeof body.description === "string" && body.description.trim() ? body.description.trim() : undefined;
+    const newMonitoringLevel = body.monitoringLevel !== undefined ? parseMonitoringLevel(body.monitoringLevel) : undefined;
 
     const before = {
       performerUserIds: existing.performers.map((p) => p.userId),
       reviewerUserIds: existing.reviewerUsers.map((r) => r.userId),
+      description: existing.description,
+      monitoringLevel: existing.monitoringLevel,
     };
 
     const updated = await prisma.$transaction(async (tx) => {
-      await tx.kpiDefinitionPerformer.deleteMany({ where: { kpiDefinitionId: id } });
-      await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
-      await tx.kpiDefinitionPerformer.createMany({
-        data: performerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
-      });
-      if (reviewerUserIds.length > 0) {
-        await tx.kpiDefinitionReviewerUser.createMany({
-          data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+      if (isAssignmentUpdate) {
+        await tx.kpiDefinitionPerformer.deleteMany({ where: { kpiDefinitionId: id } });
+        await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
+        await tx.kpiDefinitionPerformer.createMany({
+          data: performerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+        });
+        if (reviewerUserIds.length > 0) {
+          await tx.kpiDefinitionReviewerUser.createMany({
+            data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+          });
+        }
+      }
+      if (newDescription !== undefined || newMonitoringLevel !== undefined) {
+        await tx.kpiDefinition.update({
+          where: { id },
+          data: {
+            ...(newDescription !== undefined ? { description: newDescription } : {}),
+            ...(newMonitoringLevel !== undefined ? { monitoringLevel: newMonitoringLevel } : {}),
+          },
         });
       }
       return tx.kpiDefinition.findUniqueOrThrow({
@@ -122,11 +149,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     await logAudit(
       actor?.id,
-      "kpi_definition.assignments",
+      "kpi_definition.update",
       "kpi_definition",
       id,
       before,
-      { performerUserIds, reviewerUserIds },
+      { performerUserIds, reviewerUserIds, description: newDescription ?? null, monitoringLevel: newMonitoringLevel ?? null },
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
 
@@ -136,8 +163,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       assignedToName: updated.performers.map((p) => p.user.name).join(", ") || null,
       reviewerUserId: updated.reviewerUsers[0]?.userId ?? null,
       reviewerName: updated.reviewerUsers.map((r) => r.user.name).join(", ") || null,
-      performerUserIds,
-      reviewerUserIds,
+      performerUserIds: updated.performers.map((p) => p.userId),
+      reviewerUserIds: updated.reviewerUsers.map((r) => r.userId),
+      description: updated.description,
+      monitoringLevel: updated.monitoringLevel,
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

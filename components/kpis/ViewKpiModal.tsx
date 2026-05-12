@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { KPISubmission } from "@/types";
 import ReassignKpiModal from "@/components/kpis/ReassignKpiModal";
 import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement } from "@/src/lib/services/kpiService";
+
+const ESCALATION_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  on_track: { label: "On track", color: "var(--alert-success)", bg: "rgba(0,200,83,0.08)", border: "rgba(0,200,83,0.35)" },
+  needs_coordination: { label: "Needs coordination", color: "var(--alert-warning)", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.35)" },
+  needs_acs_decision: { label: "Needs ACS decision", color: "var(--alert-critical)", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.4)" },
+};
 
 type Props = {
   open: boolean;
@@ -346,6 +353,29 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     {m.remarks && (
                       <p className="mt-1 text-xs italic text-[var(--text-muted)]">"{m.remarks}"</p>
                     )}
+
+                    {/* Bottleneck reason */}
+                    {m.bottleneckReason && (
+                      <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)]">Bottleneck</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-primary)]">{m.bottleneckReason}</p>
+                      </div>
+                    )}
+
+                    {/* Escalation flag */}
+                    {m.escalationFlag && m.escalationFlag !== "on_track" && (() => {
+                      const cfg = ESCALATION_LABEL[m.escalationFlag];
+                      if (!cfg) return null;
+                      return (
+                        <span
+                          className="mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.25em]"
+                          style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          {cfg.label}
+                        </span>
+                      );
+                    })()}
 
                     <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--text-muted)]">
                       {m.submittedBy && (

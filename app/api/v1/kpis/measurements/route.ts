@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { KPIWorkflowStatus } from "@prisma/client";
+import { KPIWorkflowStatus, KpiEscalationFlag } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assertKpiUpdaterForDefinition, userRoleIdsFromDbUser } from "@/lib/kpi-access";
@@ -18,6 +18,10 @@ type Body = {
   denominatorValue?: number | null;
   remarks?: string;
   workflowStatus?: "draft" | "submitted";
+  /** Free-text bottleneck explanation (requires FLAG_KPI_ESCALATION). */
+  bottleneckReason?: string | null;
+  /** ACS routing flag (requires FLAG_KPI_ESCALATION). */
+  escalationFlag?: "on_track" | "needs_coordination" | "needs_acs_decision" | null;
 };
 
 export async function POST(request: NextRequest) {
@@ -79,6 +83,7 @@ export async function POST(request: NextRequest) {
     });
 
     const canOverrideDenominator = hasPermissionForUser(actor, "MANAGE_SCHEMES");
+    const canFlagEscalation = hasPermissionForUser(actor, "FLAG_KPI_ESCALATION");
 
     let target = existingTarget;
     if (!existingTarget) {
@@ -139,6 +144,18 @@ export async function POST(request: NextRequest) {
           ? { reviewedById: null, reviewedAt: new Date(), reviewNote: null }
           : { reviewedById: null, reviewedAt: null, reviewNote: null };
 
+    const VALID_ESCALATION_FLAGS = new Set<string>(["on_track", "needs_coordination", "needs_acs_decision"]);
+    const resolvedEscalationFlag: KpiEscalationFlag | null =
+      canFlagEscalation &&
+      body.escalationFlag &&
+      VALID_ESCALATION_FLAGS.has(body.escalationFlag)
+        ? (body.escalationFlag as KpiEscalationFlag)
+        : null;
+    const resolvedBottleneckReason: string | null =
+      canFlagEscalation && body.bottleneckReason?.trim()
+        ? body.bottleneckReason.trim()
+        : null;
+
     if (existingMeasurement) {
       await prisma.kpiMeasurement.update({
         where: { id: existingMeasurement.id },
@@ -149,6 +166,8 @@ export async function POST(request: NextRequest) {
           workflowStatus: resolvedWorkflowStatus,
           progressStatus: "on_track",
           remarks: body.remarks,
+          bottleneckReason: resolvedBottleneckReason,
+          escalationFlag: resolvedEscalationFlag,
           createdById: actor.id,
           ...reviewFields,
         },
@@ -164,6 +183,8 @@ export async function POST(request: NextRequest) {
           workflowStatus: resolvedWorkflowStatus,
           progressStatus: "on_track",
           remarks: body.remarks,
+          bottleneckReason: resolvedBottleneckReason,
+          escalationFlag: resolvedEscalationFlag,
           createdById: actor.id,
           ...reviewFields,
         },

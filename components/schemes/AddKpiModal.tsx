@@ -227,6 +227,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   const [subschemeId, setSubschemeId] = useState<string>("");
   const [unit, setUnit] = useState("");
   const [denominator, setDenominator] = useState("");
+  const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
   const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
 
@@ -239,6 +240,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setSubschemeId("");
     setUnit("");
     setDenominator("");
+    setMonitoringLevel("");
     setPerformerIds([""]);
     setReviewerIds([""]);
     setAlert(null);
@@ -276,6 +278,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
         numeratorUnit: unitTrimmed,
         denominatorUnit: unitTrimmed,
         denominatorValue: isNaN(denominatorValue as number) ? null : denominatorValue,
+        monitoringLevel: monitoringLevel || null,
         performerUserIds: performers,
         reviewerUserIds: reviewers,
       });
@@ -357,6 +360,23 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
               {derivedCategory}
             </span>
           </div>
+
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+            Monitoring Level
+            <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+              Which level will monitor this KPI
+            </span>
+            <select
+              value={monitoringLevel}
+              onChange={(e) => setMonitoringLevel(e.target.value as "CS" | "ACS" | "CM" | "")}
+              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
+            >
+              <option value="">Select level (optional)</option>
+              <option value="CS">CS — Chief Secretary</option>
+              <option value="ACS">ACS — Additional Chief Secretary</option>
+              <option value="CM">CM — Chief Minister</option>
+            </select>
+          </label>
 
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Type</p>

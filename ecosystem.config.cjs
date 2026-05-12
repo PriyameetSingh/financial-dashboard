@@ -25,8 +25,8 @@ module.exports = {
         // Auth.js must use the test origin so Keycloak callbacks return here,
         // not to the production server. Must be set in the pm2 env block so
         // it takes precedence over what Next.js loads from .env at startup.
-        AUTH_URL: "http://localhost:8766/hudd-dashboard",
-        KEYCLOAK_POST_LOGOUT_REDIRECT_URI: "http://localhost:8766/hudd-dashboard/login",
+        AUTH_URL: "http://13.203.18.97:8766/hudd-dashboard/api/auth",
+        KEYCLOAK_POST_LOGOUT_REDIRECT_URI: "http://13.203.18.97:8766/hudd-dashboard/login",
       },
     },
   ],

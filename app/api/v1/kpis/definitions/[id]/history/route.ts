@@ -66,6 +66,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       denominatorValue: toNumber(target.denominatorValue),
       workflowStatus: mapWorkflowStatus(m.workflowStatus),
       remarks: m.remarks ?? null,
+      bottleneckReason: m.bottleneckReason ?? null,
+      escalationFlag: m.escalationFlag ?? null,
       submittedBy: m.createdBy?.name ?? null,
       reviewedBy: m.reviewedBy?.name ?? null,
       reviewedAt: m.reviewedAt ? m.reviewedAt.toISOString().slice(0, 10) : null,

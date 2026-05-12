@@ -5,10 +5,11 @@ import AppShell from "@/components/AppShell";
 import AddKpiModal from "@/components/schemes/AddKpiModal";
 import SchemeFormModal from "@/components/schemes/SchemeFormModal";
 import SchemeModal from "@/components/schemes/SchemeModal";
+import EditKpiModal from "@/components/kpis/EditKpiModal";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchSchemesOverview } from "@/src/lib/services/schemeService";
-import { SchemeOverview, SchemeReferenceData } from "@/types";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { KPISubmission, SchemeKpiSummary, SchemeOverview, SchemeReferenceData } from "@/types";
+import { ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { withNextBasePath } from "@/lib/next-base-path";
 
 function formatCurrency(value: number) {
@@ -18,6 +19,21 @@ function formatCurrency(value: number) {
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
+}
+
+function kpiSummaryToSubmission(k: SchemeKpiSummary): KPISubmission {
+  return {
+    id: k.id,
+    scheme: "",
+    vertical: "",
+    category: k.category as "STATE" | "CENTRAL",
+    description: k.description,
+    type: k.kpiType as "OUTPUT" | "OUTCOME" | "BINARY",
+    unit: "",
+    status: "not_submitted",
+    lastUpdated: "",
+    monitoringLevel: k.monitoringLevel,
+  };
 }
 
 export default function SchemesPage() {
@@ -34,6 +50,7 @@ export default function SchemesPage() {
   const [schemeFormTarget, setSchemeFormTarget] = useState<SchemeOverview | null>(null);
   const [kpiModalScheme, setKpiModalScheme] = useState<SchemeOverview | null>(null);
   const [schemeProgressModal, setSchemeProgressModal] = useState<SchemeOverview | null>(null);
+  const [editKpiTarget, setEditKpiTarget] = useState<KPISubmission | null>(null);
 
   const canManageSchemes = permissions.includes("MANAGE_SCHEMES");
 
@@ -232,7 +249,9 @@ export default function SchemesPage() {
                                           <th className="pb-2 pr-3">Description</th>
                                           <th className="pb-2 pr-3">Type</th>
                                           <th className="pb-2 pr-3">Category</th>
+                                          <th className="pb-2 pr-3">Monitoring</th>
                                           <th className="pb-2">Component</th>
+                                          {canManageSchemes && <th className="pb-2 pl-2" />}
                                         </tr>
                                       </thead>
                                       <tbody>
@@ -241,9 +260,30 @@ export default function SchemesPage() {
                                             <td className="py-2 pr-3 align-top">{k.description}</td>
                                             <td className="py-2 pr-3 align-top">{k.kpiType}</td>
                                             <td className="py-2 pr-3 align-top">{k.category}</td>
+                                            <td className="py-2 pr-3 align-top">
+                                              {k.monitoringLevel ? (
+                                                <span className="inline-flex items-center rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)]">
+                                                  {k.monitoringLevel}
+                                                </span>
+                                              ) : (
+                                                <span className="text-[var(--text-muted)]">—</span>
+                                              )}
+                                            </td>
                                             <td className="py-2 align-top">
                                               {k.subschemeCode ? `${k.subschemeCode} (${k.subschemeName})` : "—"}
                                             </td>
+                                            {canManageSchemes && (
+                                              <td className="py-2 pl-2 align-top">
+                                                <button
+                                                  type="button"
+                                                  title="Edit KPI"
+                                                  onClick={() => setEditKpiTarget(kpiSummaryToSubmission(k))}
+                                                  className="rounded p-1 text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
+                                                >
+                                                  <Pencil className="h-3 w-3" />
+                                                </button>
+                                              </td>
+                                            )}
                                           </tr>
                                         ))}
                                       </tbody>
@@ -316,6 +356,13 @@ export default function SchemesPage() {
                 }
               : null
           }
+        />
+
+        <EditKpiModal
+          open={editKpiTarget !== null}
+          submission={editKpiTarget}
+          onClose={() => setEditKpiTarget(null)}
+          onSaved={reloadOverview}
         />
       </div>
     </AppShell>

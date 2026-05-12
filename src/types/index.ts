@@ -39,6 +39,8 @@ export enum Permission {
   MANAGE_PERMISSIONS = "MANAGE_PERMISSIONS",
   /** Create/update FY rows; TASU / administration — see seed role grants. */
   MANAGE_FINANCIAL_YEARS = "MANAGE_FINANCIAL_YEARS",
+  /** Set bottleneck reason and ACS escalation flag on KPI measurements. */
+  FLAG_KPI_ESCALATION = "FLAG_KPI_ESCALATION",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";
@@ -94,6 +96,8 @@ export type KPIStatus = "not_submitted" | "draft" | "submitted" | "submitted_pen
 /** Latest measurement progress (on_track / delayed / overdue); null if no measurement yet. */
 export type KPIMeasurementProgressStatus = "on_track" | "delayed" | "overdue";
 
+export type KpiEscalationFlag = "on_track" | "needs_coordination" | "needs_acs_decision";
+
 export interface KPISubmission {
   id: string;
   kpiTargetId?: string | null;
@@ -125,6 +129,18 @@ export interface KPISubmission {
   currentUserCanReview?: boolean;
   /** Server-computed: MANAGE_SCHEMES — may change action owner and reviewer. */
   currentUserCanReassignOwners?: boolean;
+  /** Bottleneck reason from latest measurement. */
+  bottleneckReason?: string | null;
+  /** ACS escalation flag from latest measurement. */
+  escalationFlag?: KpiEscalationFlag | null;
+  /** Last N measurement values for velocity/trajectory display (newest first). */
+  velocityTrail?: Array<{ measuredAt: string; numeratorValue: number | null; yesValue: boolean | null }>;
+  /** Days since last measurement update; null if never updated. */
+  staleDays?: number | null;
+  /** Server-computed: user has FLAG_KPI_ESCALATION permission. */
+  canFlagEscalation?: boolean;
+  /** Monitoring level for this KPI: CS, ACS, or CM. */
+  monitoringLevel?: "CS" | "ACS" | "CM" | null;
 }
 
 export type FinancialEntryStatus =
@@ -285,6 +301,7 @@ export interface SchemeKpiSummary {
   description: string;
   kpiType: string;
   category: string;
+  monitoringLevel: "CS" | "ACS" | "CM" | null;
   subschemeCode: string | null;
   subschemeName: string | null;
 }

@@ -20,10 +20,14 @@ function utilPct(e: FinancialEntry): number {
 
 type Bucket = "on_track" | "at_risk" | "critical";
 
-function bucketFor(pct: number): Bucket {
-  if (pct > 75) return "on_track";
-  if (pct >= 40) return "at_risk";
-  return "critical";
+/** Bucketing based on quarterly target variance (not annual utilization).
+ *  Q1 target is 25%, so a scheme at 21% spending is nearly on track.
+ */
+function bucketForQuarterlyVariance(variancePct: number): Bucket {
+  // variance = actual% - target% (positive = ahead of target)
+  if (variancePct >= -5) return "on_track";     // Within 5% of target = on track
+  if (variancePct >= -15) return "at_risk";    // 5-15% behind = at risk
+  return "critical";                            // >15% behind = critical
 }
 
 function bucketLabel(bucket: Bucket): string {
@@ -62,6 +66,54 @@ function subUtilPct(s: NonNullable<FinancialEntry["subschemes"]>[number]): numbe
   return ((s.ifms ?? 0) / b) * 100;
 }
 
+type Quarter = 1 | 2 | 3 | 4;
+
+const QUARTER_ALLOCATIONS: Record<Quarter, number> = {
+  1: 0.25, // 25% in Q1 (Apr-Jun)
+  2: 0.15, // 15% in Q2 (Jul-Sep)
+  3: 0.20, // 20% in Q3 (Oct-Dec)
+  4: 0.40, // 40% in Q4 (Jan-Mar)
+};
+
+function getCurrentQuarter(): Quarter {
+  const month = new Date().getMonth(); // 0-11
+  // FY starts in April (month 3)
+  if (month >= 3 && month <= 5) return 1; // Apr-Jun
+  if (month >= 6 && month <= 8) return 2; // Jul-Sep
+  if (month >= 9 && month <= 11) return 3; // Oct-Dec
+  return 4; // Jan-Mar
+}
+
+function getCumulativeTargetUpToQuarter(q: Quarter): number {
+  let cumulative = 0;
+  for (let i = 1; i <= q; i++) {
+    cumulative += QUARTER_ALLOCATIONS[i as Quarter];
+  }
+  return cumulative;
+}
+
+function getQuarterlyProgress(e: FinancialEntry): {
+  quarter: Quarter;
+  quarterTargetPct: number;
+  cumulativeTargetPct: number;
+  actualPct: number;
+  variancePct: number;
+} {
+  const quarter = getCurrentQuarter();
+  const actualPct = utilPct(e);
+  const cumulativeTargetPct = getCumulativeTargetUpToQuarter(quarter) * 100;
+  const quarterTargetPct = QUARTER_ALLOCATIONS[quarter] * 100;
+  const variancePct = actualPct - cumulativeTargetPct;
+
+  return {
+    quarter,
+    quarterTargetPct,
+    cumulativeTargetPct,
+    actualPct,
+    variancePct,
+  };
+}
+
 const BUCKET_ORDER: Bucket[] = ["critical", "at_risk", "on_track"];
 
 const COLUMN_UI: Record<
@@ -77,43 +129,50 @@ const COLUMN_UI: Record<
     badgeText: string;
     border: string;
     cardBorder: string;
+    accentBorder: string;
   }
 > = {
   critical: {
     title: "CRITICAL",
-    range: "< 40%",
-    headerBg: "bg-rose-50 dark:bg-rose-950/40",
-    headerText: "text-rose-800 dark:text-rose-200",
-    countBg: "bg-rose-100/90 text-rose-900 dark:bg-rose-900/50 dark:text-rose-100",
+    range: ">15% behind Q target",
+    // Clean header with only top accent border
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-rose-700 dark:text-rose-300",
+    countBg: "bg-rose-600 text-white dark:bg-rose-500",
     barFill: "bg-rose-500",
-    badgeBg: "bg-rose-100 dark:bg-rose-900/40",
-    badgeText: "text-rose-800 dark:text-rose-200",
-    border: "border-rose-200/80 dark:border-rose-800/60",
-    cardBorder: "border-rose-100 dark:border-rose-900/50",
+    // Subtle badge with better contrast
+    badgeBg: "bg-rose-100 text-rose-900 dark:bg-rose-900/60 dark:text-rose-100",
+    badgeText: "", // uses combined with badgeBg
+    // Neutral column border, cards get left accent
+    border: "border-[var(--border)]",
+    cardBorder: "border-[var(--border)]",
+    accentBorder: "border-l-rose-500",
   },
   at_risk: {
     title: "AT RISK",
-    range: "40–75%",
-    headerBg: "bg-amber-50 dark:bg-amber-950/40",
-    headerText: "text-amber-900 dark:text-amber-200",
-    countBg: "bg-amber-100/90 text-amber-950 dark:bg-amber-900/50 dark:text-amber-100",
+    range: "5-15% behind Q target",
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-amber-700 dark:text-amber-300",
+    countBg: "bg-amber-600 text-white dark:bg-amber-500",
     barFill: "bg-amber-500",
-    badgeBg: "bg-amber-100 dark:bg-amber-900/40",
-    badgeText: "text-amber-900 dark:text-amber-200",
-    border: "border-amber-200/80 dark:border-amber-800/60",
-    cardBorder: "border-amber-100 dark:border-amber-900/50",
+    badgeBg: "bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-100",
+    badgeText: "",
+    border: "border-[var(--border)]",
+    cardBorder: "border-[var(--border)]",
+    accentBorder: "border-l-amber-500",
   },
   on_track: {
     title: "ON TRACK",
-    range: "> 75%",
-    headerBg: "bg-emerald-50 dark:bg-emerald-950/40",
-    headerText: "text-emerald-900 dark:text-emerald-200",
-    countBg: "bg-emerald-100/90 text-emerald-950 dark:bg-emerald-900/50 dark:text-emerald-100",
+    range: "Within 5% of Q target",
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-emerald-700 dark:text-emerald-300",
+    countBg: "bg-emerald-600 text-white dark:bg-emerald-500",
     barFill: "bg-emerald-500",
-    badgeBg: "bg-emerald-100 dark:bg-emerald-900/40",
-    badgeText: "text-emerald-900 dark:text-emerald-200",
-    border: "border-emerald-200/80 dark:border-emerald-800/60",
-    cardBorder: "border-emerald-100 dark:border-emerald-900/50",
+    badgeBg: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100",
+    badgeText: "",
+    border: "border-[var(--border)]",
+    cardBorder: "border-[var(--border)]",
+    accentBorder: "border-l-emerald-500",
   },
 };
 
@@ -171,10 +230,16 @@ export default function SchemesBoardClient() {
       critical: [],
     };
     for (const e of filtered) {
-      cols[bucketFor(utilPct(e))].push(e);
+      const qp = getQuarterlyProgress(e);
+      cols[bucketForQuarterlyVariance(qp.variancePct)].push(e);
     }
     for (const k of BUCKET_ORDER) {
-      cols[k].sort((a, b) => utilPct(b) - utilPct(a));
+      // Sort by how close they are to their quarterly target (best first)
+      cols[k].sort((a, b) => {
+        const qa = getQuarterlyProgress(a);
+        const qb = getQuarterlyProgress(b);
+        return qb.variancePct - qa.variancePct;
+      });
     }
     return cols;
   }, [filtered]);
@@ -214,7 +279,9 @@ export default function SchemesBoardClient() {
           break;
         case "bucket": {
           const order: Record<Bucket, number> = { critical: 0, at_risk: 1, on_track: 2 };
-          cmp = order[bucketFor(utilPct(a))] - order[bucketFor(utilPct(b))];
+          const qa = getQuarterlyProgress(a);
+          const qb = getQuarterlyProgress(b);
+          cmp = order[bucketForQuarterlyVariance(qa.variancePct)] - order[bucketForQuarterlyVariance(qb.variancePct)];
           break;
         }
       }
@@ -287,6 +354,25 @@ export default function SchemesBoardClient() {
               <span className="rounded-full border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold tabular-nums text-[var(--text-primary)]">
                 {totals.overallPct.toFixed(1)}% overall
               </span>
+              {(() => {
+                const q = getCurrentQuarter();
+                const allocations = [
+                  { q: 1, pct: 25, label: "Q1" },
+                  { q: 2, pct: 15, label: "Q2" },
+                  { q: 3, pct: 20, label: "Q3" },
+                  { q: 4, pct: 40, label: "Q4" },
+                ];
+                const current = allocations.find((a) => a.q === q)!;
+                const cumulative = allocations.filter((a) => a.q <= q).reduce((s, a) => s + a.pct, 0);
+                return (
+                  <span
+                    className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium tabular-nums text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200"
+                    title={`FY spending pattern: Q1=25%, Q2=15%, Q3=20%, Q4=40%. Current target up to Q${q} is ${cumulative}%`}
+                  >
+                    Q{q} Target: {cumulative}% (Q{q}={current.pct}%)
+                  </span>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -338,10 +424,10 @@ export default function SchemesBoardClient() {
               return (
                 <div
                   key={key}
-                  className={`flex min-h-[360px] flex-col overflow-hidden rounded-2xl border-2 bg-[var(--bg-card)] ${ui.border}`}
+                  className={`flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] ${ui.accentBorder} border-t-4`}
                 >
                   <div
-                    className={`flex items-center justify-between gap-2 border-b px-4 py-3 ${ui.headerBg} ${ui.border}`}
+                    className={`flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 ${ui.headerBg}`}
                   >
                     <div>
                       <p className={`text-sm font-bold ${ui.headerText}`}>
@@ -360,13 +446,14 @@ export default function SchemesBoardClient() {
                     {list.map((entry) => {
                       const pct = utilPct(entry);
                       const kind = sponsorshipKind(entry);
-                      const entryBucket = bucketFor(pct);
+                      const qp = getQuarterlyProgress(entry);
+                      const entryBucket = bucketForQuarterlyVariance(qp.variancePct);
                       const hasSubs =
                         !!entry.subschemes?.length;
                       const expanded =
                         hasSubs && expandedSchemeId === entry.id;
 
-                      const cardClass = `cursor-pointer rounded-xl border bg-[var(--bg-document)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--bg-document)] focus-visible:ring-2 focus-visible:ring-[var(--text-secondary)] ${ui.cardBorder}`;
+                      const cardClass = `cursor-pointer rounded-lg border bg-[var(--bg-document)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--bg-document)] focus-visible:ring-2 focus-visible:ring-[var(--text-secondary)] ${ui.cardBorder} ${ui.accentBorder} border-l-4`;
 
                       return (
                         <div
@@ -393,7 +480,7 @@ export default function SchemesBoardClient() {
                               </p>
                             </div>
                             <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${ui.badgeBg} ${ui.badgeText}`}
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${ui.badgeBg}`}
                             >
                               {bucketLabel(entryBucket)} — {pct.toFixed(1)}%
                             </span>
@@ -423,6 +510,56 @@ export default function SchemesBoardClient() {
                               {pct.toFixed(1)}%
                             </span>
                           </div>
+
+                          {/* Quarterly Progress */}
+                          {(() => {
+                            const qp = getQuarterlyProgress(entry);
+                            const isBehind = qp.variancePct < 0;
+                            const isOnTrack = qp.variancePct >= -5;
+
+                            // Define colors properly for each state
+                            const accentColors = isBehind
+                              ? isOnTrack
+                                ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
+                                : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
+                              : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
+                            const barColor = isBehind
+                              ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
+                              : "bg-emerald-500";
+                            const varianceColor = qp.variancePct >= 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : accentColors.text;
+
+                            return (
+                              <div className={`mt-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} px-2 py-1.5`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-medium text-[var(--text-muted)]">
+                                    Q{qp.quarter} Target
+                                  </span>
+                                  <span className={`text-[10px] font-semibold tabular-nums ${accentColors.text}`}>
+                                    {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
+                                  </span>
+                                </div>
+                                <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--border)]">
+                                  <div
+                                    className={`h-full rounded-full ${barColor}`}
+                                    style={{
+                                      width: `${Math.min(100, (qp.actualPct / qp.cumulativeTargetPct) * 100)}%`,
+                                    }}
+                                  />
+                                </div>
+                                <div className="mt-0.5 flex items-center justify-between">
+                                  <span className="text-[9px] text-[var(--text-muted)]">
+                                    Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
+                                  </span>
+                                  <span className={`text-[9px] font-semibold tabular-nums ${varianceColor}`}>
+                                    {qp.variancePct >= 0 ? "+" : ""}
+                                    {qp.variancePct.toFixed(1)}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {hasSubs && (
                             <div
@@ -538,7 +675,8 @@ export default function SchemesBoardClient() {
                 <tbody className="divide-y divide-[var(--border)]">
                   {sortedList.map((entry) => {
                     const pct = utilPct(entry);
-                    const bucket = bucketFor(pct);
+                    const qp = getQuarterlyProgress(entry);
+                    const bucket = bucketForQuarterlyVariance(qp.variancePct);
                     const kind = sponsorshipKind(entry);
 
                     const barFill =

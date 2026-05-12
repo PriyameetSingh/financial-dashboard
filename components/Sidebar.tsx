@@ -183,7 +183,7 @@ const items: NavItem[] = [
   },
 
   {
-    label: "Meetings",
+    label: "Dashboard Meetings",
     href: "/meetings",
     icon: CalendarDays,
         roles: [UserRole.TASU, UserRole.PROGRAMME_MANAGER, UserRole.ACS],

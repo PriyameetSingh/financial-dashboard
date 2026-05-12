@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { KPICategory, KPIType } from "@prisma/client";
+import { KPICategory, KPIType, KpiMonitoringLevel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import {
@@ -59,7 +59,7 @@ export async function GET() {
               include: {
                 measurements: {
                   orderBy: { measuredAt: "desc" },
-                  take: 1,
+                  take: 5,
                 },
               },
               take: 1,
@@ -68,7 +68,7 @@ export async function GET() {
               include: {
                 measurements: {
                   orderBy: { measuredAt: "desc" },
-                  take: 1,
+                  take: 5,
                 },
               },
               take: 1,
@@ -81,6 +81,9 @@ export async function GET() {
     const canManageSchemes = hasPermissionForUser(actor, "MANAGE_SCHEMES");
     const canEnterPermission = hasPermissionForUser(actor, "ENTER_KPI_DATA");
     const canApprovePermission = hasPermissionForUser(actor, "APPROVE_KPI");
+    const canFlagEscalation = hasPermissionForUser(actor, "FLAG_KPI_ESCALATION");
+
+    const today = new Date();
 
     const schemeIds = [...new Set(definitions.map((d) => d.schemeId))];
     const kpiOwner1Rows =
@@ -120,6 +123,7 @@ export async function GET() {
           description: definition.description,
           type: definition.kpiType,
           unit: definition.numeratorUnit ?? definition.denominatorUnit ?? "value",
+          monitoringLevel: definition.monitoringLevel ?? null,
           numerator: toNumber(measurement?.numeratorValue),
           denominator: toNumber(target?.denominatorValue),
           yes: measurement?.yesValue ?? null,
@@ -127,6 +131,16 @@ export async function GET() {
           measurementProgressStatus: measurement?.progressStatus ?? null,
           lastUpdated: (measurement?.measuredAt ?? definition.updatedAt).toISOString().slice(0, 10),
           remarks: measurement?.remarks ?? undefined,
+          bottleneckReason: measurement?.bottleneckReason ?? null,
+          escalationFlag: measurement?.escalationFlag ?? null,
+          velocityTrail: (target?.measurements ?? []).map((m) => ({
+            measuredAt: m.measuredAt.toISOString().slice(0, 10),
+            numeratorValue: toNumber(m.numeratorValue),
+            yesValue: m.yesValue ?? null,
+          })),
+          staleDays: measurement
+            ? Math.floor((today.getTime() - measurement.measuredAt.getTime()) / 86_400_000)
+            : null,
           assignedToUserId: definition.performers[0]?.userId ?? null,
           assignedToName:
             definition.performers.map((p) => p.user.name).join(", ") || null,
@@ -138,6 +152,7 @@ export async function GET() {
           currentUserCanEnter,
           currentUserCanReview,
           currentUserCanReassignOwners: canManageSchemes,
+          canFlagEscalation,
         };
       });
 
@@ -164,6 +179,11 @@ function parseKpiType(value: unknown): KPIType | null {
   return null;
 }
 
+function parseMonitoringLevel(value: unknown): KpiMonitoringLevel | null {
+  if (value === "CS" || value === "ACS" || value === "CM") return value;
+  return null;
+}
+
 function normalizeUuidList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const out: string[] = [];
@@ -184,6 +204,7 @@ type CreateBody = {
   numeratorUnit?: string | null;
   denominatorUnit?: string | null;
   denominatorValue?: number | null;
+  monitoringLevel?: string | null;
   performerUserIds?: string[] | null;
   reviewerUserIds?: string[] | null;
   /** @deprecated Use performerUserIds / reviewerUserIds arrays */
@@ -264,6 +285,8 @@ export async function POST(request: NextRequest) {
 
     const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
+    const monitoringLevel = parseMonitoringLevel(body.monitoringLevel);
+
     const created = await prisma.kpiDefinition.create({
       data: {
         schemeId,
@@ -273,6 +296,7 @@ export async function POST(request: NextRequest) {
         kpiType,
         numeratorUnit: body.numeratorUnit?.trim() || null,
         denominatorUnit: body.denominatorUnit?.trim() || null,
+        monitoringLevel: monitoringLevel ?? undefined,
         createdById: actor?.id ?? null,
         performers: {
           create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
@@ -335,6 +359,7 @@ export async function POST(request: NextRequest) {
           kpiType: created.kpiType,
           numeratorUnit: created.numeratorUnit,
           denominatorUnit: created.denominatorUnit,
+          monitoringLevel: created.monitoringLevel,
         },
       },
       { status: 201 },

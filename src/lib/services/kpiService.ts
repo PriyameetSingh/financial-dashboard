@@ -10,6 +10,8 @@ export type KpiMeasurementHistory = {
   denominatorValue: number | null;
   workflowStatus: "draft" | "submitted_pending" | "approved" | "rejected";
   remarks: string | null;
+  bottleneckReason: string | null;
+  escalationFlag: "on_track" | "needs_coordination" | "needs_acs_decision" | null;
   submittedBy: string | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
@@ -67,6 +69,8 @@ export async function submitKPIMeasurement(input: {
   denominatorValue?: number | null;
   remarks?: string;
   workflowStatus?: "draft" | "submitted";
+  bottleneckReason?: string | null;
+  escalationFlag?: "on_track" | "needs_coordination" | "needs_acs_decision" | null;
 }): Promise<void> {
   const response = await fetch(withNextBasePath("/api/v1/kpis/measurements"), {
     method: "POST",
@@ -125,6 +129,7 @@ export async function createKpiDefinition(input: {
   numeratorUnit?: string | null;
   denominatorUnit?: string | null;
   denominatorValue?: number | null;
+  monitoringLevel?: "CS" | "ACS" | "CM" | null;
   performerUserIds: string[];
   reviewerUserIds: string[];
 }): Promise<void> {
@@ -134,4 +139,21 @@ export async function createKpiDefinition(input: {
     body: JSON.stringify(input),
   });
   await parseResponse<{ definition?: unknown }>(response);
+}
+
+export async function updateKpiDefinition(
+  kpiDefinitionId: string,
+  input: {
+    description?: string;
+    monitoringLevel?: "CS" | "ACS" | "CM" | null;
+    performerUserIds?: string[];
+    reviewerUserIds?: string[];
+  },
+): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  await parseResponse<{ ok: boolean }>(response);
 }

@@ -21,6 +21,7 @@ const PERMISSIONS = [
   { code: "VIEW_ANALYTICS", name: "View analytics" },
   { code: "MANAGE_PERMISSIONS", name: "Manage permissions" },
   { code: "MANAGE_FINANCIAL_YEARS", name: "Manage financial years" },
+  { code: "FLAG_KPI_ESCALATION", name: "Flag KPI escalation / bottleneck" },
 ];
 
 /** Merged former AS / PS HUDD / similar desk roles — permission set aligned with Nodal Officer. */
@@ -46,12 +47,13 @@ const ROLES = [
       "VIEW_ANALYTICS",
       "APPROVE_KPI",
       "APPROVE_ACTION_ITEMS",
+      "FLAG_KPI_ESCALATION",
     ],
   },
   {
     code: "PROGRAMME_MANAGER",
     name: "Programme Manager",
-    permissions: NODAL_LIKE_PERMISSIONS,
+    permissions: [...NODAL_LIKE_PERMISSIONS, "FLAG_KPI_ESCALATION"],
   },
   {
     code: "FA",
@@ -75,7 +77,7 @@ const ROLES = [
   {
     code: "NODAL_OFFICER",
     name: "Nodal Officer",
-    permissions: NODAL_LIKE_PERMISSIONS,
+    permissions: [...NODAL_LIKE_PERMISSIONS, "FLAG_KPI_ESCALATION"],
   },
 ];
 
