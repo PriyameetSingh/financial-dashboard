@@ -34,6 +34,9 @@ export async function GET() {
         email: true,
         department: true,
         designation: true,
+        organisation: true,
+        section: true,
+        officerType: true,
         userRoles: {
           take: 1,
           orderBy: { roleId: "asc" },
@@ -57,6 +60,9 @@ export async function GET() {
           role: parseRole(roleCode),
           department: r.department ?? "",
           designation: r.designation?.trim() || "",
+          organisation: r.organisation ?? "",
+          section: r.section ?? "",
+          officerType: r.officerType ?? null,
           assignedSchemes,
         };
       });

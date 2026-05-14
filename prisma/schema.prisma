@@ -111,6 +111,12 @@ enum FinanceYearBudgetCategory {
   ADMIN_EXPENDITURE
 }
 
+/// Government desk vs Programme Management Unit (HUDD).
+enum OfficerType {
+  GOVERNMENT
+  PMU
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   code         String?  @unique
@@ -118,6 +124,9 @@ model User {
   email        String   @unique
   department   String?
   designation  String?
+  organisation String?
+  section      String?
+  officerType  OfficerType?
   isActive     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -247,6 +256,7 @@ model FinancialYear {
   kpiTargets                KpiTarget[]
   supplements FinanceBudgetSupplement[]
   financeYearBudgetAllocation FinanceYearBudgetAllocation?
+  meetings                  DashboardMeeting[]
 
   @@map("financial_years")
 }
@@ -515,14 +525,16 @@ model KpiMeasurement {
 }
 
 model DashboardMeeting {
-  id          String   @id @default(uuid()) @db.Uuid
-  meetingDate DateTime @db.Date
-  title       String?
-  notes       String?
-  createdById String?  @db.Uuid
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid()) @db.Uuid
+  meetingDate     DateTime @db.Date
+  title           String?
+  notes           String?
+  financialYearId String?  @db.Uuid
+  createdById     String?  @db.Uuid
+  createdAt       DateTime @default(now())
 
-  createdBy User? @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy    User?         @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  financialYear FinancialYear? @relation(fields: [financialYearId], references: [id], onDelete: SetNull)
 
   topics     MeetingTopic[]
   actionItems ActionItem[]

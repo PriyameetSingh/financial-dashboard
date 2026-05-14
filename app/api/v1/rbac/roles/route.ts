@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    await requirePermission("MANAGE_PERMISSIONS");
+    await requireAnyPermission("MANAGE_USERS", "MANAGE_PERMISSIONS");
 
     const roles = await prisma.role.findMany({
       orderBy: { code: "asc" },

@@ -54,6 +54,7 @@ type Body = {
   notes?: string | null;
   topics?: Array<{ topic: string }>;
   actionItemIds?: string[];
+  financialYearId?: string | null;
 };
 
 export async function POST(request: NextRequest) {
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         meetingDate,
         title: body.title ?? null,
         notes: body.notes ?? null,
+        financialYearId: body.financialYearId ?? null,
         createdById: actor?.id ?? null,
         topics: body.topics?.length
           ? {

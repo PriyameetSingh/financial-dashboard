@@ -4,11 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import AppShell from "@/components/AppShell";
 import { useRequireRole } from "@/src/lib/route-guards";
 import { hasPermission, UserRole, Permission, refreshSessionUserFromApi, getCurrentUser } from "@/lib/auth";
-import { fetchMeetings, MeetingListItem } from "@/src/lib/services/meetingService";
-import { CalendarPlus, Play, Sparkles, FileText } from "lucide-react";
+import { fetchMeetings, MeetingListItem, deleteMeeting } from "@/src/lib/services/meetingService";
+import { CalendarPlus, Play, Sparkles, FileText, Edit3, Trash2 } from "lucide-react";
 import { getFinancialYear, todayISO } from "./meetingUtils";
 import ActiveMeetingOverlay from "./components/ActiveMeetingOverlay";
 import ScheduleMeetingModal from "./components/ScheduleMeetingModal";
+import EditMeetingModal from "./components/EditMeetingModal";
 
 function normalizeMeetings(raw: MeetingListItem[]): MeetingListItem[] {
   return raw.map((m) => ({
@@ -26,8 +27,10 @@ export default function MeetingsPage() {
 
   const [showSchedule, setShowSchedule] = useState(false);
   const [activeMeeting, setActiveMeeting] = useState<MeetingListItem | null>(null);
+  const [editingMeeting, setEditingMeeting] = useState<MeetingListItem | null>(null);
 
   const [canSchedule, setCanSchedule] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +42,7 @@ export default function MeetingsPage() {
         hasPermission(user, Permission.CREATE_ACTION_ITEMS) ||
           hasPermission(user, Permission.MANAGE_SCHEMES),
       );
+      setCanDelete(hasPermission(user, Permission.MANAGE_SCHEMES));
     })();
     return () => {
       cancelled = true;
@@ -72,6 +76,19 @@ export default function MeetingsPage() {
       setError(e instanceof Error ? e.message : "Failed to load meetings");
     }
   }, []);
+
+  const handleDeleteMeeting = async (meetingId: string, meetingTitle: string) => {
+    if (!window.confirm(`Are you sure you want to delete the meeting "${meetingTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteMeeting(meetingId);
+      await load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete meeting");
+    }
+  };
 
   useEffect(() => {
     load();
@@ -150,7 +167,16 @@ export default function MeetingsPage() {
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {todayMeetings.map((m) => (
-                <MeetingCard key={m.id} meeting={m} isToday onStart={() => setActiveMeeting(m)} />
+                <MeetingCard 
+                  key={m.id} 
+                  meeting={m} 
+                  isToday 
+                  onStart={() => setActiveMeeting(m)}
+                  onEdit={() => setEditingMeeting(m)}
+                  onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
+                  canEdit={canSchedule}
+                  canDelete={canDelete}
+                />
               ))}
             </div>
           </section>
@@ -165,7 +191,14 @@ export default function MeetingsPage() {
             )}
             <div className="grid gap-4 md:grid-cols-2">
               {otherMeetings.map((m) => (
-                <MeetingCard key={m.id} meeting={m} />
+                <MeetingCard 
+                  key={m.id} 
+                  meeting={m}
+                  onEdit={() => setEditingMeeting(m)}
+                  onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
+                  canEdit={canSchedule}
+                  canDelete={canDelete}
+                />
               ))}
             </div>
           </section>
@@ -181,6 +214,17 @@ export default function MeetingsPage() {
           }}
         />
       )}
+
+      {editingMeeting && (
+        <EditMeetingModal
+          meeting={editingMeeting}
+          onClose={() => setEditingMeeting(null)}
+          onUpdated={() => {
+            setEditingMeeting(null);
+            load();
+          }}
+        />
+      )}
     </AppShell>
   );
 }
@@ -189,10 +233,18 @@ function MeetingCard({
   meeting,
   isToday = false,
   onStart,
+  onEdit,
+  onDelete,
+  canEdit = false,
+  canDelete = false,
 }: {
   meeting: MeetingListItem;
   isToday?: boolean;
   onStart?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const materials = meeting.materials ?? [];
   return (
@@ -252,6 +304,31 @@ function MeetingCard({
             <span className="text-[10px] font-medium uppercase tracking-[0.3em]">Action items</span>
             <span className="ml-2 tabular-nums text-[var(--text-primary)]">{meeting.actionItems.length}</span>
           </p>
+        </div>
+
+        <div className="mt-3 flex gap-2">
+          {canEdit && onEdit && (
+            <button
+              id={`btn-edit-meeting-${meeting.id}`}
+              type="button"
+              onClick={onEdit}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5"
+            >
+              <Edit3 size={12} />
+              Edit
+            </button>
+          )}
+          {canDelete && onDelete && (
+            <button
+              id={`btn-delete-meeting-${meeting.id}`}
+              type="button"
+              onClick={onDelete}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--alert-critical)]/40 bg-[var(--alert-critical)]/5 px-3 py-1.5 text-xs font-medium text-[var(--alert-critical)] transition-colors hover:border-[var(--alert-critical)]/60 hover:bg-[var(--alert-critical)]/10"
+            >
+              <Trash2 size={12} />
+              Delete
+            </button>
+          )}
         </div>
 
         {isToday && onStart && (

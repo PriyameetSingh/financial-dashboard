@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { withNextBasePath } from "@/lib/next-base-path";
+import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
+
+/** App Router + `fetch()` use the full pathname including `basePath` (e.g. `/hudd-dashboard/api/...`). */
+function isApiOrAssetPath(pathname: string): boolean {
+  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return true;
+  if (pathname.startsWith("/api")) return true;
+  if (NEXTJS_BASE_PATH && pathname.startsWith(`${NEXTJS_BASE_PATH}/api`)) return true;
+  return false;
+}
 
 const PUBLIC_PATHS = new Set(["/login"]);
 
@@ -34,9 +42,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/favicon") ||
+    isApiOrAssetPath(pathname) ||
     pathname.startsWith("/images") ||
     PUBLIC_STATIC_EXT.test(pathname)
   ) {

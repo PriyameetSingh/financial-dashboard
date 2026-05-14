@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ function computeEffective(roles: { permissions: string[] }[], overrides: { code:
 
 export async function GET() {
   try {
-    await requirePermission("MANAGE_PERMISSIONS");
+    await requireAnyPermission("MANAGE_USERS", "MANAGE_PERMISSIONS");
 
     const users = await prisma.user.findMany({
       where: { isActive: true },
@@ -63,6 +63,9 @@ export async function GET() {
           email: u.email,
           department: u.department,
           designation: u.designation,
+          organisation: u.organisation,
+          section: u.section,
+          officerType: u.officerType,
           roles: roles.map((r) => r.code),
           overrides,
           effectivePermissions: computeEffective(roles, overrides),

@@ -9,6 +9,9 @@ module.exports = {
       exec_mode: "fork",
       autorestart: true,
       max_memory_restart: "1G",
+      env: {
+        NODE_OPTIONS: "--max-http-header-size=65536",
+      },
     },
     {
       name: "hudd-dashboard-test",

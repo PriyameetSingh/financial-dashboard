@@ -1,5 +1,5 @@
 import { withNextBasePath } from "@/lib/next-base-path";
-import { SessionUser, Permission, UserRole } from "@/types";
+import { SessionUser, Permission, UserRole, type OfficerType } from "@/types";
 
 export { Permission, UserRole };
 export type { SessionUser };
@@ -53,6 +53,9 @@ type MeApiUser = {
   role: UserRole;
   department: string;
   designation?: string | null;
+  organisation?: string | null;
+  section?: string | null;
+  officerType?: OfficerType | null;
   assignedSchemes: string[];
   permissions: Permission[];
 };
@@ -86,6 +89,9 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       role: data.user.role,
       department: data.user.department,
       designation: data.user.designation ?? undefined,
+      organisation: data.user.organisation ?? undefined,
+      section: data.user.section ?? undefined,
+      officerType: data.user.officerType ?? undefined,
       assignedSchemes: data.user.assignedSchemes,
       permissions: data.user.permissions,
     };

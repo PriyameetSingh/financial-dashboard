@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
-import { assertAllowedMeetingMaterial, sanitizeMeetingFileName } from "@/lib/meeting-materials";
+import { assertAllowedMeetingMaterial, sanitizeMeetingFileName, MEETING_MATERIAL_MAX_BYTES } from "@/lib/meeting-materials";
 import { saveFile } from "@/lib/local-file-storage";
 
 export const runtime = "nodejs";
@@ -50,16 +50,40 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }
 
+    // Check content length before processing to prevent large file issues
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > MEETING_MATERIAL_MAX_BYTES * 2) {
+      return NextResponse.json({ 
+        detail: `Request too large. Maximum file size is ${MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)} MB.` 
+      }, { status: 413 });
+    }
+
+    // Additional check for nginx 413 errors - if content-length is missing but request seems large
+    if (!contentLength) {
+      console.warn('Warning: No content-length header received - possible nginx 413 issue');
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ detail: "Expected multipart field \"file\" with a non-empty file." }, { status: 400 });
     }
 
+    console.log('Server received file:', {
+      name: file.name,
+      size: file.size,
+      sizeMB: file.size / (1024 * 1024),
+      type: file.type,
+      maxSize: MEETING_MATERIAL_MAX_BYTES,
+      maxSizeMB: MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)
+    });
+
     try {
       assertAllowedMeetingMaterial(file);
+      console.log('File validation passed');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Invalid file";
+      console.error('File validation failed:', msg);
       return NextResponse.json({ detail: msg }, { status: 400 });
     }
 
@@ -68,9 +92,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     const buffer = Buffer.from(await file.arrayBuffer());
 
     try {
+      console.log('Attempting to save file:', objectKey);
       await saveFile(buffer, objectKey);
+      console.log('File saved successfully');
     } catch (uploadError) {
       const msg = uploadError instanceof Error ? uploadError.message : "Upload failed";
+      console.error('File save failed:', uploadError);
       return NextResponse.json({ detail: msg }, { status: 502 });
     }
 

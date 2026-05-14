@@ -1,56 +1,42 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2, FileText } from "lucide-react";
-import { createMeeting, uploadMeetingMaterial } from "@/src/lib/services/meetingService";
+import { X, Plus, Trash2, FileText, Edit3 } from "lucide-react";
+import { updateMeeting, uploadMeetingMaterial, MeetingListItem, MeetingMaterialMeta } from "@/src/lib/services/meetingService";
 import { MEETING_MATERIAL_MAX_BYTES } from "@/lib/meeting-materials";
-import { getFinancialYear, todayISO, fetchFinancialYears } from "../meetingUtils";
+import { getFinancialYear } from "../meetingUtils";
+import { deleteMeetingMaterial } from "@/src/lib/services/meetingService";
 
 const ACCEPT =
   ".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-export default function ScheduleMeetingModal({
+export default function EditMeetingModal({
+  meeting,
   onClose,
-  onCreated,
+  onUpdated,
 }: {
+  meeting: MeetingListItem;
   onClose: () => void;
-  onCreated: () => void;
+  onUpdated: () => void;
 }) {
-  const [date, setDate] = useState(todayISO());
-  const [title, setTitle] = useState("");
-  const [topics, setTopics] = useState<string[]>([""]);
+  const [date, setDate] = useState(meeting.meetingDate);
+  const [title, setTitle] = useState(meeting.title || "");
+  const [topics, setTopics] = useState<string[]>(meeting.topics.map(t => t.topic));
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [financialYears, setFinancialYears] = useState<Array<{ id: string; label: string; startDate: string; endDate: string }>>([]);
-  const [selectedFinancialYearId, setSelectedFinancialYearId] = useState<string>("");
-  const [loadingFinancialYears, setLoadingFinancialYears] = useState(true);
+  const [materialsToRemove, setMaterialsToRemove] = useState<string[]>([]);
 
   const fy = getFinancialYear(date);
 
   useEffect(() => {
-    const loadFinancialYears = async () => {
-      try {
-        const years = await fetchFinancialYears();
-        setFinancialYears(years);
-        
-        // Set current financial year as default
-        const currentFy = getFinancialYear(todayISO());
-        const currentYear = years.find(y => y.label === currentFy);
-        if (currentYear) {
-          setSelectedFinancialYearId(currentYear.id);
-        } else if (years.length > 0) {
-          setSelectedFinancialYearId(years[0].id);
-        }
-      } catch (error) {
-        console.error("Failed to load financial years:", error);
-      } finally {
-        setLoadingFinancialYears(false);
-      }
-    };
-
-    loadFinancialYears();
-  }, []);
+    setDate(meeting.meetingDate);
+    setTitle(meeting.title || "");
+    setTopics(meeting.topics.map(t => t.topic));
+    setMaterialsToRemove([]);
+    setPendingFiles([]);
+    setFormError(null);
+  }, [meeting]);
 
   const addTopic = () => setTopics((prev) => [...prev, ""]);
   const removeTopic = (idx: number) => setTopics((prev) => prev.filter((_, i) => i !== idx));
@@ -61,14 +47,6 @@ export default function ScheduleMeetingModal({
     if (!list?.length) return;
     const next: File[] = [];
     for (const f of Array.from(list)) {
-      console.log('File details:', {
-        name: f.name,
-        size: f.size,
-        sizeMB: f.size / (1024 * 1024),
-        type: f.type,
-        maxSize: MEETING_MATERIAL_MAX_BYTES,
-        maxSizeMB: MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)
-      });
       if (f.size > MEETING_MATERIAL_MAX_BYTES) {
         setFormError(`"${f.name}" exceeds ${MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)} MB.`);
         return;
@@ -83,6 +61,14 @@ export default function ScheduleMeetingModal({
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const toggleMaterialRemoval = (materialId: string) => {
+    setMaterialsToRemove((prev) =>
+      prev.includes(materialId)
+        ? prev.filter((id) => id !== materialId)
+        : [...prev, materialId]
+    );
+  };
+
   const handleSubmit = async () => {
     if (!date) {
       setFormError("Please select a date.");
@@ -92,49 +78,47 @@ export default function ScheduleMeetingModal({
       setFormError("Please enter a meeting name.");
       return;
     }
-    const validTopics = topics.filter((t) => t.trim());
+
     try {
       setSubmitting(true);
       setFormError(null);
-      const { id } = await createMeeting({
+
+      // Update meeting details
+      await updateMeeting(meeting.id, {
         meetingDate: date,
         title: title.trim(),
-        topics: validTopics.map((t) => ({ topic: t.trim() })),
-        financialYearId: selectedFinancialYearId || null,
       });
 
+      // Remove marked materials
+      for (const materialId of materialsToRemove) {
+        await deleteMeetingMaterial(meeting.id, materialId);
+      }
+
+      // Upload new materials
       const failed: string[] = [];
-      const errorMessages: string[] = [];
       for (const file of pendingFiles) {
         try {
-          console.log('Uploading file:', {
-            name: file.name,
-            size: file.size,
-            sizeMB: file.size / (1024 * 1024),
-            type: file.type
-          });
-          await uploadMeetingMaterial(id, file);
-          console.log('Upload successful for:', file.name);
-        } catch (error) {
-          console.error('Upload failed for file:', file.name, error);
+          await uploadMeetingMaterial(meeting.id, file);
+        } catch {
           failed.push(file.name);
-          const errorMessage = error instanceof Error ? error.message : "Unknown error";
-          errorMessages.push(`${file.name}: ${errorMessage}`);
         }
       }
+
       if (failed.length) {
-        const errorDetails = errorMessages.length > 0 ? `\n\nError details:\n${errorMessages.join('\n')}` : '';
         window.alert(
-          `Meeting created, but ${failed.length} file(s) could not be uploaded:\n${failed.join("\n")}${errorDetails}\n\nPlease check the file size and format.`,
+          `Meeting updated, but ${failed.length} file(s) could not be uploaded:\n${failed.join("\n")}\n\nPlease check the file size and format.`,
         );
       }
-      onCreated();
+
+      onUpdated();
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Failed to create meeting");
+      setFormError(e instanceof Error ? e.message : "Failed to update meeting");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const remainingMaterials = meeting.materials.filter(m => !materialsToRemove.includes(m.id));
 
   return (
     <div
@@ -150,16 +134,16 @@ export default function ScheduleMeetingModal({
           <X size={18} />
         </button>
 
-        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Schedule a Meeting</h2>
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Edit Meeting</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Fill in the details below. Attach PDF, PowerPoint, Word, or Excel files to present during the meeting.
+          Update meeting details, topics, and materials.
         </p>
 
         <div className="mt-6 space-y-5">
           <label className="block">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Date</span>
             <input
-              id="input-meeting-date"
+              id="input-edit-meeting-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -170,7 +154,7 @@ export default function ScheduleMeetingModal({
           <label className="block">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Name</span>
             <input
-              id="input-meeting-title"
+              id="input-edit-meeting-title"
               type="text"
               placeholder="e.g. Monthly Review — PMAY Urban"
               value={title}
@@ -181,31 +165,42 @@ export default function ScheduleMeetingModal({
 
           <label className="block">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial Year</span>
-            {loadingFinancialYears ? (
-              <input
-                type="text"
-                readOnly
-                value="Loading..."
-                className="mt-1 w-full cursor-default rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/50 px-4 py-2.5 text-sm text-[var(--text-muted)]"
-              />
-            ) : (
-              <select
-                id="input-meeting-fy"
-                value={selectedFinancialYearId}
-                onChange={(e) => setSelectedFinancialYearId(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-              >
-                {financialYears.map((fy) => (
-                  <option key={fy.id} value={fy.id}>
-                    {fy.label}
-                  </option>
-                ))}
-              </select>
-            )}
+            <input
+              id="input-edit-meeting-fy"
+              type="text"
+              readOnly
+              value={fy}
+              className="mt-1 w-full cursor-default rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/50 px-4 py-2.5 text-sm text-[var(--text-muted)]"
+            />
           </label>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Presentation files</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Current Materials</span>
+            {remainingMaterials.length > 0 ? (
+              <ul className="mt-2 space-y-2">
+                {remainingMaterials.map((material) => (
+                  <li
+                    key={material.id}
+                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                  >
+                    <span className="truncate pr-2">{material.fileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleMaterialRemoval(material.id)}
+                      className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">No materials uploaded yet.</p>
+            )}
+          </div>
+
+          <div>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Add New Materials</span>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
               PDF, PPT, PPTX, DOC, DOCX, XLS, XLSX (max {MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)} MB each).
             </p>
@@ -257,7 +252,7 @@ export default function ScheduleMeetingModal({
               {topics.map((t, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <input
-                    id={`input-topic-${idx}`}
+                    id={`input-edit-topic-${idx}`}
                     type="text"
                     placeholder={`Topic ${idx + 1}`}
                     value={t}
@@ -276,19 +271,18 @@ export default function ScheduleMeetingModal({
                 </div>
               ))}
             </div>
-            
           </div>
 
           {formError && <p className="text-sm text-[var(--alert-critical)]">{formError}</p>}
 
           <button
-            id="btn-submit-meeting"
+            id="btn-update-meeting"
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
             className="w-full rounded-xl bg-[var(--bg-surface)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98] disabled:opacity-60"
           >
-            {submitting ? "Scheduling…" : "Schedule Meeting"}
+            {submitting ? "Updating…" : "Update Meeting"}
           </button>
         </div>
       </div>

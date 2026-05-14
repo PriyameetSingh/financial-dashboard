@@ -327,122 +327,125 @@ export default function BulkEntryPage() {
       <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[var(--bg-document)]">
 
         {/* ── Top Controls ─────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-b border-[var(--border)] bg-[var(--bg-card)] px-6 py-4 space-y-4">
+        <div className="shrink-0 border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 space-y-3">
 
           {/* Header row */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--text-muted)]">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
                 Finance Desk {financialYearLabel ? `· ${financialYearLabel}` : ""}
               </p>
-              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Bulk Financial Entry</h1>
+              <h1 className="text-lg font-semibold text-[var(--text-primary)] leading-tight">Bulk Financial Entry</h1>
             </div>
 
             {/* Mode tabs */}
-            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] p-1">
+            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] p-0.5">
               <button
                 onClick={() => { setMode("snapshot"); clearAllDrafts(); }}
-                className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-md px-3 py-1 text-xs font-medium transition-all ${
                   mode === "snapshot"
                     ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
+                <LayoutGrid className="h-3 w-3" />
                 Snapshot (SO / IFMS)
               </button>
               <button
                 onClick={() => { setMode("budget"); clearAllDrafts(); }}
-                className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-md px-3 py-1 text-xs font-medium transition-all ${
                   mode === "budget"
                     ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                <IndianRupee className="h-3.5 w-3.5" />
+                <IndianRupee className="h-3 w-3" />
                 Budget Revision
               </button>
             </div>
           </div>
 
-          {/* Snapshot controls */}
-          {mode === "snapshot" && (
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex-1 min-w-[240px] max-w-sm">
-                <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">
-                  Meeting <span className="text-[var(--alert-critical)]">*</span>
-                </label>
-                <select
-                  value={selectedMeetingId}
-                  onChange={(e) => setSelectedMeetingId(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
-                >
-                  <option value="">Select meeting…</option>
-                  {meetings.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {formatMeetingLabel(m)}
-                    </option>
-                  ))}
-                </select>
-                {noMeeting && (
-                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">
-                    No meetings found. Create a meeting first.
-                  </p>
-                )}
-              </div>
+          {/* Filters & Search Row */}
+          <div className="flex items-end gap-3 flex-wrap">
+            {mode === "snapshot" && (
+              <>
+                <div className="min-w-[200px] max-w-xs">
+                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                    Meeting <span className="text-[var(--alert-critical)]">*</span>
+                  </label>
+                  <select
+                    value={selectedMeetingId}
+                    onChange={(e) => setSelectedMeetingId(e.target.value)}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
+                  >
+                    <option value="">Select meeting…</option>
+                    {meetings.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {formatMeetingLabel(m)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">
-                  Data As Of Date
-                </label>
+                <div>
+                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                    Data As Of
+                  </label>
+                  <input
+                    type="date"
+                    value={asOfDate}
+                    onChange={(e) => setAsOfDate(e.target.value)}
+                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Search */}
+            <div className="relative min-w-[200px] max-w-xs">
+              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                Search
+              </label>
+              <Search className="absolute left-3 top-7.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
                 <input
-                  type="date"
-                  value={asOfDate}
-                  onChange={(e) => setAsOfDate(e.target.value)}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
+                  type="text"
+                  placeholder="Scheme or component…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] py-1.5 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none"
                 />
               </div>
             </div>
-          )}
 
-          {/* Search + summary row */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[200px] max-w-xs">
-              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                placeholder="Search scheme or component…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none"
-              />
-            </div>
+            <div className="flex items-center gap-3 mb-1.5 ml-auto">
+              <p className="text-xs text-[var(--text-muted)]">
+                {filteredRows.length} rows
+                {dirtyRows.length > 0 && (
+                  <span className="ml-1.5 font-semibold text-[var(--text-primary)]">
+                    · {dirtyRows.length} edited
+                  </span>
+                )}
+              </p>
 
-            <p className="text-xs text-[var(--text-muted)]">
-              {filteredRows.length} row{filteredRows.length !== 1 ? "s" : ""}
               {dirtyRows.length > 0 && (
-                <span className="ml-1.5 font-semibold text-[var(--text-primary)]">
-                  · {dirtyRows.length} edited
-                </span>
+                <button
+                  onClick={clearAllDrafts}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Clear
+                </button>
               )}
-            </p>
-
-            {dirtyRows.length > 0 && (
-              <button
-                onClick={clearAllDrafts}
-                className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              >
-                <RefreshCw className="h-3 w-3" />
-                Clear edits
-              </button>
-            )}
+            </div>
           </div>
         </div>
 
         {/* ── Global message ─────────────────────────────────────────────────── */}
         {globalMsg && (
           <div
-            className={`shrink-0 flex items-center gap-2 px-6 py-2.5 text-sm border-b ${
+            className={`shrink-0 flex items-center gap-2 px-4 py-1.5 text-sm border-b ${
               globalMsg.type === "success"
                 ? "bg-[rgba(46,204,113,0.07)] border-[rgba(46,204,113,0.2)] text-[#27ae60]"
                 : "bg-[rgba(231,76,60,0.07)] border-[rgba(231,76,60,0.2)] text-[#c0392b]"
@@ -462,46 +465,46 @@ export default function BulkEntryPage() {
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-[var(--border)] bg-[var(--bg-card)]">
-                <th className="w-[50px] px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[50px] px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   Sl. No.
                 </th>
-                <th className="w-[280px] px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[280px] px-5 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   Scheme
                 </th>
-                <th className="w-[180px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[180px] px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   Component
                 </th>
-                <th className="w-[140px] px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   Total Budget (₹ Cr)
                 </th>
 
                 {mode === "snapshot" ? (
                   <>
-                    <th className="w-[140px] px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current SO (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#3498db]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#3498db]">
                       Add to SO (₹ Cr)
                     </th>
-                    <th className="w-[140px] px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current IFMS (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71]">
                       Add to IFMS (₹ Cr)
                     </th>
-                    <th className="w-[90px] px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[90px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Utilisation
                     </th>
                   </>
                 ) : (
                   <>
-                    <th className="w-[140px] px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current Budget (₹ Cr)
                     </th>
-                    <th className="w-[180px] px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
+                    <th className="w-[180px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
                       New Budget (₹ Cr)
                     </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Reason
                     </th>
                   </>
@@ -536,12 +539,12 @@ export default function BulkEntryPage() {
                     }`}
                   >
                     {/* Sl. No. */}
-                    <td className="px-3 py-2.5 text-center text-xs text-[var(--text-secondary)] tabular-nums">
+                    <td className="px-3 py-1.5 text-center text-xs text-[var(--text-secondary)] tabular-nums">
                       {index + 1}
                     </td>
 
                     {/* Scheme name */}
-                    <td className="px-5 py-2.5">
+                    <td className="px-5 py-1.5">
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`font-medium leading-tight ${
@@ -561,7 +564,7 @@ export default function BulkEntryPage() {
                     </td>
 
                     {/* Component */}
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-1.5">
                       {row.componentCode ? (
                         <div>
                           <div className="text-xs font-semibold text-[var(--text-primary)]">
@@ -577,28 +580,28 @@ export default function BulkEntryPage() {
                     </td>
 
                     {/* Total Budget */}
-                    <td className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--text-primary)] tabular-nums">
+                    <td className="px-4 py-1.5 text-right text-xs font-semibold text-[var(--text-primary)] tabular-nums">
                       {fmtCr(row.effectiveBudget)}
                     </td>
 
                     {mode === "snapshot" ? (
                       <>
                         {/* Current SO */}
-                        <td className="px-4 py-2.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
                           {fmtCr(row.currentSo)}
                         </td>
 
                         {/* New SO input */}
-                        <td className="px-4 py-2.5 text-center">
+                        <td className="px-4 py-1.5 text-center">
                           <input
                             type="number"
                             min="0"
                             step="0.01"
-                            placeholder="+ Add amount"
+                            placeholder="+ Add"
                             value={draft.so}
                             onChange={(e) => setDraftField(row.key, "so", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
-                            className={`w-full rounded-md border px-2.5 py-1.5 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               draft.so !== ""
                                 ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
                                 : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
@@ -607,21 +610,21 @@ export default function BulkEntryPage() {
                         </td>
 
                         {/* Current IFMS */}
-                        <td className="px-4 py-2.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
                           {fmtCr(row.currentIfms)}
                         </td>
 
                         {/* New IFMS input */}
-                        <td className="px-4 py-2.5 text-center">
+                        <td className="px-4 py-1.5 text-center">
                           <input
                             type="number"
                             min="0"
                             step="0.01"
-                            placeholder="+ Add amount"
+                            placeholder="+ Add"
                             value={draft.ifms}
                             onChange={(e) => setDraftField(row.key, "ifms", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
-                            className={`w-full rounded-md border px-2.5 py-1.5 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               draft.ifms !== ""
                                 ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
                                 : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
@@ -630,7 +633,7 @@ export default function BulkEntryPage() {
                         </td>
 
                         {/* Utilisation badge */}
-                        <td className="px-4 py-2.5 text-center">
+                        <td className="px-4 py-1.5 text-center">
                           <span
                             className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
                             style={{
@@ -645,12 +648,12 @@ export default function BulkEntryPage() {
                     ) : (
                       <>
                         {/* Current Budget */}
-                        <td className="px-4 py-2.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
                           {fmtCr(row.currentBudget)}
                         </td>
 
                         {/* New Budget input */}
-                        <td className="px-4 py-2.5 text-center">
+                        <td className="px-4 py-1.5 text-center">
                           <input
                             type="number"
                             min="0"
@@ -659,7 +662,7 @@ export default function BulkEntryPage() {
                             value={draft.budget}
                             onChange={(e) => setDraftField(row.key, "budget", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
-                            className={`w-full rounded-md border px-2.5 py-1.5 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               draft.budget !== ""
                                 ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
                                 : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
@@ -668,14 +671,14 @@ export default function BulkEntryPage() {
                         </td>
 
                         {/* Budget Reason */}
-                        <td className="px-4 py-2.5">
+                        <td className="px-4 py-1.5">
                           <input
                             type="text"
                             placeholder="Reason (optional)"
                             value={draft.budgetReason}
                             onChange={(e) => setDraftField(row.key, "budgetReason", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
-                            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           />
                           {isRowError && status?.error && (
                             <p className="mt-0.5 text-[10px] text-[#e74c3c]">{status.error}</p>
@@ -702,7 +705,7 @@ export default function BulkEntryPage() {
         </div>
 
         {/* ── Footer ────────────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-6 py-3 flex items-center justify-between gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 flex items-center justify-between gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
           <div className="text-xs text-[var(--text-muted)]">
             {mode === "snapshot" ? (
               <>

@@ -213,10 +213,10 @@ export default function SchemeEntryPage() {
     if (entry.subschemes && entry.subschemes.length > 0) {
       const first = entry.subschemes[0];
       setSelectedSubschemeCode(first.code);
-      setIfmsValue(first.ifms ?? 0);
+      setIfmsValue("");
     } else {
       setSelectedSubschemeCode("");
-      setIfmsValue(entry.ifms);
+      setIfmsValue("");
     }
     setAsOfDate(new Date().toISOString().slice(0, 10));
   }, []);
@@ -225,7 +225,7 @@ export default function SchemeEntryPage() {
     const sub = entry.subschemes?.find((s) => s.code === code);
     if (!sub) return;
     setSelectedSubschemeCode(code);
-    setIfmsValue(sub.ifms ?? 0);
+    setIfmsValue("");
     setRemarks("");
     setAlertInfo(null);
     setAddingSupplement(false);
@@ -335,8 +335,9 @@ export default function SchemeEntryPage() {
       }
     }
 
-    if (ifmsValue === "" || Number(ifmsValue) < 0) {
-      triggerAlert("error", "IFMS value must be a non-negative number.");
+    const ifmsToAdd = ifmsValue === "" ? 0 : Number(ifmsValue);
+    if (isNaN(ifmsToAdd) || ifmsToAdd < 0) {
+      triggerAlert("error", "Enter a valid non-negative IFMS value to add.");
       return;
     }
     if (!ifmsMeetingId.trim()) {
@@ -348,12 +349,13 @@ export default function SchemeEntryPage() {
     setPendingSubmit(workflowStatus);
     setAlertInfo(null);
     try {
+      const totalIFMS = currentIFMS + ifmsToAdd;
       await submitFinancialSnapshot({
         schemeCode: selected.id,
         subschemeCode: hasSubschemes ? selectedSubschemeCode : null,
         asOfDate,
         soExpenditureCr: currentSO,
-        ifmsExpenditureCr: Number(ifmsValue),
+        ifmsExpenditureCr: totalIFMS,
         remarks,
         financialYearLabel,
         workflowStatus,
@@ -482,8 +484,9 @@ export default function SchemeEntryPage() {
 
   const handleUpdateSO = async () => {
     if (!selected || !financialYearLabel) return;
-    if (editSoValue === "" || isNaN(Number(editSoValue)) || Number(editSoValue) < 0) {
-      triggerAlert("error", "Enter a valid non-negative SO amount.");
+    const soToAdd = editSoValue === "" ? 0 : Number(editSoValue);
+    if (isNaN(soToAdd) || soToAdd < 0) {
+      triggerAlert("error", "Enter a valid non-negative SO amount to add.");
       return;
     }
     if (!ifmsMeetingId.trim()) {
@@ -493,12 +496,13 @@ export default function SchemeEntryPage() {
     setIsSubmitting(true);
     setPendingSubmit("so");
     try {
+      const totalSO = currentSO + soToAdd;
       // Per instructions SO update logic; substituting submitFinancialSnapshot for SO update
       await submitFinancialSnapshot({
         schemeCode: selected.id,
         subschemeCode: hasSubschemes ? selectedSubschemeCode : null,
         asOfDate: new Date().toISOString().slice(0, 10),
-        soExpenditureCr: Number(editSoValue),
+        soExpenditureCr: totalSO,
         ifmsExpenditureCr: currentIFMS,
         remarks: editSoRemarks,
         financialYearLabel,
@@ -839,9 +843,17 @@ export default function SchemeEntryPage() {
                           </div>
                         ) : (
                           <div className="bg-[rgba(52,152,219,0.05)] border border-[rgba(52,152,219,0.2)] p-4 rounded-lg mb-8">
-                            <div className="text-xs font-semibold text-[#2980b9] uppercase tracking-wider mb-3">Update Sanction Amount</div>
+                            <div className="text-xs font-semibold text-[#2980b9] uppercase tracking-wider mb-1">Add to Sanction Amount</div>
+                            <div className="text-[10px] text-[#2980b9] mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString('en-IN')} Cr</div>
                             <div className="space-y-3">
-                              <input type="number" step="0.01" min="0" placeholder="New SO Amount (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
+                              <div className="relative">
+                                <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
+                                {editSoValue !== "" && Number(editSoValue) !== 0 && (
+                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#2980b9]">
+                                    → Total: ₹ {(currentSO + Number(editSoValue)).toFixed(2)} Cr
+                                  </div>
+                                )}
+                              </div>
                               <input type="text" placeholder="Remarks or Reference" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoRemarks} onChange={e => setEditSoRemarks(e.target.value)} />
                               <div className="flex justify-end gap-2 pt-2">
                                 <button onClick={() => setIsEditingSO(false)} className="text-xs font-medium text-[#2980b9] px-3 py-1.5 hover:bg-[rgba(52,152,219,0.1)] rounded">Cancel</button>
@@ -956,8 +968,15 @@ export default function SchemeEntryPage() {
                     </div>
                     <div className="flex gap-4 items-end flex-wrap">
                       <div className="flex-1 min-w-[8rem]">
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Updated IFMS Expenditure (₹ Cr)</label>
-                        <input type="number" min="0" step="0.01" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2 flex justify-between items-center">
+                          <span>Add IFMS Expenditure (₹ Cr)</span>
+                          {ifmsValue !== "" && Number(ifmsValue) !== 0 && (
+                            <span className="text-[10px] font-bold text-[#2ecc71]">
+                              New Total: ₹ {(currentIFMS + Number(ifmsValue)).toFixed(2)} Cr
+                            </span>
+                          )}
+                        </label>
+                        <input type="number" min="0" step="0.01" placeholder="Amount to add..." className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
                       </div>
                       <div className="w-48">
                         <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Data as of Date</label>

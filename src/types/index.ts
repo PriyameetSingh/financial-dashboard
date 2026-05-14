@@ -7,6 +7,9 @@ export enum UserRole {
   NODAL_OFFICER = "NODAL_OFFICER",
 }
 
+/** Stored on `User.officerType`; matches Prisma `OfficerType`. */
+export type OfficerType = "GOVERNMENT" | "PMU";
+
 /** Signed-in client profile from `/api/v1/rbac/me` (and directory rows for pickers). */
 export interface SessionUser {
   id: string;
@@ -16,6 +19,9 @@ export interface SessionUser {
   department: string;
   /** Job title or post (e.g. Principal Secretary, HUDD); distinct from application role. */
   designation?: string | null;
+  organisation?: string | null;
+  section?: string | null;
+  officerType?: OfficerType | null;
   assignedSchemes: string[];
   permissions?: Permission[];
 }

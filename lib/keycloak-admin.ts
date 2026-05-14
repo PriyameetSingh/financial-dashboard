@@ -371,6 +371,71 @@ export async function findKeycloakUserIdByIdentity(input: { username?: string | 
   return null;
 }
 
+async function getKeycloakUserById(
+  accessToken: string,
+  config: KeycloakConfig,
+  userId: string,
+): Promise<Record<string, unknown> | null> {
+  const response = await fetch(
+    `${config.adminBaseUrl}/admin/realms/${encodeURIComponent(config.realm)}/users/${encodeURIComponent(userId)}`,
+    {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Keycloak user read failed (${response.status}): ${detail || "unknown error"}`);
+  }
+  return (await response.json()) as Record<string, unknown>;
+}
+
+/**
+ * Updates display identity in Keycloak (email, first/last name). Merges onto the current representation.
+ * Omits credentials so the account password is not cleared by PUT.
+ */
+export async function updateKeycloakUserProfile(
+  userId: string,
+  updates: { email?: string; fullName?: string },
+): Promise<void> {
+  if (updates.email === undefined && updates.fullName === undefined) return;
+
+  const config = getKeycloakConfig();
+  const accessToken = await getAdminAccessToken(config);
+  const existing = await getKeycloakUserById(accessToken, config, userId);
+  if (!existing) return;
+
+  const next: Record<string, unknown> = { ...existing };
+  delete next.credentials;
+
+  if (updates.email !== undefined) {
+    next.email = updates.email;
+  }
+  if (updates.fullName !== undefined) {
+    const { firstName, lastName } = splitFullName(updates.fullName);
+    next.firstName = firstName;
+    next.lastName = lastName || undefined;
+  }
+
+  const response = await fetch(
+    `${config.adminBaseUrl}/admin/realms/${encodeURIComponent(config.realm)}/users/${encodeURIComponent(userId)}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(next),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Keycloak user update failed (${response.status}): ${detail || "unknown error"}`);
+  }
+}
+
 export async function deleteKeycloakUserById(userId: string): Promise<void> {
   const config = getKeycloakConfig();
   const accessToken = await getAdminAccessToken(config);

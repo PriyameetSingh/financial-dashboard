@@ -3,7 +3,8 @@
 import AppShell from "@/components/AppShell";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
-import { Permission, UserRole } from "@/lib/auth";
+import { Permission, UserRole, hasPermission } from "@/lib/auth";
+import type { OfficerType } from "@/types";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import { withNextBasePath } from "@/lib/next-base-path";
 
@@ -22,6 +23,9 @@ type DbUserRow = {
   email: string;
   department: string | null;
   designation: string | null;
+  organisation: string | null;
+  section: string | null;
+  officerType: OfficerType | null;
   roles: UserRole[];
   overrides: DbUserPermissionOverride[];
   effectivePermissions: Permission[];
@@ -34,8 +38,21 @@ type CreateUserFormState = {
   phone: string;
   department: string;
   designation: string;
+  organisation: string;
+  section: string;
+  officerType: OfficerType;
   defaultPassword: string;
   roleCode: UserRole;
+};
+
+type EditProfileFormState = {
+  name: string;
+  email: string;
+  department: string;
+  designation: string;
+  organisation: string;
+  section: string;
+  officerType: OfficerType;
 };
 
 type RoleFilterValue = UserRole | "ALL";
@@ -46,6 +63,9 @@ const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   phone: "",
   department: "",
   designation: "",
+  organisation: "",
+  section: "",
+  officerType: "GOVERNMENT",
   defaultPassword: "",
   roleCode: UserRole.NODAL_OFFICER,
 };
@@ -58,6 +78,12 @@ function usernameDigitsFromPhone(phone: string): string {
 function formatRoleLabel(role: UserRole): string {
   if (role === UserRole.PROGRAMME_MANAGER) return "Programme Manager";
   return role.replace(/_/g, " ");
+}
+
+function formatOfficerTypeLabel(value: OfficerType | null): string {
+  if (value === "PMU") return "PMU";
+  if (value === "GOVERNMENT") return "Government";
+  return "—";
 }
 
 // ─── Permissions Modal ────────────────────────────────────────────────────────
@@ -276,6 +302,38 @@ function CreateUserModal({
               />
             </label>
 
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Organisation (optional)
+              <input
+                value={form.organisation}
+                onChange={(e) => onChange("organisation", e.target.value)}
+                placeholder="Organisation"
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Section (optional)
+              <input
+                value={form.section}
+                onChange={(e) => onChange("section", e.target.value)}
+                placeholder="Section"
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Officer type
+              <select
+                value={form.officerType}
+                onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              >
+                <option value="GOVERNMENT">Government</option>
+                <option value="PMU">PMU</option>
+              </select>
+            </label>
+
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] md:col-span-2">
               Designation
               <input
@@ -341,10 +399,172 @@ function CreateUserModal({
   );
 }
 
+interface EditUserProfileModalProps {
+  user: DbUserRow;
+  form: EditProfileFormState;
+  isSaving: boolean;
+  alert: string;
+  onChange: (key: keyof EditProfileFormState, value: string) => void;
+  onSubmit: () => Promise<void>;
+  onClose: () => void;
+}
+
+function editProfileFormFromUser(user: DbUserRow): EditProfileFormState {
+  return {
+    name: user.name,
+    email: user.email,
+    department: user.department ?? "",
+    designation: user.designation ?? "",
+    organisation: user.organisation ?? "",
+    section: user.section ?? "",
+    officerType: user.officerType ?? "GOVERNMENT",
+  };
+}
+
+function EditUserProfileModal({
+  user,
+  form,
+  isSaving,
+  alert,
+  onChange,
+  onSubmit,
+  onClose,
+}: EditUserProfileModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Edit profile</h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Update directory fields for {user.name}. Login username (phone code) is unchanged here.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={isSaving}
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            aria-label="Close edit profile dialog"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Name
+              <input
+                value={form.name}
+                onChange={(e) => onChange("name", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Email
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => onChange("email", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Department
+              <input
+                value={form.department}
+                onChange={(e) => onChange("department", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Organisation
+              <input
+                value={form.organisation}
+                onChange={(e) => onChange("organisation", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Section
+              <input
+                value={form.section}
+                onChange={(e) => onChange("section", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+              Officer type
+              <select
+                value={form.officerType}
+                onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              >
+                <option value="GOVERNMENT">Government</option>
+                <option value="PMU">PMU</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] md:col-span-2">
+              Designation
+              <input
+                value={form.designation}
+                onChange={(e) => onChange("designation", e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+              />
+            </label>
+          </div>
+        </div>
+
+        {alert && (
+          <div className="border-t border-[var(--border)] px-6 py-3">
+            <p className="text-xs text-[var(--alert-critical)]">{alert}</p>
+          </div>
+        )}
+
+        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4">
+          <button
+            onClick={onClose}
+            disabled={isSaving}
+            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => void onSubmit()}
+            disabled={isSaving}
+            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminUsersPage() {
-  useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
+  const sessionUser = useRequireAnyPermission(
+    [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_USERS],
+    "/dashboard",
+  );
+
+  const canManagePermissions = useMemo(
+    () => hasPermission(sessionUser, Permission.MANAGE_PERMISSIONS),
+    [sessionUser],
+  );
+
+  const canMutateUsers = useMemo(
+    () => hasPermission(sessionUser, Permission.MANAGE_USERS) || canManagePermissions,
+    [sessionUser, canManagePermissions],
+  );
 
   const [users, setUsers] = useState<DbUserRow[]>([]);
   const [alert, setAlert] = useState("");
@@ -358,6 +578,11 @@ export default function AdminUsersPage() {
   const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, UserRole>>({});
   const [roleUpdateLoadingCodes, setRoleUpdateLoadingCodes] = useState<Record<string, boolean>>({});
   const [deleteLoadingCodes, setDeleteLoadingCodes] = useState<Record<string, boolean>>({});
+
+  const [profileEditUser, setProfileEditUser] = useState<DbUserRow | null>(null);
+  const [profileEditForm, setProfileEditForm] = useState<EditProfileFormState | null>(null);
+  const [profileEditAlert, setProfileEditAlert] = useState("");
+  const [profileSaveLoadingCodes, setProfileSaveLoadingCodes] = useState<Record<string, boolean>>({});
 
   const [rolePermissions, setRolePermissions] = useState<Record<UserRole, Permission[]>>(() =>
     Object.fromEntries(Object.values(UserRole).map((role) => [role, [] as Permission[]])) as Record<UserRole, Permission[]>,
@@ -433,6 +658,9 @@ export default function AdminUsersPage() {
         user.code ?? "",
         user.department ?? "",
         user.designation ?? "",
+        user.organisation ?? "",
+        user.section ?? "",
+        user.officerType ?? "",
         role,
         assignedSchemes,
       ]
@@ -493,6 +721,9 @@ export default function AdminUsersPage() {
           phone: createUserForm.phone.trim(),
           department: createUserForm.department.trim() || undefined,
           designation: createUserForm.designation.trim(),
+          organisation: createUserForm.organisation.trim() || undefined,
+          section: createUserForm.section.trim() || undefined,
+          officerType: createUserForm.officerType,
           defaultPassword: createUserForm.defaultPassword,
           roleCode: createUserForm.roleCode,
         }),
@@ -586,12 +817,65 @@ export default function AdminUsersPage() {
       if (selectedUser?.code === userCode) {
         setSelectedUser(null);
       }
+      if (profileEditUser?.code === userCode) {
+        setProfileEditUser(null);
+        setProfileEditForm(null);
+        setProfileEditAlert("");
+      }
     } catch {
       setAlert("Unable to delete user.");
     } finally {
       setDeleteLoadingCodes((prev) => ({ ...prev, [userCode]: false }));
     }
-  }, [refreshUsers, selectedUser?.code]);
+  }, [refreshUsers, selectedUser?.code, profileEditUser?.code]);
+
+  const handleProfileEditChange = useCallback((key: keyof EditProfileFormState, value: string) => {
+    setProfileEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }, []);
+
+  const handleSaveUserProfile = useCallback(async () => {
+    if (!profileEditUser || !profileEditForm) return;
+    const userCode = profileEditUser.code ?? "";
+    if (!userCode) return;
+
+    setProfileEditAlert("");
+    if (!profileEditForm.name.trim() || !profileEditForm.email.trim()) {
+      setProfileEditAlert("Name and email are required.");
+      return;
+    }
+
+    setProfileSaveLoadingCodes((prev) => ({ ...prev, [userCode]: true }));
+    try {
+      const response = await fetch(withNextBasePath(`/api/v1/admin/users/${encodeURIComponent(userCode)}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileEditForm.name.trim(),
+          email: profileEditForm.email.trim().toLowerCase(),
+          department: profileEditForm.department.trim() || null,
+          designation: profileEditForm.designation.trim() || null,
+          organisation: profileEditForm.organisation.trim() || null,
+          section: profileEditForm.section.trim() || null,
+          officerType: profileEditForm.officerType,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { detail?: string } | null;
+        setProfileEditAlert(data?.detail || "Unable to save profile.");
+        return;
+      }
+
+      await refreshUsers();
+      setProfileEditUser(null);
+      setProfileEditForm(null);
+      setProfileEditAlert("");
+    } catch {
+      setProfileEditAlert("Unable to save profile.");
+    } finally {
+      setProfileSaveLoadingCodes((prev) => ({ ...prev, [userCode]: false }));
+    }
+  }, [profileEditForm, profileEditUser, refreshUsers]);
 
   const togglePermission = useCallback(async (userCode: string, permission: Permission) => {
     const target = users.find((user) => user.code === userCode);
@@ -642,6 +926,13 @@ export default function AdminUsersPage() {
     });
   }, [users]);
 
+  useEffect(() => {
+    if (selectedUser && !canManagePermissions) {
+      setSelectedUser(null);
+      setAlert("");
+    }
+  }, [selectedUser, canManagePermissions]);
+
   return (
     <AppShell title="Admin · Users">
       <div className="space-y-5 px-6 py-6">
@@ -651,12 +942,14 @@ export default function AdminUsersPage() {
               <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
               <h1 className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">User Directory</h1>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Manage users, roles, permission overrides, and access visibility.
+                Manage users, roles, and access visibility
+                {canManagePermissions ? ", including permission overrides" : ""}.
               </p>
             </div>
             <button
               onClick={() => { setCreateUserAlert(""); setIsCreateUserOpen(true); }}
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+              disabled={!canMutateUsers}
+              className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Create User
             </button>
@@ -681,7 +974,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {alert && !selectedUser && (
+        {alert && !selectedUser && !profileEditUser && (
           <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-4 py-3">
             <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
           </div>
@@ -695,7 +988,7 @@ export default function AdminUsersPage() {
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name, email, phone/code, designation, department, scheme"
+                placeholder="Search by name, email, phone/code, designation, department, organisation, section, officer type, scheme"
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
             </label>
@@ -725,13 +1018,16 @@ export default function AdminUsersPage() {
 
         <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
           <div className="overflow-x-auto">
-            <table className="min-w-[1080px] w-full text-left text-sm">
+            <table className="min-w-[1320px] w-full text-left text-sm">
               <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 <tr>
                   <th className="px-4 py-3">Officer</th>
                   <th className="px-4 py-3">Designation</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Department</th>
+                  <th className="px-4 py-3">Organisation</th>
+                  <th className="px-4 py-3">Section</th>
+                  <th className="px-4 py-3">Officer type</th>
                   <th className="px-4 py-3">Assigned Schemes</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
@@ -766,7 +1062,7 @@ export default function AdminUsersPage() {
                           <select
                             value={selectedRole}
                             onChange={(e) => handleRoleDraftChange(userCode, e.target.value as UserRole)}
-                            disabled={!userCode || isUpdatingRole || isDeleting}
+                            disabled={!userCode || isUpdatingRole || isDeleting || !canMutateUsers}
                             className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {roleOptions.map((role) => (
@@ -783,6 +1079,9 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-[var(--text-muted)]">{user.department || "—"}</td>
+                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.organisation?.trim() ? user.organisation : "—"}</td>
+                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.section?.trim() ? user.section : "—"}</td>
+                      <td className="px-4 py-4 text-[var(--text-muted)]">{formatOfficerTypeLabel(user.officerType)}</td>
                       <td className="px-4 py-4">
                         {shownSchemes.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
@@ -806,21 +1105,37 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex min-w-[240px] flex-wrap items-center gap-2">
-                          <button
-                            onClick={() => { setAlert(""); setSelectedUser(user); }}
-                            className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
-                            title="Manage permissions for this user"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-                              <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                            Permissions
-                          </button>
+                          {canManagePermissions && (
+                            <button
+                              onClick={() => { setAlert(""); setSelectedUser(user); }}
+                              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+                              title="Manage permissions for this user"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                              </svg>
+                              Permissions
+                            </button>
+                          )}
+                          {canMutateUsers && (
+                            <button
+                              onClick={() => {
+                                setProfileEditAlert("");
+                                setProfileEditUser(user);
+                                setProfileEditForm(editProfileFormFromUser(user));
+                              }}
+                              disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
+                              className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+                              title="Edit name, email, department, and other profile fields"
+                            >
+                              {profileSaveLoadingCodes[userCode] ? "Saving..." : "Edit profile"}
+                            </button>
+                          )}
                           <button
                             onClick={() => void handleRoleUpdate(user)}
-                            disabled={!roleChanged || !userCode || isUpdatingRole || isDeleting}
+                            disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
                             className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
                             title="Save selected role"
                           >
@@ -828,7 +1143,7 @@ export default function AdminUsersPage() {
                           </button>
                           <button
                             onClick={() => void handleDeleteUser(user)}
-                            disabled={!userCode || isDeleting || isUpdatingRole}
+                            disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
                             className="rounded-lg border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-3 py-1.5 text-xs font-semibold text-[var(--alert-critical)] transition-colors hover:bg-[rgba(255,59,59,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
                             title="Delete user account"
                           >
@@ -841,7 +1156,7 @@ export default function AdminUsersPage() {
                 })}
                 {filteredUsers.length === 0 && (
                   <tr className="border-t border-[var(--border)]">
-                    <td colSpan={6} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+                    <td colSpan={9} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
                       No users match the current search/filter criteria.
                     </td>
                   </tr>
@@ -852,12 +1167,30 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {selectedUser && (
+      {selectedUser && canManagePermissions && (
         <PermissionsModal
           user={selectedUser}
           onToggle={togglePermission}
           onClose={() => { setSelectedUser(null); setAlert(""); }}
           alert={alert}
+        />
+      )}
+
+      {profileEditUser && profileEditForm && (
+        <EditUserProfileModal
+          user={profileEditUser}
+          form={profileEditForm}
+          isSaving={Boolean(profileSaveLoadingCodes[profileEditUser.code ?? ""])}
+          alert={profileEditAlert}
+          onChange={handleProfileEditChange}
+          onSubmit={handleSaveUserProfile}
+          onClose={() => {
+            if (!profileSaveLoadingCodes[profileEditUser.code ?? ""]) {
+              setProfileEditUser(null);
+              setProfileEditForm(null);
+              setProfileEditAlert("");
+            }
+          }}
         />
       )}
 

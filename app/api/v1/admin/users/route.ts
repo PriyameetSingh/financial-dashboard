@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { OfficerType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assignKeycloakClientRole, createOrFindKeycloakUser, KeycloakClientRoleNotFoundError } from "@/lib/keycloak-admin";
@@ -7,6 +8,8 @@ import { UserRole } from "@/types";
 
 export const runtime = "nodejs";
 
+const OFFICER_TYPE_VALUES = new Set<string>(Object.values(OfficerType));
+
 type Body = {
   name?: string;
   email?: string;
@@ -14,9 +17,26 @@ type Body = {
   phone?: string;
   department?: string | null;
   designation?: string | null;
+  organisation?: string | null;
+  section?: string | null;
+  /** `GOVERNMENT` or `PMU` (case-insensitive). */
+  officerType?: string | null;
   defaultPassword?: string;
   roleCode?: UserRole;
 };
+
+function trimToNull(raw: string | null | undefined, maxLen: number): string | null {
+  const t = raw === undefined || raw === null ? "" : String(raw).trim();
+  if (!t) return null;
+  return t.slice(0, maxLen) || null;
+}
+
+function parseOfficerType(raw: unknown): OfficerType | null {
+  if (raw === undefined || raw === null) return null;
+  const upper = String(raw).trim().toUpperCase();
+  if (!OFFICER_TYPE_VALUES.has(upper)) return null;
+  return upper as OfficerType;
+}
 
 /** Keycloak username from phone: digits only (strips spaces, dashes, country code symbols). */
 function usernameFromPhone(phone: string): string {
@@ -36,6 +56,9 @@ export async function POST(request: NextRequest) {
     const department = body.department?.trim() || null;
     const designationRaw = body.designation === undefined || body.designation === null ? "" : String(body.designation).trim();
     const designation = designationRaw.slice(0, 500) || null;
+    const organisation = trimToNull(body.organisation ?? undefined, 500);
+    const section = trimToNull(body.section ?? undefined, 500);
+    const officerType = parseOfficerType(body.officerType);
     const defaultPassword = body.defaultPassword?.trim() ?? "";
     const roleCode = body.roleCode ?? UserRole.NODAL_OFFICER;
 
@@ -48,6 +71,13 @@ export async function POST(request: NextRequest) {
 
     if (!designation) {
       return NextResponse.json({ detail: "designation is required" }, { status: 400 });
+    }
+
+    if (!officerType) {
+      return NextResponse.json(
+        { detail: "officerType is required: use GOVERNMENT or PMU" },
+        { status: 400 },
+      );
     }
 
     if (username.length < 10) {
@@ -78,6 +108,9 @@ export async function POST(request: NextRequest) {
           code: username,
           department,
           designation,
+          organisation,
+          section,
+          officerType,
           isActive: true,
         },
         create: {
@@ -86,6 +119,9 @@ export async function POST(request: NextRequest) {
           code: username,
           department,
           designation,
+          organisation,
+          section,
+          officerType,
           isActive: true,
         },
       });
@@ -112,6 +148,9 @@ export async function POST(request: NextRequest) {
         code: dbUser.code,
         email: dbUser.email,
         roleCode,
+        organisation: dbUser.organisation,
+        section: dbUser.section,
+        officerType: dbUser.officerType,
       },
       {
         ...auditContext,
@@ -128,6 +167,9 @@ export async function POST(request: NextRequest) {
           name: dbUser.name,
           email: dbUser.email,
           department: dbUser.department,
+          organisation: dbUser.organisation,
+          section: dbUser.section,
+          officerType: dbUser.officerType,
           roleCode,
         },
       },
