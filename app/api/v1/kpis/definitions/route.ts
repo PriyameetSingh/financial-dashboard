@@ -42,6 +42,11 @@ export async function GET() {
 
     const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
+    const latestMeeting = await prisma.dashboardMeeting.findFirst({
+      orderBy: { meetingDate: "desc" },
+      select: { id: true, meetingDate: true },
+    });
+
     const definitions = await prisma.kpiDefinition.findMany({
       include: {
         scheme: { select: { name: true, verticalName: true } },
@@ -95,6 +100,34 @@ export async function GET() {
           });
     const kpiOwner1BySchemeId = groupKpiAssignmentsBySchemeId(kpiOwner1Rows);
 
+    const targetIds = definitions
+      .map((d) => d.targets[0]?.id)
+      .filter((id): id is string => Boolean(id));
+
+    const latestMeetingMeasurementByTargetId = new Map<
+      string,
+      { progressStatus: string | null; workflowStatus: string }
+    >();
+    if (latestMeeting && targetIds.length > 0) {
+      const rows = await prisma.kpiMeasurement.findMany({
+        where: {
+          meetingId: latestMeeting.id,
+          kpiTargetId: { in: targetIds },
+        },
+        select: {
+          kpiTargetId: true,
+          progressStatus: true,
+          workflowStatus: true,
+        },
+      });
+      for (const row of rows) {
+        latestMeetingMeasurementByTargetId.set(row.kpiTargetId, {
+          progressStatus: row.progressStatus,
+          workflowStatus: row.workflowStatus,
+        });
+      }
+    }
+
     const submissions = definitions.map((definition: (typeof definitions)[number]) => {
         const target = definition.targets[0] ?? null;
         const measurement = target?.measurements[0] ?? null;
@@ -113,6 +146,11 @@ export async function GET() {
         const currentUserCanReview =
           canApprovePermission && userCanReviewKpiMeasurementSync(defPick, actor?.id, canManageSchemes);
 
+        const latestMeetingMeasurement = target?.id
+          ? latestMeetingMeasurementByTargetId.get(target.id)
+          : undefined;
+        const hasEntryForLatestMeeting = Boolean(latestMeetingMeasurement);
+
         return {
           id: definition.id,
           kpiTargetId: target?.id ?? null,
@@ -128,6 +166,7 @@ export async function GET() {
           denominator: toNumber(target?.denominatorValue),
           yes: measurement?.yesValue ?? null,
           status: mapWorkflowStatus(measurement?.workflowStatus),
+          hasEntryForLatestMeeting,
           measurementProgressStatus: measurement?.progressStatus ?? null,
           lastUpdated: (measurement?.measuredAt ?? definition.updatedAt).toISOString().slice(0, 10),
           remarks: measurement?.remarks ?? undefined,
@@ -158,6 +197,12 @@ export async function GET() {
 
     return NextResponse.json({
       financialYearLabel: fy?.label ?? null,
+      latestMeeting: latestMeeting
+        ? {
+            id: latestMeeting.id,
+            meetingDate: latestMeeting.meetingDate.toISOString().slice(0, 10),
+          }
+        : null,
       submissions,
     });
   } catch (error) {

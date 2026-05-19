@@ -147,6 +147,8 @@ export interface KPISubmission {
   velocityTrail?: Array<{ measuredAt: string; numeratorValue: number | null; yesValue: boolean | null }>;
   /** Days since last measurement update; null if never updated. */
   staleDays?: number | null;
+  /** Whether a measurement exists for the latest dashboard meeting (weekly cycle). */
+  hasEntryForLatestMeeting?: boolean;
   /** Server-computed: user has FLAG_KPI_ESCALATION permission. */
   canFlagEscalation?: boolean;
   /** Monitoring level for this KPI: CS, ACS, or CM. */

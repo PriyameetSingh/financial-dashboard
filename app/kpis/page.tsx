@@ -8,7 +8,7 @@ import { fetchKPISubmissions, reviewKpiMeasurement } from "@/src/lib/services/kp
 import { fetchFinancialBudgets } from "@/src/lib/services/financialService";
 import { KPISubmission, KpiEscalationFlag } from "@/types";
 import type { FinancialEntry } from "@/types";
-import { UserRole } from "@/lib/auth";
+import { UserRole, hasPermission, Permission } from "@/lib/auth";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import ViewKpiModal from "@/components/kpis/ViewKpiModal";
@@ -255,6 +255,7 @@ export default function KPIsPage() {
   }, [submissions]);
 
   const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
+  const canManageSchemes = user ? hasPermission(user, Permission.MANAGE_SCHEMES) : false;
 
   const pendingQueue = useMemo(
     () =>
@@ -736,7 +737,7 @@ export default function KPIsPage() {
                           <td className="py-3">
                             <div className="flex items-center gap-2">
                               <StatusBadge status={item.status} />
-                              {!isViewer && item.currentUserCanReassignOwners && (
+                              {canManageSchemes && (
                                 <button
                                   type="button"
                                   title="Edit KPI"
@@ -774,16 +775,18 @@ export default function KPIsPage() {
         }}
       />
 
-      <EditKpiModal
-        open={!!editKpi}
-        submission={editKpi}
-        onClose={() => setEditKpi(null)}
-        onSaved={async () => {
-          const data = await fetchKPISubmissions();
-          setSubmissions(data.submissions);
-          setActionMessage("KPI updated successfully.");
-        }}
-      />
+      {canManageSchemes && (
+        <EditKpiModal
+          open={!!editKpi}
+          submission={editKpi}
+          onClose={() => setEditKpi(null)}
+          onSaved={async () => {
+            const data = await fetchKPISubmissions();
+            setSubmissions(data.submissions);
+            setActionMessage("KPI updated successfully.");
+          }}
+        />
+      )}
     </AppShell>
   );
 }

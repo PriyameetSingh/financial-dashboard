@@ -2,17 +2,22 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { UserRole, hasPermission, Permission, type SessionUser } from "@/lib/auth";
+import { UserRole, hasPermission, Permission } from "@/lib/auth";
 import { HUDD_LOGO_PUBLIC_PATH } from "@/lib/hudd-logo";
 import { withNextBasePath } from "@/lib/next-base-path";
 import {
   canSeeMyTasksNav,
   hasPendingAssignedActionItems,
-  isAssignedActionOfficer,
 } from "@/src/lib/actionItemAssignment";
+import {
+  mergePendingBadges,
+  pendingAssignedBadgeState,
+  pendingKpiEntryBadgeState,
+  SIDEBAR_BADGE_TONE_CLASS,
+} from "@/src/lib/myTasksPendingBadges";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { fetchActionItems } from "@/src/lib/services/actionItemService";
-import { fetchKPISubmissions } from "@/src/lib/services/kpiService";
+import { fetchKPISubmissions, type KpiLatestMeeting } from "@/src/lib/services/kpiService";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import type { ActionItem, KPISubmission } from "@/types";
 import {
@@ -33,75 +38,6 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
-function isPendingAction(item: ActionItem) {
-  return item.status !== "COMPLETED";
-}
-
-function isOverdue(item: ActionItem) {
-  if (item.status === "OVERDUE") return true;
-  const due = new Date(item.dueDate);
-  const now = new Date();
-  return due < now;
-}
-
-function isDueWithinWeek(item: ActionItem) {
-  const due = new Date(item.dueDate);
-  const now = new Date();
-  const week = new Date();
-  week.setDate(now.getDate() + 7);
-  return due >= now && due <= week;
-}
-
-function pendingAssignedBadgeState(items: ActionItem[], user: SessionUser): { count: number; tone: "red" | "yellow" | "green" | null } {
-  const mine = items.filter((item) => isAssignedActionOfficer(item, user) && isPendingAction(item));
-  const count = mine.length;
-  if (count === 0) return { count: 0, tone: null };
-  const anyOverdue = mine.some(isOverdue);
-  if (anyOverdue) return { count, tone: "red" };
-  const anyDueSoon = mine.some(isDueWithinWeek);
-  if (anyDueSoon) return { count, tone: "yellow" };
-  return { count, tone: "green" };
-}
-
-function isPendingKpiEntryForAssignee(submission: KPISubmission, assigneeDbUserId: string | null) {
-  if (!assigneeDbUserId) return false;
-  const ids = submission.performerUserIds?.length
-    ? submission.performerUserIds
-    : submission.assignedToUserId
-      ? [submission.assignedToUserId]
-      : [];
-  if (!ids.includes(assigneeDbUserId)) return false;
-  return submission.status === "not_submitted" || submission.status === "draft";
-}
-
-/** Red if any overdue, else yellow if any delayed, else green (mirrors action-item badge semantics). */
-function pendingKpiEntryBadgeState(
-  submissions: KPISubmission[],
-  assigneeDbUserId: string | null,
-): { count: number; tone: "red" | "yellow" | "green" | null } {
-  const mine = submissions.filter((s) => isPendingKpiEntryForAssignee(s, assigneeDbUserId));
-  const count = mine.length;
-  if (count === 0) return { count: 0, tone: null };
-  const anyOverdue = mine.some((s) => s.measurementProgressStatus === "overdue");
-  if (anyOverdue) return { count, tone: "red" };
-  const anyDelayed = mine.some((s) => s.measurementProgressStatus === "delayed");
-  if (anyDelayed) return { count, tone: "yellow" };
-  return { count, tone: "green" };
-}
-
-async function fetchSessionDbUserId(): Promise<string | null> {
-  const response = await fetch(withNextBasePath("/api/v1/rbac/me"), { cache: "no-store" });
-  if (!response.ok) return null;
-  const data = (await response.json()) as { user: { dbId: string | null } | null };
-  return data.user?.dbId ?? null;
-}
-
-const BADGE_TONE_CLASS: Record<"red" | "yellow" | "green", string> = {
-  red: "text-red-300",
-  yellow: "text-amber-300",
-  green: "text-emerald-300",
-};
-
 type NavItem = {
   label: string;
   href: string;
@@ -113,20 +49,6 @@ type NavItem = {
   /** When true, item is shown only if hub permissions apply or the user has pending assigned decision items. */
   myTasksHubGate?: boolean;
 };
-
-function mergePendingBadges(
-  slices: { count: number; tone: "red" | "yellow" | "green" | null }[],
-): { count: number; tone: "red" | "yellow" | "green" | null } {
-  const active = slices.filter((s) => s.count > 0 && s.tone);
-  if (!active.length) return { count: 0, tone: null };
-  const count = active.reduce((acc, s) => acc + s.count, 0);
-  const tone = active.some((s) => s.tone === "red")
-    ? "red"
-    : active.some((s) => s.tone === "yellow")
-      ? "yellow"
-      : "green";
-  return { count, tone };
-}
 
 const items: NavItem[] = [
   {
@@ -431,12 +353,12 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
-  const [assigneeDbUserId, setAssigneeDbUserId] = useState<string | null>(null);
+  const [latestKpiMeeting, setLatestKpiMeeting] = useState<KpiLatestMeeting | null>(null);
 
   useEffect(() => {
     let active = true;
     if (!user) {
-      setAssigneeDbUserId(null);
+      setLatestKpiMeeting(null);
       setKpiSubmissions([]);
       setActionItems([]);
       return;
@@ -452,20 +374,20 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     if (hasPermission(user, Permission.ENTER_KPI_DATA)) {
       void (async () => {
         try {
-          const [dbId, kpiData] = await Promise.all([fetchSessionDbUserId(), fetchKPISubmissions()]);
+          const kpiData = await fetchKPISubmissions();
           if (active) {
-            setAssigneeDbUserId(dbId);
+            setLatestKpiMeeting(kpiData.latestMeeting);
             setKpiSubmissions(kpiData.submissions);
           }
         } catch {
           if (active) {
-            setAssigneeDbUserId(null);
+            setLatestKpiMeeting(null);
             setKpiSubmissions([]);
           }
         }
       })();
     } else {
-      setAssigneeDbUserId(null);
+      setLatestKpiMeeting(null);
       setKpiSubmissions([]);
     }
     return () => {
@@ -489,7 +411,10 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     return pendingAssignedBadgeState(actionItems, user);
   }, [actionItems, user]);
 
-  const kpiEntryBadge = useMemo(() => pendingKpiEntryBadgeState(kpiSubmissions, assigneeDbUserId), [kpiSubmissions, assigneeDbUserId]);
+  const kpiEntryBadge = useMemo(
+    () => pendingKpiEntryBadgeState(kpiSubmissions, latestKpiMeeting),
+    [kpiSubmissions, latestKpiMeeting],
+  );
 
   const myTasksHubBadge = useMemo((): { count: number; tone: "red" | "yellow" | "green" | null } => {
     if (!user || !canSeeMyTasksNav(user, actionItems)) return { count: 0, tone: null };
@@ -558,7 +483,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                     <span className="truncate">{item.label}</span>
                     {item.href === "/action-items" && actionItemsBadge && actionItemsBadge.count > 0 && actionItemsBadge.tone && (
                       <span
-                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
+                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
                         title="Pending action items assigned to you"
                       >
                         ({actionItemsBadge.count})
@@ -566,7 +491,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                     )}
                     {item.href === "/my-tasks" && myTasksHubBadge.count > 0 && myTasksHubBadge.tone && (
                       <span
-                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
+                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
                         title="Pending items across KPI and decision-tracker work assigned to you"
                       >
                         ({myTasksHubBadge.count})

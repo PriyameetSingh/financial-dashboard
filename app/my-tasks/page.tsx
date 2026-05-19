@@ -5,17 +5,42 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { Permission, hasPermission } from "@/lib/auth";
 import { useRequireMyTasksHub } from "@/src/lib/route-guards";
+import { hasAnyAssignedActionItems } from "@/src/lib/actionItemAssignment";
 import {
-  filterAssignedPendingActionItems,
-  hasAnyAssignedActionItems,
-} from "@/src/lib/actionItemAssignment";
+  BADGE_TONE_CLASS,
+  pendingAssignedBadgeState,
+  pendingKpiEntryBadgeState,
+} from "@/src/lib/myTasksPendingBadges";
 import { fetchActionItems } from "@/src/lib/services/actionItemService";
-import type { ActionItem } from "@/types";
+import { fetchKPISubmissions, type KpiLatestMeeting } from "@/src/lib/services/kpiService";
+import type { ActionItem, KPISubmission } from "@/types";
 import { ArrowRight, ClipboardList, IndianRupee, Layers, ListChecks } from "lucide-react";
+
+function PendingCountLabel({
+  count,
+  tone,
+  singular,
+  plural,
+}: {
+  count: number;
+  tone: "red" | "yellow" | "green" | null;
+  singular: string;
+  plural: string;
+}) {
+  const label = count === 1 ? singular : plural;
+  const toneClass = tone ? BADGE_TONE_CLASS[tone] : "text-[var(--text-muted)]";
+  return (
+    <p className={`mt-2 text-xs font-semibold tabular-nums ${toneClass}`}>
+      {count} {label}
+    </p>
+  );
+}
 
 export default function MyTasksHubPage() {
   const user = useRequireMyTasksHub();
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
+  const [latestKpiMeeting, setLatestKpiMeeting] = useState<KpiLatestMeeting | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -32,9 +57,40 @@ export default function MyTasksHubPage() {
     };
   }, [user]);
 
-  const assignedPending = useMemo(
-    () => (user ? filterAssignedPendingActionItems(actionItems, user) : []),
+  useEffect(() => {
+    if (!user || !hasPermission(user, Permission.ENTER_KPI_DATA)) {
+      setLatestKpiMeeting(null);
+      setKpiSubmissions([]);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      try {
+        const kpiData = await fetchKPISubmissions();
+        if (active) {
+          setLatestKpiMeeting(kpiData.latestMeeting);
+          setKpiSubmissions(kpiData.submissions);
+        }
+      } catch {
+        if (active) {
+          setLatestKpiMeeting(null);
+          setKpiSubmissions([]);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const actionItemsBadge = useMemo(
+    () => (user ? pendingAssignedBadgeState(actionItems, user) : { count: 0, tone: null }),
     [actionItems, user],
+  );
+
+  const kpiEntryBadge = useMemo(
+    () => pendingKpiEntryBadgeState(kpiSubmissions, latestKpiMeeting),
+    [kpiSubmissions, latestKpiMeeting],
   );
 
   if (!user) {
@@ -70,8 +126,15 @@ export default function MyTasksHubPage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-semibold text-[var(--sidebar-text-primary)]">KPI monitoring</h2>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
-                    Enter or update measurements assigned to you as KPI action owner.
+                    Enter or update measurements assigned to you for the latest dashboard meeting
+                    {latestKpiMeeting ? ` (${latestKpiMeeting.meetingDate})` : ""}.
                   </p>
+                  <PendingCountLabel
+                    count={kpiEntryBadge.count}
+                    tone={kpiEntryBadge.tone}
+                    singular="KPI still to enter for this meeting"
+                    plural="KPIs still to enter for this meeting"
+                  />
                   <Link
                     href="/kpis/entry"
                     className="mt-3 inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
@@ -97,23 +160,12 @@ export default function MyTasksHubPage() {
                       ? "View and update action items assigned to you, upload proof, and track status in one place."
                       : "You have decision items assigned to you. Open one below or go to the full tracker."}
                   </p>
-                  {/* {assignedPending.length > 0 && (
-                    <ul className="mt-3 space-y-2 border-t border-[var(--border)] pt-3">
-                      {assignedPending.map((item) => (
-                        <li key={item.id}>
-                          <Link
-                            href={`/action-items/${item.id}`}
-                            className="flex flex-col gap-0.5 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left text-xs transition hover:bg-[var(--sidebar-hover-bg)]/50"
-                          >
-                            <span className="font-medium text-[var(--sidebar-text-primary)]">{item.title}</span>
-                            <span className="text-[var(--text-muted)]">
-                              Due {item.dueDate} · {item.status.replace(/_/g, " ")}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )} */}
+                  <PendingCountLabel
+                    count={actionItemsBadge.count}
+                    tone={actionItemsBadge.tone}
+                    singular="pending action item"
+                    plural="pending action items"
+                  />
                   <Link
                     href="/action-items"
                     className="mt-3 inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"

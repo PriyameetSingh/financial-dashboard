@@ -31,8 +31,14 @@ export type KpiHistoryResponse = {
   measurements: KpiMeasurementHistory[];
 };
 
+export type KpiLatestMeeting = {
+  id: string;
+  meetingDate: string;
+};
+
 type KPIResponse = {
   financialYearLabel: string | null;
+  latestMeeting: KpiLatestMeeting | null;
   submissions: KPISubmission[];
 };
 
@@ -44,7 +50,11 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchKPISubmissions(): Promise<{ submissions: KPISubmission[]; financialYearLabel: string | null }> {
+export async function fetchKPISubmissions(): Promise<{
+  submissions: KPISubmission[];
+  financialYearLabel: string | null;
+  latestMeeting: KpiLatestMeeting | null;
+}> {
   const response = await fetch(withNextBasePath("/api/v1/kpis/definitions"), { cache: "no-store" });
   return parseResponse<KPIResponse>(response);
 }
