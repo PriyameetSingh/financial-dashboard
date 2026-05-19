@@ -15,6 +15,7 @@ type ActionItemWithRelations = Prisma.ActionItemGetPayload<{
   include: {
     scheme: { select: { code: true; verticalName: true } };
     vertical: { select: { name: true } };
+    meeting: { select: { meetingDate: true } };
     performers: { include: { user: { select: { id: true; name: true; code: true } } }; orderBy: { sortOrder: "asc" } };
     reviewerUsers: { include: { user: { select: { id: true; name: true; code: true } } }; orderBy: { sortOrder: "asc" } };
     updates: {
@@ -40,6 +41,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     vertical: item.vertical?.name ?? item.scheme?.verticalName ?? "",
     priority: item.priority,
     dueDate: toIsoDate(item.dueDate),
+    createdAt: item.createdAt.toISOString(),
     status: item.status,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
@@ -51,6 +53,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     reviewerUserCode: revUsers[0]?.code ?? null,
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
+    meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,
@@ -69,6 +72,7 @@ function mapActionItem(item: ActionItemWithRelations) {
 const actionInclude = {
   scheme: { select: { code: true, verticalName: true } },
   vertical: { select: { name: true } },
+  meeting: { select: { meetingDate: true } },
   performers: {
     orderBy: { sortOrder: "asc" as const },
     include: { user: { select: { id: true, name: true, code: true } } },

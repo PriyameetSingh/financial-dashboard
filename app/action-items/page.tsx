@@ -34,6 +34,20 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
+/** True when this user is one of the item's performers (`users.code` or display name). */
+function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): boolean {
+  if (item.performers?.length) {
+    return item.performers.some(
+      (p) =>
+        (!!p.code && p.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
+        normalize(p.name) === normalize(u.name),
+    );
+  }
+  const code = item.assignedToUserCode?.trim().toLowerCase();
+  if (code && code === u.id.trim().toLowerCase()) return true;
+  return normalize(item.assignedTo) === normalize(u.name);
+}
+
 /** True when this user is one of the item's reviewers (`users.code` or display name). */
 function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
   if (item.reviewers?.length) {
@@ -67,6 +81,7 @@ export default function ActionItemsPage() {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState("all");
   const [pageTab, setPageTab] = useState<"list" | "tracker">("list");
+  const [sortBy, setSortBy] = useState<"meeting" | "date" | "latest_updates">("meeting");
   const [trackerActivity, setTrackerActivity] = useState<
     "all" | "recent_7" | "recent_30" | "inactive_14" | "inactive_30"
   >("all");
@@ -103,6 +118,13 @@ export default function ActionItemsPage() {
     setReassignItem(item);
   };
 
+  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
+  const canViewAllItems =
+    !!user &&
+    (hasPermission(user, Permission.VIEW_ALL_DATA) ||
+      hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
+      hasPermission(user, Permission.CREATE_ACTION_ITEMS));
+
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -121,12 +143,19 @@ export default function ActionItemsPage() {
     };
   }, []);
 
-  /** Full list for every role; only per-item actions are gated by assignment / permissions. */
-  const listItems = useMemo(() => (user ? items : []), [user, items]);
+  /**
+   * If the user is an admin (has create/update permissions) or has view-all, they see all items.
+   * Otherwise, they only see items where they are an assigned officer or reviewer.
+   */
+  const listItems = useMemo(() => {
+    if (!user) return [];
+    if (canViewAllItems) return items;
+    return items.filter((item) => isAssignedOfficer(item, user) || isDesignatedReviewer(item, user));
+  }, [user, items, canViewAllItems]);
 
   const filtered = useMemo(() => {
     const activeFilter = STATUS_FILTERS.find((entry) => entry.id === filter) ?? STATUS_FILTERS[0];
-    return listItems.filter((item) => {
+    const results = listItems.filter((item) => {
       const matchesQuery =
         item.title.toLowerCase().includes(query.toLowerCase()) ||
         item.vertical.toLowerCase().includes(query.toLowerCase()) ||
@@ -153,12 +182,29 @@ export default function ActionItemsPage() {
       })();
       return matchesQuery && activeFilter.match(item.status) && matchesVertical && matchesAssignee && matchesPriority && matchesDue;
     });
-  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter]);
+
+    return results.sort((a, b) => {
+      if (sortBy === "meeting") {
+        const da = a.meetingDate ? new Date(a.meetingDate).getTime() : 0;
+        const db = b.meetingDate ? new Date(b.meetingDate).getTime() : 0;
+        if (da !== db) return db - da;
+      } else if (sortBy === "date") {
+        const da = new Date(a.createdAt).getTime();
+        const db = new Date(b.createdAt).getTime();
+        if (da !== db) return db - da;
+      } else if (sortBy === "latest_updates") {
+        const da = lastActivityMs(a);
+        const db = lastActivityMs(b);
+        if (da !== db) return db - da;
+      }
+      return a.title.localeCompare(b.title);
+    });
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy]);
 
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
-    return listItems.filter((item) => {
+    const results = listItems.filter((item) => {
       if (trackerStatus !== "all" && item.status !== trackerStatus) return false;
       const last = lastActivityMs(item);
       const age = now - last;
@@ -168,7 +214,24 @@ export default function ActionItemsPage() {
       if (trackerActivity === "inactive_30") return age > 30 * day;
       return true;
     });
-  }, [listItems, trackerActivity, trackerStatus]);
+
+    return results.sort((a, b) => {
+      if (sortBy === "meeting") {
+        const da = a.meetingDate ? new Date(a.meetingDate).getTime() : 0;
+        const db = b.meetingDate ? new Date(b.meetingDate).getTime() : 0;
+        if (da !== db) return db - da;
+      } else if (sortBy === "date") {
+        const da = new Date(a.createdAt).getTime();
+        const db = new Date(b.createdAt).getTime();
+        if (da !== db) return db - da;
+      } else if (sortBy === "latest_updates") {
+        const da = lastActivityMs(a);
+        const db = lastActivityMs(b);
+        if (da !== db) return db - da;
+      }
+      return a.title.localeCompare(b.title);
+    });
+  }, [listItems, trackerActivity, trackerStatus, sortBy]);
 
   const now = useMemo(() => new Date(), []);
 
@@ -200,7 +263,6 @@ export default function ActionItemsPage() {
   const assigneeOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.assignedTo)))], [items]);
   const priorityOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.priority)))], [items]);
 
-  const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
   const showStats = !!user;
   const canReassignActionItems =
     !!user &&
@@ -212,7 +274,7 @@ export default function ActionItemsPage() {
     <AppShell title="Action Items">
       <div className="relative space-y-6 px-6 py-6">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-document)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
             Read-only
           </div>
         )}
@@ -227,7 +289,10 @@ export default function ActionItemsPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setPageTab("list")}
+                onClick={() => {
+                  setPageTab("list");
+                  setSortBy("meeting");
+                }}
                 className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${
                   pageTab === "list"
                     ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
@@ -238,7 +303,10 @@ export default function ActionItemsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setPageTab("tracker")}
+                onClick={() => {
+                  setPageTab("tracker");
+                  setSortBy("latest_updates");
+                }}
                 className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${
                   pageTab === "tracker"
                     ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
@@ -249,7 +317,7 @@ export default function ActionItemsPage() {
               </button>
             </div>
           </div>
-          {user?.role === UserRole.TASU && (
+          {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
             <Link
               href="/action-items/create"
               className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)]"
@@ -285,8 +353,16 @@ export default function ActionItemsPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              >
+                <option value="latest_updates">Latest updates</option>
+                <option value="meeting">Meeting wise</option>
+                <option value="date">Date wise</option>
+              </select>
             </div>
-            <AiAlertsCard />
           </div>
         )}
 
@@ -357,6 +433,15 @@ export default function ActionItemsPage() {
             <option value="week">Due this week</option>
             <option value="month">Due this month</option>
             <option value="overdue">Overdue</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          >
+            <option value="meeting">Meeting wise</option>
+            <option value="date">Date wise</option>
+            <option value="latest_updates">Latest updates</option>
           </select>
         </div>
         )}
@@ -506,42 +591,59 @@ export default function ActionItemsPage() {
               return (
                 <div
                   key={item.id}
-                  className={`rounded-2xl border p-5 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
+                  className={`rounded-2xl border p-6 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
-                    <div>
-                      <h3 className="text-lg font-semibold text-[var(--text-primary)]">{item.title}</h3>
-                      <p className="mt-1 text-xs text-[var(--text-muted)]">
-                        {item.vertical} · {item.schemeId} · Due {item.dueDate}
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
+                      <p className="text-sm font-medium text-[var(--text-muted)]">
+                        {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
                       </p>
                     </div>
-                    <StatusBadge status={item.status} />
+                    <StatusBadge status={item.status} size="md" />
                   </div>
-                  <div className="mt-4">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Status updates</p>
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Latest status updates</p>
+                      {sorted.length > 2 && (
+                        <span className="text-[11px] font-medium text-[var(--text-muted)] bg-[var(--bg-document)] px-2 py-0.5 rounded-full border border-[var(--border)]">
+                          Showing 2 of {sorted.length}
+                        </span>
+                      )}
+                    </div>
                     {sorted.length === 0 ? (
-                      <p className="mt-2 text-sm text-[var(--text-muted)]">No recorded updates yet.</p>
+                      <p className="mt-2 text-sm text-[var(--text-muted)] italic">No recorded updates yet.</p>
                     ) : (
-                      <ul className="mt-3 space-y-3 border-l-2 border-[var(--border)] pl-4">
-                        {sorted.map((u, idx) => (
+                      <ul className="space-y-5 border-l-2 border-[var(--border)] ml-1 pl-6">
+                        {sorted.slice(0, 2).map((u, idx) => (
                           <li key={u.id ?? `${item.id}-u-${idx}`} className="relative">
-                            <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[var(--text-primary)]" />
-                            <p className="text-xs font-medium text-[var(--text-primary)]">
-                              {u.timestamp}
-                              {u.actor ? ` · ${u.actor}` : ""} · {u.status.replace(/_/g, " ")}
-                            </p>
-                            {u.note ? <p className="mt-1 text-sm text-[var(--text-muted)]">{u.note}</p> : null}
+                            <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full border-2 border-[var(--bg-card)] bg-[var(--text-primary)] ring-2 ring-[var(--border)]" />
+                            <div className="space-y-1.5">
+                              <p className="text-sm font-bold text-[var(--text-primary)]">
+                                {u.timestamp}
+                                {u.actor ? ` · ${u.actor}` : ""}
+                                <span className="ml-2 inline-flex items-center rounded-md bg-[var(--bg-document)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[var(--border)]">
+                                  {u.status.replace(/_/g, " ")}
+                                </span>
+                              </p>
+                              {u.note ? (
+                                <p className="text-sm leading-relaxed text-[var(--text-secondary)] bg-[var(--bg-document)] p-3 rounded-xl border border-[var(--border)]/50">
+                                  {u.note}
+                                </p>
+                              ) : null}
+                            </div>
                           </li>
                         ))}
                       </ul>
                     )}
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-6 pt-4 border-t border-[var(--border)]/50">
                     <Link
                       href={`/action-items/${item.id}`}
-                      className="text-xs font-medium text-[var(--text-primary)] underline underline-offset-2"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
                     >
-                      Open item
+                      View full details
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
                     </Link>
                   </div>
                 </div>

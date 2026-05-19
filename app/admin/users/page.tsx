@@ -8,9 +8,12 @@ import type { OfficerType } from "@/types";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import { withNextBasePath } from "@/lib/next-base-path";
 
-const PERMISSION_LIST = Object.values(Permission);
-
 type OverrideEffect = "allow" | "deny";
+
+type PermissionRow = {
+  code: string;
+  name: string;
+};
 
 type DbUserPermissionOverride = {
   code: Permission;
@@ -90,12 +93,13 @@ function formatOfficerTypeLabel(value: OfficerType | null): string {
 
 interface PermissionsModalProps {
   user: DbUserRow;
-  onToggle: (userCode: string, permission: Permission) => Promise<void>;
+  permissionCatalog: PermissionRow[];
+  onToggle: (userCode: string, permissionCode: string) => Promise<void>;
   onClose: () => void;
   alert: string;
 }
 
-function PermissionsModal({ user, onToggle, onClose, alert }: PermissionsModalProps) {
+function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }: PermissionsModalProps) {
   const overrideCount = user.overrides.length;
   const grantedCount = user.effectivePermissions.length;
 
@@ -150,13 +154,13 @@ function PermissionsModal({ user, onToggle, onClose, alert }: PermissionsModalPr
         {/* Permission toggles */}
         <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
           <div className="flex flex-wrap gap-2">
-            {PERMISSION_LIST.map((permission) => {
-              const override = user.overrides.find((entry) => entry.code === permission) ?? null;
-              const granted = user.effectivePermissions.includes(permission);
+            {permissionCatalog.map((permission) => {
+              const override = user.overrides.find((entry) => entry.code === permission.code) ?? null;
+              const granted = user.effectivePermissions.includes(permission.code as Permission);
               return (
                 <button
-                  key={`modal-${user.code ?? user.email}-${permission}`}
-                  onClick={() => onToggle(user.code ?? "", permission)}
+                  key={`modal-${user.code ?? user.email}-${permission.code}`}
+                  onClick={() => onToggle(user.code ?? "", permission.code)}
                   className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors whitespace-nowrap ${override?.effect === "deny"
                     ? "border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] text-[var(--alert-critical)]"
                     : granted
@@ -171,7 +175,7 @@ function PermissionsModal({ user, onToggle, onClose, alert }: PermissionsModalPr
                         : "Click to grant (override)"
                   }
                 >
-                  {permission.replace(/_/g, " ")}
+                  {permission.name}
                 </button>
               );
             })}
@@ -587,6 +591,14 @@ export default function AdminUsersPage() {
   const [rolePermissions, setRolePermissions] = useState<Record<UserRole, Permission[]>>(() =>
     Object.fromEntries(Object.values(UserRole).map((role) => [role, [] as Permission[]])) as Record<UserRole, Permission[]>,
   );
+  const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
+
+  const refreshPermissionCatalog = useCallback(async () => {
+    const response = await fetch(withNextBasePath("/api/v1/rbac/permissions"));
+    if (!response.ok) throw new Error("Failed to load permissions");
+    const data = (await response.json()) as { permissions: PermissionRow[] };
+    setPermissionCatalog(data.permissions);
+  }, []);
 
   const refreshRoles = useCallback(async () => {
     const response = await fetch(withNextBasePath("/api/v1/rbac/roles"));
@@ -614,7 +626,7 @@ export default function AdminUsersPage() {
     let active = true;
     const load = async () => {
       try {
-        await Promise.all([refreshRoles(), refreshUsers()]);
+        await Promise.all([refreshRoles(), refreshUsers(), refreshPermissionCatalog()]);
         if (!active) return;
         setAlert("");
       } catch {
@@ -626,7 +638,7 @@ export default function AdminUsersPage() {
     return () => {
       active = false;
     };
-  }, [refreshRoles, refreshUsers]);
+  }, [refreshRoles, refreshUsers, refreshPermissionCatalog]);
 
   const managePermissionCount = useMemo(() => {
     return users.filter((user) => user.effectivePermissions.includes(Permission.MANAGE_PERMISSIONS)).length;
@@ -877,12 +889,12 @@ export default function AdminUsersPage() {
     }
   }, [profileEditForm, profileEditUser, refreshUsers]);
 
-  const togglePermission = useCallback(async (userCode: string, permission: Permission) => {
+  const togglePermission = useCallback(async (userCode: string, permissionCode: string) => {
     const target = users.find((user) => user.code === userCode);
     if (!target) return;
 
-    const currentOverride = target.overrides.find((override) => override.code === permission) ?? null;
-    const hasEffective = target.effectivePermissions.includes(permission);
+    const currentOverride = target.overrides.find((override) => override.code === permissionCode) ?? null;
+    const hasEffective = target.effectivePermissions.includes(permissionCode as Permission);
 
     let nextEffect: "allow" | "deny" | "unset";
     if (currentOverride) {
@@ -891,7 +903,12 @@ export default function AdminUsersPage() {
       nextEffect = hasEffective ? "deny" : "allow";
     }
 
-    if (permission === Permission.MANAGE_PERMISSIONS && hasEffective && nextEffect === "deny" && managePermissionCount <= 1) {
+    if (
+      permissionCode === Permission.MANAGE_PERMISSIONS &&
+      hasEffective &&
+      nextEffect === "deny" &&
+      managePermissionCount <= 1
+    ) {
       setAlert("At least one officer must retain the Manage Permissions privilege.");
       return;
     }
@@ -901,7 +918,7 @@ export default function AdminUsersPage() {
     const response = await fetch(withNextBasePath(`/api/v1/rbac/users/${userCode}/permissions`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ permissionCode: permission, effect: nextEffect }),
+      body: JSON.stringify({ permissionCode, effect: nextEffect }),
     });
 
     if (!response.ok) {
@@ -1016,9 +1033,9 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
           <div className="overflow-x-auto">
-            <table className="min-w-[1320px] w-full text-left text-sm">
+            <table className="min-w-[1000px] w-full text-left text-sm">
               <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 <tr>
                   <th className="px-4 py-3">Officer</th>
@@ -1104,51 +1121,74 @@ export default function AdminUsersPage() {
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex min-w-[240px] flex-wrap items-center gap-2">
-                          {canManagePermissions && (
-                            <button
-                              onClick={() => { setAlert(""); setSelectedUser(user); }}
-                              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
-                              title="Manage permissions for this user"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
-                              Permissions
-                            </button>
-                          )}
-                          {canMutateUsers && (
-                            <button
-                              onClick={() => {
-                                setProfileEditAlert("");
-                                setProfileEditUser(user);
-                                setProfileEditForm(editProfileFormFromUser(user));
-                              }}
-                              disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
-                              className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
-                              title="Edit name, email, department, and other profile fields"
-                            >
-                              {profileSaveLoadingCodes[userCode] ? "Saving..." : "Edit profile"}
-                            </button>
-                          )}
+                        <div className="relative">
                           <button
-                            onClick={() => void handleRoleUpdate(user)}
-                            disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
-                            className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
-                            title="Save selected role"
+                            onClick={() => {
+                              const dropdown = document.getElementById(`actions-dropdown-${userCode}`);
+                              dropdown?.classList.toggle('hidden');
+                            }}
+                            className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
                           >
-                            {isUpdatingRole ? "Saving..." : "Save Role"}
+            •••
                           </button>
-                          <button
-                            onClick={() => void handleDeleteUser(user)}
-                            disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
-                            className="rounded-lg border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-3 py-1.5 text-xs font-semibold text-[var(--alert-critical)] transition-colors hover:bg-[rgba(255,59,59,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
-                            title="Delete user account"
+                          <div
+                            id={`actions-dropdown-${userCode}`}
+                            className="absolute right-0 top-full z-10 mt-1 hidden w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
                           >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                          </button>
+                            <div className="flex flex-col py-1">
+                              {canManagePermissions && (
+                                <button
+                                  onClick={() => {
+                                    setAlert("");
+                                    setSelectedUser(user);
+                                    document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+                                    <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                  </svg>
+                                  Permissions
+                                </button>
+                              )}
+                              {canMutateUsers && (
+                                <button
+                                  onClick={() => {
+                                    setProfileEditAlert("");
+                                    setProfileEditUser(user);
+                                    setProfileEditForm(editProfileFormFromUser(user));
+                                    document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
+                                  }}
+                                  disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  Edit profile
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  void handleRoleUpdate(user);
+                                  document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
+                                }}
+                                disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
+                                className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isUpdatingRole ? "Saving..." : "Save Role"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  void handleDeleteUser(user);
+                                  document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
+                                }}
+                                disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
+                                className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[rgba(255,59,59,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -1170,6 +1210,7 @@ export default function AdminUsersPage() {
       {selectedUser && canManagePermissions && (
         <PermissionsModal
           user={selectedUser}
+          permissionCatalog={permissionCatalog}
           onToggle={togglePermission}
           onClose={() => { setSelectedUser(null); setAlert(""); }}
           alert={alert}

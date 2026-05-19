@@ -10,6 +10,7 @@ import { getFinancialYear, todayISO } from "./meetingUtils";
 import ActiveMeetingOverlay from "./components/ActiveMeetingOverlay";
 import ScheduleMeetingModal from "./components/ScheduleMeetingModal";
 import EditMeetingModal from "./components/EditMeetingModal";
+import ViewMeetingModal from "./components/ViewMeetingModal";
 
 function normalizeMeetings(raw: MeetingListItem[]): MeetingListItem[] {
   return raw.map((m) => ({
@@ -26,7 +27,8 @@ export default function MeetingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showSchedule, setShowSchedule] = useState(false);
-  const [activeMeeting, setActiveMeeting] = useState<MeetingListItem | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingListItem | null>(null);
+  const [dashboardMeeting, setDashboardMeeting] = useState<MeetingListItem | null>(null);
   const [editingMeeting, setEditingMeeting] = useState<MeetingListItem | null>(null);
 
   const [canSchedule, setCanSchedule] = useState(false);
@@ -67,7 +69,11 @@ export default function MeetingsPage() {
       const data = await fetchMeetings();
       const normalized = normalizeMeetings(data);
       setMeetings(normalized);
-      setActiveMeeting((prev) => {
+      setDashboardMeeting((prev) => {
+        if (!prev) return null;
+        return normalized.find((m) => m.id === prev.id) ?? prev;
+      });
+      setSelectedMeeting((prev) => {
         if (!prev) return null;
         return normalized.find((m) => m.id === prev.id) ?? prev;
       });
@@ -99,12 +105,12 @@ export default function MeetingsPage() {
   const todayMeetings = meetings.filter((m) => m.meetingDate === today);
   const otherMeetings = meetings.filter((m) => m.meetingDate !== today);
 
-  if (activeMeeting) {
+  if (dashboardMeeting) {
     return (
       <ActiveMeetingOverlay
-        meeting={activeMeeting}
+        meeting={dashboardMeeting}
         allMeetings={meetings}
-        onClose={() => setActiveMeeting(null)}
+        onClose={() => setDashboardMeeting(null)}
         onActionItemCreated={refreshMeetingContext}
         onTopicAdded={refreshMeetingContext}
       />
@@ -171,7 +177,7 @@ export default function MeetingsPage() {
                   key={m.id} 
                   meeting={m} 
                   isToday 
-                  onStart={() => setActiveMeeting(m)}
+                  onClick={() => setSelectedMeeting(m)}
                   onEdit={() => setEditingMeeting(m)}
                   onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
                   canEdit={canSchedule}
@@ -194,6 +200,7 @@ export default function MeetingsPage() {
                 <MeetingCard 
                   key={m.id} 
                   meeting={m}
+                  onClick={() => setSelectedMeeting(m)}
                   onEdit={() => setEditingMeeting(m)}
                   onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
                   canEdit={canSchedule}
@@ -215,6 +222,22 @@ export default function MeetingsPage() {
         />
       )}
 
+      {selectedMeeting && (
+        <ViewMeetingModal
+          meeting={selectedMeeting}
+          onClose={() => setSelectedMeeting(null)}
+          onStartMeeting={() => {
+            setDashboardMeeting(selectedMeeting);
+            setSelectedMeeting(null);
+          }}
+          onEdit={() => {
+            setEditingMeeting(selectedMeeting);
+            setSelectedMeeting(null);
+          }}
+          canEdit={canSchedule}
+        />
+      )}
+
       {editingMeeting && (
         <EditMeetingModal
           meeting={editingMeeting}
@@ -232,7 +255,7 @@ export default function MeetingsPage() {
 function MeetingCard({
   meeting,
   isToday = false,
-  onStart,
+  onClick,
   onEdit,
   onDelete,
   canEdit = false,
@@ -240,7 +263,7 @@ function MeetingCard({
 }: {
   meeting: MeetingListItem;
   isToday?: boolean;
-  onStart?: () => void;
+  onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   canEdit?: boolean;
@@ -249,7 +272,16 @@ function MeetingCard({
   const materials = meeting.materials ?? [];
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg ${
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 ${
         isToday
           ? "border-[var(--accent)]/40 bg-gradient-to-br from-[var(--accent)]/5 to-[var(--bg-card)] shadow-md shadow-[var(--accent)]/5"
           : "border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-hover,var(--border))]"
@@ -311,7 +343,10 @@ function MeetingCard({
             <button
               id={`btn-edit-meeting-${meeting.id}`}
               type="button"
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5"
             >
               <Edit3 size={12} />
@@ -322,7 +357,10 @@ function MeetingCard({
             <button
               id={`btn-delete-meeting-${meeting.id}`}
               type="button"
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="flex items-center gap-1.5 rounded-lg border border-[var(--alert-critical)]/40 bg-[var(--alert-critical)]/5 px-3 py-1.5 text-xs font-medium text-[var(--alert-critical)] transition-colors hover:border-[var(--alert-critical)]/60 hover:bg-[var(--alert-critical)]/10"
             >
               <Trash2 size={12} />
@@ -331,11 +369,14 @@ function MeetingCard({
           )}
         </div>
 
-        {isToday && onStart && (
+        {isToday && onClick && (
           <button
             id={`btn-start-meeting-${meeting.id}`}
             type="button"
-            onClick={onStart}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98]"
           >
             <Play size={16} fill="white" />

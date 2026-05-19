@@ -470,7 +470,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
           )}
 
           {selectedId && (
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-3">
+            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Add subscheme to this scheme</p>
               <div className="grid gap-2 md:grid-cols-2">
                 <input

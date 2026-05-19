@@ -54,6 +54,7 @@ type PatchBody = {
   meetingDate?: string;
   title?: string | null;
   notes?: string | null;
+  topics?: string[];
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -64,18 +65,43 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const body = (await request.json()) as PatchBody;
     const auditContext = getAuditRequestContext(request);
 
-    const before = await prisma.dashboardMeeting.findUnique({ where: { id } });
+    const before = await prisma.dashboardMeeting.findUnique({
+      where: { id },
+      include: { topics: true },
+    });
     if (!before) {
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }
 
-    const meeting = await prisma.dashboardMeeting.update({
-      where: { id },
-      data: {
-        meetingDate: body.meetingDate ? new Date(`${body.meetingDate}T00:00:00.000Z`) : undefined,
-        title: body.title,
-        notes: body.notes,
-      },
+    const meeting = await prisma.$transaction(async (tx) => {
+      // Update meeting details
+      const m = await tx.dashboardMeeting.update({
+        where: { id },
+        data: {
+          meetingDate: body.meetingDate ? new Date(`${body.meetingDate}T00:00:00.000Z`) : undefined,
+          title: body.title,
+          notes: body.notes,
+        },
+      });
+
+      // Update topics if provided
+      if (body.topics !== undefined) {
+        // Simple strategy: replace all topics
+        await tx.meetingTopic.deleteMany({ where: { meetingId: id } });
+        if (body.topics.length > 0) {
+          await tx.meetingTopic.createMany({
+            data: body.topics
+              .filter((t) => t.trim().length > 0)
+              .map((t) => ({
+                meetingId: id,
+                topic: t.trim(),
+                createdById: actor?.id ?? null,
+              })),
+          });
+        }
+      }
+
+      return m;
     });
 
     await logAudit(
@@ -83,8 +109,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       "meeting.update",
       "dashboard_meeting",
       id,
-      { title: before.title, notes: before.notes },
-      { title: meeting.title, notes: meeting.notes },
+      { title: before.title, notes: before.notes, topics: before.topics.map((t) => t.topic) },
+      { title: meeting.title, notes: meeting.notes, topics: body.topics ?? null },
       { ...auditContext, meetingId: id },
     );
 

@@ -29,6 +29,7 @@ type PatchBody = {
   reviewerId?: string | null;
   description?: string | null;
   monitoringLevel?: string | null;
+  denominatorValue?: number | null;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -53,7 +54,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       body.assignedToId === undefined &&
       body.reviewerId === undefined &&
       body.description === undefined &&
-      body.monitoringLevel === undefined
+      body.monitoringLevel === undefined &&
+      body.denominatorValue === undefined
     ) {
       return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
     }
@@ -73,6 +75,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       }
     }
 
+    const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+
     const existing = await prisma.kpiDefinition.findUnique({
       where: { id },
       select: {
@@ -83,6 +87,12 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         scheme: { select: { code: true } },
         performers: { select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
+        targets: fy
+          ? {
+              where: { financialYearId: fy.id },
+              take: 1,
+            }
+          : false,
       },
     });
 
@@ -102,12 +112,14 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const auditContext = getAuditRequestContext(request);
     const newDescription = typeof body.description === "string" && body.description.trim() ? body.description.trim() : undefined;
     const newMonitoringLevel = body.monitoringLevel !== undefined ? parseMonitoringLevel(body.monitoringLevel) : undefined;
+    const newDenominatorValue = body.denominatorValue !== undefined ? (body.denominatorValue === null ? null : Number(body.denominatorValue)) : undefined;
 
     const before = {
       performerUserIds: existing.performers.map((p) => p.userId),
       reviewerUserIds: existing.reviewerUsers.map((r) => r.userId),
       description: existing.description,
       monitoringLevel: existing.monitoringLevel,
+      denominatorValue: (existing as any).targets?.[0]?.denominatorValue ? Number((existing as any).targets[0].denominatorValue) : null,
     };
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -132,6 +144,23 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           },
         });
       }
+      if (newDenominatorValue !== undefined && fy) {
+        const target = (existing as any).targets?.[0];
+        if (target) {
+          await tx.kpiTarget.update({
+            where: { id: target.id },
+            data: { denominatorValue: newDenominatorValue },
+          });
+        } else {
+          await tx.kpiTarget.create({
+            data: {
+              kpiDefinitionId: id,
+              financialYearId: fy.id,
+              denominatorValue: newDenominatorValue,
+            },
+          });
+        }
+      }
       return tx.kpiDefinition.findUniqueOrThrow({
         where: { id },
         include: {
@@ -143,6 +172,12 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             orderBy: { sortOrder: "asc" },
             include: { user: { select: { id: true, name: true } } },
           },
+          targets: fy
+            ? {
+                where: { financialYearId: fy.id },
+                take: 1,
+              }
+            : false,
         },
       });
     });
@@ -153,7 +188,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       "kpi_definition",
       id,
       before,
-      { performerUserIds, reviewerUserIds, description: newDescription ?? null, monitoringLevel: newMonitoringLevel ?? null },
+      {
+        performerUserIds,
+        reviewerUserIds,
+        description: newDescription ?? null,
+        monitoringLevel: newMonitoringLevel ?? null,
+        denominatorValue: newDenominatorValue ?? null,
+      },
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
 
@@ -167,6 +208,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       reviewerUserIds: updated.reviewerUsers.map((r) => r.userId),
       description: updated.description,
       monitoringLevel: updated.monitoringLevel,
+      denominatorValue: (updated as any).targets?.[0]?.denominatorValue ? Number((updated as any).targets[0].denominatorValue) : null,
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

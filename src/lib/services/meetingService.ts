@@ -88,7 +88,12 @@ export async function getMeetingMaterialSignedUrl(
 
 export async function updateMeeting(
   id: string,
-  input: { meetingDate?: string; title?: string | null; notes?: string | null },
+  input: {
+    meetingDate?: string;
+    title?: string | null;
+    notes?: string | null;
+    topics?: string[];
+  },
 ): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/meetings/${id}`), {
     method: "PATCH",

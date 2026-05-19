@@ -43,6 +43,7 @@ export default function MyTasksHubPage() {
 
   const showKpi = hasPermission(user, Permission.ENTER_KPI_DATA);
   const showFinance = hasPermission(user, Permission.ENTER_FINANCIAL_DATA);
+  const showBulkFinancial = hasPermission(user, Permission.MANAGE_FINANCIAL_DATA);
   const showActionsByPermission =
     hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
     hasPermission(user, Permission.CREATE_ACTION_ITEMS);
@@ -151,14 +152,16 @@ export default function MyTasksHubPage() {
                       Summary entry
                       <ArrowRight size={14} aria-hidden />
                     </Link>
-                    <Link
-                      href="/financial/entry/bulk"
-                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
-                    >
-                      <Layers size={13} aria-hidden />
-                      Bulk entry
-                      <ArrowRight size={14} aria-hidden />
-                    </Link>
+                    {showBulkFinancial && (
+                      <Link
+                        href="/financial/entry/bulk"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                      >
+                        <Layers size={13} aria-hidden />
+                        Bulk entry
+                        <ArrowRight size={14} aria-hidden />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

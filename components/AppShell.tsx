@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Bot } from "lucide-react";
+import { Bell, Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
@@ -18,6 +18,7 @@ export default function AppShell({ children, title }: Props) {
   const { mounted } = useTheme();
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,16 +50,24 @@ export default function AppShell({ children, title }: Props) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} />
       <div className="flex-1 flex flex-col">
         <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
-            <div className="min-w-0 flex-1">
-            {/* <p className="text-[10px] uppercase tracking-[0.5em] text-[var(--text-muted)]">Government of Odisha</p> */}
-              <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
-                Housing & Urban Development Department
-              </p>
-              {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <button
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
+              <div className="min-w-0">
+                <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
+                  Housing & Urban Development Department
+                </p>
+                {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:flex-nowrap lg:justify-end">
               <TextSizeToolbarControl />

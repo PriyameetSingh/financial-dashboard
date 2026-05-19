@@ -127,7 +127,6 @@ async function main() {
     create: {
       financialYearId: fy2526.id,
       totalBudgetCr: 9907.56,
-      createdById: NODAL_OFFICER_ID,
     },
   });
 
@@ -193,7 +192,6 @@ async function main() {
           schemeId: schemes[sb.code],
           financialYearId: fy2526.id,
           budgetEstimateCr: sb.budgetCr,
-          createdById: NODAL_OFFICER_ID,
         },
       });
     }
@@ -244,7 +242,6 @@ async function main() {
         soExpenditureCr: snap.soExp,
         ifmsExpenditureCr: snap.ifmsExp,
         workflowStatus: FinancialWorkflowStatus.submitted,
-        createdById: NODAL_OFFICER_ID,
       },
     }).catch(() => {/* ignore duplicates on rerun */});
   }
@@ -258,7 +255,6 @@ async function main() {
       meetingDate: new Date("2025-12-26"),
       title: "52nd HUDD Dashboard Meeting",
       notes: "Monthly review meeting. Financial data as on 26-Dec-2025.",
-      createdById: NODAL_OFFICER_ID,
     },
   });
   console.log(`✅  Created 52nd Dashboard meeting (${meeting52.id})`);
@@ -271,7 +267,6 @@ async function main() {
       meetingDate: new Date("2026-03-20"),
       title: "61st HUDD Dashboard Meeting",
       notes: "Monthly review meeting. Financial data as on 20-Mar-2026.",
-      createdById: NODAL_OFFICER_ID,
     },
   });
   console.log(`✅  Created 61st Dashboard meeting (${meeting61.id})`);
@@ -287,7 +282,7 @@ async function main() {
     "New Big Ticket Items",
   ];
   for (const topic of topics61) {
-    await prisma.meetingTopic.create({ data: { meetingId: meeting61.id, topic, createdById: NODAL_OFFICER_ID } });
+    await prisma.meetingTopic.create({ data: { meetingId: meeting61.id, topic } });
   }
   console.log(`✅  Meeting topics for 61st (${topics61.length})`);
 
@@ -738,9 +733,6 @@ async function main() {
         priority: ActionItemPriority.Medium,
         dueDate: new Date(ai.dueDate),
         status: ai.status,
-        createdById: NODAL_OFFICER_ID,
-        performers: { create: [{ userId: NODAL_OFFICER_ID, sortOrder: 0 }] },
-        reviewerUsers: { create: [{ userId: ACS_ID, sortOrder: 0 }] },
       },
     });
     if (ai.update) {
@@ -750,7 +742,6 @@ async function main() {
           timestamp: new Date("2026-03-20"),
           status: ai.status,
           note: ai.update,
-          createdById: NODAL_OFFICER_ID,
         },
       });
     }
@@ -902,9 +893,6 @@ async function main() {
         kpiType: row.kpiType,
         numeratorUnit: row.numeratorUnit,
         denominatorUnit: row.denominatorUnit,
-        createdById: NODAL_OFFICER_ID,
-        performers: { create: [{ userId: NODAL_OFFICER_ID, sortOrder: 0 }] },
-        reviewerUsers: { create: [{ userId: ACS_ID, sortOrder: 0 }] },
       },
     });
 
@@ -925,7 +913,6 @@ async function main() {
         progressStatus: row.progressStatus as KPIProgressStatus,
         workflowStatus: KPIWorkflowStatus.submitted,
         remarks: row.remarks ?? null,
-        createdById: NODAL_OFFICER_ID,
       },
     });
 

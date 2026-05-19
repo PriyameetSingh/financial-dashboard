@@ -46,6 +46,7 @@ function normalizeCodes(codes: unknown): string[] {
 const actionInclude = {
   scheme: { select: { code: true, verticalName: true } },
   vertical: { select: { name: true } },
+  meeting: { select: { meetingDate: true } },
   performers: {
     orderBy: { sortOrder: "asc" as const },
     include: { user: { select: { id: true, name: true, code: true, designation: true } } },
@@ -84,6 +85,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     vertical: item.vertical?.name ?? item.scheme?.verticalName ?? "",
     priority: item.priority,
     dueDate: toIsoDate(item.dueDate),
+    createdAt: item.createdAt.toISOString(),
     status: item.status,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
@@ -95,6 +97,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     reviewerUserCode: revUsers[0]?.code ?? null,
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
+    meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,

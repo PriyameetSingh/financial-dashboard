@@ -11,12 +11,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import { useRequireRole } from "@/src/lib/route-guards";
-import { UserRole } from "@/lib/auth";
+import { Permission } from "@/lib/auth";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import {
   fetchFinancialBudgets,
   submitFinancialSnapshot,
-  patchFinancialBudget,
+  createFinanceBudgetSupplement,
 } from "@/src/lib/services/financialService";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import type { FinancialEntry } from "@/types";
@@ -44,11 +44,12 @@ interface FlatRow {
 interface RowDraft {
   so: string;
   ifms: string;
-  budget: string;
-  budgetReason: string;
+  /** Supplementary amount — positive or negative delta in ₹ Cr */
+  supplement: string;
+  supplementReason: string;
 }
 
-const emptyDraft = (): RowDraft => ({ so: "", ifms: "", budget: "", budgetReason: "" });
+const emptyDraft = (): RowDraft => ({ so: "", ifms: "", supplement: "", supplementReason: "" });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ function formatMeetingLabel(m: MeetingListItem): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BulkEntryPage() {
-  useRequireRole([UserRole.FA, UserRole.TASU], "/");
+  useRequireAnyPermission([Permission.MANAGE_FINANCIAL_DATA], "/");
 
   // ── Remote state ─────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
@@ -184,7 +185,7 @@ export default function BulkEntryPage() {
   const isDirty = (key: string): boolean => {
     const d = getDraft(key);
     if (mode === "snapshot") return d.so !== "" || d.ifms !== "";
-    return d.budget !== "";
+    return d.supplement !== "";
   };
 
   const dirtyRows = useMemo(
@@ -192,7 +193,7 @@ export default function BulkEntryPage() {
       filteredRows.filter((r) => {
         const d = drafts[r.key] ?? emptyDraft();
         if (mode === "snapshot") return d.so !== "" || d.ifms !== "";
-        return d.budget !== "";
+        return d.supplement !== "";
       }),
     [filteredRows, drafts, mode],
   );
@@ -247,13 +248,13 @@ export default function BulkEntryPage() {
               meetingId: selectedMeetingId.trim(),
             });
           } else {
-            if (d.budget === "") return;
-            await patchFinancialBudget({
+            if (d.supplement === "") return;
+            await createFinanceBudgetSupplement({
               schemeCode: row.schemeCode,
               subschemeCode: row.subschemeCode,
               financialYearLabel,
-              newBudgetCr: Number(d.budget),
-              reason: d.budgetReason.trim() || "Bulk budget update",
+              amountCr: Number(d.supplement),
+              reason: d.supplementReason.trim() || "Supplementary budget",
             });
           }
           setRowStatuses((prev) => ({ ...prev, [row.key]: { state: "success" } }));
@@ -501,8 +502,8 @@ export default function BulkEntryPage() {
                     <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current Budget (₹ Cr)
                     </th>
-                    <th className="w-[180px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
-                      New Budget (₹ Cr)
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
+                      Supplement (₹ Cr)
                     </th>
                     <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Reason
@@ -652,31 +653,33 @@ export default function BulkEntryPage() {
                           {fmtCr(row.currentBudget)}
                         </td>
 
-                        {/* New Budget input */}
+                        {/* Supplementary amount input (+/-) */}
                         <td className="px-4 py-1.5 text-center">
                           <input
                             type="number"
-                            min="0"
                             step="0.01"
-                            placeholder={fmtCr(row.currentBudget)}
-                            value={draft.budget}
-                            onChange={(e) => setDraftField(row.key, "budget", e.target.value)}
+                            placeholder="e.g. +5.00 or -2.50"
+                            value={draft.supplement}
+                            onChange={(e) => setDraftField(row.key, "supplement", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              draft.budget !== ""
-                                ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
+                              draft.supplement !== ""
+                                ? Number(draft.supplement) >= 0
+                                  ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
+                                  : "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
                                 : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
                         </td>
 
-                        {/* Budget Reason */}
+
+                        {/* Reason */}
                         <td className="px-4 py-1.5">
                           <input
                             type="text"
                             placeholder="Reason (optional)"
-                            value={draft.budgetReason}
-                            onChange={(e) => setDraftField(row.key, "budgetReason", e.target.value)}
+                            value={draft.supplementReason}
+                            onChange={(e) => setDraftField(row.key, "supplementReason", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           />
@@ -693,7 +696,7 @@ export default function BulkEntryPage() {
               {filteredRows.length === 0 && (
                 <tr>
                   <td
-                    colSpan={mode === "snapshot" ? 9 : 7}
+                    colSpan={mode === "snapshot" ? 9 : 8}
                     className="px-5 py-16 text-center text-sm text-[var(--text-muted)]"
                   >
                     {query ? "No schemes match your search." : "No financial entries found."}
@@ -714,8 +717,9 @@ export default function BulkEntryPage() {
               </>
             ) : (
               <>
-                Enter a <span className="font-medium text-[#e67e22]">new budget amount</span> to
-                revise. Add a reason if required.
+                Enter a <span className="font-medium text-[#e67e22]">supplementary amount</span>{" "}
+                (positive or negative) to record a budget supplement for this FY. The base budget
+                remains unchanged; only the supplement is added.
               </>
             )}
           </div>

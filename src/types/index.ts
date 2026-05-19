@@ -30,6 +30,8 @@ export enum Permission {
   VIEW_ALL_DATA = "VIEW_ALL_DATA",
   VIEW_ASSIGNED_DATA = "VIEW_ASSIGNED_DATA",
   ENTER_FINANCIAL_DATA = "ENTER_FINANCIAL_DATA",
+  /** Bulk spreadsheet-style financial entry (all schemes at once). */
+  MANAGE_FINANCIAL_DATA = "MANAGE_FINANCIAL_DATA",
   ENTER_KPI_DATA = "ENTER_KPI_DATA",
   CREATE_ACTION_ITEMS = "CREATE_ACTION_ITEMS",
   UPDATE_ACTION_ITEMS = "UPDATE_ACTION_ITEMS",
@@ -73,6 +75,7 @@ export interface ActionItem {
   vertical: string;
   priority: ActionItemPriority;
   dueDate: string;
+  createdAt: string;
   status: ActionItemStatus;
   /** Comma-separated display names of performers. */
   assignedTo: string;
@@ -90,6 +93,7 @@ export interface ActionItem {
   schemeId: string;
   /** Source meeting when the action item was created from a meeting; used to default progress attribution. */
   meetingId?: string | null;
+  meetingDate?: string | null;
   daysOverdue?: number;
   updates: ActionItemUpdate[];
   proofFiles: ActionItemProof[];

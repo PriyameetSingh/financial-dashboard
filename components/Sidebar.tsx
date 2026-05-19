@@ -420,7 +420,11 @@ function MeetingScopeSelect() {
   );
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+}
+
+export default function Sidebar({ isCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const user = useHydratedCurrentUser();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -521,26 +525,18 @@ export default function Sidebar() {
   const roleLabel = user?.role.replaceAll("_", " ");
 
   return (
-    <aside className="w-64 h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0">
-      <div className="px-6 py-5 border-b border-(--sidebar-border) items-center justify-center flex">
-        {/* <div className="text-sm font-semibold tracking-[0.6em] text-[var(--sidebar-text-muted)]">HUDD</div> */}
-        {/* <div className="text-xs uppercase text-[var(--sidebar-text-muted)] mt-1">Government of Odisha</div> */}
-        <div className="flex size-24 shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5">
+    <aside className={`${isCollapsed ? "w-20" : "w-64"} h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0 transition-all duration-300`}>
+      <div className={`px-4 py-5 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
+        <div className={`flex shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5 transition-all ${isCollapsed ? "size-12" : "size-24"}`}>
           <img
             src={withNextBasePath(HUDD_LOGO_PUBLIC_PATH)}
             alt="HUDD Logo"
             className="h-full w-full object-contain"
           />
         </div>
-        {/* {user && (
-          <div className="mt-3 flex flex-col gap-1">
-            <div className="text-[13px] font-bold text-[var(--sidebar-text-primary)]">{user.name}</div>
-            <div className="flex items-center gap-1">{roleBadge}</div>
-          </div>
-        )} */}
       </div>
 
-      <MeetingScopeSelect />
+      {!isCollapsed && <MeetingScopeSelect />}
 
       <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
         {visibleItems.map(item => {
@@ -553,31 +549,34 @@ export default function Sidebar() {
             <div key={item.href}>
               <Link
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors text-sm font-medium ${isTopNavActive(pathname, item.href) ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"}`}
+                title={isCollapsed ? item.label : undefined}
+                className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors text-sm font-medium ${isTopNavActive(pathname, item.href) ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"} ${isCollapsed ? "justify-center px-0" : ""}`}
               >
-                <item.icon size={16} />
-                <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <span className="truncate">{item.label}</span>
-                  {item.href === "/action-items" && actionItemsBadge && actionItemsBadge.count > 0 && actionItemsBadge.tone && (
-                    <span
-                      className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
-                      title="Pending action items assigned to you"
-                    >
-                      ({actionItemsBadge.count})
-                    </span>
-                  )}
-                  {item.href === "/my-tasks" && myTasksHubBadge.count > 0 && myTasksHubBadge.tone && (
-                    <span
-                      className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
-                      title="Pending items across KPI and decision-tracker work assigned to you"
-                    >
-                      ({myTasksHubBadge.count})
-                    </span>
-                  )}
-                </span>
-                {item.badge && <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">{item.badge}</span>}
+                <item.icon size={isCollapsed ? 20 : 16} />
+                {!isCollapsed && (
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <span className="truncate">{item.label}</span>
+                    {item.href === "/action-items" && actionItemsBadge && actionItemsBadge.count > 0 && actionItemsBadge.tone && (
+                      <span
+                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
+                        title="Pending action items assigned to you"
+                      >
+                        ({actionItemsBadge.count})
+                      </span>
+                    )}
+                    {item.href === "/my-tasks" && myTasksHubBadge.count > 0 && myTasksHubBadge.tone && (
+                      <span
+                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
+                        title="Pending items across KPI and decision-tracker work assigned to you"
+                      >
+                        ({myTasksHubBadge.count})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {!isCollapsed && item.badge && <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">{item.badge}</span>}
               </Link>
-              {childLinks.length > 0 && (
+              {!isCollapsed && childLinks.length > 0 && (
                 <ul
                   className="mt-2 ml-3 flex list-none flex-col gap-0.5 border-l-2 border-[var(--sidebar-text-muted)]/30 py-0.5 pl-3"
                   aria-label={`${item.label} — related links`}
@@ -620,23 +619,26 @@ export default function Sidebar() {
             className={[
               "group flex w-full items-center gap-2 overflow-hidden border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-left transition hover:bg-[var(--bg-surface)] hover:text-[var(--sidebar-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-text-muted)]/40",
               userMenuOpen ? "rounded-b-full rounded-t-none border-t-0" : "rounded-full",
+              isCollapsed ? "justify-center p-1" : "px-2",
             ].join(" ")}
             type="button"
             aria-label="Open user menu"
             aria-expanded={userMenuOpen}
             onClick={() => setUserMenuOpen((open) => !open)}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--border)] group-hover:bg-[var(--sidebar-hover-bg)]">
-              <User size={16} className="text-[var(--text-secondary)] group-hover:text-[var(--sidebar-text-primary)]" />
+            <div className={`flex shrink-0 items-center justify-center rounded-full bg-[var(--border)] group-hover:bg-[var(--sidebar-hover-bg)] ${isCollapsed ? "h-10 w-10" : "h-8 w-8"}`}>
+              <User size={isCollapsed ? 20 : 16} className="text-[var(--text-secondary)] group-hover:text-[var(--sidebar-text-primary)]" />
             </div>
-            <div className="min-w-0 flex-1 pr-2">
-              <p className="truncate text-xs font-semibold text-[var(--text-primary)] group-hover:text-[var(--sidebar-text-primary)]">
-                {user?.name ?? roleLabel ?? "User"}
-              </p>
-            </div>
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="truncate text-xs font-semibold text-[var(--text-primary)] group-hover:text-[var(--sidebar-text-primary)]">
+                  {user?.name ?? roleLabel ?? "User"}
+                </p>
+              </div>
+            )}
           </button>
           {userMenuOpen && (
-            <div className="absolute bottom-full left-0 z-40 w-full rounded-t-xl rounded-b-none border border-b-0 border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
+            <div className={`absolute bottom-full z-40 rounded-t-xl rounded-b-none border border-b-0 border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl ${isCollapsed ? "left-0 w-64" : "left-0 w-full"}`}>
               <div className="space-y-1 border-b border-[var(--border)] pb-3">
                 <p className="text-sm font-semibold text-[var(--text-primary)]">{user?.name ?? "Signed in user"}</p>
                 <p className="text-xs text-[var(--text-muted)]">{user?.email ?? "Email unavailable"}</p>

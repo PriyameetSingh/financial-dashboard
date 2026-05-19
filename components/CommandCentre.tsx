@@ -29,6 +29,52 @@ import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
 import CommandCentreSparkLine from "@/components/command-centre/CommandCentreSparkLine";
 import SchemeModal from "@/components/schemes/SchemeModal";
 
+/** Mock rows for “What changed since last meeting” (AI-style summary cards). */
+const MOCK_WHAT_CHANGED_SINCE_LAST_MEETING = [
+  {
+    id: "be",
+    title: "Budget Estimates",
+    status: "Unchanged at ₹10,726.87 Cr",
+    description: "BE/RE figures held steady from 1st meeting",
+    tone: "positive" as const,
+  },
+  {
+    id: "metro",
+    title: "Metro Project Note",
+    status: "Pending → Approved",
+    description: "Cabinet approval received for Metro Project Note",
+    tone: "positive" as const,
+  },
+  {
+    id: "waterfront",
+    title: "Waterfront EFC",
+    status: "Pending → Approved",
+    description: "EFC clearance secured for Waterfront project",
+    tone: "positive" as const,
+  },
+  {
+    id: "pothole",
+    title: "Pothole-Free Cities",
+    status: "Certificates: 93 of 115 ULBs",
+    description: "Compliance drive progressing across ULBs",
+    tone: "positive" as const,
+  },
+  {
+    id: "ebus",
+    title: "PM e-Bus Sewa",
+    status: "Action Complied",
+    description: "Compliance closed on PM e-Bus Sewa decision",
+    tone: "positive" as const,
+  },
+  {
+    id: "expenditure",
+    title: "Expenditure Booking",
+    status: "Still 0% (early FY)",
+    description: "First fortnight of FY — IFMS expenditure yet to begin",
+    tone: "negative" as const,
+  },
+];
+
 function statusColor(s: string) {
   if (s === "critical") return "var(--alert-critical)";
   if (s === "warning") return "var(--alert-warning)";
@@ -99,51 +145,7 @@ const FP = {
   track: "rgba(0, 0, 0, 0.08)",
 };
 
-/** Mock rows for “What changed since last meeting” (AI-style summary cards). */
-const MOCK_WHAT_CHANGED_SINCE_LAST_MEETING = [
-  {
-    id: "be",
-    title: "Budget Estimates",
-    status: "Unchanged at ₹10,726.87 Cr",
-    description: "BE/RE figures held steady from 1st meeting",
-    tone: "positive" as const,
-  },
-  {
-    id: "metro",
-    title: "Metro Project Note",
-    status: "Pending → Approved",
-    description: "Cabinet approval received for Metro Project Note",
-    tone: "positive" as const,
-  },
-  {
-    id: "waterfront",
-    title: "Waterfront EFC",
-    status: "Pending → Approved",
-    description: "EFC clearance secured for Waterfront project",
-    tone: "positive" as const,
-  },
-  {
-    id: "pothole",
-    title: "Pothole-Free Cities",
-    status: "Certificates: 93 of 115 ULBs",
-    description: "Compliance drive progressing across ULBs",
-    tone: "positive" as const,
-  },
-  {
-    id: "ebus",
-    title: "PM e-Bus Sewa",
-    status: "Action Complied",
-    description: "Compliance closed on PM e-Bus Sewa decision",
-    tone: "positive" as const,
-  },
-  {
-    id: "expenditure",
-    title: "Expenditure Booking",
-    status: "Still 0% (early FY)",
-    description: "First fortnight of FY — IFMS expenditure yet to begin",
-    tone: "negative" as const,
-  },
-];
+
 
 function SchemeFinancialProgressRow({
   name,
@@ -453,14 +455,14 @@ function CommandCentreContent({ setActive }: Props) {
         ) : (
           <div className="mb-4 grid gap-4 sm:grid-cols-2">
             <div
-              className="rounded-lg border border-(--border) bg-[var(--bg-card)] p-3.5"
+              className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
               style={{ borderStyle: "solid" }}
             >
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <ListChecks className="h-4 w-4 shrink-0 text-[var(--text-muted)]" aria-hidden />
                   <div className="min-w-0">
-                    <span className="block text-[11px] text-semibold uppercase tracking-[0.2em] text-(--alert-critical)">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--alert-critical)]">
                       Important topics for Discussion
                     </span>
                     {lastMeeting ? (
@@ -483,12 +485,14 @@ function CommandCentreContent({ setActive }: Props) {
               </div>
               {!lastMeeting || lastMeeting.topics.length === 0 ? (
                 <p className="text-xs text-[var(--text-muted)]">
-                  {lastMeeting ? "No discussion topics were recorded for this meeting." : "Schedule a meeting to capture agenda topics."}
+                  {lastMeeting
+                    ? "No discussion topics were recorded for this meeting."
+                    : "Schedule a meeting to capture agenda topics."}
                 </p>
               ) : (
                 <ol className="list-decimal space-y-2 pl-4 marker:text-[11px] marker:text-[var(--text-muted)]">
                   {lastMeeting.topics.map((t) => (
-                    <li key={t.id} className="text-xs leading-snug text-[var(--text-primary)] pl-0.5">
+                    <li key={t.id} className="pl-0.5 text-xs leading-snug text-[var(--text-primary)]">
                       {t.topic}
                     </li>
                   ))}

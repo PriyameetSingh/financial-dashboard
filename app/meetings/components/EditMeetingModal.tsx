@@ -87,6 +87,7 @@ export default function EditMeetingModal({
       await updateMeeting(meeting.id, {
         meetingDate: date,
         title: title.trim(),
+        topics: topics.map(t => t.trim()).filter(t => t.length > 0),
       });
 
       // Remove marked materials

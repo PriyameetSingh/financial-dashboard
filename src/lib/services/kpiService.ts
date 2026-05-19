@@ -146,6 +146,7 @@ export async function updateKpiDefinition(
   input: {
     description?: string;
     monitoringLevel?: "CS" | "ACS" | "CM" | null;
+    denominatorValue?: number | null;
     performerUserIds?: string[];
     reviewerUserIds?: string[];
   },

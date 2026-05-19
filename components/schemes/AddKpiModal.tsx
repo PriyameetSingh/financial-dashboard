@@ -354,12 +354,12 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
             />
           </label>
 
-          <div className="flex justify between">
+          {/* <div className="flex justify between">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Category</p>
             <span className="mt-2 inline-block rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]">
               {derivedCategory}
             </span>
-          </div>
+          </div> */}
 
           <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
             Monitoring Level

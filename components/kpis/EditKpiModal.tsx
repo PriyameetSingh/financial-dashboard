@@ -21,6 +21,7 @@ const MONITORING_LEVELS = [
 export default function EditKpiModal({ open, submission, onClose, onSaved }: Props) {
   const [description, setDescription] = useState("");
   const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
+  const [denominatorValue, setDenominatorValue] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
     if (!open || !submission) return;
     setDescription(submission.description);
     setMonitoringLevel((submission.monitoringLevel as "CS" | "ACS" | "CM") ?? "");
+    setDenominatorValue(submission.denominator != null ? String(submission.denominator) : "");
     setMsg(null);
   }, [open, submission]);
 
@@ -45,6 +47,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
       await updateKpiDefinition(submission.id, {
         description: d,
         monitoringLevel: monitoringLevel || null,
+        denominatorValue: denominatorValue.trim() ? Number(denominatorValue) : null,
       });
       onSaved();
       onClose();
@@ -118,6 +121,23 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
               ))}
             </select>
           </label>
+
+          {submission.type !== "BINARY" && (
+            <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              Target Denominator
+              <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                Annual target or total possible value
+              </span>
+              <input
+                type="number"
+                value={denominatorValue}
+                onChange={(e) => setDenominatorValue(e.target.value)}
+                disabled={busy}
+                placeholder="e.g. 100"
+                className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+              />
+            </label>
+          )}
 
           {msg && (
             <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">

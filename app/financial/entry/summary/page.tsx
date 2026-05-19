@@ -29,7 +29,7 @@ function defaultLines(): FinanceYearBudgetAllocationLineRow[] {
 }
 
 export default function SummaryEntryPage() {
-  useRequireRole([UserRole.FA], "/");
+  useRequireRole([UserRole.FA, UserRole.TASU], "/");
 
   const [financialYearLabel, setFinancialYearLabel] = useState<string | null>(null);
   const [allocationLines, setAllocationLines] = useState<FinanceYearBudgetAllocationLineRow[]>(defaultLines);
@@ -163,7 +163,7 @@ export default function SummaryEntryPage() {
                             {row.label}
                             {!editable && (
                               <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-[var(--text-muted)]">
-                                (from schemes)
+                                (auto filled)
                               </span>
                             )}
                           </td>

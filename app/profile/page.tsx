@@ -1,30 +1,12 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import RoleBadge from "@/src/components/ui/RoleBadge";
-import { fetchKPISubmissionsList } from "@/src/lib/services/kpiService";
-import { fetchActionItems } from "@/src/lib/services/actionItemService";
 
 export default function ProfilePage() {
   const user = useRequireAuth();
-  const [kpiCount, setKpiCount] = useState(0);
-  const [actionCount, setActionCount] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      const [kpis, actions] = await Promise.all([fetchKPISubmissionsList(), fetchActionItems()]);
-      if (!active) return;
-      setKpiCount(kpis.length);
-      setActionCount(actions.length);
-    };
-    load();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const initials = useMemo(() => {
     if (!user) return "HN";
@@ -55,35 +37,6 @@ export default function ProfilePage() {
             ) : null}
           </div>
           <RoleBadge role={user.role} size="md" />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Assigned Schemes</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{user.assignedSchemes.length}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Metrics</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{kpiCount}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Action Items</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{actionCount}</p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Assigned Schemes</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {user.assignedSchemes.map((scheme) => (
-              <span
-                key={scheme}
-                className="rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-muted)]"
-              >
-                {scheme}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </AppShell>

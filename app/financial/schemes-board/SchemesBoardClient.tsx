@@ -186,7 +186,7 @@ export default function SchemesBoardClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [schemeModalEntry, setSchemeModalEntry] = useState<FinancialEntry | null>(null);
   const [activeTab, setActiveTab] = useState<ViewTab>("board");
   const [sortKey, setSortKey] = useState<SortKey>("pct");
@@ -299,6 +299,26 @@ export default function SchemesBoardClient() {
     }
   }
 
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedIds(new Set(filtered.map((e) => e.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+  };
+
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <span className="ml-1 opacity-30">↕</span>;
     return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
@@ -325,16 +345,6 @@ export default function SchemesBoardClient() {
               {filtered.length} schemes across {totals.verticalCount} verticals — each card is a
               scheme; expand to see sub-schemes.
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[var(--text-muted)]">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-sky-500" />
-                SS — State Scheme
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-orange-500" />
-                CSS — Centrally Sponsored Scheme
-              </span>
-            </div>
           </div>
 
           <div className="flex w-full max-w-xl flex-col gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-end">
@@ -354,56 +364,159 @@ export default function SchemesBoardClient() {
               <span className="rounded-full border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold tabular-nums text-[var(--text-primary)]">
                 {totals.overallPct.toFixed(1)}% overall
               </span>
-              {(() => {
-                const q = getCurrentQuarter();
-                const allocations = [
-                  { q: 1, pct: 25, label: "Q1" },
-                  { q: 2, pct: 15, label: "Q2" },
-                  { q: 3, pct: 20, label: "Q3" },
-                  { q: 4, pct: 40, label: "Q4" },
-                ];
-                const current = allocations.find((a) => a.q === q)!;
-                const cumulative = allocations.filter((a) => a.q <= q).reduce((s, a) => s + a.pct, 0);
-                return (
-                  <span
-                    className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium tabular-nums text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200"
-                    title={`FY spending pattern: Q1=25%, Q2=15%, Q3=20%, Q4=40%. Current target up to Q${q} is ${cumulative}%`}
-                  >
-                    Q{q} Target: {cumulative}% (Q{q}={current.pct}%)
-                  </span>
-                );
-              })()}
             </div>
           </div>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1 w-fit">
-          {(["board", "list"] as ViewTab[]).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
-                activeTab === tab
-                  ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              {tab === "board" ? (
-                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="1" y="1" width="4" height="14" rx="1" />
-                  <rect x="6" y="1" width="4" height="14" rx="1" />
-                  <rect x="11" y="1" width="4" height="14" rx="1" />
+        {/* Legend / Info Section */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Targets Card */}
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+              QTR Wise Spending Targets
+            </h3>
+            <div className="mt-3 grid grid-cols-4 gap-1">
+              {[
+                { label: "Q1", pct: 25, cum: 25 },
+                { label: "Q2", pct: 15, cum: 40 },
+                { label: "Q3", pct: 20, cum: 60 },
+                { label: "Q4", pct: 40, cum: 100 },
+              ].map((q) => {
+                const isCurrent = getCurrentQuarter() === (q.label === "Q1" ? 1 : q.label === "Q2" ? 2 : q.label === "Q3" ? 3 : 4);
+                return (
+                  <div
+                    key={q.label}
+                    className={`flex flex-col items-center rounded-lg py-2 transition-all ${
+                      isCurrent
+                        ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                        : "bg-white dark:bg-slate-800 border border-[var(--border)] text-slate-900 dark:text-slate-100"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase">{q.label}</span>
+                    <span className="text-sm font-black">{q.pct}%</span>
+                    <span className={`text-[9px] font-bold ${isCurrent ? "text-blue-100" : "text-slate-600 dark:text-slate-300"}`}>
+                      Σ {q.cum}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Classification Card */}
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+              Classification Rules
+            </h3>
+            <div className="mt-3 space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-emerald-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">On Track: &lt;5% behind target</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-amber-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">At Risk: 5–15% behind target</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-rose-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">Critical: &gt;15% behind target</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Scheme Categories Card */}
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+              Scheme Categories
+            </h3>
+            <div className="mt-3 space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-sky-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">State Sector (SS)</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-orange-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Status Card */}
+          <div className="rounded-xl border-2 border-blue-500 bg-blue-700 p-4 shadow-lg">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white">
+              Current Target Status
+            </h3>
+            {(() => {
+              const q = getCurrentQuarter();
+              const cumulative = getCumulativeTargetUpToQuarter(q) * 100;
+              return (
+                <div className="mt-2">
+                  <p className="text-2xl font-black text-white">
+                    Q{q} Target: {cumulative}%
+                  </p>
+                  <p className="mt-1 text-[11px] font-bold text-blue-100">
+                    Cumulative utilization target as of today.
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Tab switcher & Global controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1 w-fit">
+            {(["board", "list"] as ViewTab[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
+                  activeTab === tab
+                    ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {tab === "board" ? (
+                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="1" y="1" width="4" height="14" rx="1" />
+                    <rect x="6" y="1" width="4" height="14" rx="1" />
+                    <rect x="11" y="1" width="4" height="14" rx="1" />
+                  </svg>
+                ) : (
+                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M1 4h14M1 8h14M1 12h14" strokeLinecap="round" />
+                  </svg>
+                )}
+                {tab === "board" ? "Board" : "List"}
+              </button>
+            ))}
+          </div>
+
+          {!loading && !error && activeTab === "board" && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={expandAll}
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-all shadow-sm active:scale-95"
+              >
+                <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 3v10M3 8h10" strokeLinecap="round" />
                 </svg>
-              ) : (
-                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M1 4h14M1 8h14M1 12h14" strokeLinecap="round" />
+                Expand All
+              </button>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-all shadow-sm active:scale-95"
+              >
+                <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 8h10" strokeLinecap="round" />
                 </svg>
-              )}
-              {tab === "board" ? "Board" : "List"}
-            </button>
-          ))}
+                Collapse All
+              </button>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -448,30 +561,29 @@ export default function SchemesBoardClient() {
                       const kind = sponsorshipKind(entry);
                       const qp = getQuarterlyProgress(entry);
                       const entryBucket = bucketForQuarterlyVariance(qp.variancePct);
-                      const hasSubs =
-                        !!entry.subschemes?.length;
-                      const expanded =
-                        hasSubs && expandedSchemeId === entry.id;
+                      const hasSubs = !!entry.subschemes?.length;
+                      const expanded = expandedIds.has(entry.id);
 
-                      const cardClass = `cursor-pointer rounded-lg border bg-[var(--bg-document)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--bg-document)] focus-visible:ring-2 focus-visible:ring-[var(--text-secondary)] ${ui.cardBorder} ${ui.accentBorder} border-l-4`;
+                      const cardClass = `rounded-lg border bg-[var(--bg-document)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--bg-document)] focus-visible:ring-2 focus-visible:ring-[var(--text-secondary)] ${ui.cardBorder} ${ui.accentBorder} border-l-4`;
 
                       return (
                         <div
                           key={entry.id}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Open scheme details for ${entry.scheme}`}
-                          onClick={() => setSchemeModalEntry(entry)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setSchemeModalEntry(entry);
-                            }
-                          }}
                           className={cardClass}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
+                            <div
+                              className="min-w-0 flex-1 cursor-pointer"
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSchemeModalEntry(entry)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setSchemeModalEntry(entry);
+                                }
+                              }}
+                            >
                               <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">
                                 {entry.scheme}
                               </p>
@@ -479,151 +591,172 @@ export default function SchemesBoardClient() {
                                 {entry.vertical} · {entry.id}
                               </p>
                             </div>
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${ui.badgeBg}`}
-                            >
-                              {bucketLabel(entryBucket)} — {pct.toFixed(1)}%
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-[11px] text-[var(--text-muted)]">
-                            RE ₹{fmtCr(effBudget(entry))} Cr · Spent ₹
-                            {fmtCr(entry.ifms)} Cr
-                          </p>
-
-                          <div className="mt-2 flex items-center gap-2">
-                            <span
-                              className={`mt-0.5 size-2 shrink-0 rounded-full ${
-                                kind === "SS" ? "bg-sky-500" : "bg-orange-500"
-                              }`}
-                              title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
-                            />
-                            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
-                              <div
-                                className={`h-full rounded-full transition-all ${ui.barFill}`}
-                                style={{
-                                  width: `${Math.min(100, pct)}%`,
-                                }}
-                              />
-                            </div>
-                            <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
-                              {pct.toFixed(1)}%
-                            </span>
-                          </div>
-
-                          {/* Quarterly Progress */}
-                          {(() => {
-                            const qp = getQuarterlyProgress(entry);
-                            const isBehind = qp.variancePct < 0;
-                            const isOnTrack = qp.variancePct >= -5;
-
-                            // Define colors properly for each state
-                            const accentColors = isBehind
-                              ? isOnTrack
-                                ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
-                                : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
-                              : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
-                            const barColor = isBehind
-                              ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
-                              : "bg-emerald-500";
-                            const varianceColor = qp.variancePct >= 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : accentColors.text;
-
-                            return (
-                              <div className={`mt-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} px-2 py-1.5`}>
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[10px] font-medium text-[var(--text-muted)]">
-                                    Q{qp.quarter} Target
-                                  </span>
-                                  <span className={`text-[10px] font-semibold tabular-nums ${accentColors.text}`}>
-                                    {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
-                                  </span>
-                                </div>
-                                <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--border)]">
-                                  <div
-                                    className={`h-full rounded-full ${barColor}`}
-                                    style={{
-                                      width: `${Math.min(100, (qp.actualPct / qp.cumulativeTargetPct) * 100)}%`,
-                                    }}
-                                  />
-                                </div>
-                                <div className="mt-0.5 flex items-center justify-between">
-                                  <span className="text-[9px] text-[var(--text-muted)]">
-                                    Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
-                                  </span>
-                                  <span className={`text-[9px] font-semibold tabular-nums ${varianceColor}`}>
-                                    {qp.variancePct >= 0 ? "+" : ""}
-                                    {qp.variancePct.toFixed(1)}%
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })()}
-
-                          {hasSubs && (
-                            <div
-                              className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-[var(--border)] pt-2"
-                              onClick={(e) => e.stopPropagation()}
-                              onKeyDown={(e) => e.stopPropagation()}
-                            >
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${ui.badgeBg}`}
+                              >
+                                {bucketLabel(entryBucket)} — {pct.toFixed(1)}%
+                              </span>
                               <button
                                 type="button"
-                                className={`text-[11px] font-medium ${ui.headerText} hover:underline`}
-                                aria-expanded={expanded}
-                                onClick={() =>
-                                  setExpandedSchemeId((id) =>
-                                    id === entry.id ? null : entry.id,
-                                  )
-                                }
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpand(entry.id);
+                                }}
+                                className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${
+                                  expanded ? "rotate-180" : ""
+                                }`}
                               >
-                                {expanded ? "Collapse ∨" : "View sub-schemes >"}
+                                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                               </button>
+                            </div>
+                          </div>
+
+                          <div
+                            className="cursor-pointer"
+                            onClick={() => setSchemeModalEntry(entry)}
+                          >
+                            <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                              RE ₹{fmtCr(effBudget(entry))} Cr · Spent ₹
+                              {fmtCr(entry.ifms)} Cr
+                            </p>
+
+                            <div className="mt-2 flex items-center gap-2">
+                              <span
+                                className={`mt-0.5 size-2 shrink-0 rounded-full ${
+                                  kind === "SS" ? "bg-sky-500" : "bg-orange-500"
+                                }`}
+                                title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
+                              />
+                              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
+                                <div
+                                  className={`h-full rounded-full transition-all ${ui.barFill}`}
+                                  style={{
+                                    width: `${Math.min(100, pct)}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                {pct.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Expanded Content */}
+                          {expanded && (
+                            <div className="mt-4 space-y-4 border-t border-[var(--border)] pt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                              {/* Quarterly Progress */}
+                              {(() => {
+                                const qp = getQuarterlyProgress(entry);
+                                const isBehind = qp.variancePct < 0;
+                                const isOnTrack = qp.variancePct >= -5;
+
+                                const accentColors = isBehind
+                                  ? isOnTrack
+                                    ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
+                                    : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
+                                  : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
+                                const barColor = isBehind
+                                  ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
+                                  : "bg-emerald-500";
+                                const varianceColor = qp.variancePct >= 0
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : accentColors.text;
+
+                                return (
+                                  <div className={`rounded-md border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} px-2 py-1.5`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-[10px] font-medium text-[var(--text-muted)]">
+                                        Q{qp.quarter} Target
+                                      </span>
+                                      <span className={`text-[10px] font-semibold tabular-nums ${accentColors.text}`}>
+                                        {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--border)]">
+                                      <div
+                                        className={`h-full rounded-full ${barColor}`}
+                                        style={{
+                                          width: `${Math.min(100, (qp.actualPct / qp.cumulativeTargetPct) * 100)}%`,
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="mt-0.5 flex items-center justify-between">
+                                      <span className="text-[9px] text-[var(--text-muted)]">
+                                        Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
+                                      </span>
+                                      <span className={`text-[9px] font-semibold tabular-nums ${varianceColor}`}>
+                                        {qp.variancePct >= 0 ? "+" : ""}
+                                        {qp.variancePct.toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Sub-schemes */}
+                              {hasSubs && entry.subschemes && (
+                                <div className="space-y-3">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                    Sub-schemes
+                                  </p>
+                                  <ul className="space-y-2">
+                                    {entry.subschemes.map((sub) => {
+                                      const sp = subUtilPct(sub);
+                                      const re = subEffBudget(sub);
+                                      return (
+                                        <li
+                                          key={sub.id}
+                                          className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 text-[11px]"
+                                        >
+                                          <span
+                                            className={`mt-1 size-1.5 shrink-0 rounded-full ${
+                                              kind === "SS"
+                                                ? "bg-sky-400"
+                                                : "bg-orange-400"
+                                            }`}
+                                          />
+                                          <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-[var(--text-primary)]">
+                                              {sub.name}
+                                            </p>
+                                            <p className="text-[10px] text-[var(--text-muted)]">
+                                              {sub.code}
+                                            </p>
+                                            <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--text-secondary)]">
+                                              <span>RE ₹{fmtCr(re)} Cr</span>
+                                              <span>
+                                                Spent ₹{fmtCr(sub.ifms ?? 0)} Cr
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <span className="shrink-0 self-start rounded bg-[var(--bg-document)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                            {sp.toFixed(1)}%
+                                          </span>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           )}
 
-                          {expanded && entry.subschemes && (
-                            <ul
-                              className="mt-3 space-y-2 border-t border-[var(--border)] pt-3"
-                              onClick={(e) => e.stopPropagation()}
-                              onKeyDown={(e) => e.stopPropagation()}
-                            >
-                              {entry.subschemes.map((sub) => {
-                                const sp = subUtilPct(sub);
-                                const re = subEffBudget(sub);
-                                return (
-                                  <li
-                                    key={sub.id}
-                                    className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 text-[11px]"
-                                  >
-                                    <span
-                                      className={`mt-1 size-1.5 shrink-0 rounded-full ${
-                                        kind === "SS"
-                                          ? "bg-sky-400"
-                                          : "bg-orange-400"
-                                      }`}
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="font-medium text-[var(--text-primary)]">
-                                        {sub.name}
-                                      </p>
-                                      <p className="text-[10px] text-[var(--text-muted)]">
-                                        {sub.code}
-                                      </p>
-                                      <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--text-secondary)]">
-                                        <span>RE ₹{fmtCr(re)} Cr</span>
-                                        <span>
-                                          Spent ₹{fmtCr(sub.ifms ?? 0)} Cr
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <span className="shrink-0 self-start rounded bg-[var(--bg-document)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-secondary)]">
-                                      {sp.toFixed(1)}%
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
+                          {!expanded && (
+                            <div className="mt-3 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpand(entry.id);
+                                }}
+                                className={`text-[10px] font-semibold ${ui.headerText} hover:underline`}
+                              >
+                                {hasSubs ? "View progress & sub-schemes >" : "View quarterly progress >"}
+                              </button>
+                            </div>
                           )}
                         </div>
                       );

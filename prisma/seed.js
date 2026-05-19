@@ -297,8 +297,8 @@ async function main() {
     if (!vertical) throw new Error(`Vertical not found: ${verticalCode}`);
     return prisma.scheme.upsert({
       where: { code },
-      update: { name: code, verticalId: vertical.id, sponsorshipType: "STATE" },
-      create: { code, name: code, verticalId: vertical.id, sponsorshipType: "STATE" },
+      update: { name: code, sponsorshipType: "STATE", verticalName: vertical.name },
+      create: { code, name: code, sponsorshipType: "STATE", verticalName: vertical.name },
     });
   };
 

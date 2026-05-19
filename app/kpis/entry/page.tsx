@@ -58,9 +58,16 @@ export default function KPIEntryPage() {
 
   const reload = async () => {
     const data = await fetchKPISubmissions();
-    // Only show KPIs the current user is assigned to enter. Admins with
-    // MANAGE_SCHEMES have currentUserCanEnter=true for every KPI.
-    setSubmissions(data.submissions.filter((s) => s.currentUserCanEnter === true));
+    // Show KPIs the current user is assigned to enter or review.
+    // Users with edit/create permissions (MANAGE_SCHEMES) see all KPIs.
+    setSubmissions(
+      data.submissions.filter(
+        (s) =>
+          s.currentUserCanReassignOwners === true ||
+          s.currentUserCanEnter === true ||
+          s.currentUserCanReview === true,
+      ),
+    );
     setFinancialYearLabel(data.financialYearLabel);
     const num: Record<string, number | ""> = {};
     const rem: Record<string, string> = {};
