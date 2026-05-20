@@ -7,7 +7,7 @@ const ROLE_STYLES: Record<UserRole, { color: string; background: string; border:
     background: "rgba(31, 58, 147, 0.15)",
     border: "rgba(31, 58, 147, 0.4)",
   },
-  [UserRole.PROGRAMME_MANAGER]: {
+  [UserRole.VERTICAL_HEAD]: {
     color: "#5b4fcf",
     background: "rgba(91, 79, 207, 0.15)",
     border: "rgba(91, 79, 207, 0.4)",
@@ -43,7 +43,7 @@ interface RoleBadgeProps {
 }
 
 const formatRole = (role: UserRole) =>
-  role === UserRole.PROGRAMME_MANAGER ? "Programme Manager" : role.replace(/_/g, " ");
+  role === UserRole.VERTICAL_HEAD ? "Vertical Head" : role.replace(/_/g, " ");
 
 export default function RoleBadge({ role, size = "sm", className }: RoleBadgeProps) {
   const style = ROLE_STYLES[role];

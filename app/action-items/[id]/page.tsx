@@ -21,7 +21,7 @@ import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const DESIGNATIONS: Record<UserRole, string> = {
   [UserRole.ACS]: "Additional Chief Secretary",
-  [UserRole.PROGRAMME_MANAGER]: "Programme Manager",
+  [UserRole.VERTICAL_HEAD]: "Vertical Head",
   [UserRole.FA]: "Finance Advisor",
   [UserRole.TASU]: "TASU Lead",
   [UserRole.NODAL_OFFICER]: "Nodal Officer",

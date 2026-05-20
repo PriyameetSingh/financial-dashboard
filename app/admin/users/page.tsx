@@ -79,7 +79,7 @@ function usernameDigitsFromPhone(phone: string): string {
 }
 
 function formatRoleLabel(role: UserRole): string {
-  if (role === UserRole.PROGRAMME_MANAGER) return "Programme Manager";
+  if (role === UserRole.VERTICAL_HEAD) return "Vertical Head";
   return role.replace(/_/g, " ");
 }
 

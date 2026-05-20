@@ -1,0 +1,200 @@
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9861294118',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[31m[auth][error][0m UnknownAction: Unsupported action. Read more at https://errors.authjs.dev#unknownaction
+    at Object.signin (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:380:5543)
+    at ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:51168)
+    at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+    at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+    at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+    at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+    at async rz.handleResponse (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:1:119077)
+    at async o (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:6061)
+    at async Module.S [as handler] (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:7168)
+    at async NextNodeServer.renderToResponseWithComponentsImpl (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/server/base-server.js:1454:9)
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: to: response parameter "iss" (issuer) missing
+    at ti (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:5252)
+    at /home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30162
+    at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30952)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async r1 (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:38783)
+    at async ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:50981)
+    at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+    at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+    at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+    at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+[31m[auth][details][0m: {
+  "parameters": {},
+  "provider": "keycloak"
+}
+[31m[auth][error][0m InvalidCheck: pkceCodeVerifier value could not be parsed. Read more at https://errors.authjs.dev#invalidcheck
+    at rO (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:24653)
+    at Object.use (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:25074)
+    at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:31231)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async r1 (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:38783)
+    at async ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:50981)
+    at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+    at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+    at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+    at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+[31m[auth][error][0m UnknownAction: Unsupported action. Read more at https://errors.authjs.dev#unknownaction
+    at Object.signin (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:380:5543)
+    at ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:51168)
+    at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+    at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+    at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+    at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+    at async rz.handleResponse (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:1:119077)
+    at async o (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:6061)
+    at async Module.S [as handler] (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:7168)
+    at async NextNodeServer.renderToResponseWithComponentsImpl (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/server/base-server.js:1454:9)
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: to: response parameter "iss" (issuer) missing
+    at ti (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:5252)
+    at /home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30162
+    at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30952)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async r1 (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:38783)
+    at async ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:50981)
+    at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+    at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+    at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+    at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+[31m[auth][details][0m: {
+  "parameters": {},
+  "provider": "keycloak"
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}
+[rbac/me] Invalid role, falling back to NODAL_OFFICER {
+  source: 'database',
+  userId: '9439703939',
+  receivedRole: 'VERTICAL_HEAD',
+  acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+}

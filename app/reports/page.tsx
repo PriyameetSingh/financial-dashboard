@@ -38,7 +38,7 @@ const reports: ReportCard[] = [
 ];
 
 export default function ReportsPage() {
-  useRequireRole([UserRole.PROGRAMME_MANAGER, UserRole.ACS], "/dashboard");
+  useRequireRole([UserRole.VERTICAL_HEAD, UserRole.ACS], "/dashboard");
 
   return (
     <AppShell title="Reports & Export">

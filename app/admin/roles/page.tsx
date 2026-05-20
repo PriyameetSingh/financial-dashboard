@@ -18,7 +18,7 @@ type PermissionRow = {
 };
 
 function formatRoleLabel(code: string): string {
-  if (code === UserRole.PROGRAMME_MANAGER) return "Programme Manager";
+  if (code === UserRole.VERTICAL_HEAD) return "Vertical Head";
   return code.replace(/_/g, " ");
 }
 
@@ -165,21 +165,16 @@ export default function AdminRolesPage() {
                         <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Role Code</label>
                         <input
                           type="text"
-                          autoFocus
+                          disabled
                           value={editingRoleCodeInput}
-                          onChange={(e) => setEditingRoleCodeInput(e.target.value.toUpperCase().replace(/\s/g, "_"))}
-                          placeholder="ROLE_CODE"
-                          className="w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--text-primary)] focus:outline-none"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") void handleSaveRole(role.code);
-                            if (e.key === "Escape") setEditingRoleCode(null);
-                          }}
+                          className="w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-1.5 text-xs text-[var(--text-muted)] cursor-not-allowed opacity-60 focus:outline-none"
                         />
                       </div>
                       <div className="flex-1 space-y-1">
                         <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Display Name</label>
                         <input
                           type="text"
+                          autoFocus
                           value={editingRoleName}
                           onChange={(e) => setEditingRoleName(e.target.value)}
                           placeholder="Display Name"

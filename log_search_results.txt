@@ -1,0 +1,712 @@
+--- Match at line 19101 ---
+19098: receivedRole: 'VERTICAL_HEAD',
+19099: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+19100: }
+19101: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19102: source: 'database',
+19103: userId: '9861294118',
+19104: receivedRole: 'VERTICAL_HEAD',
+19105: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19107 ---
+19106: }
+19107: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19108: source: 'database',
+19109: userId: '9861294118',
+19110: receivedRole: 'VERTICAL_HEAD',
+19111: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19113 ---
+19112: }
+19113: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19114: source: 'database',
+19115: userId: '9861294118',
+19116: receivedRole: 'VERTICAL_HEAD',
+19117: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19119 ---
+19118: }
+19119: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19120: source: 'database',
+19121: userId: '9861294118',
+19122: receivedRole: 'VERTICAL_HEAD',
+19123: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19125 ---
+19124: }
+19125: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19126: source: 'database',
+19127: userId: '9861294118',
+19128: receivedRole: 'VERTICAL_HEAD',
+19129: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19131 ---
+19130: }
+19131: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19132: source: 'database',
+19133: userId: '9861294118',
+19134: receivedRole: 'VERTICAL_HEAD',
+19135: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19137 ---
+19136: }
+19137: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19138: source: 'database',
+19139: userId: '9861294118',
+19140: receivedRole: 'VERTICAL_HEAD',
+19141: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19143 ---
+19142: }
+19143: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19144: source: 'database',
+19145: userId: '9861294118',
+19146: receivedRole: 'VERTICAL_HEAD',
+19147: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19149 ---
+19148: }
+19149: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19150: source: 'database',
+19151: userId: '9861294118',
+19152: receivedRole: 'VERTICAL_HEAD',
+19153: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19155 ---
+19154: }
+19155: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19156: source: 'database',
+19157: userId: '9861294118',
+19158: receivedRole: 'VERTICAL_HEAD',
+19159: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19161 ---
+19160: }
+19161: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19162: source: 'database',
+19163: userId: '9861294118',
+19164: receivedRole: 'VERTICAL_HEAD',
+19165: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19167 ---
+19166: }
+19167: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19168: source: 'database',
+19169: userId: '9861294118',
+19170: receivedRole: 'VERTICAL_HEAD',
+19171: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19173 ---
+19172: }
+19173: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19174: source: 'database',
+19175: userId: '9861294118',
+19176: receivedRole: 'VERTICAL_HEAD',
+19177: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19179 ---
+19178: }
+19179: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19180: source: 'database',
+19181: userId: '9861294118',
+19182: receivedRole: 'VERTICAL_HEAD',
+19183: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19185 ---
+19184: }
+19185: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19186: source: 'database',
+19187: userId: '9861294118',
+19188: receivedRole: 'VERTICAL_HEAD',
+19189: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19191 ---
+19190: }
+19191: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19192: source: 'database',
+19193: userId: '9861294118',
+19194: receivedRole: 'VERTICAL_HEAD',
+19195: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19197 ---
+19196: }
+19197: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19198: source: 'database',
+19199: userId: '9861294118',
+19200: receivedRole: 'VERTICAL_HEAD',
+19201: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19203 ---
+19202: }
+19203: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19204: source: 'database',
+19205: userId: '9861294118',
+19206: receivedRole: 'VERTICAL_HEAD',
+19207: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19209 ---
+19208: }
+19209: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19210: source: 'database',
+19211: userId: '9861294118',
+19212: receivedRole: 'VERTICAL_HEAD',
+19213: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19215 ---
+19214: }
+19215: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19216: source: 'database',
+19217: userId: '9861294118',
+19218: receivedRole: 'VERTICAL_HEAD',
+19219: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19221 ---
+19220: }
+19221: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19222: source: 'database',
+19223: userId: '9861294118',
+19224: receivedRole: 'VERTICAL_HEAD',
+19225: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19227 ---
+19226: }
+19227: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19228: source: 'database',
+19229: userId: '9861294118',
+19230: receivedRole: 'VERTICAL_HEAD',
+19231: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19233 ---
+19232: }
+19233: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19234: source: 'database',
+19235: userId: '9861294118',
+19236: receivedRole: 'VERTICAL_HEAD',
+19237: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19239 ---
+19238: }
+19239: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19240: source: 'database',
+19241: userId: '9861294118',
+19242: receivedRole: 'VERTICAL_HEAD',
+19243: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19245 ---
+19244: }
+19245: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19246: source: 'database',
+19247: userId: '9861294118',
+19248: receivedRole: 'VERTICAL_HEAD',
+19249: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19251 ---
+19250: }
+19251: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19252: source: 'database',
+19253: userId: '9861294118',
+19254: receivedRole: 'VERTICAL_HEAD',
+19255: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19257 ---
+19256: }
+19257: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19258: source: 'database',
+19259: userId: '9861294118',
+19260: receivedRole: 'VERTICAL_HEAD',
+19261: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19263 ---
+19262: }
+19263: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19264: source: 'database',
+19265: userId: '9861294118',
+19266: receivedRole: 'VERTICAL_HEAD',
+19267: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19269 ---
+19268: }
+19269: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19270: source: 'database',
+19271: userId: '9861294118',
+19272: receivedRole: 'VERTICAL_HEAD',
+19273: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19275 ---
+19274: }
+19275: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19276: source: 'database',
+19277: userId: '9861294118',
+19278: receivedRole: 'VERTICAL_HEAD',
+19279: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19281 ---
+19280: }
+19281: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19282: source: 'database',
+19283: userId: '9861294118',
+19284: receivedRole: 'VERTICAL_HEAD',
+19285: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19287 ---
+19286: }
+19287: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19288: source: 'database',
+19289: userId: '9861294118',
+19290: receivedRole: 'VERTICAL_HEAD',
+19291: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19293 ---
+19292: }
+19293: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19294: source: 'database',
+19295: userId: '9861294118',
+19296: receivedRole: 'VERTICAL_HEAD',
+19297: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19299 ---
+19298: }
+19299: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19300: source: 'database',
+19301: userId: '9861294118',
+19302: receivedRole: 'VERTICAL_HEAD',
+19303: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19305 ---
+19304: }
+19305: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19306: source: 'database',
+19307: userId: '9861294118',
+19308: receivedRole: 'VERTICAL_HEAD',
+19309: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19311 ---
+19310: }
+19311: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19312: source: 'database',
+19313: userId: '9861294118',
+19314: receivedRole: 'VERTICAL_HEAD',
+19315: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19317 ---
+19316: }
+19317: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19318: source: 'database',
+19319: userId: '9861294118',
+19320: receivedRole: 'VERTICAL_HEAD',
+19321: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19323 ---
+19322: }
+19323: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19324: source: 'database',
+19325: userId: '9861294118',
+19326: receivedRole: 'VERTICAL_HEAD',
+19327: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19329 ---
+19328: }
+19329: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19330: source: 'database',
+19331: userId: '9861294118',
+19332: receivedRole: 'VERTICAL_HEAD',
+19333: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19335 ---
+19334: }
+19335: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19336: source: 'database',
+19337: userId: '9861294118',
+19338: receivedRole: 'VERTICAL_HEAD',
+19339: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19341 ---
+19340: }
+19341: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19342: source: 'database',
+19343: userId: '9861294118',
+19344: receivedRole: 'VERTICAL_HEAD',
+19345: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19347 ---
+19346: }
+19347: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19348: source: 'database',
+19349: userId: '9861294118',
+19350: receivedRole: 'VERTICAL_HEAD',
+19351: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19353 ---
+19352: }
+19353: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19354: source: 'database',
+19355: userId: '9861294118',
+19356: receivedRole: 'VERTICAL_HEAD',
+19357: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19359 ---
+19358: }
+19359: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19360: source: 'database',
+19361: userId: '9861294118',
+19362: receivedRole: 'VERTICAL_HEAD',
+19363: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19365 ---
+19364: }
+19365: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19366: source: 'database',
+19367: userId: '9861294118',
+19368: receivedRole: 'VERTICAL_HEAD',
+19369: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19371 ---
+19370: }
+19371: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19372: source: 'database',
+19373: userId: '9861294118',
+19374: receivedRole: 'VERTICAL_HEAD',
+19375: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19377 ---
+19376: }
+19377: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19378: source: 'database',
+19379: userId: '9861294118',
+19380: receivedRole: 'VERTICAL_HEAD',
+19381: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19383 ---
+19382: }
+19383: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19384: source: 'database',
+19385: userId: '9861294118',
+19386: receivedRole: 'VERTICAL_HEAD',
+19387: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19389 ---
+19388: }
+19389: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19390: source: 'database',
+19391: userId: '9861294118',
+19392: receivedRole: 'VERTICAL_HEAD',
+19393: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19395 ---
+19394: }
+19395: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19396: source: 'database',
+19397: userId: '9861294118',
+19398: receivedRole: 'VERTICAL_HEAD',
+19399: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19401 ---
+19400: }
+19401: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19402: source: 'database',
+19403: userId: '9861294118',
+19404: receivedRole: 'VERTICAL_HEAD',
+19405: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19407 ---
+19406: }
+19407: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19408: source: 'database',
+19409: userId: '9861294118',
+19410: receivedRole: 'VERTICAL_HEAD',
+19411: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19413 ---
+19412: }
+19413: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19414: source: 'database',
+19415: userId: '9861294118',
+19416: receivedRole: 'VERTICAL_HEAD',
+19417: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19419 ---
+19418: }
+19419: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19420: source: 'database',
+19421: userId: '9861294118',
+19422: receivedRole: 'VERTICAL_HEAD',
+19423: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19425 ---
+19424: }
+19425: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19426: source: 'database',
+19427: userId: '9861294118',
+19428: receivedRole: 'VERTICAL_HEAD',
+19429: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19431 ---
+19430: }
+19431: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19432: source: 'database',
+19433: userId: '9861294118',
+19434: receivedRole: 'VERTICAL_HEAD',
+19435: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19437 ---
+19436: }
+19437: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19438: source: 'database',
+19439: userId: '9861294118',
+19440: receivedRole: 'VERTICAL_HEAD',
+19441: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19443 ---
+19442: }
+19443: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19444: source: 'database',
+19445: userId: '9861294118',
+19446: receivedRole: 'VERTICAL_HEAD',
+19447: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19449 ---
+19448: }
+19449: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19450: source: 'database',
+19451: userId: '9861294118',
+19452: receivedRole: 'VERTICAL_HEAD',
+19453: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19455 ---
+19454: }
+19455: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19456: source: 'database',
+19457: userId: '9861294118',
+19458: receivedRole: 'VERTICAL_HEAD',
+19459: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19461 ---
+19460: }
+19461: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19462: source: 'database',
+19463: userId: '9861294118',
+19464: receivedRole: 'VERTICAL_HEAD',
+19465: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19467 ---
+19466: }
+19467: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19468: source: 'database',
+19469: userId: '9861294118',
+19470: receivedRole: 'VERTICAL_HEAD',
+19471: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19473 ---
+19472: }
+19473: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19474: source: 'database',
+19475: userId: '9861294118',
+19476: receivedRole: 'VERTICAL_HEAD',
+19477: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19479 ---
+19478: }
+19479: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19480: source: 'database',
+19481: userId: '9861294118',
+19482: receivedRole: 'VERTICAL_HEAD',
+19483: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19485 ---
+19484: }
+19485: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19486: source: 'database',
+19487: userId: '9861294118',
+19488: receivedRole: 'VERTICAL_HEAD',
+19489: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19491 ---
+19490: }
+19491: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19492: source: 'database',
+19493: userId: '9861294118',
+19494: receivedRole: 'VERTICAL_HEAD',
+19495: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19497 ---
+19496: }
+19497: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19498: source: 'database',
+19499: userId: '9861294118',
+19500: receivedRole: 'VERTICAL_HEAD',
+19501: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19503 ---
+19502: }
+19503: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19504: source: 'database',
+19505: userId: '9861294118',
+19506: receivedRole: 'VERTICAL_HEAD',
+19507: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19509 ---
+19508: }
+19509: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19510: source: 'database',
+19511: userId: '9861294118',
+19512: receivedRole: 'VERTICAL_HEAD',
+19513: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19515 ---
+19514: }
+19515: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19516: source: 'database',
+19517: userId: '9861294118',
+19518: receivedRole: 'VERTICAL_HEAD',
+19519: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19521 ---
+19520: }
+19521: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19522: source: 'database',
+19523: userId: '9861294118',
+19524: receivedRole: 'VERTICAL_HEAD',
+19525: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19527 ---
+19526: }
+19527: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19528: source: 'database',
+19529: userId: '9861294118',
+19530: receivedRole: 'VERTICAL_HEAD',
+19531: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19533 ---
+19532: }
+19533: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19534: source: 'database',
+19535: userId: '9861294118',
+19536: receivedRole: 'VERTICAL_HEAD',
+19537: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19539 ---
+19538: }
+19539: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19540: source: 'database',
+19541: userId: '9861294118',
+19542: receivedRole: 'VERTICAL_HEAD',
+19543: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19545 ---
+19544: }
+19545: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19546: source: 'database',
+19547: userId: '9861294118',
+19548: receivedRole: 'VERTICAL_HEAD',
+19549: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19551 ---
+19550: }
+19551: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19552: source: 'database',
+19553: userId: '9861294118',
+19554: receivedRole: 'VERTICAL_HEAD',
+19555: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19557 ---
+19556: }
+19557: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19558: source: 'database',
+19559: userId: '9861294118',
+19560: receivedRole: 'VERTICAL_HEAD',
+19561: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19563 ---
+19562: }
+19563: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19564: source: 'database',
+19565: userId: '9861294118',
+19566: receivedRole: 'VERTICAL_HEAD',
+19567: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19569 ---
+19568: }
+19569: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19570: source: 'database',
+19571: userId: '9861294118',
+19572: receivedRole: 'VERTICAL_HEAD',
+19573: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19575 ---
+19574: }
+19575: [31m[auth][error][0m UnknownAction: Unsupported action. Read more at https://errors.authjs.dev#unknownaction
+19576: at Object.signin (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:380:5543)
+19577: at ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:51168)
+19578: at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+19579: at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+--- Match at line 19586 ---
+19583: at async o (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:6061)
+19584: at async Module.S [as handler] (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:7168)
+19585: at async NextNodeServer.renderToResponseWithComponentsImpl (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/server/base-server.js:1454:9)
+19586: [31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+19587: [31m[auth][cause][0m: to: response parameter "iss" (issuer) missing
+19588: at ti (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:5252)
+19589: at /home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30162
+19590: at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30952)
+--- Match at line 19602 ---
+19599: "parameters": {},
+19600: "provider": "keycloak"
+19601: }
+19602: [31m[auth][error][0m InvalidCheck: pkceCodeVerifier value could not be parsed. Read more at https://errors.authjs.dev#invalidcheck
+19603: at rO (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:24653)
+19604: at Object.use (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:25074)
+19605: at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:31231)
+19606: at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+--- Match at line 19613 ---
+19610: at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+19611: at async rz.handle (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:26101)
+19612: at async l (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:5020)
+19613: [31m[auth][error][0m UnknownAction: Unsupported action. Read more at https://errors.authjs.dev#unknownaction
+19614: at Object.signin (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:380:5543)
+19615: at ne (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:51168)
+19616: at async nr (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:55978)
+19617: at async rz.do (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:21393)
+--- Match at line 19624 ---
+19621: at async o (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:6061)
+19622: at async Module.S [as handler] (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/[root-of-the-server]__0bwbyg0._.js:1:7168)
+19623: at async NextNodeServer.renderToResponseWithComponentsImpl (/home/ec2-user/dev/hudd-dashboard/node_modules/next/dist/server/base-server.js:1454:9)
+19624: [31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+19625: [31m[auth][cause][0m: to: response parameter "iss" (issuer) missing
+19626: at ti (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:5252)
+19627: at /home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30162
+19628: at rF (/home/ec2-user/dev/hudd-dashboard/.next/server/chunks/_06n4fb.._.js:404:30952)
+--- Match at line 19640 ---
+19637: "parameters": {},
+19638: "provider": "keycloak"
+19639: }
+19640: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19641: source: 'database',
+19642: userId: '9439703939',
+19643: receivedRole: 'VERTICAL_HEAD',
+19644: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19646 ---
+19645: }
+19646: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19647: source: 'database',
+19648: userId: '9439703939',
+19649: receivedRole: 'VERTICAL_HEAD',
+19650: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19652 ---
+19651: }
+19652: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19653: source: 'database',
+19654: userId: '9439703939',
+19655: receivedRole: 'VERTICAL_HEAD',
+19656: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19658 ---
+19657: }
+19658: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19659: source: 'database',
+19660: userId: '9439703939',
+19661: receivedRole: 'VERTICAL_HEAD',
+19662: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19664 ---
+19663: }
+19664: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19665: source: 'database',
+19666: userId: '9439703939',
+19667: receivedRole: 'VERTICAL_HEAD',
+19668: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19670 ---
+19669: }
+19670: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19671: source: 'database',
+19672: userId: '9439703939',
+19673: receivedRole: 'VERTICAL_HEAD',
+19674: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19676 ---
+19675: }
+19676: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19677: source: 'database',
+19678: userId: '9439703939',
+19679: receivedRole: 'VERTICAL_HEAD',
+19680: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19682 ---
+19681: }
+19682: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19683: source: 'database',
+19684: userId: '9439703939',
+19685: receivedRole: 'VERTICAL_HEAD',
+19686: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19688 ---
+19687: }
+19688: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19689: source: 'database',
+19690: userId: '9439703939',
+19691: receivedRole: 'VERTICAL_HEAD',
+19692: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19694 ---
+19693: }
+19694: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19695: source: 'database',
+19696: userId: '9439703939',
+19697: receivedRole: 'VERTICAL_HEAD',
+19698: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19700 ---
+19699: }
+19700: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19701: source: 'database',
+19702: userId: '9439703939',
+19703: receivedRole: 'VERTICAL_HEAD',
+19704: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19706 ---
+19705: }
+19706: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19707: source: 'database',
+19708: userId: '9439703939',
+19709: receivedRole: 'VERTICAL_HEAD',
+19710: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19712 ---
+19711: }
+19712: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19713: source: 'database',
+19714: userId: '9439703939',
+19715: receivedRole: 'VERTICAL_HEAD',
+19716: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19718 ---
+19717: }
+19718: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19719: source: 'database',
+19720: userId: '9439703939',
+19721: receivedRole: 'VERTICAL_HEAD',
+19722: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19724 ---
+19723: }
+19724: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19725: source: 'database',
+19726: userId: '9439703939',
+19727: receivedRole: 'VERTICAL_HEAD',
+19728: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]
+--- Match at line 19730 ---
+19729: }
+19730: [rbac/me] Invalid role, falling back to NODAL_OFFICER {
+19731: source: 'database',
+19732: userId: '9439703939',
+19733: receivedRole: 'VERTICAL_HEAD',
+19734: acceptedRoles: [ 'ACS', 'PROGRAMME_MANAGER', 'FA', 'TASU', 'NODAL_OFFICER' ]

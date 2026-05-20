@@ -108,7 +108,7 @@ const items: NavItem[] = [
     label: "Dashboard Meetings",
     href: "/meetings",
     icon: CalendarDays,
-        roles: [UserRole.TASU, UserRole.PROGRAMME_MANAGER, UserRole.ACS],
+        roles: [UserRole.TASU, UserRole.VERTICAL_HEAD, UserRole.ACS],
   },
   // {
   //   label: "Reports & Export",
@@ -158,7 +158,7 @@ const items: NavItem[] = [
 
 const badgeColors: Record<UserRole, string> = {
   [UserRole.ACS]: "bg-[#1f3a93]",
-  [UserRole.PROGRAMME_MANAGER]: "bg-[#5b4fcf]",
+  [UserRole.VERTICAL_HEAD]: "bg-[#5b4fcf]",
   [UserRole.FA]: "bg-[#1abc9c]",
   [UserRole.TASU]: "bg-[#1abc9c]",
   [UserRole.NODAL_OFFICER]: "bg-[#2ecc71]",

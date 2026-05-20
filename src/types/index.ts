@@ -1,7 +1,7 @@
 export enum UserRole {
   ACS = "ACS",
   /** Former AS / Principal Secretary–class desk roles; permission profile aligned with Nodal Officer. */
-  PROGRAMME_MANAGER = "PROGRAMME_MANAGER",
+  VERTICAL_HEAD = "VERTICAL_HEAD",
   FA = "FA",
   TASU = "TASU",
   NODAL_OFFICER = "NODAL_OFFICER",
