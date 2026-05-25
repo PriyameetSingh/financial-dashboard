@@ -45,6 +45,7 @@ export default function SchemesPage() {
   const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [archivedFilter, setArchivedFilter] = useState<"all" | "active" | "archived">("active");
 
   const [schemeFormOpen, setSchemeFormOpen] = useState(false);
   const [schemeFormTarget, setSchemeFormTarget] = useState<SchemeOverview | null>(null);
@@ -55,24 +56,24 @@ export default function SchemesPage() {
   const canManageSchemes = permissions.includes("MANAGE_SCHEMES");
 
   const reloadOverview = useCallback(async () => {
-    const data = await fetchSchemesOverview();
+    const archivedParam = archivedFilter === "all" ? undefined : archivedFilter === "archived" ? "true" : "false";
+    const url = archivedParam ? `/api/v1/schemes/overview?archived=${archivedParam}` : "/api/v1/schemes/overview";
+    const response = await fetch(withNextBasePath(url), { cache: "no-store" });
+    const data = await response.json();
     setSchemes(data.schemes);
     setFinancialYearLabel(data.financialYearLabel);
     setReference(data.reference);
-  }, []);
+  }, [archivedFilter]);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       try {
         const [overviewRes, rbacRes] = await Promise.all([
-          fetchSchemesOverview(),
+          reloadOverview(),
           fetch(withNextBasePath("/api/v1/rbac/me"), { cache: "no-store" }).then((r) => r.json()),
         ]);
         if (!active) return;
-        setSchemes(overviewRes.schemes);
-        setFinancialYearLabel(overviewRes.financialYearLabel);
-        setReference(overviewRes.reference);
         const rbacPerms = rbacRes?.user?.permissions;
         setPermissions(Array.isArray(rbacPerms) ? rbacPerms : []);
       } catch (e: unknown) {
@@ -86,7 +87,7 @@ export default function SchemesPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadOverview]);
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -107,6 +108,20 @@ export default function SchemesPage() {
     setSchemeFormOpen(true);
   };
 
+  const unarchiveScheme = async (id: string) => {
+    try {
+      const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: false }),
+      });
+      if (!response.ok) throw new Error("Failed to unarchive scheme");
+      await reloadOverview();
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to unarchive scheme"));
+    }
+  };
+
   return (
     <AppShell title="Schemes">
       <div className="space-y-6 px-6 py-6">
@@ -118,15 +133,52 @@ export default function SchemesPage() {
               All schemes with KPI definitions, latest expenditure ({financialYearLabel ?? "current FY"}), and subschemes.
             </p>
           </div>
-          {canManageSchemes && reference && (
-            <button
-              type="button"
-              onClick={openCreateScheme}
-              className="shrink-0 rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)]"
-            >
-              Create scheme
-            </button>
-          )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setArchivedFilter("active")}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
+                  archivedFilter === "active"
+                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
+                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                onClick={() => setArchivedFilter("archived")}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
+                  archivedFilter === "archived"
+                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
+                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Archived
+              </button>
+              <button
+                type="button"
+                onClick={() => setArchivedFilter("all")}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
+                  archivedFilter === "all"
+                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
+                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                All
+              </button>
+            </div>
+            {canManageSchemes && reference && (
+              <button
+                type="button"
+                onClick={openCreateScheme}
+                className="shrink-0 rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)]"
+              >
+                Create scheme
+              </button>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -215,6 +267,15 @@ export default function SchemesPage() {
                               >
                                 Edit
                               </button>
+                              {s.archived && (
+                                <button
+                                  type="button"
+                                  onClick={() => unarchiveScheme(s.id)}
+                                  className="rounded-lg border border-[var(--accent)] px-2 py-1 text-[11px] text-[var(--accent)]"
+                                >
+                                  Unarchive
+                                </button>
+                              )}
                             </div>
                           </td>
                         )}

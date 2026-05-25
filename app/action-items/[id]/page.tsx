@@ -453,7 +453,7 @@ export default function ActionItemDetailPage() {
             <div className="mt-3 space-y-4">
               {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
                 const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
-                const designation = profile?.designation?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
+                const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
                 return (
                   <div key={`perf-${p.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
                     <div>
@@ -471,7 +471,7 @@ export default function ActionItemDetailPage() {
             <div className="mt-3 space-y-4">
               {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
                 const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
-                const designation = profile?.designation?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
+                const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
                 return (
                   <div key={`rev-${r.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
                     <div>
@@ -595,6 +595,7 @@ export default function ActionItemDetailPage() {
                 >
                   Approve Completion
                 </button>
+                
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
                   <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Rejection Comment</p>
                   <textarea

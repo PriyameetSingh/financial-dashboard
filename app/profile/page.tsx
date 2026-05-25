@@ -32,8 +32,8 @@ export default function ProfilePage() {
             <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">HUDD Officer</p>
             <h1 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{user.name}</h1>
             <p className="text-sm text-[var(--text-muted)]">{user.department}</p>
-            {user.designation?.trim() ? (
-              <p className="mt-1 text-sm text-[var(--text-primary)]">{user.designation}</p>
+            {user.designationName?.trim() ? (
+              <p className="mt-1 text-sm text-[var(--text-primary)]">{user.designationName}</p>
             ) : null}
           </div>
           <RoleBadge role={user.role} size="md" />

@@ -91,6 +91,15 @@ export default function ActionItemsPage() {
   const [reassignReviewers, setReassignReviewers] = useState<string[]>([""]);
   const [reassignBusy, setReassignBusy] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
+  const [confirmApprove, setConfirmApprove] = useState(false);
+  const [confirmReject, setConfirmReject] = useState(false);
+  const [rejectComment, setRejectComment] = useState("");
+  const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+
+  
 
   const pickAnotherUserId = (exclude: string) => directoryUsers.find((u) => u.id !== exclude)?.id ?? "";
 
@@ -557,12 +566,30 @@ export default function ActionItemsPage() {
                       item.status === "UNDER_REVIEW" &&
                       isDesignatedReviewer(item, user) && (
                       <>
-                        <button type="button" className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]">
+                        <button
+                          type="button"
+                          className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                          onClick={() => {
+                            setSelectedItem(item);
+                            setActionError(null);
+                            setConfirmApprove(true);
+                          }}
+                        >
                           Approve
                         </button>
-                        <button type="button" className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]">
-                          Reject
-                        </button>
+                        <button
+                        type="button"
+                        className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setRejectComment("");
+                          setActionError(null);
+                          setConfirmReject(true);
+                        }}
+                      >
+                        Reject
+                      </button>
+                        
                       </>
                     )}
                   </div>
@@ -803,6 +830,156 @@ export default function ActionItemsPage() {
           </div>
         </div>
       )}
+      {confirmApprove && selectedItem && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            Confirm Approval
+          </h3>
+
+          <p className="mt-2 text-sm text-[var(--text-muted)]">
+            Are you sure you want to approve &ldquo;{selectedItem.title}&rdquo;?
+          </p>
+
+          {actionError && (
+            <p className="mt-3 text-sm text-[var(--alert-critical)]">
+              {actionError}
+            </p>
+          )}
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+              disabled={actionBusy}
+              onClick={() => {
+                setConfirmApprove(false);
+                setSelectedItem(null);
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              disabled={actionBusy}
+              onClick={async () => {
+                if (!selectedItem) return;
+
+                setActionBusy(true);
+                setActionError(null);
+
+                try {
+                  const updated = await updateActionItem(selectedItem.id, {
+                    status: "COMPLETED",
+                  });
+
+                  setItems((prev) =>
+                    prev.map((row) =>
+                      row.id === updated.id ? updated : row
+                    )
+                  );
+
+                  setConfirmApprove(false);
+                  setSelectedItem(null);
+                } catch (e: unknown) {
+                  setActionError(
+                    e instanceof Error ? e.message : "Approval failed"
+                  );
+                } finally {
+                  setActionBusy(false);
+                }
+              }}
+            >
+              {actionBusy ? "Approving..." : "Approve"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {confirmReject && selectedItem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+        Reject Action Item
+      </h3>
+
+      <p className="mt-2 text-sm text-[var(--text-muted)]">
+        Please provide rejection remarks for
+        {" "}
+        &ldquo;{selectedItem.title}&rdquo;.
+      </p>
+
+      <textarea
+        value={rejectComment}
+        onChange={(e) => setRejectComment(e.target.value)}
+        rows={4}
+        placeholder="Enter rejection remarks..."
+        className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-red-500"
+      />
+
+      {actionError && (
+        <p className="mt-3 text-sm text-[var(--alert-critical)]">
+          {actionError}
+        </p>
+      )}
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+          disabled={actionBusy}
+          onClick={() => {
+            setConfirmReject(false);
+            setSelectedItem(null);
+            setRejectComment("");
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          disabled={actionBusy || !rejectComment.trim()}
+          onClick={async () => {
+            if (!selectedItem) return;
+
+            setActionBusy(true);
+            setActionError(null);
+
+            try {
+              const updated = await updateActionItem(selectedItem.id, {
+              status: "IN_PROGRESS",
+              rejectionReason: rejectComment.trim(),  // ← was rejectionComment
+            });
+
+              setItems((prev) =>
+                prev.map((row) =>
+                  row.id === updated.id ? updated : row
+                )
+              );
+
+              setConfirmReject(false);
+              setSelectedItem(null);
+              setRejectComment("");
+            } catch (e: unknown) {
+              setActionError(
+                e instanceof Error ? e.message : "Reject failed"
+              );
+            } finally {
+              setActionBusy(false);
+            }
+          }}
+        >
+          {actionBusy ? "Rejecting..." : "Reject"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </AppShell>
   );
 }

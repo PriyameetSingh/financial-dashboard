@@ -30,7 +30,7 @@ export default function UserSelector({ users, value, onChange, label = "Assignee
         {users.map((user) => (
           <option key={user.id} value={user.id}>
             {user.name}
-            {user.designation?.trim() ? ` — ${user.designation}` : ` — ${formatRole(user.role)}`}
+            {user.designationName?.trim() ? ` — ${user.designationName}` : ` — ${formatRole(user.role)}`}
           </option>
         ))}
       </select>

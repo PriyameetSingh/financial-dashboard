@@ -14,14 +14,30 @@ const rbacMeUserSelect = {
   name: true,
   email: true,
   department: true,
-  designation: true,
-  organisation: true,
-  section: true,
+  designationId: true,
+  organisationId: true,
+  ulbId: true,
   officerType: true,
   userRoles: {
     include: { role: { select: { code: true } } },
   },
-} satisfies Prisma.UserSelect;
+  designationRel: {
+    select: { id: true, name: true },
+  },
+  organisationRel: {
+    select: { id: true, name: true },
+  },
+  ulbRel: {
+    select: { id: true, name: true },
+  },
+  userSections: {
+    include: {
+      section: {
+        select: { id: true, name: true },
+      },
+    },
+  },
+} as const;
 
 const USER_ROLE_VALUES = new Set<string>(Object.values(UserRole));
 const PERMISSION_VALUES = new Set<string>(Object.values(Permission));
@@ -88,9 +104,13 @@ export async function GET() {
             userId: sessionUser.id,
           }),
           department: "",
-          designation: null as string | null,
-          organisation: null as string | null,
-          section: null as string | null,
+          designationId: null as string | null,
+          designationName: null as string | null,
+          organisationId: null as string | null,
+          organisationName: null as string | null,
+          ulbId: null as string | null,
+          ulbName: null as string | null,
+          sections: [] as { id: string; name: string }[],
           officerType: null as string | null,
           assignedSchemes: [] as string[],
           permissions: [] as Permission[],
@@ -127,9 +147,16 @@ export async function GET() {
         email: dbUser.email,
         role: primaryRole,
         department: dbUser.department ?? "",
-        designation: dbUser.designation ?? null,
-        organisation: dbUser.organisation ?? null,
-        section: dbUser.section ?? null,
+        designationId: dbUser.designationId ?? null,
+        designationName: (dbUser.designationRel as { id: string; name: string } | null)?.name ?? null,
+        organisationId: dbUser.organisationId ?? null,
+        organisationName: (dbUser.organisationRel as { id: string; name: string } | null)?.name ?? null,
+        ulbId: dbUser.ulbId ?? null,
+        ulbName: (dbUser.ulbRel as { id: string; name: string } | null)?.name ?? null,
+        sections: (dbUser.userSections as Array<{ section: { id: string; name: string } }>).map((us) => ({
+          id: us.section.id,
+          name: us.section.name,
+        })),
         officerType: dbUser.officerType ?? null,
         assignedSchemes,
         permissions,

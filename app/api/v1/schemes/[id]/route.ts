@@ -20,6 +20,7 @@ type Body = {
   verticalName?: string;
   sponsorshipType?: "STATE" | "CENTRAL" | "CENTRAL_SECTOR";
   assignments?: AssignmentInput[];
+  archived?: boolean;
 };
 
 export const runtime = "nodejs";
@@ -96,6 +97,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           name: body.name?.trim(),
           verticalName: body.verticalName?.trim(),
           ...(sponsorshipType !== undefined && sponsorshipType !== null ? { sponsorshipType } : {}),
+          ...(body.archived !== undefined ? { archived: body.archived } : {}),
         },
       });
 
@@ -167,19 +169,32 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "Scheme not found" }, { status: 404 });
     }
 
-    await prisma.scheme.delete({ where: { id } });
+    const after = await prisma.scheme.update({
+      where: { id },
+      data: { archived: true },
+      include: {
+        subschemes: { orderBy: { name: "asc" } },
+        assignments: {
+          orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+          include: {
+            user: { select: { id: true, name: true } },
+            role: { select: { id: true, code: true } },
+          },
+        },
+      },
+    });
 
     await logAudit(
       actor?.id,
-      "scheme.delete",
+      "scheme.archive",
       "scheme",
       id,
       mapSchemeView(before),
-      null,
+      mapSchemeView(after),
       { ...auditContext, schemeId: id },
     );
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ scheme: mapSchemeView(after) });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {

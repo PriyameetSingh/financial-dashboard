@@ -332,9 +332,9 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
     }
   };
 
-  const handleDelete = async () => {
+  const handleArchive = async () => {
     if (!selectedId) return;
-    if (!window.confirm("Delete this scheme? This cannot be undone.")) return;
+    if (!window.confirm("Archive this scheme? It will be hidden from the active list but can be unarchived later.")) return;
     setSaving(true);
     setAlert(null);
     try {
@@ -342,7 +342,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
       onSaved();
       onClose();
     } catch (error: unknown) {
-      setAlert(getErrorMessage(error, "Unable to delete scheme."));
+      setAlert(getErrorMessage(error, "Unable to archive scheme."));
     } finally {
       setSaving(false);
     }
@@ -650,10 +650,10 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
               <button
                 type="button"
                 disabled={saving}
-                onClick={handleDelete}
-                className="rounded-xl border border-[var(--alert-critical)] px-4 py-2 text-sm text-[var(--alert-critical)] disabled:opacity-60"
+                onClick={handleArchive}
+                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-muted)] disabled:opacity-60"
               >
-                Delete scheme
+                Archive scheme
               </button>
             )}
           </div>

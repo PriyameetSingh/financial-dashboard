@@ -123,13 +123,24 @@ model User {
   name         String
   email        String   @unique
   department   String?
-  designation  String?
-  organisation String?
-  section      String?
+  // legacy string fields removed: designation, organisation, section
+  // Use normalized relations instead (designationId, organisationId, userSections)
   officerType  OfficerType?
   isActive     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  // Normalized relations: keep the existing string fields for compatibility,
+  // and provide optional FK links to the new reference tables.
+  designationId  String? @db.Uuid
+  organisationId String? @db.Uuid
+  ulbId          String? @db.Uuid
+  // Users may belong to multiple sections via the join table `UserSection`.
+  designationRel  Designation? @relation(fields: [designationId], references: [id], onDelete: SetNull)
+  organisationRel Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  ulbRel          Ulb?          @relation(fields: [ulbId], references: [id], onDelete: SetNull)
+
+  userSections UserSection[]
 
   userRoles            UserRole[]
   createdPermissionOverrides UserPermissionOverride[] @relation("CreatedOverrides")
@@ -242,6 +253,61 @@ model Vertical {
   @@map("verticals")
 }
 
+/// Organizational sections (e.g. Accounts, PHE, Municipal- II ...)
+model Section {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userSections UserSection[]
+
+  @@map("sections")
+}
+
+model Organisation {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+  @@map("organisations")
+}
+
+model Designation {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+  @@map("designations")
+}
+
+model Ulb {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+  @@map("ulbs")
+}
+
+model UserSection {
+  userId    String @db.Uuid
+  sectionId String @db.Uuid
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sectionId])
+  @@map("user_sections")
+}
+
 model FinancialYear {
   id        String   @id @default(uuid()) @db.Uuid
   label     String   @unique
@@ -267,6 +333,7 @@ model Scheme {
   name            String
   verticalName    String
   sponsorshipType SponsorshipType
+  archived        Boolean         @default(false)
   createdById     String?         @db.Uuid
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { mapSchemeView } from "@/lib/scheme-api";
@@ -103,7 +103,7 @@ function rollupExpenditure(
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
   } catch (error) {
@@ -114,13 +114,26 @@ export async function GET() {
     throw error;
   }
 
+  const { searchParams } = new URL(request.url);
+  const archivedParam = searchParams.get("archived");
+  const archivedFilter = archivedParam === "true" ? true : archivedParam === "false" ? false : undefined;
+
+  const whereClause = archivedFilter !== undefined ? { archived: archivedFilter } : {};
+
   const fy = await prisma.financialYear.findFirst({
     orderBy: { endDate: "desc" },
   });
 
   const [schemesRaw, reference, budgets, snapshots] = await Promise.all([
     prisma.scheme.findMany({
-      include: {
+      where: whereClause as Prisma.SchemeWhereInput,
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        verticalName: true,
+        sponsorshipType: true,
+        archived: true,
         subschemes: { orderBy: { name: "asc" } },
         assignments: {
           orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],

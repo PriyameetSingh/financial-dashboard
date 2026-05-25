@@ -16,9 +16,14 @@ type Body = {
   /** Digits-only value used as Keycloak username and `User.code`. */
   phone?: string;
   department?: string | null;
-  designation?: string | null;
-  organisation?: string | null;
-  section?: string | null;
+  /** UUID foreign key to Designation table */
+  designationId?: string;
+  /** UUID foreign key to Organisation table */
+  organisationId?: string | null;
+  /** UUID foreign key to Ulb table */
+  ulbId?: string | null;
+  /** Array of section UUIDs to associate with user */
+  sectionIds?: string[];
   /** `GOVERNMENT` or `PMU` (case-insensitive). */
   officerType?: string | null;
   defaultPassword?: string;
@@ -54,10 +59,10 @@ export async function POST(request: NextRequest) {
     const phone = body.phone?.trim() ?? "";
     const username = usernameFromPhone(phone);
     const department = body.department?.trim() || null;
-    const designationRaw = body.designation === undefined || body.designation === null ? "" : String(body.designation).trim();
-    const designation = designationRaw.slice(0, 500) || null;
-    const organisation = trimToNull(body.organisation ?? undefined, 500);
-    const section = trimToNull(body.section ?? undefined, 500);
+    const designationId = body.designationId?.trim() || null;
+    const organisationId = body.organisationId?.trim() || null;
+    const ulbId = body.ulbId?.trim() || null;
+    const sectionIds = Array.isArray(body.sectionIds) ? body.sectionIds.filter((id) => typeof id === "string" && id.trim()) : [];
     const officerType = parseOfficerType(body.officerType);
     const defaultPassword = body.defaultPassword?.trim() ?? "";
     const roleCode = body.roleCode ?? UserRole.NODAL_OFFICER;
@@ -69,8 +74,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!designation) {
-      return NextResponse.json({ detail: "designation is required" }, { status: 400 });
+    if (!designationId) {
+      return NextResponse.json({ detail: "designationId is required" }, { status: 400 });
     }
 
     if (!officerType) {
@@ -107,9 +112,9 @@ export async function POST(request: NextRequest) {
           name,
           code: username,
           department,
-          designation,
-          organisation,
-          section,
+          designationId,
+          organisationId,
+          ulbId,
           officerType,
           isActive: true,
         },
@@ -118,9 +123,9 @@ export async function POST(request: NextRequest) {
           email,
           code: username,
           department,
-          designation,
-          organisation,
-          section,
+          designationId,
+          organisationId,
+          ulbId,
           officerType,
           isActive: true,
         },
@@ -135,6 +140,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Handle section associations via UserSection join table
+      await tx.userSection.deleteMany({ where: { userId: user.id } });
+      if (sectionIds.length > 0) {
+        await tx.userSection.createMany({
+          data: sectionIds.map((sectionId) => ({
+            userId: user.id,
+            sectionId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       return user;
     });
 
@@ -148,8 +165,10 @@ export async function POST(request: NextRequest) {
         code: dbUser.code,
         email: dbUser.email,
         roleCode,
-        organisation: dbUser.organisation,
-        section: dbUser.section,
+        designationId: dbUser.designationId,
+        organisationId: dbUser.organisationId,
+        ulbId: dbUser.ulbId,
+        sectionIds,
         officerType: dbUser.officerType,
       },
       {
@@ -167,8 +186,10 @@ export async function POST(request: NextRequest) {
           name: dbUser.name,
           email: dbUser.email,
           department: dbUser.department,
-          organisation: dbUser.organisation,
-          section: dbUser.section,
+          designationId: dbUser.designationId,
+          organisationId: dbUser.organisationId,
+          ulbId: dbUser.ulbId,
+          sectionIds,
           officerType: dbUser.officerType,
           roleCode,
         },

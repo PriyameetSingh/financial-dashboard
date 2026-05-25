@@ -17,10 +17,20 @@ export interface SessionUser {
   email: string;
   role: UserRole;
   department: string;
-  /** Job title or post (e.g. Principal Secretary, HUDD); distinct from application role. */
-  designation?: string | null;
-  organisation?: string | null;
-  section?: string | null;
+  /** UUID foreign key to Designation table */
+  designationId?: string | null;
+  /** Designation name from relation */
+  designationName?: string | null;
+  /** UUID foreign key to Organisation table */
+  organisationId?: string | null;
+  /** Organisation name from relation */
+  organisationName?: string | null;
+  /** UUID foreign key to Ulb table */
+  ulbId?: string | null;
+  /** ULB name from relation */
+  ulbName?: string | null;
+  /** Sections the user belongs to */
+  sections?: Array<{ id: string; name: string }>;
   officerType?: OfficerType | null;
   assignedSchemes: string[];
   permissions?: Permission[];
@@ -299,6 +309,7 @@ export interface SchemeView {
   name: string;
   verticalName: string;
   sponsorshipType: SponsorshipType;
+  archived: boolean;
   subschemes: SubschemeView[];
   assignments: SchemeAssignmentView[];
 }

@@ -35,6 +35,7 @@ import {
   CheckSquare,
   User,
   Shield,
+  FileText,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -110,12 +111,12 @@ const items: NavItem[] = [
     icon: CalendarDays,
         roles: [UserRole.TASU, UserRole.VERTICAL_HEAD, UserRole.ACS],
   },
-  // {
-  //   label: "Reports & Export",
-  //   href: "/reports",
-  //   icon: FileText,
-  //   roles: [UserRole.AS, UserRole.PS_HUDD, UserRole.ACS],
-  // },
+  {
+    label: "Reports & Export",
+    href: "/reports",
+    icon: FileText,
+    roles: [ UserRole.ACS, UserRole.VERTICAL_HEAD, UserRole.TASU],
+  },
   // {
   //   label: "Execution Efficiency",
   //   href: "/financial/execution-efficiency",

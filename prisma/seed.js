@@ -97,6 +97,118 @@ const VERTICALS = [
   { code: "GRIEVANCE", name: "Grievance" },
 ];
 
+const SECTIONS = [
+  "Accounts",
+  "PHE",
+  "Municipal- II",
+  "Co-Ordination",
+  "Housing",
+  "Relief & Rehabilitation",
+  "Finance",
+  "Budget",
+  "Municipal - I",
+  "UPA",
+  "Sanitation",
+  "Water Supply & Sewerage",
+  "Town Planning",
+  "O.E. Section",
+  "e-Abhijoga Cell",
+  "e-governance Cell",
+  "Project",
+  "Reforms",
+  "Urban Mobility",
+  "Directorate",
+  "Election",
+  "Legislation",
+  "Legal Cell",
+  "Audit",
+  "Funds",
+  "Pension",
+  "Diary",
+];
+
+const ORGANISATIONS = [
+  "DIRECTORATE OF TOWN PLANNING",
+  "DEVELOPMENT AUTHORYTY",
+  "DUDA",
+  "ODISHA URBAN ACADEMY",
+  "ORERA",
+  "OUHM",
+  "OUIDF",
+  "OWSSB",
+  "PHEO",
+  "SUDA",
+  // ULBs that are organisational entities are seeded separately into ULBS
+  "WATCO",
+];
+
+const DESIGNATIONS = [
+  "A.F.A CUM-DEPUTY SECRETARY",
+  "A.F.A CUM-UNDER SECRETARY",
+  "ADDITIONAL CHIEF ENGINEER",
+  "ADDITIONAL CHIEF SECRETARY",
+  "ADDITIONAL SECRETARY",
+  "AFA-CUM-DEPUTY SECRETARY",
+  "ASSISTANT AUDIT OFFICER",
+  "ASSISTANT DIRECTOR (LAW)",
+  "ASSISTANT MANAGER WATCO",
+  "ASSISTANT SECTION OFFICER",
+  "ASSITANT ENGINEER",
+  "ASSITANT EXECUTIVE ENGINEER",
+  "ASSITANT TOWN PLANNER",
+  "ASSOCIATE TOWN PLANNER",
+  "AUDIT OFFICER",
+  "AUDITOR",
+  "CEO-BMRCL",
+  "CHIEF ENGINEER",
+  "CHIEF ENGINEER AND EX-OFFICIO ADDITIONAL SECRETARY",
+  "CHIEF TOWN PLANNER",
+  "COMMISSIONER CUM SECRETARY",
+  "DEPUTY  SECRETARY",
+  "DESK OFFICER",
+  "DIRECTOR -OUA",
+  "DIRECTOR TOWN PLANNING",
+  "DIRECTOR WATCO",
+  "DMA & EX-OFFICIO ADDITIONAL SECRETARY",
+  "EIC- OWSSB",
+  "EIC-PHEO",
+  "EXECUTIVE ENGINEER",
+  "EXECUTIVE OFFICER",
+  "F.A. -CUM ADDITIONAL SECRETARY",
+  "GM-WATCO",
+  "IAO-CUM-UNDER SECRETARY",
+  "JOINT SECRETARY",
+  "JUNIOR ENGINEER",
+  "JUNIOR TOWN PLANNER",
+  "MANAGER WATCO",
+  "MD- WATCO",
+  "MD-CRUT",
+  "MD-OSHB",
+  "MUNICIPAL COMMISSIONER",
+  "OSD",
+  "PLANNING MEMBER- DEVELOPMENT AUTORITY",
+  "PRINCIPAL SECRETARY",
+  "PROJECT DIRECTOR",
+  "PROJECT DIRECTOR- SUDA",
+  "SECRETARY- DEVELOPMENT AUTHORITY",
+  "SECRETARY-OSHB",
+  "SECTION OFFICER",
+  "SPECIAL SECRETARY",
+  "SUPERINTENDING ENGINEER",
+  "TOWN PLANNER",
+  "UNDER SECRETARY",
+  "VC - DEVELOPMENT AUTHORITY",
+];
+
+const ULBS = [
+  "Berhampur (MC)",
+  "Bubaneswar (MC)",
+  "Cuttack (MC)",
+  "Puri (MC)",
+  "Rourkela (MC)",
+  "Sambalpur (MC)",
+];
+
 const FINANCIAL_ENTRIES = [
   { scheme: "PMAY-U", verticalCode: "HOUSING", status: "submitted_pending", annualBudget: 820, so: 320.5, ifms: 83.5, lastUpdated: "2026-03-17", submitterName: "Shri Rakesh Mohanty" },
   { scheme: "SUJALA", verticalCode: "WATER", status: "submitted_pending", annualBudget: 360, so: 142.2, ifms: 136.8, lastUpdated: "2026-03-18", submitterName: "Shri Rakesh Mohanty" },
@@ -233,6 +345,39 @@ async function main() {
     });
   }
 
+  // Seed reference tables: sections, organisations, designations, ulbs
+  for (const name of SECTIONS) {
+    await prisma.section.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+
+  for (const name of ORGANISATIONS) {
+    await prisma.organisation.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+
+  for (const name of DESIGNATIONS) {
+    await prisma.designation.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+
+  for (const name of ULBS) {
+    await prisma.ulb.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+
   await prisma.financialYear.upsert({
     where: { label: "2025-26" },
     update: {
@@ -261,14 +406,12 @@ async function main() {
         name: u.name,
         department: u.department,
         code: u.code,
-        designation: u.designation ?? null,
       },
       create: {
         name: u.name,
         email: u.email,
         department: u.department,
         code: u.code,
-        designation: u.designation ?? null,
       },
     });
 
@@ -279,6 +422,27 @@ async function main() {
         update: {},
         create: { userId: user.id, roleId: role.id },
       });
+    }
+  }
+
+  // Link users to normalized designations (when matching by text)
+  for (const u of USERS) {
+    try {
+      const user = await prisma.user.findUnique({ where: { email: u.email } });
+      if (!user) continue;
+      let designationId = null;
+      if (u.designation) {
+        const designation = await prisma.designation.findUnique({ where: { name: u.designation } });
+        if (designation) designationId = designation.id;
+      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          designationId,
+        },
+      });
+    } catch (e) {
+      console.warn("Failed to link designation for user", u.email, e.message);
     }
   }
 

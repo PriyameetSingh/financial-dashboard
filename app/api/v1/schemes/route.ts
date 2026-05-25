@@ -39,12 +39,19 @@ async function getReferenceData() {
   return { roles, users };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
 
+    const { searchParams } = new URL(request.url);
+    const archivedParam = searchParams.get("archived");
+    const archivedFilter = archivedParam === "true" ? true : archivedParam === "false" ? false : undefined;
+
+    const whereClause = archivedFilter !== undefined ? { archived: archivedFilter } : {};
+
     const [schemes, reference] = await Promise.all([
       prisma.scheme.findMany({
+        where: whereClause as Prisma.SchemeWhereInput,
         include: {
           subschemes: { orderBy: { name: "asc" } },
           assignments: {

@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission, UserRole, hasPermission } from "@/lib/auth";
 import type { OfficerType } from "@/types";
@@ -25,9 +25,13 @@ type DbUserRow = {
   name: string;
   email: string;
   department: string | null;
-  designation: string | null;
-  organisation: string | null;
-  section: string | null;
+  designationId: string | null;
+  designationName: string | null;
+  organisationId: string | null;
+  organisationName: string | null;
+  ulbId: string | null;
+  ulbName: string | null;
+  sections: Array<{ id: string; name: string }>;
   officerType: OfficerType | null;
   roles: UserRole[];
   overrides: DbUserPermissionOverride[];
@@ -40,9 +44,10 @@ type CreateUserFormState = {
   email: string;
   phone: string;
   department: string;
-  designation: string;
-  organisation: string;
-  section: string;
+  designationId: string;
+  organisationId: string;
+  ulbId: string;
+  sectionIds: string[];
   officerType: OfficerType;
   defaultPassword: string;
   roleCode: UserRole;
@@ -52,10 +57,16 @@ type EditProfileFormState = {
   name: string;
   email: string;
   department: string;
-  designation: string;
-  organisation: string;
-  section: string;
+  designationId: string;
+  organisationId: string;
+  ulbId: string;
+  sectionIds: string[];
   officerType: OfficerType;
+};
+
+type ReferenceOption = {
+  id: string;
+  name: string;
 };
 
 type RoleFilterValue = UserRole | "ALL";
@@ -65,9 +76,10 @@ const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   email: "",
   phone: "",
   department: "",
-  designation: "",
-  organisation: "",
-  section: "",
+  designationId: "",
+  organisationId: "",
+  ulbId: "",
+  sectionIds: [],
   officerType: "GOVERNMENT",
   defaultPassword: "",
   roleCode: UserRole.NODAL_OFFICER,
@@ -87,6 +99,218 @@ function formatOfficerTypeLabel(value: OfficerType | null): string {
   if (value === "PMU") return "PMU";
   if (value === "GOVERNMENT") return "Government";
   return "—";
+}
+
+// ─── Combobox Component ───────────────────────────────────────────────────────
+
+interface ComboboxProps {
+  label: string;
+  options: ReferenceOption[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+}
+
+function Combobox({ label, options, value, onChange, placeholder, disabled, required }: ComboboxProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearch("");
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const selectedOption = options.find((opt) => opt.id === value);
+  const filteredOptions = options.filter((opt) =>
+    opt.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+      {label}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {selectedOption ? selectedOption.name : placeholder || "Select..."}
+        </button>
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
+            <div className="p-2">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-60 overflow-y-auto">
+              {!required && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange("");
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
+                >
+                  (None)
+                </button>
+              )}
+              {filteredOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.id);
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${
+                    option.id === value ? "bg-[var(--bg-surface)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                  }`}
+                >
+                  {option.name}
+                </button>
+              ))}
+              {filteredOptions.length === 0 && (
+                <div className="px-3 py-2 text-xs text-[var(--text-muted)]">No results</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
+
+// ─── Multi-Select Combobox Component ──────────────────────────────────────────
+
+interface MultiComboboxProps {
+  label: string;
+  options: ReferenceOption[];
+  values: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+function MultiCombobox({ label, options, values, onChange, placeholder, disabled }: MultiComboboxProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearch("");
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const selectedOptions = options.filter((opt) => values.includes(opt.id));
+  const filteredOptions = options.filter((opt) =>
+    opt.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggleOption = (id: string) => {
+    if (values.includes(id)) {
+      onChange(values.filter((v) => v !== id));
+    } else {
+      onChange([...values, id]);
+    }
+  };
+
+  return (
+    <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+      {label}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {selectedOptions.length > 0
+            ? selectedOptions.map((opt) => opt.name).join(", ")
+            : placeholder || "Select..."}
+        </button>
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
+            <div className="p-2">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-60 overflow-y-auto">
+              {filteredOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => toggleOption(option.id)}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${
+                    values.includes(option.id) ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={values.includes(option.id)}
+                    onChange={() => {}}
+                    className="pointer-events-none"
+                  />
+                  {option.name}
+                </button>
+              ))}
+              {filteredOptions.length === 0 && (
+                <div className="px-3 py-2 text-xs text-[var(--text-muted)]">No results</div>
+              )}
+            </div>
+            <div className="border-t border-[var(--border)] p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setSearch("");
+                }}
+                className="w-full rounded border border-[var(--border)] px-2 py-1 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </label>
+  );
 }
 
 // ─── Permissions Modal ────────────────────────────────────────────────────────
@@ -210,7 +434,12 @@ interface CreateUserModalProps {
   phoneUsernamePreview: string;
   isCreatingUser: boolean;
   alert: string;
-  onChange: (key: Exclude<keyof CreateUserFormState, "roleCode">, value: string) => void;
+  designations: ReferenceOption[];
+  organisations: ReferenceOption[];
+  ulbs: ReferenceOption[];
+  sections: ReferenceOption[];
+  onChange: (key: Exclude<keyof CreateUserFormState, "roleCode" | "sectionIds">, value: string) => void;
+  onSectionsChange: (sectionIds: string[]) => void;
   onRoleChange: (roleCode: UserRole) => void;
   onSubmit: () => Promise<void>;
   onClose: () => void;
@@ -223,7 +452,12 @@ function CreateUserModal({
   phoneUsernamePreview,
   isCreatingUser,
   alert,
+  designations,
+  organisations,
+  ulbs,
+  sections,
   onChange,
+  onSectionsChange,
   onRoleChange,
   onSubmit,
   onClose,
@@ -235,8 +469,8 @@ function CreateUserModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 sticky top-0 bg-[var(--bg-primary)] z-10">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
             <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Create User</h2>
@@ -306,25 +540,38 @@ function CreateUserModal({
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Organisation (optional)
-              <input
-                value={form.organisation}
-                onChange={(e) => onChange("organisation", e.target.value)}
-                placeholder="Organisation"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
-            </label>
+            <Combobox
+              label="Designation (required)"
+              options={designations}
+              value={form.designationId}
+              onChange={(value) => onChange("designationId", value)}
+              placeholder="Select designation"
+              required
+            />
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Section (optional)
-              <input
-                value={form.section}
-                onChange={(e) => onChange("section", e.target.value)}
-                placeholder="Section"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
-            </label>
+            <Combobox
+              label="Organisation (optional)"
+              options={organisations}
+              value={form.organisationId}
+              onChange={(value) => onChange("organisationId", value)}
+              placeholder="Select organisation"
+            />
+
+            <Combobox
+              label="ULB (optional)"
+              options={ulbs}
+              value={form.ulbId}
+              onChange={(value) => onChange("ulbId", value)}
+              placeholder="Select ULB"
+            />
+
+            <MultiCombobox
+              label="Sections (optional, multi-select)"
+              options={sections}
+              values={form.sectionIds}
+              onChange={onSectionsChange}
+              placeholder="Select sections"
+            />
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Officer type
@@ -336,17 +583,6 @@ function CreateUserModal({
                 <option value="GOVERNMENT">Government</option>
                 <option value="PMU">PMU</option>
               </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] md:col-span-2">
-              Designation
-              <input
-                required
-                value={form.designation}
-                onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g. Principal Secretary, HUDD"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
@@ -383,7 +619,7 @@ function CreateUserModal({
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4">
+        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 sticky bottom-0 bg-[var(--bg-primary)]">
           <button
             onClick={onClose}
             className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
@@ -408,7 +644,12 @@ interface EditUserProfileModalProps {
   form: EditProfileFormState;
   isSaving: boolean;
   alert: string;
-  onChange: (key: keyof EditProfileFormState, value: string) => void;
+  designations: ReferenceOption[];
+  organisations: ReferenceOption[];
+  ulbs: ReferenceOption[];
+  sections: ReferenceOption[];
+  onChange: (key: Exclude<keyof EditProfileFormState, "sectionIds">, value: string) => void;
+  onSectionsChange: (sectionIds: string[]) => void;
   onSubmit: () => Promise<void>;
   onClose: () => void;
 }
@@ -418,9 +659,10 @@ function editProfileFormFromUser(user: DbUserRow): EditProfileFormState {
     name: user.name,
     email: user.email,
     department: user.department ?? "",
-    designation: user.designation ?? "",
-    organisation: user.organisation ?? "",
-    section: user.section ?? "",
+    designationId: user.designationId ?? "",
+    organisationId: user.organisationId ?? "",
+    ulbId: user.ulbId ?? "",
+    sectionIds: user.sections.map((s) => s.id),
     officerType: user.officerType ?? "GOVERNMENT",
   };
 }
@@ -430,7 +672,12 @@ function EditUserProfileModal({
   form,
   isSaving,
   alert,
+  designations,
+  organisations,
+  ulbs,
+  sections,
   onChange,
+  onSectionsChange,
   onSubmit,
   onClose,
 }: EditUserProfileModalProps) {
@@ -439,8 +686,8 @@ function EditUserProfileModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 sticky top-0 bg-[var(--bg-primary)] z-10">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
             <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Edit profile</h2>
@@ -487,22 +734,34 @@ function EditUserProfileModal({
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Organisation
-              <input
-                value={form.organisation}
-                onChange={(e) => onChange("organisation", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Section
-              <input
-                value={form.section}
-                onChange={(e) => onChange("section", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
-            </label>
+            <Combobox
+              label="Designation"
+              options={designations}
+              value={form.designationId}
+              onChange={(value) => onChange("designationId", value)}
+              placeholder="Select designation"
+            />
+            <Combobox
+              label="Organisation"
+              options={organisations}
+              value={form.organisationId}
+              onChange={(value) => onChange("organisationId", value)}
+              placeholder="Select organisation"
+            />
+            <Combobox
+              label="ULB"
+              options={ulbs}
+              value={form.ulbId}
+              onChange={(value) => onChange("ulbId", value)}
+              placeholder="Select ULB"
+            />
+            <MultiCombobox
+              label="Sections (multi-select)"
+              options={sections}
+              values={form.sectionIds}
+              onChange={onSectionsChange}
+              placeholder="Select sections"
+            />
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Officer type
               <select
@@ -514,14 +773,6 @@ function EditUserProfileModal({
                 <option value="PMU">PMU</option>
               </select>
             </label>
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)] md:col-span-2">
-              Designation
-              <input
-                value={form.designation}
-                onChange={(e) => onChange("designation", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              />
-            </label>
           </div>
         </div>
 
@@ -531,7 +782,7 @@ function EditUserProfileModal({
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4">
+        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 sticky bottom-0 bg-[var(--bg-primary)]">
           <button
             onClick={onClose}
             disabled={isSaving}
@@ -582,6 +833,7 @@ export default function AdminUsersPage() {
   const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, UserRole>>({});
   const [roleUpdateLoadingCodes, setRoleUpdateLoadingCodes] = useState<Record<string, boolean>>({});
   const [deleteLoadingCodes, setDeleteLoadingCodes] = useState<Record<string, boolean>>({});
+  const [openDropdownCode, setOpenDropdownCode] = useState<string | null>(null);
 
   const [profileEditUser, setProfileEditUser] = useState<DbUserRow | null>(null);
   const [profileEditForm, setProfileEditForm] = useState<EditProfileFormState | null>(null);
@@ -592,6 +844,11 @@ export default function AdminUsersPage() {
     Object.fromEntries(Object.values(UserRole).map((role) => [role, [] as Permission[]])) as Record<UserRole, Permission[]>,
   );
   const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
+  
+  const [designations, setDesignations] = useState<ReferenceOption[]>([]);
+  const [organisations, setOrganisations] = useState<ReferenceOption[]>([]);
+  const [ulbs, setUlbs] = useState<ReferenceOption[]>([]);
+  const [sections, setSections] = useState<ReferenceOption[]>([]);
 
   const refreshPermissionCatalog = useCallback(async () => {
     const response = await fetch(withNextBasePath("/api/v1/rbac/permissions"));
@@ -622,11 +879,37 @@ export default function AdminUsersPage() {
     return data.users;
   }, []);
 
+  const refreshReferenceData = useCallback(async () => {
+    const [designationsRes, organisationsRes, ulbsRes, sectionsRes] = await Promise.all([
+      fetch(withNextBasePath("/api/v1/admin/designations")),
+      fetch(withNextBasePath("/api/v1/admin/organisations")),
+      fetch(withNextBasePath("/api/v1/admin/ulbs")),
+      fetch(withNextBasePath("/api/v1/admin/sections")),
+    ]);
+
+    if (designationsRes.ok) {
+      const data = await designationsRes.json() as { designations: ReferenceOption[] };
+      setDesignations(data.designations || []);
+    }
+    if (organisationsRes.ok) {
+      const data = await organisationsRes.json() as { organisations: ReferenceOption[] };
+      setOrganisations(data.organisations || []);
+    }
+    if (ulbsRes.ok) {
+      const data = await ulbsRes.json() as { ulbs: ReferenceOption[] };
+      setUlbs(data.ulbs || []);
+    }
+    if (sectionsRes.ok) {
+      const data = await sectionsRes.json() as { sections: ReferenceOption[] };
+      setSections(data.sections || []);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
     const load = async () => {
       try {
-        await Promise.all([refreshRoles(), refreshUsers(), refreshPermissionCatalog()]);
+        await Promise.all([refreshRoles(), refreshUsers(), refreshPermissionCatalog(), refreshReferenceData()]);
         if (!active) return;
         setAlert("");
       } catch {
@@ -638,7 +921,7 @@ export default function AdminUsersPage() {
     return () => {
       active = false;
     };
-  }, [refreshRoles, refreshUsers, refreshPermissionCatalog]);
+  }, [refreshRoles, refreshUsers, refreshPermissionCatalog, refreshReferenceData]);
 
   const managePermissionCount = useMemo(() => {
     return users.filter((user) => user.effectivePermissions.includes(Permission.MANAGE_PERMISSIONS)).length;
@@ -664,14 +947,16 @@ export default function AdminUsersPage() {
       if (!needle) return true;
 
       const assignedSchemes = user.assignedSchemes?.join(" ").toLowerCase() ?? "";
+      const sectionNames = user.sections?.map((s) => s.name).join(" ").toLowerCase() ?? "";
       const haystack = [
         user.name,
         user.email,
         user.code ?? "",
         user.department ?? "",
-        user.designation ?? "",
-        user.organisation ?? "",
-        user.section ?? "",
+        user.designationName ?? "",
+        user.organisationName ?? "",
+        user.ulbName ?? "",
+        sectionNames,
         user.officerType ?? "",
         role,
         assignedSchemes,
@@ -694,8 +979,12 @@ export default function AdminUsersPage() {
     }, 0);
   }, [pendingRoleChanges, users]);
 
-  const handleCreateUserChange = useCallback((key: Exclude<keyof CreateUserFormState, "roleCode">, value: string) => {
+  const handleCreateUserChange = useCallback((key: Exclude<keyof CreateUserFormState, "roleCode" | "sectionIds">, value: string) => {
     setCreateUserForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleCreateUserSectionsChange = useCallback((sectionIds: string[]) => {
+    setCreateUserForm((prev) => ({ ...prev, sectionIds }));
   }, []);
 
   const handleCreateUserRoleChange = useCallback((roleCode: UserRole) => {
@@ -711,7 +1000,7 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (!createUserForm.designation.trim()) {
+    if (!createUserForm.designationId.trim()) {
       setCreateUserAlert("Designation is required for every new user.");
       return;
     }
@@ -732,9 +1021,10 @@ export default function AdminUsersPage() {
           email: createUserForm.email.trim().toLowerCase(),
           phone: createUserForm.phone.trim(),
           department: createUserForm.department.trim() || undefined,
-          designation: createUserForm.designation.trim(),
-          organisation: createUserForm.organisation.trim() || undefined,
-          section: createUserForm.section.trim() || undefined,
+          designationId: createUserForm.designationId.trim() || undefined,
+          organisationId: createUserForm.organisationId.trim() || undefined,
+          ulbId: createUserForm.ulbId.trim() || undefined,
+          sectionIds: createUserForm.sectionIds,
           officerType: createUserForm.officerType,
           defaultPassword: createUserForm.defaultPassword,
           roleCode: createUserForm.roleCode,
@@ -841,8 +1131,12 @@ export default function AdminUsersPage() {
     }
   }, [refreshUsers, selectedUser?.code, profileEditUser?.code]);
 
-  const handleProfileEditChange = useCallback((key: keyof EditProfileFormState, value: string) => {
+  const handleProfileEditChange = useCallback((key: Exclude<keyof EditProfileFormState, "sectionIds">, value: string) => {
     setProfileEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }, []);
+
+  const handleProfileEditSectionsChange = useCallback((sectionIds: string[]) => {
+    setProfileEditForm((prev) => (prev ? { ...prev, sectionIds } : prev));
   }, []);
 
   const handleSaveUserProfile = useCallback(async () => {
@@ -865,9 +1159,10 @@ export default function AdminUsersPage() {
           name: profileEditForm.name.trim(),
           email: profileEditForm.email.trim().toLowerCase(),
           department: profileEditForm.department.trim() || null,
-          designation: profileEditForm.designation.trim() || null,
-          organisation: profileEditForm.organisation.trim() || null,
-          section: profileEditForm.section.trim() || null,
+          designationId: profileEditForm.designationId.trim() || null,
+          organisationId: profileEditForm.organisationId.trim() || null,
+          ulbId: profileEditForm.ulbId.trim() || null,
+          sectionIds: profileEditForm.sectionIds,
           officerType: profileEditForm.officerType,
         }),
       });
@@ -949,6 +1244,19 @@ export default function AdminUsersPage() {
       setAlert("");
     }
   }, [selectedUser, canManagePermissions]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownCode && !(event.target as HTMLElement).closest(`#actions-dropdown-${openDropdownCode}`) && !(event.target as HTMLElement).closest(`#actions-button-${openDropdownCode}`)) {
+        setOpenDropdownCode(null);
+      }
+    };
+
+    if (openDropdownCode) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [openDropdownCode]);
 
   return (
     <AppShell title="Admin · Users">
@@ -1043,7 +1351,8 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Department</th>
                   <th className="px-4 py-3">Organisation</th>
-                  <th className="px-4 py-3">Section</th>
+                  <th className="px-4 py-3">ULB</th>
+                  <th className="px-4 py-3">Sections</th>
                   <th className="px-4 py-3">Officer type</th>
                   <th className="px-4 py-3">Assigned Schemes</th>
                   <th className="px-4 py-3">Actions</th>
@@ -1071,7 +1380,7 @@ export default function AdminUsersPage() {
                         )}
                       </td>
                       <td className="px-4 py-4 text-sm text-[var(--text-muted)]">
-                        {user.designation?.trim() ? user.designation : "—"}
+                        {user.designationName?.trim() ? user.designationName : "—"}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex max-w-[220px] flex-col gap-2">
@@ -1096,8 +1405,24 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-[var(--text-muted)]">{user.department || "—"}</td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.organisation?.trim() ? user.organisation : "—"}</td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.section?.trim() ? user.section : "—"}</td>
+                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.organisationName?.trim() ? user.organisationName : "—"}</td>
+                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.ulbName?.trim() ? user.ulbName : "—"}</td>
+                      <td className="px-4 py-4">
+                        {user.sections && user.sections.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {user.sections.map((section) => (
+                              <span
+                                key={`${userCode}-section-${section.id}`}
+                                className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]"
+                              >
+                                {section.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[var(--text-muted)]">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-[var(--text-muted)]">{formatOfficerTypeLabel(user.officerType)}</td>
                       <td className="px-4 py-4">
                         {shownSchemes.length > 0 ? (
@@ -1123,72 +1448,72 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-4">
                         <div className="relative">
                           <button
-                            onClick={() => {
-                              const dropdown = document.getElementById(`actions-dropdown-${userCode}`);
-                              dropdown?.classList.toggle('hidden');
-                            }}
+                            id={`actions-button-${userCode}`}
+                            onClick={() => setOpenDropdownCode(openDropdownCode === userCode ? null : userCode)}
                             className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
                           >
             •••
                           </button>
-                          <div
-                            id={`actions-dropdown-${userCode}`}
-                            className="absolute right-0 top-full z-10 mt-1 hidden w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
-                          >
-                            <div className="flex flex-col py-1">
-                              {canManagePermissions && (
+                          {openDropdownCode === userCode && (
+                            <div
+                              id={`actions-dropdown-${userCode}`}
+                              className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
+                            >
+                              <div className="flex flex-col py-1">
+                                {canManagePermissions && (
+                                  <button
+                                    onClick={() => {
+                                      setAlert("");
+                                      setSelectedUser(user);
+                                      setOpenDropdownCode(null);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+                                      <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                      <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                    Permissions
+                                  </button>
+                                )}
+                                {canMutateUsers && (
+                                  <button
+                                    onClick={() => {
+                                      setProfileEditAlert("");
+                                      setProfileEditUser(user);
+                                      setProfileEditForm(editProfileFormFromUser(user));
+                                      setOpenDropdownCode(null);
+                                    }}
+                                    disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
+                                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Edit profile
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => {
-                                    setAlert("");
-                                    setSelectedUser(user);
-                                    document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
+                                    void handleRoleUpdate(user);
+                                    setOpenDropdownCode(null);
                                   }}
-                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-                                    <path d="M8.5 8.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                    <path d="M6 4v4M4 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                  </svg>
-                                  Permissions
-                                </button>
-                              )}
-                              {canMutateUsers && (
-                                <button
-                                  onClick={() => {
-                                    setProfileEditAlert("");
-                                    setProfileEditUser(user);
-                                    setProfileEditForm(editProfileFormFromUser(user));
-                                    document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
-                                  }}
-                                  disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
+                                  disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
                                   className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  Edit profile
+                                  {isUpdatingRole ? "Saving..." : "Save Role"}
                                 </button>
-                              )}
-                              <button
-                                onClick={() => {
-                                  void handleRoleUpdate(user);
-                                  document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
-                                }}
-                                disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
-                                className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {isUpdatingRole ? "Saving..." : "Save Role"}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  void handleDeleteUser(user);
-                                  document.getElementById(`actions-dropdown-${userCode}`)?.classList.add('hidden');
-                                }}
-                                disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
-                                className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[rgba(255,59,59,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {isDeleting ? "Deleting..." : "Delete"}
-                              </button>
+                                <button
+                                  onClick={() => {
+                                    void handleDeleteUser(user);
+                                    setOpenDropdownCode(null);
+                                  }}
+                                  disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[rgba(255,59,59,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {isDeleting ? "Deleting..." : "Delete"}
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1196,7 +1521,7 @@ export default function AdminUsersPage() {
                 })}
                 {filteredUsers.length === 0 && (
                   <tr className="border-t border-[var(--border)]">
-                    <td colSpan={9} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+                    <td colSpan={10} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
                       No users match the current search/filter criteria.
                     </td>
                   </tr>
@@ -1223,7 +1548,12 @@ export default function AdminUsersPage() {
           form={profileEditForm}
           isSaving={Boolean(profileSaveLoadingCodes[profileEditUser.code ?? ""])}
           alert={profileEditAlert}
+          designations={designations}
+          organisations={organisations}
+          ulbs={ulbs}
+          sections={sections}
           onChange={handleProfileEditChange}
+          onSectionsChange={handleProfileEditSectionsChange}
           onSubmit={handleSaveUserProfile}
           onClose={() => {
             if (!profileSaveLoadingCodes[profileEditUser.code ?? ""]) {
@@ -1242,7 +1572,12 @@ export default function AdminUsersPage() {
         phoneUsernamePreview={phoneUsernamePreview}
         isCreatingUser={isCreatingUser}
         alert={createUserAlert}
+        designations={designations}
+        organisations={organisations}
+        ulbs={ulbs}
+        sections={sections}
         onChange={handleCreateUserChange}
+        onSectionsChange={handleCreateUserSectionsChange}
         onRoleChange={handleCreateUserRoleChange}
         onSubmit={handleCreateUser}
         onClose={() => { if (!isCreatingUser) setIsCreateUserOpen(false); }}

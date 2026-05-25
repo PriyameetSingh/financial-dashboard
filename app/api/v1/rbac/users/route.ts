@@ -40,6 +40,22 @@ export async function GET() {
         schemeAssignments: {
           select: { scheme: { select: { code: true } } },
         },
+        designationRel: {
+          select: { id: true, name: true },
+        },
+        organisationRel: {
+          select: { id: true, name: true },
+        },
+        ulbRel: {
+          select: { id: true, name: true },
+        },
+        userSections: {
+          include: {
+            section: {
+              select: { id: true, name: true },
+            },
+          },
+        },
       },
     });
 
@@ -62,9 +78,16 @@ export async function GET() {
           name: u.name,
           email: u.email,
           department: u.department,
-          designation: u.designation,
-          organisation: u.organisation,
-          section: u.section,
+          designationId: u.designationId,
+          designationName: u.designationRel?.name ?? null,
+          organisationId: u.organisationId,
+          organisationName: u.organisationRel?.name ?? null,
+          ulbId: u.ulbId,
+          ulbName: u.ulbRel?.name ?? null,
+          sections: u.userSections.map((us) => ({
+            id: us.section.id,
+            name: us.section.name,
+          })),
           officerType: u.officerType,
           roles: roles.map((r) => r.code),
           overrides,

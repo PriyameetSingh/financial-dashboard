@@ -52,9 +52,13 @@ type MeApiUser = {
   email: string;
   role: UserRole;
   department: string;
-  designation?: string | null;
-  organisation?: string | null;
-  section?: string | null;
+  designationId?: string | null;
+  designationName?: string | null;
+  organisationId?: string | null;
+  organisationName?: string | null;
+  ulbId?: string | null;
+  ulbName?: string | null;
+  sections?: Array<{ id: string; name: string }>;
   officerType?: OfficerType | null;
   assignedSchemes: string[];
   permissions: Permission[];
@@ -88,9 +92,13 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       email: data.user.email,
       role: data.user.role,
       department: data.user.department,
-      designation: data.user.designation ?? undefined,
-      organisation: data.user.organisation ?? undefined,
-      section: data.user.section ?? undefined,
+      designationId: data.user.designationId ?? undefined,
+      designationName: data.user.designationName ?? undefined,
+      organisationId: data.user.organisationId ?? undefined,
+      organisationName: data.user.organisationName ?? undefined,
+      ulbId: data.user.ulbId ?? undefined,
+      ulbName: data.user.ulbName ?? undefined,
+      sections: data.user.sections ?? undefined,
       officerType: data.user.officerType ?? undefined,
       assignedSchemes: data.user.assignedSchemes,
       permissions: data.user.permissions,

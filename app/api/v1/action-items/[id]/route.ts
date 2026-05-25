@@ -49,11 +49,11 @@ const actionInclude = {
   meeting: { select: { meetingDate: true } },
   performers: {
     orderBy: { sortOrder: "asc" as const },
-    include: { user: { select: { id: true, name: true, code: true, designation: true } } },
+    include: { user: { select: { id: true, name: true, code: true, designationId: true, designationRel: { select: { name: true } } } } },
   },
   reviewerUsers: {
     orderBy: { sortOrder: "asc" as const },
-    include: { user: { select: { id: true, name: true, code: true, designation: true } } },
+    include: { user: { select: { id: true, name: true, code: true, designationId: true, designationRel: { select: { name: true } } } } },
   },
   updates: {
     orderBy: { timestamp: "asc" as const },
@@ -89,8 +89,8 @@ function mapActionItem(item: ActionItemWithRelations) {
     status: item.status,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
-    performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designation ?? "" })),
-    reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designation ?? "" })),
+    performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designationRel?.name ?? "" })),
+    reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designationRel?.name ?? "" })),
     assignedToUserIds: perfUsers.map((u) => u.id),
     reviewerUserIds: revUsers.map((u) => u.id),
     assignedToUserCode: perfUsers[0]?.code ?? null,

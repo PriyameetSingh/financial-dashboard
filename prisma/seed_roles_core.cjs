@@ -57,6 +57,11 @@ const ROLES = [
     permissions: [...NODAL_LIKE_PERMISSIONS, "FLAG_KPI_ESCALATION"],
   },
   {
+    code: "VERTICAL_HEAD",
+    name: "Vertical Head",
+    permissions: [...NODAL_LIKE_PERMISSIONS, "FLAG_KPI_ESCALATION"],
+  },
+  {
     code: "FA",
     name: "Finance Advisor",
     permissions: ["VIEW_ALL_DATA", "ENTER_FINANCIAL_DATA", "UPLOAD_PROOF"],

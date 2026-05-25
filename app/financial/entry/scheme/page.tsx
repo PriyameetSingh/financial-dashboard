@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { Loader2, Lock, Plus, Search } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useRequireRole } from "@/src/lib/route-guards";
-import { getCurrentUser, UserRole } from "@/lib/auth";
+import { getCurrentUser, UserRole, Permission, hasPermission } from "@/lib/auth";
 import {
   fetchFinancialBudgets,
   submitFinancialSnapshot,
@@ -135,6 +135,12 @@ export default function SchemeEntryPage() {
   useRequireRole([UserRole.FA, UserRole.NODAL_OFFICER, UserRole.TASU], "/");
 
   const [query, setQuery] = useState("");
+
+  // Permission check for managing financial data
+  const canManageFinancials = useMemo(() => {
+    const user = getCurrentUser();
+    return hasPermission(user, Permission.MANAGE_FINANCIAL_DATA);
+  }, []);
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [financialYearLabel, setFinancialYearLabel] = useState<string | null>(null);
   const [selected, setSelected] = useState<FinancialEntry | null>(null);
@@ -683,8 +689,13 @@ export default function SchemeEntryPage() {
                 {/* CARD 1: Annual Budget */}
                 <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
                   <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-content-surface)]">
-                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">Annual Budget</h2>
-                    {!isBudgetLocked && (
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-semibold text-[var(--text-primary)]">Annual Budget</h2>
+                      {!canManageFinancials && (
+                        <span className="text-[10px] font-medium text-[var(--text-muted)] bg-[var(--bg-document)] px-2 py-0.5 rounded border border-[var(--border)]">View Only</span>
+                      )}
+                    </div>
+                    {!isBudgetLocked && canManageFinancials && (
                       <button
                         onClick={() => setRevisingBudget(true)}
                         className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--bg-card)] px-3 py-1 rounded border border-[var(--border)]"
@@ -772,7 +783,7 @@ export default function SchemeEntryPage() {
                       </div>
                     )}
 
-                    {!isBudgetLocked && !addingSupplement && (
+                    {!isBudgetLocked && canManageFinancials && !addingSupplement && (
                       <button
                         onClick={() => setAddingSupplement(true)}
                         className="mt-5 text-sm font-medium text-[var(--text-primary)] flex items-center gap-1.5 hover:underline"
@@ -839,7 +850,9 @@ export default function SchemeEntryPage() {
                               <div className="text-xs text-[var(--text-muted)] mb-1">SO Sanction Amount</div>
                               <div className="text-3xl font-light text-[var(--text-primary)]">₹ {currentSO.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                             </div>
-                            <button onClick={() => setIsEditingSO(true)} className="px-4 py-1.5 rounded border border-[var(--border)] text-sm font-medium hover:bg-[var(--bg-content-surface)]">Edit</button>
+                            {canManageFinancials && (
+                              <button onClick={() => setIsEditingSO(true)} className="px-4 py-1.5 rounded border border-[var(--border)] text-sm font-medium hover:bg-[var(--bg-content-surface)]">Edit</button>
+                            )}
                           </div>
                         ) : (
                           <div className="bg-[rgba(52,152,219,0.05)] border border-[rgba(52,152,219,0.2)] p-4 rounded-lg mb-8">
