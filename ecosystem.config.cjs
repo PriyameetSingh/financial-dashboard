@@ -32,5 +32,19 @@ module.exports = {
         KEYCLOAK_POST_LOGOUT_REDIRECT_URI: "http://13.203.18.97:8766/hudd-dashboard/login",
       },
     },
+    {
+      name: "webhook-server",
+      cwd: __dirname,
+      script: "webhook-server.js",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      max_memory_restart: "256M",
+      env: {
+        WEBHOOK_PORT: 9000,
+        WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || "CHANGE_THIS_SECRET",
+        NODE_ENV: "production",
+      },
+    },
   ],
 };
