@@ -453,3 +453,56 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     throw error;
   }
 }
+
+export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await ctx.params;
+
+    const actor = await getDbUserBySession();
+    if (!actor) {
+      return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+    }
+
+    const canDelete = hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS");
+    if (!canDelete) {
+      return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
+    }
+
+    const current = await prisma.actionItem.findUnique({
+      where: { id },
+      select: { id: true, title: true, status: true, meetingId: true, schemeId: true },
+    });
+
+    if (!current) {
+      return NextResponse.json({ detail: "Action item not found" }, { status: 404 });
+    }
+
+    const auditContext = getAuditRequestContext(request);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.actionItemUpdate.deleteMany({ where: { actionItemId: id } });
+      await tx.actionItemPerformer.deleteMany({ where: { actionItemId: id } });
+      await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
+      await tx.actionItemProof.deleteMany({ where: { actionItemId: id } });
+      await tx.actionItem.delete({ where: { id } });
+    });
+
+    await logAudit(
+      actor.id,
+      "action_item.delete",
+      "action_item",
+      id,
+      { title: current.title, status: current.status },
+      null,
+      { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+    );
+
+    return NextResponse.json({ success: true, message: "Action item deleted successfully" });
+  } catch (error) {
+    const auth = toAuthErrorResponse(error);
+    if (auth) {
+      return NextResponse.json({ detail: auth.detail }, { status: auth.status });
+    }
+    throw error;
+  }
+}
