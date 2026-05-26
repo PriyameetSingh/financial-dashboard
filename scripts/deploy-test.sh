@@ -40,9 +40,15 @@ git fetch origin dev || {
 REMOTE_COMMIT=$(git rev-parse origin/dev)
 log "Remote commit: $REMOTE_COMMIT"
 
+# Commenting out early exit to force rebuild even when developing on this server
+# if [ "$BEFORE_COMMIT" = "$REMOTE_COMMIT" ]; then
+#     log "No new changes to deploy"
+#     exit 0
+# fi
+
 if [ "$BEFORE_COMMIT" = "$REMOTE_COMMIT" ]; then
-    log "No new changes to deploy"
-    exit 0
+    log "Local and remote are in sync (developing on this server)"
+    log "Continuing with rebuild anyway..."
 fi
 
 # Pull latest changes
