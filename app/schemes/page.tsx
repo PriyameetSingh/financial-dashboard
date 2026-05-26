@@ -9,7 +9,7 @@ import EditKpiModal from "@/components/kpis/EditKpiModal";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchSchemesOverview } from "@/src/lib/services/schemeService";
 import { KPISubmission, SchemeKpiSummary, SchemeOverview, SchemeReferenceData } from "@/types";
-import { ChevronDown, ChevronRight, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { withNextBasePath } from "@/lib/next-base-path";
 
 function formatCurrency(value: number) {
@@ -119,6 +119,42 @@ export default function SchemesPage() {
       await reloadOverview();
     } catch (e) {
       setError(getErrorMessage(e, "Failed to unarchive scheme"));
+    }
+  };
+
+  const deleteScheme = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete the scheme "${name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete scheme");
+      }
+      await reloadOverview();
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to delete scheme"));
+    }
+  };
+
+  const deleteKpi = async (kpiId: string, description: string, schemeId: string) => {
+    if (!confirm(`Are you sure you want to delete the KPI "${description}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const response = await fetch(withNextBasePath(`/api/v1/kpis/${kpiId}`), {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete KPI");
+      }
+      await reloadOverview();
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to delete KPI"));
     }
   };
 
@@ -276,6 +312,14 @@ export default function SchemesPage() {
                                   Unarchive
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => deleteScheme(s.id, s.name)}
+                                className="rounded-lg border border-[var(--alert-critical)] px-2 py-1 text-[11px] text-[var(--alert-critical)] hover:bg-[var(--alert-critical)] hover:text-white"
+                                title="Delete scheme"
+                              >
+                                Delete
+                              </button>
                             </div>
                           </td>
                         )}
@@ -335,14 +379,24 @@ export default function SchemesPage() {
                                             </td>
                                             {canManageSchemes && (
                                               <td className="py-2 pl-2 align-top">
-                                                <button
-                                                  type="button"
-                                                  title="Edit KPI"
-                                                  onClick={() => setEditKpiTarget(kpiSummaryToSubmission(k))}
-                                                  className="rounded p-1 text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
-                                                >
-                                                  <Pencil className="h-3 w-3" />
-                                                </button>
+                                                <div className="flex gap-1">
+                                                  <button
+                                                    type="button"
+                                                    title="Edit KPI"
+                                                    onClick={() => setEditKpiTarget(kpiSummaryToSubmission(k))}
+                                                    className="rounded p-1 text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
+                                                  >
+                                                    <Pencil className="h-3 w-3" />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    title="Delete KPI"
+                                                    onClick={() => deleteKpi(k.id, k.description, s.id)}
+                                                    className="rounded p-1 text-[var(--alert-critical)] transition hover:bg-[var(--alert-critical)] hover:text-white"
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                </div>
                                               </td>
                                             )}
                                           </tr>

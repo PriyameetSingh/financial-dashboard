@@ -95,3 +95,13 @@ export async function addActionItemProof(id: string, input: {
   });
   await parseResponse<{ ok: boolean }>(response);
 }
+
+export async function deleteActionItem(id: string): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}`), {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? "Failed to delete action item");
+  }
+}

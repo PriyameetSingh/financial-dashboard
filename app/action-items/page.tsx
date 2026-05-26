@@ -5,7 +5,7 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
 import { useRequireAuth } from "@/src/lib/route-guards";
-import { fetchActionItems, updateActionItem } from "@/src/lib/services/actionItemService";
+import { fetchActionItems, updateActionItem, deleteActionItem } from "@/src/lib/services/actionItemService";
 import { ActionItem, ActionItemStatus } from "@/types";
 import { UserRole, hasPermission, Permission } from "@/lib/auth";
 import type { SessionUser } from "@/types";
@@ -97,6 +97,9 @@ export default function ActionItemsPage() {
   const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
   
@@ -278,6 +281,10 @@ export default function ActionItemsPage() {
     !isViewer &&
     (hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
       hasPermission(user, Permission.CREATE_ACTION_ITEMS));
+  const canDeleteActionItems =
+    !!user &&
+    !isViewer &&
+    hasPermission(user, Permission.UPDATE_ACTION_ITEMS);
 
   return (
     <AppShell title="Action Items">
@@ -591,6 +598,19 @@ export default function ActionItemsPage() {
                       </button>
                         
                       </>
+                    )}
+                    {canDeleteActionItems && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setDeleteError(null);
+                          setConfirmDelete(true);
+                        }}
+                      >
+                        Delete
+                      </button>
                     )}
                   </div>
                 </div>
@@ -974,6 +994,71 @@ export default function ActionItemsPage() {
           }}
         >
           {actionBusy ? "Rejecting..." : "Reject"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{confirmDelete && selectedItem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+        Confirm Delete
+      </h3>
+
+      <p className="mt-2 text-sm text-[var(--text-muted)]">
+        Are you sure you want to delete &ldquo;{selectedItem.title}&rdquo;? This action cannot be undone.
+      </p>
+
+      {deleteError && (
+        <p className="mt-3 text-sm text-[var(--alert-critical)]">
+          {deleteError}
+        </p>
+      )}
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+          disabled={deleteBusy}
+          onClick={() => {
+            setConfirmDelete(false);
+            setSelectedItem(null);
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          disabled={deleteBusy}
+          onClick={async () => {
+            if (!selectedItem) return;
+
+            setDeleteBusy(true);
+            setDeleteError(null);
+
+            try {
+              await deleteActionItem(selectedItem.id);
+
+              setItems((prev) =>
+                prev.filter((row) => row.id !== selectedItem.id)
+              );
+
+              setConfirmDelete(false);
+              setSelectedItem(null);
+            } catch (e: unknown) {
+              setDeleteError(
+                e instanceof Error ? e.message : "Delete failed"
+              );
+            } finally {
+              setDeleteBusy(false);
+            }
+          }}
+        >
+          {deleteBusy ? "Deleting..." : "Delete"}
         </button>
       </div>
     </div>
