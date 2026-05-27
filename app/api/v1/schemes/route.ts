@@ -26,7 +26,7 @@ type Body = {
   code: string;
   name: string;
   verticalName: string;
-  sponsorshipType: "STATE" | "CENTRAL" | "CENTRAL_SECTOR";
+  sponsorshipType: "STATE" | "CENTRAL" | "CENTRAL_SECTOR" | "NON_FINANCIAL";
   subschemes?: Array<{ code: string; name: string }>;
   assignments?: AssignmentInput[];
 };
