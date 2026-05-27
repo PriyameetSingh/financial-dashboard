@@ -96,6 +96,9 @@ async function answerKpi(): Promise<string> {
   const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
   if (!fy) return "No financial year configured — KPI targets are unavailable.";
   const definitions = await prisma.kpiDefinition.findMany({
+    where: {
+      scheme: { archived: false },
+    },
     include: {
       scheme: { select: { name: true, verticalName: true } },
       targets: {

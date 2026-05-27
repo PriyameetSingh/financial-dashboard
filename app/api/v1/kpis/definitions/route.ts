@@ -48,6 +48,9 @@ export async function GET() {
     });
 
     const definitions = await prisma.kpiDefinition.findMany({
+      where: {
+        scheme: { archived: false },
+      },
       include: {
         scheme: { select: { name: true, verticalName: true } },
         performers: {
