@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.schemeAssignment.deleteMany({ where: { schemeId: id } });
-      await tx.kpi.deleteMany({ where: { schemeId: id } });
+      await tx.kpiDefinition.deleteMany({ where: { schemeId: id } });
       await tx.subscheme.deleteMany({ where: { schemeId: id } });
       await tx.scheme.delete({ where: { id } });
     });
