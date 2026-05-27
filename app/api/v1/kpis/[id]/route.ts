@@ -39,7 +39,6 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       await tx.kpiDefinitionPerformer.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiTarget.deleteMany({ where: { kpiDefinitionId: id } });
-      await tx.kpiMeasurement.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiDefinition.delete({ where: { id } });
     });
 
