@@ -28,6 +28,7 @@ export async function syncSchemeFyCategoryLines(
 
   const [schemes, budgets, snapshots, supplements] = await Promise.all([
     prisma.scheme.findMany({
+      where: { archived: false },
       include: { subschemes: { orderBy: { name: "asc" } } },
       orderBy: { name: "asc" },
     }),
