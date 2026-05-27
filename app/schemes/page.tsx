@@ -6,6 +6,7 @@ import AddKpiModal from "@/components/schemes/AddKpiModal";
 import SchemeFormModal from "@/components/schemes/SchemeFormModal";
 import SchemeModal from "@/components/schemes/SchemeModal";
 import EditKpiModal from "@/components/kpis/EditKpiModal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchSchemesOverview } from "@/src/lib/services/schemeService";
 import { KPISubmission, SchemeKpiSummary, SchemeOverview, SchemeReferenceData } from "@/types";
@@ -52,6 +53,13 @@ export default function SchemesPage() {
   const [kpiModalScheme, setKpiModalScheme] = useState<SchemeOverview | null>(null);
   const [schemeProgressModal, setSchemeProgressModal] = useState<SchemeOverview | null>(null);
   const [editKpiTarget, setEditKpiTarget] = useState<KPISubmission | null>(null);
+  
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: "scheme" | "kpi";
+    id: string;
+    name: string;
+    schemeId?: string;
+  } | null>(null);
 
   const canManageSchemes = permissions.includes("MANAGE_SCHEMES");
 
@@ -123,39 +131,40 @@ export default function SchemesPage() {
   };
 
   const deleteScheme = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the scheme "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+    setDeleteConfirm({ type: "scheme", id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+
     try {
-      const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete scheme");
+      if (deleteConfirm.type === "scheme") {
+        const response = await fetch(withNextBasePath(`/api/v1/schemes/${deleteConfirm.id}`), {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to delete scheme");
+        }
+      } else if (deleteConfirm.type === "kpi") {
+        const response = await fetch(withNextBasePath(`/api/v1/kpis/${deleteConfirm.id}`), {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to delete KPI");
+        }
       }
       await reloadOverview();
+      setDeleteConfirm(null);
     } catch (e) {
-      setError(getErrorMessage(e, "Failed to delete scheme"));
+      setError(getErrorMessage(e, `Failed to delete ${deleteConfirm.type}`));
+      setDeleteConfirm(null);
     }
   };
 
   const deleteKpi = async (kpiId: string, description: string, schemeId: string) => {
-    if (!confirm(`Are you sure you want to delete the KPI "${description}"? This action cannot be undone.`)) {
-      return;
-    }
-    try {
-      const response = await fetch(withNextBasePath(`/api/v1/kpis/${kpiId}`), {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete KPI");
-      }
-      await reloadOverview();
-    } catch (e) {
-      setError(getErrorMessage(e, "Failed to delete KPI"));
-    }
+    setDeleteConfirm({ type: "kpi", id: kpiId, name: description, schemeId });
   };
 
   return (
@@ -478,6 +487,17 @@ export default function SchemesPage() {
           submission={editKpiTarget}
           onClose={() => setEditKpiTarget(null)}
           onSaved={reloadOverview}
+        />
+
+        <ConfirmDialog
+          open={deleteConfirm !== null}
+          title={deleteConfirm?.type === "scheme" ? "Delete Scheme" : "Delete KPI"}
+          message={`Are you sure you want to permanently delete ${deleteConfirm?.type === "scheme" ? "the scheme" : "the KPI"} "${deleteConfirm?.name}"? This action cannot be undone and will remove all associated data.`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          confirmVariant="danger"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm(null)}
         />
       </div>
     </AppShell>

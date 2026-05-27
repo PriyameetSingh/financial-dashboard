@@ -169,32 +169,24 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "Scheme not found" }, { status: 404 });
     }
 
-    const after = await prisma.scheme.update({
-      where: { id },
-      data: { archived: true },
-      include: {
-        subschemes: { orderBy: { name: "asc" } },
-        assignments: {
-          orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
-          include: {
-            user: { select: { id: true, name: true } },
-            role: { select: { id: true, code: true } },
-          },
-        },
-      },
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.schemeAssignment.deleteMany({ where: { schemeId: id } });
+      await tx.kpi.deleteMany({ where: { schemeId: id } });
+      await tx.subscheme.deleteMany({ where: { schemeId: id } });
+      await tx.scheme.delete({ where: { id } });
     });
 
     await logAudit(
       actor?.id,
-      "scheme.archive",
+      "scheme.delete",
       "scheme",
       id,
       mapSchemeView(before),
-      mapSchemeView(after),
+      null,
       { ...auditContext, schemeId: id },
     );
 
-    return NextResponse.json({ scheme: mapSchemeView(after) });
+    return NextResponse.json({ success: true });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
