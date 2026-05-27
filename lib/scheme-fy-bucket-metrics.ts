@@ -95,8 +95,10 @@ export function sponsorshipToSchemeBudgetCategory(
 ): Extract<
   FinanceYearBudgetCategory,
   "STATE_SCHEME" | "CENTRALLY_SPONSORED_SCHEME" | "CENTRAL_SECTOR_SCHEME"
-> {
+> | null {
   if (st === "STATE") return "STATE_SCHEME";
   if (st === "CENTRAL") return "CENTRALLY_SPONSORED_SCHEME";
+  if (st === "CENTRAL_SECTOR") return "CENTRAL_SECTOR_SCHEME";
+  if (st === "NON_FINANCIAL") return null;
   return "CENTRAL_SECTOR_SCHEME";
 }

@@ -258,7 +258,10 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
 
   // Get all schemes to show which ones had no updates
   const allSchemes = await prisma.scheme.findMany({
-    where: { archived: false },
+    where: { 
+      archived: false,
+      sponsorshipType: { not: "NON_FINANCIAL" }
+    },
     include: {
       subschemes: {
         orderBy: { name: "asc" },
@@ -275,7 +278,9 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
         ? "State Scheme"
         : scheme.sponsorshipType === "CENTRAL"
           ? "Centrally Sponsored Scheme"
-          : "Central Sector Scheme";
+          : scheme.sponsorshipType === "CENTRAL_SECTOR"
+            ? "Central Sector Scheme"
+            : "Non-Financial Scheme";
 
     const subschemeRows: FinancialDataUpdateRow["subschemes"] = [];
 

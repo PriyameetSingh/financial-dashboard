@@ -28,7 +28,10 @@ export async function syncSchemeFyCategoryLines(
 
   const [schemes, budgets, snapshots, supplements] = await Promise.all([
     prisma.scheme.findMany({
-      where: { archived: false },
+      where: { 
+        archived: false,
+        sponsorshipType: { not: "NON_FINANCIAL" }
+      },
       include: { subschemes: { orderBy: { name: "asc" } } },
       orderBy: { name: "asc" },
     }),
@@ -66,13 +69,14 @@ export async function syncSchemeFyCategoryLines(
   };
 
   for (const scheme of schemes) {
+    const cat = sponsorshipToSchemeBudgetCategory(scheme.sponsorshipType);
+    if (!cat) continue;
     const m = computeSchemeFyMetrics(
       scheme,
       budgetsByScheme.get(scheme.id) ?? [],
       snapshotsByScheme.get(scheme.id) ?? [],
       supplementsByScheme.get(scheme.id) ?? [],
     );
-    const cat = sponsorshipToSchemeBudgetCategory(scheme.sponsorshipType);
     buckets[cat].budgetEstimateCr += m.effectiveBudgetCr;
     buckets[cat].soExpenditureCr += m.so;
     buckets[cat].ifmsExpenditureCr += m.ifms;

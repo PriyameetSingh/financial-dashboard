@@ -114,7 +114,8 @@ function pct(ifms: number, budget: number): number | null {
 function sponsorshipHeading(st: SponsorshipType): string {
   if (st === "STATE") return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.STATE_SCHEME;
   if (st === "CENTRAL") return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.CENTRALLY_SPONSORED_SCHEME;
-  return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.CENTRAL_SECTOR_SCHEME;
+  if (st === "CENTRAL_SECTOR") return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.CENTRAL_SECTOR_SCHEME;
+  return "Non-Financial Scheme";
 }
 
 async function resolveFinancialYear(meeting: {
@@ -238,7 +239,10 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
     const [schemes, budgets, supplements] = await Promise.all([
       prisma.scheme.findMany({
-        where: { archived: false },
+        where: { 
+          archived: false,
+          sponsorshipType: { not: "NON_FINANCIAL" }
+        },
         include: { subschemes: { orderBy: { name: "asc" } } },
         orderBy: [{ verticalName: "asc" }, { name: "asc" }],
       }),
@@ -301,9 +305,11 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
         const schemeSups = supplementsByScheme.get(scheme.id) ?? [];
         const m = computeSchemeFyMetrics(scheme, schemeBudgets, schemeSnaps, schemeSups);
         const cat = sponsorshipToSchemeBudgetCategory(scheme.sponsorshipType);
-        bucketTotals[cat].budget += m.effectiveBudgetCr;
-        bucketTotals[cat].so += m.so;
-        bucketTotals[cat].ifms += m.ifms;
+        if (cat) {
+          bucketTotals[cat].budget += m.effectiveBudgetCr;
+          bucketTotals[cat].so += m.so;
+          bucketTotals[cat].ifms += m.ifms;
+        }
 
         rows.push({
           planType: scheme.name,

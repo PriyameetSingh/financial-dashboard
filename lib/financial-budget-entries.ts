@@ -59,6 +59,7 @@ export async function getFinanceSummaryBreakdownForOverview(
     const st = (e.metadata as { sponsorshipType?: SponsorshipType } | undefined)?.sponsorshipType;
     if (!st) continue;
     const cat = sponsorshipToSchemeBudgetCategory(st);
+    if (!cat) continue;
     const eff = e.effectiveBudgetCr ?? e.annualBudget + (e.totalSupplementCr ?? 0);
     schemeBuckets[cat].budgetEstimateCr += eff;
     schemeBuckets[cat].soExpenditureCr += e.so;
@@ -124,7 +125,10 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
 
   const [schemes, budgets, snapshots, supplements] = await Promise.all([
     prisma.scheme.findMany({
-      where: { archived: false },
+      where: { 
+        archived: false,
+        sponsorshipType: { not: "NON_FINANCIAL" }
+      },
       include: {
         subschemes: { orderBy: { name: "asc" } },
       },

@@ -10,6 +10,7 @@ datasource db {
 
 /// Scheme sponsorship; maps to FinanceYearBudgetCategory for scheme buckets:
 /// STATE → STATE_SCHEME, CENTRAL → CENTRALLY_SPONSORED_SCHEME, CENTRAL_SECTOR → CENTRAL_SECTOR_SCHEME
+/// NON_FINANCIAL → no financial bucket (KPI-only schemes)
 enum SponsorshipType {
   /// State sector scheme → FY line STATE_SCHEME
   STATE
@@ -17,6 +18,8 @@ enum SponsorshipType {
   CENTRAL
   /// Central Sector Scheme → FY line CENTRAL_SECTOR_SCHEME
   CENTRAL_SECTOR
+  /// Non-financial scheme (KPI-only, no financial data)
+  NON_FINANCIAL
 }
 
 enum WorkflowType {

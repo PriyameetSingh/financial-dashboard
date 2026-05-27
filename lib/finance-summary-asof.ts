@@ -59,6 +59,7 @@ export async function aggregateSnapshotTotalsBySchemeBucket(
     const scheme = snaps.find((x) => x.schemeId === schemeId)?.scheme;
     if (!scheme) continue;
     const cat = sponsorshipToSchemeBudgetCategory(scheme.sponsorshipType);
+    if (!cat) continue;
     buckets[cat].soExpenditureCr += t.so;
     buckets[cat].ifmsExpenditureCr += t.ifms;
   }

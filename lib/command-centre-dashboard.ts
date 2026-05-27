@@ -206,6 +206,7 @@ export async function getCommandCentreDashboard(
     const st = (e.metadata as { sponsorshipType?: SponsorshipType } | undefined)?.sponsorshipType;
     if (!st) continue;
     const cat = sponsorshipToSchemeBudgetCategory(st);
+    if (!cat) continue;
     if (cat === "STATE_SCHEME") stateSector += 1;
     else if (cat === "CENTRALLY_SPONSORED_SCHEME") centrallySponsored += 1;
     else centralSector += 1;

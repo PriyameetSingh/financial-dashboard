@@ -281,7 +281,7 @@ export interface PendingApprovalSummary {
   actionItems: number;
 }
 
-export type SponsorshipType = "STATE" | "CENTRAL" | "CENTRAL_SECTOR";
+export type SponsorshipType = "STATE" | "CENTRAL" | "CENTRAL_SECTOR" | "NON_FINANCIAL";
 
 export type SchemeAssignmentKind = "dashboard_owner" | "kpi_owner_1" | "kpi_owner_2" | "action_item_owner_1" | "action_item_owner_2";
 

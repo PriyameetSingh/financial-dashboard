@@ -426,6 +426,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
               <option value="STATE">State sector</option>
               <option value="CENTRAL">Centrally sponsored</option>
               <option value="CENTRAL_SECTOR">Central sector</option>
+              <option value="NON_FINANCIAL">Non-financial scheme (KPI only)</option>
             </select>
           </label>
 
