@@ -139,11 +139,13 @@ model User {
   organisationId String? @db.Uuid
   ulbId          String? @db.Uuid
   // Users may belong to multiple sections via the join table `UserSection`.
+  // Users may belong to multiple organisations via the join table `UserOrganisation`.
   designationRel  Designation? @relation(fields: [designationId], references: [id], onDelete: SetNull)
-  organisationRel Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  organisationRel Organisation? @relation("LegacyUserOrganisation", fields: [organisationId], references: [id], onDelete: SetNull)
   ulbRel          Ulb?          @relation(fields: [ulbId], references: [id], onDelete: SetNull)
 
   userSections UserSection[]
+  userOrganisations UserOrganisation[]
 
   userRoles            UserRole[]
   createdPermissionOverrides UserPermissionOverride[] @relation("CreatedOverrides")
@@ -273,7 +275,8 @@ model Organisation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
+  users     User[] @relation("LegacyUserOrganisation")
+  userOrganisations UserOrganisation[]
 
   @@map("organisations")
 }
@@ -309,6 +312,17 @@ model UserSection {
 
   @@id([userId, sectionId])
   @@map("user_sections")
+}
+
+model UserOrganisation {
+  userId         String @db.Uuid
+  organisationId String @db.Uuid
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organisationId])
+  @@map("user_organisations")
 }
 
 model FinancialYear {

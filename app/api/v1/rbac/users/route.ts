@@ -56,6 +56,13 @@ export async function GET() {
             },
           },
         },
+        userOrganisations: {
+          include: {
+            organisation: {
+              select: { id: true, name: true },
+            },
+          },
+        },
       },
     });
 
@@ -82,6 +89,10 @@ export async function GET() {
           designationName: u.designationRel?.name ?? null,
           organisationId: u.organisationId,
           organisationName: u.organisationRel?.name ?? null,
+          organisations: u.userOrganisations.map((uo) => ({
+            id: uo.organisation.id,
+            name: uo.organisation.name,
+          })),
           ulbId: u.ulbId,
           ulbName: u.ulbRel?.name ?? null,
           sections: u.userSections.map((us) => ({

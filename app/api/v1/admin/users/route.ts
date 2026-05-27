@@ -18,8 +18,10 @@ type Body = {
   department?: string | null;
   /** UUID foreign key to Designation table */
   designationId?: string;
-  /** UUID foreign key to Organisation table */
+  /** UUID foreign key to Organisation table (legacy single organisation) */
   organisationId?: string | null;
+  /** Array of organisation UUIDs to associate with user (new multi-select) */
+  organisationIds?: string[];
   /** UUID foreign key to Ulb table */
   ulbId?: string | null;
   /** Array of section UUIDs to associate with user */
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
     const department = body.department?.trim() || null;
     const designationId = body.designationId?.trim() || null;
     const organisationId = body.organisationId?.trim() || null;
+    const organisationIds = Array.isArray(body.organisationIds) ? body.organisationIds.filter((id) => typeof id === "string" && id.trim()) : [];
     const ulbId = body.ulbId?.trim() || null;
     const sectionIds = Array.isArray(body.sectionIds) ? body.sectionIds.filter((id) => typeof id === "string" && id.trim()) : [];
     const officerType = parseOfficerType(body.officerType);
@@ -152,6 +155,18 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Handle organisation associations via UserOrganisation join table
+      await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
+      if (organisationIds.length > 0) {
+        await tx.userOrganisation.createMany({
+          data: organisationIds.map((organisationId) => ({
+            userId: user.id,
+            organisationId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       return user;
     });
 
@@ -167,6 +182,7 @@ export async function POST(request: NextRequest) {
         roleCode,
         designationId: dbUser.designationId,
         organisationId: dbUser.organisationId,
+        organisationIds,
         ulbId: dbUser.ulbId,
         sectionIds,
         officerType: dbUser.officerType,
@@ -188,6 +204,7 @@ export async function POST(request: NextRequest) {
           department: dbUser.department,
           designationId: dbUser.designationId,
           organisationId: dbUser.organisationId,
+          organisationIds,
           ulbId: dbUser.ulbId,
           sectionIds,
           officerType: dbUser.officerType,

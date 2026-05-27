@@ -23,8 +23,10 @@ type PatchBody = {
   department?: string | null;
   /** UUID foreign key to Designation table */
   designationId?: string | null;
-  /** UUID foreign key to Organisation table */
+  /** UUID foreign key to Organisation table (legacy single organisation) */
   organisationId?: string | null;
+  /** Array of organisation UUIDs to associate with user (new multi-select) */
+  organisationIds?: string[];
   /** UUID foreign key to Ulb table */
   ulbId?: string | null;
   /** Array of section UUIDs to associate with user */
@@ -63,6 +65,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
       body.officerType !== undefined ||
       body.designationId !== undefined ||
       body.organisationId !== undefined ||
+      body.organisationIds !== undefined ||
       body.ulbId !== undefined ||
       body.sectionIds !== undefined;
 
@@ -87,6 +90,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
         officerType: true,
         userRoles: { include: { role: true } },
         userSections: { select: { sectionId: true } },
+        userOrganisations: { select: { organisationId: true } },
       },
     });
 
@@ -96,6 +100,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
 
     const previousRoleCodes = user.userRoles.map((entry) => entry.role.code);
     const previousSectionIds = user.userSections.map((us) => us.sectionId);
+    const previousOrganisationIds = user.userOrganisations.map((uo) => uo.organisationId);
 
     const prevProfile = {
       name: user.name,
@@ -103,6 +108,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
       department: user.department,
       designationId: user.designationId,
       organisationId: user.organisationId,
+      organisationIds: previousOrganisationIds,
       ulbId: user.ulbId,
       sectionIds: previousSectionIds,
       officerType: user.officerType,
@@ -175,6 +181,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
       ? body.sectionIds.filter((id) => typeof id === "string" && id.trim())
       : previousSectionIds;
 
+    const shouldUpdateOrganisations = body.organisationIds !== undefined;
+    const nextOrganisationIds = shouldUpdateOrganisations && Array.isArray(body.organisationIds)
+      ? body.organisationIds.filter((id) => typeof id === "string" && id.trim())
+      : previousOrganisationIds;
+
     await prisma.$transaction(async (tx) => {
       if (Object.keys(prismaData).length > 0) {
         await tx.user.update({
@@ -195,6 +206,19 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
           });
         }
       }
+
+      if (shouldUpdateOrganisations) {
+        await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
+        if (nextOrganisationIds.length > 0) {
+          await tx.userOrganisation.createMany({
+            data: nextOrganisationIds.map((organisationId) => ({
+              userId: user.id,
+              organisationId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
     });
 
     const nextName = prismaData.name ?? user.name;
@@ -207,17 +231,20 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
         department: prismaData.department !== undefined ? prismaData.department : user.department,
         designationId: prismaData.designationId !== undefined ? prismaData.designationId : user.designationId,
         organisationId: prismaData.organisationId !== undefined ? prismaData.organisationId : user.organisationId,
+        organisationIds: nextOrganisationIds,
         ulbId: prismaData.ulbId !== undefined ? prismaData.ulbId : user.ulbId,
         sectionIds: nextSectionIds,
         officerType: prismaData.officerType !== undefined ? prismaData.officerType : user.officerType,
       };
       const sectionIdsChanged = JSON.stringify([...previousSectionIds].sort()) !== JSON.stringify([...nextSectionIds].sort());
+      const organisationIdsChanged = JSON.stringify([...previousOrganisationIds].sort()) !== JSON.stringify([...nextOrganisationIds].sort());
       const profileChanged =
         prevProfile.name !== nextProfile.name ||
         prevProfile.email !== nextProfile.email ||
         prevProfile.department !== nextProfile.department ||
         prevProfile.designationId !== nextProfile.designationId ||
         prevProfile.organisationId !== nextProfile.organisationId ||
+        organisationIdsChanged ||
         prevProfile.ulbId !== nextProfile.ulbId ||
         sectionIdsChanged ||
         prevProfile.officerType !== nextProfile.officerType;
@@ -318,6 +345,7 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ user
       await tx.userRole.deleteMany({ where: { userId: user.id } });
       await tx.userPermissionOverride.deleteMany({ where: { userId: user.id } });
       await tx.userSection.deleteMany({ where: { userId: user.id } });
+      await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
       await tx.schemeAssignment.updateMany({ where: { userId: user.id }, data: { userId: null } });
       await tx.user.update({
         where: { id: user.id },

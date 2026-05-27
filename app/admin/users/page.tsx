@@ -29,6 +29,7 @@ type DbUserRow = {
   designationName: string | null;
   organisationId: string | null;
   organisationName: string | null;
+  organisations: Array<{ id: string; name: string }>;
   ulbId: string | null;
   ulbName: string | null;
   sections: Array<{ id: string; name: string }>;
@@ -45,7 +46,7 @@ type CreateUserFormState = {
   phone: string;
   department: string;
   designationId: string;
-  organisationId: string;
+  organisationIds: string[];
   ulbId: string;
   sectionIds: string[];
   officerType: OfficerType;
@@ -58,7 +59,7 @@ type EditProfileFormState = {
   email: string;
   department: string;
   designationId: string;
-  organisationId: string;
+  organisationIds: string[];
   ulbId: string;
   sectionIds: string[];
   officerType: OfficerType;
@@ -77,7 +78,7 @@ const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   phone: "",
   department: "",
   designationId: "",
-  organisationId: "",
+  organisationIds: [],
   ulbId: "",
   sectionIds: [],
   officerType: "GOVERNMENT",
@@ -145,10 +146,20 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {selectedOption ? selectedOption.name : placeholder || "Select..."}
         </button>
+        <svg 
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          width="16" 
+          height="16" 
+          viewBox="0 0 16 16" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         {isOpen && (
           <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
             <div className="p-2">
@@ -253,12 +264,22 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {selectedOptions.length > 0
             ? selectedOptions.map((opt) => opt.name).join(", ")
             : placeholder || "Select..."}
         </button>
+        <svg 
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          width="16" 
+          height="16" 
+          viewBox="0 0 16 16" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         {isOpen && (
           <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
             <div className="p-2">
@@ -438,7 +459,8 @@ interface CreateUserModalProps {
   organisations: ReferenceOption[];
   ulbs: ReferenceOption[];
   sections: ReferenceOption[];
-  onChange: (key: Exclude<keyof CreateUserFormState, "roleCode" | "sectionIds">, value: string) => void;
+  onChange: (key: Exclude<keyof CreateUserFormState, "roleCode" | "sectionIds" | "organisationIds">, value: string) => void;
+  onOrganisationsChange: (organisationIds: string[]) => void;
   onSectionsChange: (sectionIds: string[]) => void;
   onRoleChange: (roleCode: UserRole) => void;
   onSubmit: () => Promise<void>;
@@ -457,6 +479,7 @@ function CreateUserModal({
   ulbs,
   sections,
   onChange,
+  onOrganisationsChange,
   onSectionsChange,
   onRoleChange,
   onSubmit,
@@ -549,12 +572,12 @@ function CreateUserModal({
               required
             />
 
-            <Combobox
-              label="Organisation (optional)"
+            <MultiCombobox
+              label="Organisation (optional, multi-select)"
               options={organisations}
-              value={form.organisationId}
-              onChange={(value) => onChange("organisationId", value)}
-              placeholder="Select organisation"
+              values={form.organisationIds}
+              onChange={onOrganisationsChange}
+              placeholder="Select organisations"
             />
 
             <Combobox
@@ -575,14 +598,26 @@ function CreateUserModal({
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Officer type
-              <select
-                value={form.officerType}
-                onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              >
-                <option value="GOVERNMENT">Government</option>
-                <option value="PMU">PMU</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={form.officerType}
+                  onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
+                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                >
+                  <option value="GOVERNMENT">Government</option>
+                  <option value="PMU">PMU</option>
+                </select>
+                <svg 
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 16 16" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
@@ -598,17 +633,29 @@ function CreateUserModal({
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Role
-              <select
-                value={form.roleCode}
-                onChange={(e) => onRoleChange(e.target.value as UserRole)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              >
-                {roleOptions.map((role) => (
-                  <option key={`create-role-${role}`} value={role}>
-                    {formatRoleLabel(role)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={form.roleCode}
+                  onChange={(e) => onRoleChange(e.target.value as UserRole)}
+                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                >
+                  {roleOptions.map((role) => (
+                    <option key={`create-role-${role}`} value={role}>
+                      {formatRoleLabel(role)}
+                    </option>
+                  ))}
+                </select>
+                <svg 
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 16 16" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </label>
           </div>
         </div>
@@ -648,7 +695,8 @@ interface EditUserProfileModalProps {
   organisations: ReferenceOption[];
   ulbs: ReferenceOption[];
   sections: ReferenceOption[];
-  onChange: (key: Exclude<keyof EditProfileFormState, "sectionIds">, value: string) => void;
+  onChange: (key: Exclude<keyof EditProfileFormState, "sectionIds" | "organisationIds">, value: string) => void;
+  onOrganisationsChange: (organisationIds: string[]) => void;
   onSectionsChange: (sectionIds: string[]) => void;
   onSubmit: () => Promise<void>;
   onClose: () => void;
@@ -660,7 +708,7 @@ function editProfileFormFromUser(user: DbUserRow): EditProfileFormState {
     email: user.email,
     department: user.department ?? "",
     designationId: user.designationId ?? "",
-    organisationId: user.organisationId ?? "",
+    organisationIds: user.organisations.map((o) => o.id),
     ulbId: user.ulbId ?? "",
     sectionIds: user.sections.map((s) => s.id),
     officerType: user.officerType ?? "GOVERNMENT",
@@ -677,6 +725,7 @@ function EditUserProfileModal({
   ulbs,
   sections,
   onChange,
+  onOrganisationsChange,
   onSectionsChange,
   onSubmit,
   onClose,
@@ -741,12 +790,12 @@ function EditUserProfileModal({
               onChange={(value) => onChange("designationId", value)}
               placeholder="Select designation"
             />
-            <Combobox
-              label="Organisation"
+            <MultiCombobox
+              label="Organisation (multi-select)"
               options={organisations}
-              value={form.organisationId}
-              onChange={(value) => onChange("organisationId", value)}
-              placeholder="Select organisation"
+              values={form.organisationIds}
+              onChange={onOrganisationsChange}
+              placeholder="Select organisations"
             />
             <Combobox
               label="ULB"
@@ -764,14 +813,26 @@ function EditUserProfileModal({
             />
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Officer type
-              <select
-                value={form.officerType}
-                onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              >
-                <option value="GOVERNMENT">Government</option>
-                <option value="PMU">PMU</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={form.officerType}
+                  onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
+                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                >
+                  <option value="GOVERNMENT">Government</option>
+                  <option value="PMU">PMU</option>
+                </select>
+                <svg 
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 16 16" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </label>
           </div>
         </div>
@@ -983,6 +1044,10 @@ export default function AdminUsersPage() {
     setCreateUserForm((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleCreateUserOrganisationsChange = useCallback((organisationIds: string[]) => {
+    setCreateUserForm((prev) => ({ ...prev, organisationIds }));
+  }, []);
+
   const handleCreateUserSectionsChange = useCallback((sectionIds: string[]) => {
     setCreateUserForm((prev) => ({ ...prev, sectionIds }));
   }, []);
@@ -1022,7 +1087,7 @@ export default function AdminUsersPage() {
           phone: createUserForm.phone.trim(),
           department: createUserForm.department.trim() || undefined,
           designationId: createUserForm.designationId.trim() || undefined,
-          organisationId: createUserForm.organisationId.trim() || undefined,
+          organisationIds: createUserForm.organisationIds.length > 0 ? createUserForm.organisationIds : undefined,
           ulbId: createUserForm.ulbId.trim() || undefined,
           sectionIds: createUserForm.sectionIds,
           officerType: createUserForm.officerType,
@@ -1131,8 +1196,12 @@ export default function AdminUsersPage() {
     }
   }, [refreshUsers, selectedUser?.code, profileEditUser?.code]);
 
-  const handleProfileEditChange = useCallback((key: Exclude<keyof EditProfileFormState, "sectionIds">, value: string) => {
+  const handleProfileEditChange = useCallback((key: Exclude<keyof EditProfileFormState, "sectionIds" | "organisationIds">, value: string) => {
     setProfileEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }, []);
+
+  const handleProfileEditOrganisationsChange = useCallback((organisationIds: string[]) => {
+    setProfileEditForm((prev) => (prev ? { ...prev, organisationIds } : prev));
   }, []);
 
   const handleProfileEditSectionsChange = useCallback((sectionIds: string[]) => {
@@ -1160,7 +1229,7 @@ export default function AdminUsersPage() {
           email: profileEditForm.email.trim().toLowerCase(),
           department: profileEditForm.department.trim() || null,
           designationId: profileEditForm.designationId.trim() || null,
-          organisationId: profileEditForm.organisationId.trim() || null,
+          organisationIds: profileEditForm.organisationIds,
           ulbId: profileEditForm.ulbId.trim() || null,
           sectionIds: profileEditForm.sectionIds,
           officerType: profileEditForm.officerType,
@@ -1319,18 +1388,30 @@ export default function AdminUsersPage() {
             </label>
             <label className="flex min-w-[220px] flex-col gap-1 text-xs text-[var(--text-muted)]">
               Filter by role
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as RoleFilterValue)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-              >
-                <option value="ALL">All roles</option>
-                {roleOptions.map((role) => (
-                  <option key={`filter-role-${role}`} value={role}>
-                    {formatRoleLabel(role)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as RoleFilterValue)}
+                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                >
+                  <option value="ALL">All roles</option>
+                  {roleOptions.map((role) => (
+                    <option key={`filter-role-${role}`} value={role}>
+                      {formatRoleLabel(role)}
+                    </option>
+                  ))}
+                </select>
+                <svg 
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 16 16" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </label>
             <button
               onClick={() => { setSearchTerm(""); setRoleFilter("ALL"); }}
@@ -1385,18 +1466,30 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-4">
                         <div className="flex max-w-[220px] flex-col gap-2">
                           <RoleBadge role={currentRole} />
-                          <select
-                            value={selectedRole}
-                            onChange={(e) => handleRoleDraftChange(userCode, e.target.value as UserRole)}
-                            disabled={!userCode || isUpdatingRole || isDeleting || !canMutateUsers}
-                            className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {roleOptions.map((role) => (
-                              <option key={`row-role-${userCode}-${role}`} value={role}>
-                                {formatRoleLabel(role)}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={selectedRole}
+                              onChange={(e) => handleRoleDraftChange(userCode, e.target.value as UserRole)}
+                              disabled={!userCode || isUpdatingRole || isDeleting || !canMutateUsers}
+                              className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 pr-6 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {roleOptions.map((role) => (
+                                <option key={`row-role-${userCode}-${role}`} value={role}>
+                                  {formatRoleLabel(role)}
+                                </option>
+                              ))}
+                            </select>
+                            <svg 
+                              className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                              width="12" 
+                              height="12" 
+                              viewBox="0 0 16 16" 
+                              fill="none" 
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
                           {roleChanged && (
                             <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--alert-warning)]">
                               Unsaved change
@@ -1405,7 +1498,22 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-[var(--text-muted)]">{user.department || "—"}</td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.organisationName?.trim() ? user.organisationName : "—"}</td>
+                      <td className="px-4 py-4">
+                        {user.organisations && user.organisations.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {user.organisations.map((organisation) => (
+                              <span
+                                key={`${userCode}-org-${organisation.id}`}
+                                className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]"
+                              >
+                                {organisation.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[var(--text-muted)]">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-[var(--text-muted)]">{user.ulbName?.trim() ? user.ulbName : "—"}</td>
                       <td className="px-4 py-4">
                         {user.sections && user.sections.length > 0 ? (
@@ -1553,6 +1661,7 @@ export default function AdminUsersPage() {
           ulbs={ulbs}
           sections={sections}
           onChange={handleProfileEditChange}
+          onOrganisationsChange={handleProfileEditOrganisationsChange}
           onSectionsChange={handleProfileEditSectionsChange}
           onSubmit={handleSaveUserProfile}
           onClose={() => {
@@ -1577,6 +1686,7 @@ export default function AdminUsersPage() {
         ulbs={ulbs}
         sections={sections}
         onChange={handleCreateUserChange}
+        onOrganisationsChange={handleCreateUserOrganisationsChange}
         onSectionsChange={handleCreateUserSectionsChange}
         onRoleChange={handleCreateUserRoleChange}
         onSubmit={handleCreateUser}
