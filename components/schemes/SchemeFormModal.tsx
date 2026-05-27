@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
   addSubscheme,
+  archiveScheme,
   createScheme,
-  deleteScheme,
   updateScheme,
 } from "@/src/lib/services/schemeService";
 import { SchemeAssignmentKind, SchemeReferenceData, SchemeView, SponsorshipType } from "@/types";
@@ -338,7 +338,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
     setSaving(true);
     setAlert(null);
     try {
-      await deleteScheme(selectedId);
+      await archiveScheme(selectedId);
       onSaved();
       onClose();
     } catch (error: unknown) {

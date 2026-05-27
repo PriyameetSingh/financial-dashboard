@@ -79,6 +79,15 @@ export async function updateScheme(id: string, input: {
   return data.scheme;
 }
 
+export async function archiveScheme(id: string): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ archived: true }),
+  });
+  await parseResponse<{ ok: boolean }>(response);
+}
+
 export async function deleteScheme(id: string): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/schemes/${id}`), { method: "DELETE" });
   await parseResponse<{ ok: boolean }>(response);
