@@ -3,6 +3,7 @@ import {
   ActionItemStatus,
   FinancialWorkflowStatus,
   KPIWorkflowStatus,
+  SponsorshipType,
 } from "@prisma/client";
 
 function toNumber(value: unknown): number {
@@ -260,7 +261,7 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
   const allSchemes = await prisma.scheme.findMany({
     where: { 
       archived: false,
-      sponsorshipType: { not: "NON_FINANCIAL" }
+      sponsorshipType: { not: SponsorshipType.NON_FINANCIAL }
     },
     include: {
       subschemes: {
