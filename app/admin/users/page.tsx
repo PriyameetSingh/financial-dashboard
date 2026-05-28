@@ -117,6 +117,7 @@ interface ComboboxProps {
 function Combobox({ label, options, value, onChange, placeholder, disabled, required }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [openUpward, setOpenUpward] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,6 +132,16 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !dropdownRef.current) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const estimatedMenuHeight = 280;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setOpenUpward(spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow);
   }, [isOpen]);
 
   const selectedOption = options.find((opt) => opt.id === value);
@@ -161,7 +172,11 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
           <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
+          <div
+            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${
+              openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            }`}
+          >
             <div className="p-2">
               <input
                 type="text"
@@ -227,6 +242,7 @@ interface MultiComboboxProps {
 function MultiCombobox({ label, options, values, onChange, placeholder, disabled }: MultiComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [openUpward, setOpenUpward] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -241,6 +257,16 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !dropdownRef.current) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const estimatedMenuHeight = 320;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setOpenUpward(spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow);
   }, [isOpen]);
 
   const selectedOptions = options.filter((opt) => values.includes(opt.id));
@@ -281,7 +307,11 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
           <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg">
+          <div
+            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${
+              openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            }`}
+          >
             <div className="p-2">
               <input
                 type="text"
@@ -487,6 +517,15 @@ function CreateUserModal({
 }: CreateUserModalProps) {
   if (!isOpen) return null;
 
+  const officerTypeOptions: ReferenceOption[] = [
+    { id: "GOVERNMENT", name: "Government" },
+    { id: "PMU", name: "PMU" },
+  ];
+  const roleComboboxOptions: ReferenceOption[] = roleOptions.map((role) => ({
+    id: role,
+    name: formatRoleLabel(role),
+  }));
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -596,29 +635,14 @@ function CreateUserModal({
               placeholder="Select sections"
             />
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Officer type
-              <div className="relative">
-                <select
-                  value={form.officerType}
-                  onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
-                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-                >
-                  <option value="GOVERNMENT">Government</option>
-                  <option value="PMU">PMU</option>
-                </select>
-                <svg 
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </label>
+            <Combobox
+              label="Officer type"
+              options={officerTypeOptions}
+              value={form.officerType}
+              onChange={(value) => onChange("officerType", value as OfficerType)}
+              placeholder="Select officer type"
+              required
+            />
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Default Password
@@ -631,32 +655,14 @@ function CreateUserModal({
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Role
-              <div className="relative">
-                <select
-                  value={form.roleCode}
-                  onChange={(e) => onRoleChange(e.target.value as UserRole)}
-                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
-                >
-                  {roleOptions.map((role) => (
-                    <option key={`create-role-${role}`} value={role}>
-                      {formatRoleLabel(role)}
-                    </option>
-                  ))}
-                </select>
-                <svg 
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </label>
+            <Combobox
+              label="Role"
+              options={roleComboboxOptions}
+              value={form.roleCode}
+              onChange={(value) => onRoleChange(value as UserRole)}
+              placeholder="Select role"
+              required
+            />
           </div>
         </div>
 
