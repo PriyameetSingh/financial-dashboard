@@ -1010,6 +1010,61 @@ export default function AdminUsersPage() {
   const [ulbs, setUlbs] = useState<ReferenceOption[]>([]);
   const [sections, setSections] = useState<ReferenceOption[]>([]);
 
+  const refreshPermissionCatalog = useCallback(async () => {
+    const response = await fetch(withNextBasePath("/api/v1/rbac/permissions"));
+    if (!response.ok) throw new Error("Failed to load permissions");
+    const data = (await response.json()) as { permissions: PermissionRow[] };
+    setPermissionCatalog(data.permissions);
+  }, []);
+
+  const refreshRoles = useCallback(async () => {
+    const response = await fetch(withNextBasePath("/api/v1/rbac/roles"));
+    if (!response.ok) throw new Error("Failed to load roles");
+    const data = (await response.json()) as { roles: Array<{ code: UserRole; permissions: Permission[] }> };
+
+    setRolePermissions((prev) => {
+      const next: Record<UserRole, Permission[]> = { ...prev };
+      for (const role of data.roles) {
+        next[role.code] = role.permissions;
+      }
+      return next;
+    });
+  }, []);
+
+  const refreshUsers = useCallback(async () => {
+    const response = await fetch(withNextBasePath("/api/v1/rbac/users"));
+    if (!response.ok) throw new Error("Failed to load users");
+    const data = (await response.json()) as { users: DbUserRow[] };
+    setUsers(data.users);
+    return data.users;
+  }, []);
+
+  const refreshReferenceData = useCallback(async () => {
+    const [designationsRes, organisationsRes, ulbsRes, sectionsRes] = await Promise.all([
+      fetch(withNextBasePath("/api/v1/admin/designations")),
+      fetch(withNextBasePath("/api/v1/admin/organisations")),
+      fetch(withNextBasePath("/api/v1/admin/ulbs")),
+      fetch(withNextBasePath("/api/v1/admin/sections")),
+    ]);
+
+    if (designationsRes.ok) {
+      const data = await designationsRes.json() as { designations: ReferenceOption[] };
+      setDesignations(data.designations || []);
+    }
+    if (organisationsRes.ok) {
+      const data = await organisationsRes.json() as { organisations: ReferenceOption[] };
+      setOrganisations(data.organisations || []);
+    }
+    if (ulbsRes.ok) {
+      const data = await ulbsRes.json() as { ulbs: ReferenceOption[] };
+      setUlbs(data.ulbs || []);
+    }
+    if (sectionsRes.ok) {
+      const data = await sectionsRes.json() as { sections: ReferenceOption[] };
+      setSections(data.sections || []);
+    }
+  }, []);
+
   const mapCsvRowToSeedDraft = useCallback((headers: string[], row: string[]): SeedDraftRow | null => {
     const get = (aliases: string[]) => {
       const idx = headerIndex(headers, aliases);
@@ -1119,61 +1174,6 @@ export default function AdminUsersPage() {
     setSeedAlert(`Seeding complete. Success: ${successCount}, Failed: ${failedCount}. Dropdown fields were fuzzy-matched; unmatched values were left empty.`);
     setIsSeedingUsers(false);
   }, [designations, isSeedingUsers, organisations, refreshUsers, sections, seedDraftRows, ulbs]);
-
-  const refreshPermissionCatalog = useCallback(async () => {
-    const response = await fetch(withNextBasePath("/api/v1/rbac/permissions"));
-    if (!response.ok) throw new Error("Failed to load permissions");
-    const data = (await response.json()) as { permissions: PermissionRow[] };
-    setPermissionCatalog(data.permissions);
-  }, []);
-
-  const refreshRoles = useCallback(async () => {
-    const response = await fetch(withNextBasePath("/api/v1/rbac/roles"));
-    if (!response.ok) throw new Error("Failed to load roles");
-    const data = (await response.json()) as { roles: Array<{ code: UserRole; permissions: Permission[] }> };
-
-    setRolePermissions((prev) => {
-      const next: Record<UserRole, Permission[]> = { ...prev };
-      for (const role of data.roles) {
-        next[role.code] = role.permissions;
-      }
-      return next;
-    });
-  }, []);
-
-  const refreshUsers = useCallback(async () => {
-    const response = await fetch(withNextBasePath("/api/v1/rbac/users"));
-    if (!response.ok) throw new Error("Failed to load users");
-    const data = (await response.json()) as { users: DbUserRow[] };
-    setUsers(data.users);
-    return data.users;
-  }, []);
-
-  const refreshReferenceData = useCallback(async () => {
-    const [designationsRes, organisationsRes, ulbsRes, sectionsRes] = await Promise.all([
-      fetch(withNextBasePath("/api/v1/admin/designations")),
-      fetch(withNextBasePath("/api/v1/admin/organisations")),
-      fetch(withNextBasePath("/api/v1/admin/ulbs")),
-      fetch(withNextBasePath("/api/v1/admin/sections")),
-    ]);
-
-    if (designationsRes.ok) {
-      const data = await designationsRes.json() as { designations: ReferenceOption[] };
-      setDesignations(data.designations || []);
-    }
-    if (organisationsRes.ok) {
-      const data = await organisationsRes.json() as { organisations: ReferenceOption[] };
-      setOrganisations(data.organisations || []);
-    }
-    if (ulbsRes.ok) {
-      const data = await ulbsRes.json() as { ulbs: ReferenceOption[] };
-      setUlbs(data.ulbs || []);
-    }
-    if (sectionsRes.ok) {
-      const data = await sectionsRes.json() as { sections: ReferenceOption[] };
-      setSections(data.sections || []);
-    }
-  }, []);
 
   useEffect(() => {
     let active = true;
