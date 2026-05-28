@@ -211,7 +211,7 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
                     setSearch("");
                   }}
                   className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${
-                    option.id === value ? "bg-[var(--bg-surface)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                    option.id === value ? "bg-[var(--bg-accent)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
                   }`}
                 >
                   {option.name}
@@ -542,7 +542,7 @@ function CreateUserModal({
           </div>
           <button
             onClick={onClose}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
             aria-label="Close create user dialog"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -753,7 +753,7 @@ function EditUserProfileModal({
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:opacity-50"
             aria-label="Close edit profile dialog"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
