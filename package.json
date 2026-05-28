@@ -32,11 +32,13 @@
     "db:clear-and-reseed-roles": "tsx prisma/clear_mock_data.ts --yes --reset-rbac && node prisma/seed_roles.js",
     "verify:behaviors": "node scripts/verify-behaviors.mjs",
     "migrate:prod": "bash scripts/migrate-prod.sh",
+    "backup:prod:db": "bash scripts/backup-prod-db.sh",
     "webhook:start": "pm2 start ecosystem.config.cjs --only webhook-server",
     "webhook:restart": "pm2 restart webhook-server",
     "webhook:logs": "pm2 logs webhook-server",
     "deploy:test": "bash scripts/deploy-test.sh",
-    "deploy:prod": "bash scripts/deploy-prod.sh"
+    "deploy:prod": "bash scripts/deploy-prod.sh",
+    "seed:users:csv": "tsx scripts/seed-users-from-csv.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -70,20 +70,9 @@ export async function POST(request: NextRequest) {
     const defaultPassword = body.defaultPassword?.trim() ?? "";
     const roleCode = body.roleCode ?? UserRole.NODAL_OFFICER;
 
-    if (!name || !email || !defaultPassword) {
+    if (!name || !department || !email || !defaultPassword) {
       return NextResponse.json(
-        { detail: "name, email, and defaultPassword are required" },
-        { status: 400 },
-      );
-    }
-
-    if (!designationId) {
-      return NextResponse.json({ detail: "designationId is required" }, { status: 400 });
-    }
-
-    if (!officerType) {
-      return NextResponse.json(
-        { detail: "officerType is required: use GOVERNMENT or PMU" },
+        { detail: "name, department, email, and defaultPassword are required" },
         { status: 400 },
       );
     }

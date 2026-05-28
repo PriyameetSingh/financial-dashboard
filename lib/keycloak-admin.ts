@@ -455,6 +455,32 @@ export async function deleteKeycloakUserById(userId: string): Promise<void> {
   }
 }
 
+export async function setKeycloakUserTemporaryPassword(userId: string, password: string): Promise<void> {
+  const config = getKeycloakConfig();
+  const accessToken = await getAdminAccessToken(config);
+
+  const response = await fetch(
+    `${config.adminBaseUrl}/admin/realms/${encodeURIComponent(config.realm)}/users/${encodeURIComponent(userId)}/reset-password`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "password",
+        value: password,
+        temporary: true,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Keycloak password reset failed (${response.status}): ${detail || "unknown error"}`);
+  }
+}
+
 export async function createOrFindKeycloakUser(input: CreateKeycloakUserInput): Promise<{ id: string; created: boolean }> {
   const config = getKeycloakConfig();
   const accessToken = await getAdminAccessToken(config);

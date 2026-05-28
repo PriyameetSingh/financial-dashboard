@@ -49,7 +49,7 @@ type CreateUserFormState = {
   organisationIds: string[];
   ulbId: string;
   sectionIds: string[];
-  officerType: OfficerType;
+  officerType: OfficerType | "";
   defaultPassword: string;
   roleCode: UserRole;
 };
@@ -72,6 +72,20 @@ type ReferenceOption = {
 
 type RoleFilterValue = UserRole | "ALL";
 
+type SeedDraftRow = {
+  name: string;
+  department: string;
+  email: string;
+  phone: string;
+  defaultPassword: string;
+  designationRaw: string;
+  organisationRaw: string;
+  sectionRaw: string;
+  ulbRaw: string;
+  officerTypeRaw: string;
+  roleRaw: string;
+};
+
 const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   name: "",
   email: "",
@@ -81,7 +95,7 @@ const INITIAL_CREATE_USER_FORM: CreateUserFormState = {
   organisationIds: [],
   ulbId: "",
   sectionIds: [],
-  officerType: "GOVERNMENT",
+  officerType: "",
   defaultPassword: "",
   roleCode: UserRole.NODAL_OFFICER,
 };
@@ -100,6 +114,80 @@ function formatOfficerTypeLabel(value: OfficerType | null): string {
   if (value === "PMU") return "PMU";
   if (value === "GOVERNMENT") return "Government";
   return "—";
+}
+
+function normalizeText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function splitCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (ch === "\"") {
+      if (inQuotes && line[i + 1] === "\"") {
+        current += "\"";
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (ch === "," && !inQuotes) {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseCsvRows(text: string): string[][] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !/^,+$/.test(line))
+    .map(splitCsvLine);
+}
+
+function headerIndex(headers: string[], aliases: string[]): number {
+  const normalizedAliases = aliases.map(normalizeText);
+  return headers.findIndex((h) => normalizedAliases.includes(normalizeText(h)));
+}
+
+function fuzzyMatchOptionId(rawValue: string, options: ReferenceOption[]): string {
+  const normalizedRaw = normalizeText(rawValue);
+  if (!normalizedRaw) return "";
+  const exact = options.find((option) => normalizeText(option.name) === normalizedRaw);
+  if (exact) return exact.id;
+  const partial = options.find((option) => {
+    const name = normalizeText(option.name);
+    return name.includes(normalizedRaw) || normalizedRaw.includes(name);
+  });
+  return partial?.id ?? "";
+}
+
+function fuzzyMatchManyOptionIds(rawValue: string, options: ReferenceOption[]): string[] {
+  const chunks = rawValue.split(/[,/;]+/).map((v) => v.trim()).filter(Boolean);
+  const ids = chunks.map((chunk) => fuzzyMatchOptionId(chunk, options)).filter(Boolean);
+  return Array.from(new Set(ids));
+}
+
+function parseOfficerType(rawValue: string): OfficerType | "" {
+  const normalized = normalizeText(rawValue);
+  if (normalized === "government") return "GOVERNMENT";
+  if (normalized === "pmu") return "PMU";
+  return "";
+}
+
+function parseRole(rawValue: string): UserRole {
+  const normalized = normalizeText(rawValue);
+  if (normalized.includes("vertical head")) return UserRole.VERTICAL_HEAD;
+  return UserRole.NODAL_OFFICER;
 }
 
 // ─── Combobox Component ───────────────────────────────────────────────────────
@@ -908,6 +996,9 @@ export default function AdminUsersPage() {
   const [profileEditForm, setProfileEditForm] = useState<EditProfileFormState | null>(null);
   const [profileEditAlert, setProfileEditAlert] = useState("");
   const [profileSaveLoadingCodes, setProfileSaveLoadingCodes] = useState<Record<string, boolean>>({});
+  const [seedDraftRows, setSeedDraftRows] = useState<SeedDraftRow[]>([]);
+  const [seedAlert, setSeedAlert] = useState("");
+  const [isSeedingUsers, setIsSeedingUsers] = useState(false);
 
   const [rolePermissions, setRolePermissions] = useState<Record<UserRole, Permission[]>>(() =>
     Object.fromEntries(Object.values(UserRole).map((role) => [role, [] as Permission[]])) as Record<UserRole, Permission[]>,
@@ -918,6 +1009,116 @@ export default function AdminUsersPage() {
   const [organisations, setOrganisations] = useState<ReferenceOption[]>([]);
   const [ulbs, setUlbs] = useState<ReferenceOption[]>([]);
   const [sections, setSections] = useState<ReferenceOption[]>([]);
+
+  const mapCsvRowToSeedDraft = useCallback((headers: string[], row: string[]): SeedDraftRow | null => {
+    const get = (aliases: string[]) => {
+      const idx = headerIndex(headers, aliases);
+      return idx >= 0 ? (row[idx] ?? "").trim() : "";
+    };
+
+    const nodalName = get(["Nodal Officer/ Nodal Person Name", "Nodal Officer Nodal Person Name"]);
+    const verticalName = get(["Name of the Vertical Head"]);
+    const name = nodalName || verticalName;
+    const department = get(["Department", "Deapratment"]);
+    const email = get(["Personal Email Id"]);
+    const phone = get(["Phone No. (Whatsapp)", "Phone No Whatsapp"]);
+    const defaultPassword = get(["Temporary Passwords", "Temporary passwords"]);
+    const designationRaw = get(["Designation"]);
+    const organisationRaw = get(["Organaisation", "Organisation", "Name of the Scheme"]);
+    const sectionRaw = get(["Concerned Section"]);
+    const ulbRaw = get(["ULB"]);
+    const officerTypeRaw = get(["Officer Type"]);
+    const roleRaw = get(["Role"]);
+
+    if (!name || !department || !email || !phone || !defaultPassword) {
+      return null;
+    }
+
+    return {
+      name,
+      department,
+      email,
+      phone,
+      defaultPassword,
+      designationRaw,
+      organisationRaw,
+      sectionRaw,
+      ulbRaw,
+      officerTypeRaw,
+      roleRaw,
+    };
+  }, []);
+
+  const handleSeedCsvFiles = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setSeedAlert("");
+    const nextRows: SeedDraftRow[] = [];
+    for (const file of files) {
+      const text = await file.text();
+      const parsedRows = parseCsvRows(text);
+      if (parsedRows.length < 2) continue;
+      const headers = parsedRows[0];
+      for (const row of parsedRows.slice(1)) {
+        const mapped = mapCsvRowToSeedDraft(headers, row);
+        if (mapped) nextRows.push(mapped);
+      }
+    }
+
+    setSeedDraftRows(nextRows);
+    setSeedAlert(nextRows.length > 0 ? `Loaded ${nextRows.length} users from CSV.` : "No valid users found in selected CSV files.");
+    event.target.value = "";
+  }, [mapCsvRowToSeedDraft]);
+
+  const handleSeedUsers = useCallback(async () => {
+    if (isSeedingUsers || seedDraftRows.length === 0) return;
+    setIsSeedingUsers(true);
+    setSeedAlert("");
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const row of seedDraftRows) {
+      const designationId = fuzzyMatchOptionId(row.designationRaw, designations);
+      const organisationIds = fuzzyMatchManyOptionIds(row.organisationRaw, organisations);
+      const sectionIds = fuzzyMatchManyOptionIds(row.sectionRaw, sections);
+      const ulbId = fuzzyMatchOptionId(row.ulbRaw, ulbs);
+      const officerType = parseOfficerType(row.officerTypeRaw);
+      const roleCode = parseRole(row.roleRaw);
+
+      try {
+        const response = await fetch(withNextBasePath("/api/v1/admin/users"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: row.name,
+            department: row.department,
+            email: row.email.toLowerCase(),
+            phone: row.phone,
+            defaultPassword: row.defaultPassword,
+            designationId: designationId || undefined,
+            organisationIds: organisationIds.length > 0 ? organisationIds : undefined,
+            sectionIds,
+            ulbId: ulbId || undefined,
+            officerType: officerType || undefined,
+            roleCode,
+          }),
+        });
+        if (response.ok) {
+          successCount += 1;
+        } else {
+          failedCount += 1;
+        }
+      } catch {
+        failedCount += 1;
+      }
+    }
+
+    await refreshUsers();
+    setSeedAlert(`Seeding complete. Success: ${successCount}, Failed: ${failedCount}. Dropdown fields were fuzzy-matched; unmatched values were left empty.`);
+    setIsSeedingUsers(false);
+  }, [designations, isSeedingUsers, organisations, refreshUsers, sections, seedDraftRows, ulbs]);
 
   const refreshPermissionCatalog = useCallback(async () => {
     const response = await fetch(withNextBasePath("/api/v1/rbac/permissions"));
