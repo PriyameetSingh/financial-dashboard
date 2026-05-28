@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
     const defaultPassword = body.defaultPassword?.trim() ?? "";
     const roleCode = body.roleCode ?? UserRole.NODAL_OFFICER;
 
-    if (!name || !department || !email || !defaultPassword) {
+    if (!name || !email || !defaultPassword) {
       return NextResponse.json(
-        { detail: "name, department, email, and defaultPassword are required" },
+        { detail: "name, email, and defaultPassword are required" },
         { status: 400 },
       );
     }

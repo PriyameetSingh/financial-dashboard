@@ -693,12 +693,11 @@ function CreateUserModal({
             </label>
 
             <Combobox
-              label="Designation (required)"
+              label="Designation (optional)"
               options={designations}
               value={form.designationId}
               onChange={(value) => onChange("designationId", value)}
               placeholder="Select designation"
-              required
             />
 
             <MultiCombobox
@@ -1271,11 +1270,6 @@ export default function AdminUsersPage() {
 
     if (!createUserForm.name.trim() || !createUserForm.email.trim() || !createUserForm.defaultPassword.trim()) {
       setCreateUserAlert("Name, email, and default password are required.");
-      return;
-    }
-
-    if (!createUserForm.designationId.trim()) {
-      setCreateUserAlert("Designation is required for every new user.");
       return;
     }
 
