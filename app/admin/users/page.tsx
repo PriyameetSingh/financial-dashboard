@@ -137,10 +137,11 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
   useEffect(() => {
     if (!isOpen || !dropdownRef.current) return;
     const rect = dropdownRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+    const boundary = dropdownRef.current.closest("[data-dropdown-boundary]") as HTMLElement | null;
+    const boundaryRect = boundary?.getBoundingClientRect();
     const estimatedMenuHeight = 280;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
+    const spaceBelow = boundaryRect ? boundaryRect.bottom - rect.bottom : window.innerHeight - rect.bottom;
+    const spaceAbove = boundaryRect ? rect.top - boundaryRect.top : rect.top;
     setOpenUpward(spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow);
   }, [isOpen]);
 
@@ -262,10 +263,11 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
   useEffect(() => {
     if (!isOpen || !dropdownRef.current) return;
     const rect = dropdownRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+    const boundary = dropdownRef.current.closest("[data-dropdown-boundary]") as HTMLElement | null;
+    const boundaryRect = boundary?.getBoundingClientRect();
     const estimatedMenuHeight = 320;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
+    const spaceBelow = boundaryRect ? boundaryRect.bottom - rect.bottom : window.innerHeight - rect.bottom;
+    const spaceAbove = boundaryRect ? rect.top - boundaryRect.top : rect.top;
     setOpenUpward(spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow);
   }, [isOpen]);
 
@@ -551,7 +553,7 @@ function CreateUserModal({
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Name
@@ -762,7 +764,7 @@ function EditUserProfileModal({
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Name
