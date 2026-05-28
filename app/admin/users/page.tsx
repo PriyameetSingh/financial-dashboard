@@ -1768,7 +1768,7 @@ export default function AdminUsersPage() {
                           {openDropdownCode === userCode && (
                             <div
                               id={`actions-dropdown-${userCode}`}
-                              className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
+                              className="absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
                             >
                               <div className="flex flex-col py-1">
                                 {canManagePermissions && (
