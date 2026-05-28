@@ -1626,7 +1626,7 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-visible">
             <table className="min-w-[1000px] w-full text-left text-sm">
               <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 <tr>
@@ -1768,7 +1768,7 @@ export default function AdminUsersPage() {
                           {openDropdownCode === userCode && (
                             <div
                               id={`actions-dropdown-${userCode}`}
-                              className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
+                              className="absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
                             >
                               <div className="flex flex-col py-1">
                                 {canManagePermissions && (
