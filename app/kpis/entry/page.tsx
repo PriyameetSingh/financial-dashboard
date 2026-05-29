@@ -182,6 +182,8 @@ export default function KPIEntryPage() {
   }, [selectedItem]);
 
   const getValidationError = (item: KPISubmission, newNum: number | ""): string | null => {
+    // Only enforce numeric validation for OUTPUT KPIs; OUTCOME KPIs are remarks-only.
+    if (item.type !== "OUTPUT") return null;
     if (item.status === "approved" && item.numerator != null && newNum !== "") {
       if (Number(newNum) < item.numerator) {
         return `Value cannot go below the approved value of ${item.numerator} ${item.unit}.`;
@@ -203,7 +205,8 @@ export default function KPIEntryPage() {
       return;
     }
 
-    if (item.type !== "BINARY") {
+    // Only validate numeric input for OUTPUT KPIs.
+    if (item.type === "OUTPUT") {
       const err = getValidationError(item, numeratorById[id] ?? "");
       if (err) {
         setRowState((prev) => ({ ...prev, [id]: { error: err } }));
@@ -214,13 +217,19 @@ export default function KPIEntryPage() {
     setRowState((prev) => ({ ...prev, [id]: { saving: true } }));
     try {
       const measuredAt = new Date().toISOString().slice(0, 10);
-      const num = numeratorById[id] === "" ? null : Number(numeratorById[id]);
+      const shouldSendNumerator = item.type === "OUTPUT";
+      const num = shouldSendNumerator
+        ? numeratorById[id] === ""
+          ? null
+          : Number(numeratorById[id])
+        : null;
       await submitKPIMeasurement({
         kpiDefinitionId: item.id,
         financialYearLabel,
         measuredAt,
         meetingId: meetingId.trim(),
-        numeratorValue: Number.isFinite(num as number) ? num : null,
+        // For OUTPUT KPIs, send numeric progress; OUTCOME KPIs are remarks-only.
+        numeratorValue: shouldSendNumerator && Number.isFinite(num as number) ? num : null,
         // denominator is always read-only here; do not send it
         yesValue: item.type === "BINARY" ? (binaryResponses[id] ?? null) : null,
         remarks: remarksById[id] ?? "",
@@ -374,7 +383,7 @@ export default function KPIEntryPage() {
             const isApproved = item.status === "approved";
             const approvedNum = item.numerator;
             const validationError =
-              item.type !== "BINARY" ? getValidationError(item, numVal ?? "") : null;
+              item.type === "OUTPUT" ? getValidationError(item, numVal ?? "") : null;
             const canFlagEscalation = item.canFlagEscalation === true;
 
             return (
@@ -484,7 +493,7 @@ export default function KPIEntryPage() {
                         </button>
                       </div>
                     </div>
-                  ) : (
+                  ) : item.type === "OUTPUT" ? (
                     <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
@@ -502,10 +511,11 @@ export default function KPIEntryPage() {
                               setRowState((prev) => ({ ...prev, [item.id]: {} }));
                             }
                           }}
-                          className={`w-full rounded-xl border px-4 py-2.5 text-sm tabular-nums text-[var(--text-primary)] bg-[var(--bg-card)] focus:outline-none focus:ring-1 ${validationError
-                            ? "border-[var(--alert-critical)] focus:ring-[var(--alert-critical)]"
-                            : "border-[var(--border)] focus:ring-[var(--text-primary)]"
-                            }`}
+                          className={`w-full rounded-xl border px-4 py-2.5 text-sm tabular-nums text-[var(--text-primary)] bg-[var(--bg-card)] focus:outline-none focus:ring-1 ${
+                            validationError
+                              ? "border-[var(--alert-critical)] focus:ring-[var(--alert-critical)]"
+                              : "border-[var(--border)] focus:ring-[var(--text-primary)]"
+                          }`}
                         />
                         {validationError && (
                           <p className="text-[11px] text-[var(--alert-critical)]">{validationError}</p>
@@ -554,7 +564,7 @@ export default function KPIEntryPage() {
                         )}
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Remarks */}
                   <div className="mt-5 space-y-2">
