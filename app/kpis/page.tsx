@@ -709,7 +709,7 @@ export default function KPIsPage() {
                             <p className="font-medium leading-snug">{item.description}</p>
                             <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.scheme} · {item.vertical}</p>
                             {item.monitoringLevel && (
-                              <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--text-primary)]">
+                              <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--bg-accent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--text-primary)]">
                                 {item.monitoringLevel}
                               </span>
                             )}
@@ -723,7 +723,11 @@ export default function KPIsPage() {
                               <span className="text-base font-bold text-[var(--text-primary)]">
                                 {item.yes === true ? "Yes" : item.yes === false ? "No" : "—"}
                               </span>
-                            ) : (item.numerator != null || item.denominator != null) ? (
+                            ) : item.type === "OUTCOME" ? (
+                              <p className="max-w-xs text-xs font-medium text-[var(--text-primary)]">
+                                {item.remarks?.trim() || "—"}
+                              </p>
+                            ) : item.numerator != null || item.denominator != null ? (
                               <p className="text-base font-bold tabular-nums text-[var(--text-primary)]">
                                 {item.numerator ?? 0}
                                 {item.denominator != null && <span className="font-bold"> / {item.denominator}</span>}
