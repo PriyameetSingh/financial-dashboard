@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
@@ -171,7 +171,7 @@ function kpiProgressScore(s: KPISubmission): number | null {
   return null;
 }
 
-export default function KPIsPage() {
+function KPIsPageContent() {
   const user = useRequireAuth();
   const searchParams = useSearchParams();
   const initialTabFromUrl = searchParams.get("tab");
@@ -798,5 +798,19 @@ export default function KPIsPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+export default function KPIsPage() {
+  return (
+    <Suspense fallback={
+      <AppShell title="KPI Tracker">
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-[var(--bg-document)]">
+          <div className="text-sm text-[var(--text-muted)]">Loading KPI Performance Monitor...</div>
+        </div>
+      </AppShell>
+    }>
+      <KPIsPageContent />
+    </Suspense>
   );
 }

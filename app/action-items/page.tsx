@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
@@ -28,8 +28,6 @@ const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemSta
   {
     id: "my_tasks",
     label: "My tasks",
-    // Same underlying status as "Under Review" – we further scope to the
-    // logged-in reviewer inside the main filter function below.
     match: (status) => status === "UNDER_REVIEW",
   },
   { id: "completed", label: "Completed", match: (status) => status === "COMPLETED" },
@@ -54,7 +52,7 @@ function lastActivityMs(item: ActionItem): number {
   return new Date(item.dueDate).getTime();
 }
 
-export default function ActionItemsPage() {
+function ActionItemsContent() {
   const user = useRequireAuth();
   const searchParams = useSearchParams();
   const initialFilterFromUrl = searchParams.get("filter");
@@ -153,7 +151,7 @@ export default function ActionItemsPage() {
   const listItems = useMemo(() => {
     if (!user) return [];
     if (canViewAllItems) return items;
-    return items.filter((item) => isAssignedOfficer(item, user) || isDesignatedReviewer(item, user));
+    return items.filter((item) => isAssignedActionOfficer(item, user) || isDesignatedReviewer(item, user));
   }, [user, items, canViewAllItems]);
 
   const filtered = useMemo(() => {
@@ -1070,5 +1068,21 @@ export default function ActionItemsPage() {
 )}
 
     </AppShell>
+  );
+}
+
+export default function ActionItemsPage() {
+  return (
+    <Suspense fallback={
+      <AppShell title="Action Items">
+        <div className="relative space-y-6 px-6 py-6">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+            Loading action items...
+          </div>
+        </div>
+      </AppShell>
+    }>
+      <ActionItemsContent />
+    </Suspense>
   );
 }
