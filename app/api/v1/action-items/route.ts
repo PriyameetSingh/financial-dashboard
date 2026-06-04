@@ -26,13 +26,18 @@ type ActionItemWithRelations = Prisma.ActionItemGetPayload<{
   };
 }>;
 
-function mapActionItem(item: ActionItemWithRelations) {
+function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | null) {
   const now = Date.now();
   const dueTime = item.dueDate.getTime();
   const overdueDays = dueTime < now ? Math.floor((now - dueTime) / (24 * 60 * 60 * 1000)) : undefined;
 
   const perfUsers = item.performers.map((p) => p.user);
   const revUsers = item.reviewerUsers.map((r) => r.user);
+
+  const hasUpdateForLatestMeeting =
+    latestMeetingId != null
+      ? item.updates.some((update) => update.meetingId === latestMeetingId)
+      : false;
 
   return {
     id: item.id,
@@ -55,6 +60,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     meetingId: item.meetingId,
     meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
     daysOverdue: overdueDays,
+    hasUpdateForLatestMeeting,
     updates: item.updates.map((update) => ({
       id: update.id,
       timestamp: toIsoDate(update.timestamp),
@@ -100,6 +106,12 @@ export async function GET(request: NextRequest) {
 
     const take = parseListLimit(new URL(request.url).searchParams);
 
+    const latestMeeting = await prisma.dashboardMeeting.findFirst({
+      orderBy: { meetingDate: "desc" },
+      select: { id: true },
+    });
+    const latestMeetingId = latestMeeting?.id ?? null;
+
     const items = await prisma.actionItem.findMany({
       include: actionInclude,
       orderBy: [{ dueDate: "asc" }, { title: "asc" }],
@@ -107,7 +119,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      items: items.map(mapActionItem),
+      items: items.map((item) => mapActionItem(item as ActionItemWithRelations, latestMeetingId)),
       limit: take,
     });
   } catch (error) {

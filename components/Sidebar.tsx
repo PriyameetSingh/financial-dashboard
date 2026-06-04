@@ -409,8 +409,8 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
 
   const actionItemsBadge = useMemo(() => {
     if (!user) return null;
-    return pendingAssignedBadgeState(actionItems, user);
-  }, [actionItems, user]);
+    return pendingAssignedBadgeState(actionItems, user, latestKpiMeeting);
+  }, [actionItems, user, latestKpiMeeting]);
 
   const kpiEntryBadge = useMemo(
     () => pendingKpiEntryBadgeState(kpiSubmissions, latestKpiMeeting),

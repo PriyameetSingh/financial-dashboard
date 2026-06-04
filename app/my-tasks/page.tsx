@@ -84,8 +84,8 @@ export default function MyTasksHubPage() {
   }, [user]);
 
   const actionItemsBadge = useMemo(
-    () => (user ? pendingAssignedBadgeState(actionItems, user) : { count: 0, tone: null }),
-    [actionItems, user],
+    () => (user ? pendingAssignedBadgeState(actionItems, user, latestKpiMeeting) : { count: 0, tone: null }),
+    [actionItems, user, latestKpiMeeting],
   );
 
   const kpiEntryBadge = useMemo(

@@ -1,7 +1,4 @@
-import {
-  isAssignedActionOfficer,
-  isPendingActionItem,
-} from "@/src/lib/actionItemAssignment";
+import { isAssignedActionOfficer, isPendingActionItem } from "@/src/lib/actionItemAssignment";
 import type { KpiLatestMeeting } from "@/src/lib/services/kpiService";
 import type { ActionItem, KPISubmission, SessionUser } from "@/types";
 
@@ -34,8 +31,26 @@ function isDueWithinWeek(item: ActionItem) {
   return due >= now && due <= week;
 }
 
-export function pendingAssignedBadgeState(items: ActionItem[], user: SessionUser): PendingBadgeState {
-  const mine = items.filter((item) => isAssignedActionOfficer(item, user) && isPendingActionItem(item));
+function isPendingForLatestMeeting(item: ActionItem, latestMeeting: KpiLatestMeeting | null | undefined): boolean {
+  if (!latestMeeting) {
+    return isPendingActionItem(item);
+  }
+  // When the API exposes `hasUpdateForLatestMeeting`, prefer it.
+  const hasUpdateFlag = (item as ActionItem & { hasUpdateForLatestMeeting?: boolean }).hasUpdateForLatestMeeting;
+  if (hasUpdateFlag === true) {
+    return false;
+  }
+  return isPendingActionItem(item);
+}
+
+export function pendingAssignedBadgeState(
+  items: ActionItem[],
+  user: SessionUser,
+  latestMeeting?: KpiLatestMeeting | null,
+): PendingBadgeState {
+  const mine = items.filter(
+    (item) => isAssignedActionOfficer(item, user) && isPendingForLatestMeeting(item, latestMeeting),
+  );
   const count = mine.length;
   if (count === 0) return { count: 0, tone: null };
   const anyOverdue = mine.some(isOverdue);
