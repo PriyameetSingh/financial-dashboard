@@ -1,4 +1,4 @@
-import { isAssignedActionOfficer, isPendingActionItem } from "@/src/lib/actionItemAssignment";
+import { isAssignedActionOfficer, isPendingActionItem, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import type { KpiLatestMeeting } from "@/src/lib/services/kpiService";
 import type { ActionItem, KPISubmission, SessionUser } from "@/types";
 
@@ -93,6 +93,36 @@ export function pendingKpiEntryBadgeState(
   if (count === 0) return { count: 0, tone: null };
   const tone = urgencyToneForMissingLatestMeetingEntry(latestMeeting.meetingDate);
   return { count, tone };
+}
+
+/** KPI measurements awaiting this user's review (submitted & reviewable). */
+export function pendingKpiReviewBadgeState(submissions: KPISubmission[]): PendingBadgeState {
+  const mine = submissions.filter(
+    (s) => s.status === "submitted_pending" && s.currentUserCanReview === true,
+  );
+  const count = mine.length;
+  if (count === 0) return { count: 0, tone: null };
+
+  // Use staleness to drive urgency where available.
+  const anyOverdue = mine.some((s) => (s.staleDays ?? 0) > 7);
+  if (anyOverdue) return { count, tone: "red" };
+  const anyDelayed = mine.some((s) => (s.staleDays ?? 0) > 0);
+  if (anyDelayed) return { count, tone: "yellow" };
+  return { count, tone: "green" };
+}
+
+/** Decision-tracker items awaiting this user's review (UNDER_REVIEW + reviewer match). */
+export function pendingActionReviewBadgeState(items: ActionItem[], user: SessionUser): PendingBadgeState {
+  const mine = items.filter(
+    (item) => item.status === "UNDER_REVIEW" && isDesignatedReviewer(item, user),
+  );
+  const count = mine.length;
+  if (count === 0) return { count: 0, tone: null };
+  const anyOverdue = mine.some(isOverdue);
+  if (anyOverdue) return { count, tone: "red" };
+  const anyDueSoon = mine.some(isDueWithinWeek);
+  if (anyDueSoon) return { count, tone: "yellow" };
+  return { count, tone: "green" };
 }
 
 export function mergePendingBadges(slices: PendingBadgeState[]): PendingBadgeState {

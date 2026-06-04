@@ -14,6 +14,8 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
+import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
+import { useSearchParams } from "next/navigation";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
@@ -45,43 +47,6 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
-/** True when this user is one of the item's performers (`users.code` or display name). */
-function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): boolean {
-  if (item.performers?.length) {
-    return item.performers.some(
-      (p) =>
-        (!!p.code && p.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
-        normalize(p.name) === normalize(u.name),
-    );
-  }
-  const code = item.assignedToUserCode?.trim().toLowerCase();
-  if (code && code === u.id.trim().toLowerCase()) return true;
-  return normalize(item.assignedTo) === normalize(u.name);
-}
-
-/** True when this user is one of the item's reviewers. */
-function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
-  // Prefer explicit reviewer user ids from the API (DB ids, same as SessionUser.id).
-  if (item.reviewerUserIds?.length) {
-    if (item.reviewerUserIds.includes(u.id)) return true;
-  }
-  if (item.reviewerUserId && item.reviewerUserId === u.id) {
-    return true;
-  }
-
-  // Fallback to legacy code/name matching for older data shapes.
-  if (item.reviewers?.length) {
-    return item.reviewers.some(
-      (r) =>
-        (!!r.code && r.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
-        normalize(r.name) === normalize(u.name),
-    );
-  }
-  const code = item.reviewerUserCode?.trim().toLowerCase();
-  if (code && code === u.id.trim().toLowerCase()) return true;
-  return normalize(item.reviewer) === normalize(u.name);
-}
-
 function lastActivityMs(item: ActionItem): number {
   if (item.updates?.length) {
     return Math.max(...item.updates.map((u) => new Date(u.timestamp).getTime()));
@@ -91,11 +56,17 @@ function lastActivityMs(item: ActionItem): number {
 
 export default function ActionItemsPage() {
   const user = useRequireAuth();
+  const searchParams = useSearchParams();
+  const initialFilterFromUrl = searchParams.get("filter");
+  const initialFilterId =
+    initialFilterFromUrl && STATUS_FILTERS.some((entry) => entry.id === initialFilterFromUrl)
+      ? initialFilterFromUrl
+      : "all";
   const [items, setItems] = useState<ActionItem[]>([]);
   const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(initialFilterId);
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");

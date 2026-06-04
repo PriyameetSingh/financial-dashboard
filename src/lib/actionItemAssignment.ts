@@ -17,6 +17,29 @@ export function isAssignedActionOfficer(item: ActionItem, u: { id: string; name:
   return normalize(item.assignedTo) === normalize(u.name);
 }
 
+/** True when this user is one of the item's reviewers (same rules as `app/action-items/page.tsx`). */
+export function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
+  // Prefer explicit reviewer user ids from the API (DB ids, same as SessionUser.id).
+  if (item.reviewerUserIds?.length) {
+    if (item.reviewerUserIds.includes(u.id)) return true;
+  }
+  if (item.reviewerUserId && item.reviewerUserId === u.id) {
+    return true;
+  }
+
+  // Fallback to legacy code/name matching for older data shapes.
+  if (item.reviewers?.length) {
+    return item.reviewers.some(
+      (r) =>
+        (!!r.code && r.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
+        normalize(r.name) === normalize(u.name),
+    );
+  }
+  const code = item.reviewerUserCode?.trim().toLowerCase();
+  if (code && code === u.id.trim().toLowerCase()) return true;
+  return normalize(item.reviewer) === normalize(u.name);
+}
+
 export function isPendingActionItem(item: ActionItem): boolean {
   return item.status !== "COMPLETED";
 }
