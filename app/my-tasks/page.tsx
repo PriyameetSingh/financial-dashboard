@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { Permission, hasPermission } from "@/lib/auth";
+import { Permission, UserRole, hasPermission } from "@/lib/auth";
 import { useRequireMyTasksHub } from "@/src/lib/route-guards";
-import { hasAnyAssignedActionItems } from "@/src/lib/actionItemAssignment";
+import { hasAnyAssignedActionItems, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import {
   BADGE_TONE_CLASS,
   pendingAssignedBadgeState,
   pendingKpiEntryBadgeState,
+  pendingKpiReviewBadgeState,
+  pendingActionReviewBadgeState,
 } from "@/src/lib/myTasksPendingBadges";
 import { fetchActionItems } from "@/src/lib/services/actionItemService";
 import { fetchKPISubmissions, type KpiLatestMeeting } from "@/src/lib/services/kpiService";
@@ -84,13 +86,23 @@ export default function MyTasksHubPage() {
   }, [user]);
 
   const actionItemsBadge = useMemo(
-    () => (user ? pendingAssignedBadgeState(actionItems, user) : { count: 0, tone: null }),
-    [actionItems, user],
+    () => (user ? pendingAssignedBadgeState(actionItems, user, latestKpiMeeting) : { count: 0, tone: null }),
+    [actionItems, user, latestKpiMeeting],
   );
 
   const kpiEntryBadge = useMemo(
     () => pendingKpiEntryBadgeState(kpiSubmissions, latestKpiMeeting),
     [kpiSubmissions, latestKpiMeeting],
+  );
+
+  const kpiReviewBadge = useMemo(
+    () => pendingKpiReviewBadgeState(kpiSubmissions),
+    [kpiSubmissions],
+  );
+
+  const actionReviewBadge = useMemo(
+    () => (user ? pendingActionReviewBadgeState(actionItems, user) : { count: 0, tone: null }),
+    [actionItems, user],
   );
 
   if (!user) {
@@ -103,20 +115,25 @@ export default function MyTasksHubPage() {
   const showActionsByPermission =
     hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
     hasPermission(user, Permission.CREATE_ACTION_ITEMS);
-  const showActions = showActionsByPermission || hasAnyAssignedActionItems(actionItems, user);
+  const hasAnyReviewItems = actionItems.some((item) => isDesignatedReviewer(item, user));
+  const showActions = showActionsByPermission || hasAnyAssignedActionItems(actionItems, user) || hasAnyReviewItems;
+
+  const isTasuOrVerticalHead = user.role === UserRole.TASU || user.role === UserRole.VERTICAL_HEAD;
+  const showKpiReviewButton = isTasuOrVerticalHead || kpiReviewBadge.count > 0;
+  const showActionReviewButton = isTasuOrVerticalHead || actionReviewBadge.count > 0;
 
   return (
     <AppShell title="My tasks">
       <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
         <header className="max-w-3xl">
-          <h1 className="text-xl font-semibold text-[var(--sidebar-text-primary)]">My tasks</h1>
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">My tasks</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             Jump to the work you own: KPI measurements, financial scheme entry, and decision-tracker items — without
             hunting through the rest of the sidebar.
           </p>
         </header>
 
-        <div className="grid max-w-3xl gap-4 sm:grid-cols-1">
+        <div className="grid max-w-5xl gap-4 sm:grid-cols-2">
           {showKpi && (
             <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-sm">
               <div className="flex items-start gap-3">
@@ -135,13 +152,31 @@ export default function MyTasksHubPage() {
                     singular="KPI still to enter for this meeting"
                     plural="KPIs still to enter for this meeting"
                   />
-                  <Link
-                    href="/kpis/entry"
-                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
-                  >
-                    Open KPI entry
-                    <ArrowRight size={14} aria-hidden />
-                  </Link>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href="/kpis/entry"
+                      className="inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
+                    >
+                      Open KPI entry
+                      <ArrowRight size={14} aria-hidden />
+                    </Link>
+                    {showKpiReviewButton && (
+                      <Link
+                        href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                      >
+                        <span>Pending review</span>
+                        <span
+                          className={`ml-1 text-[11px] font-semibold tabular-nums ${
+                            kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {kpiReviewBadge.count}
+                        </span>
+                        <ArrowRight size={14} aria-hidden />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -166,13 +201,33 @@ export default function MyTasksHubPage() {
                     singular="pending action item"
                     plural="pending action items"
                   />
-                  <Link
-                    href="/action-items"
-                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
-                  >
-                    Open full action list
-                    <ArrowRight size={14} aria-hidden />
-                  </Link>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href="/action-items"
+                      className="inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
+                    >
+                      Open full action list
+                      <ArrowRight size={14} aria-hidden />
+                    </Link>
+                    {showActionReviewButton && (
+                      <Link
+                        href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                      >
+                        <span>Pending review</span>
+                        <span
+                          className={`ml-1 text-[11px] font-semibold tabular-nums ${
+                            actionReviewBadge.tone
+                              ? BADGE_TONE_CLASS[actionReviewBadge.tone]
+                              : "text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {actionReviewBadge.count}
+                        </span>
+                        <ArrowRight size={14} aria-hidden />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>

@@ -40,6 +40,15 @@ function matchUser(catalog: SessionUser[], name: string) {
 }
 
 function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
+  // Prefer explicit reviewer user ids from the API (DB ids, same as SessionUser.id).
+  if (item.reviewerUserIds?.length) {
+    if (item.reviewerUserIds.includes(u.id)) return true;
+  }
+  if (item.reviewerUserId && item.reviewerUserId === u.id) {
+    return true;
+  }
+
+  // Fallback to legacy code/name matching for older data shapes.
   if (item.reviewers?.length) {
     return item.reviewers.some(
       (r) =>

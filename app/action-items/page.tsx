@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
@@ -14,11 +14,22 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
+import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
+import { useSearchParams } from "next/navigation";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
-  { id: "pending", label: "Pending Action", match: (status) => ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED"].includes(status) },
+  {
+    id: "pending",
+    label: "Pending Action",
+    match: (status) => ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED"].includes(status),
+  },
   { id: "review", label: "Under Review", match: (status) => status === "UNDER_REVIEW" },
+  {
+    id: "my_tasks",
+    label: "My tasks",
+    match: (status) => status === "UNDER_REVIEW",
+  },
   { id: "completed", label: "Completed", match: (status) => status === "COMPLETED" },
   { id: "overdue", label: "Overdue", match: (status) => status === "OVERDUE" },
 ];
@@ -34,34 +45,6 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
-/** True when this user is one of the item's performers (`users.code` or display name). */
-function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): boolean {
-  if (item.performers?.length) {
-    return item.performers.some(
-      (p) =>
-        (!!p.code && p.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
-        normalize(p.name) === normalize(u.name),
-    );
-  }
-  const code = item.assignedToUserCode?.trim().toLowerCase();
-  if (code && code === u.id.trim().toLowerCase()) return true;
-  return normalize(item.assignedTo) === normalize(u.name);
-}
-
-/** True when this user is one of the item's reviewers (`users.code` or display name). */
-function isDesignatedReviewer(item: ActionItem, u: { id: string; name: string }): boolean {
-  if (item.reviewers?.length) {
-    return item.reviewers.some(
-      (r) =>
-        (!!r.code && r.code.trim().toLowerCase() === u.id.trim().toLowerCase()) ||
-        normalize(r.name) === normalize(u.name),
-    );
-  }
-  const code = item.reviewerUserCode?.trim().toLowerCase();
-  if (code && code === u.id.trim().toLowerCase()) return true;
-  return normalize(item.reviewer) === normalize(u.name);
-}
-
 function lastActivityMs(item: ActionItem): number {
   if (item.updates?.length) {
     return Math.max(...item.updates.map((u) => new Date(u.timestamp).getTime()));
@@ -69,13 +52,19 @@ function lastActivityMs(item: ActionItem): number {
   return new Date(item.dueDate).getTime();
 }
 
-export default function ActionItemsPage() {
+function ActionItemsContent() {
   const user = useRequireAuth();
+  const searchParams = useSearchParams();
+  const initialFilterFromUrl = searchParams.get("filter");
+  const initialFilterId =
+    initialFilterFromUrl && STATUS_FILTERS.some((entry) => entry.id === initialFilterFromUrl)
+      ? initialFilterFromUrl
+      : "all";
   const [items, setItems] = useState<ActionItem[]>([]);
   const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(initialFilterId);
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -162,11 +151,13 @@ export default function ActionItemsPage() {
   const listItems = useMemo(() => {
     if (!user) return [];
     if (canViewAllItems) return items;
-    return items.filter((item) => isAssignedOfficer(item, user) || isDesignatedReviewer(item, user));
+    return items.filter((item) => isAssignedActionOfficer(item, user) || isDesignatedReviewer(item, user));
   }, [user, items, canViewAllItems]);
 
   const filtered = useMemo(() => {
     const activeFilter = STATUS_FILTERS.find((entry) => entry.id === filter) ?? STATUS_FILTERS[0];
+    const isMyTasks = activeFilter.id === "my_tasks";
+
     const results = listItems.filter((item) => {
       const matchesQuery =
         item.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -175,6 +166,9 @@ export default function ActionItemsPage() {
       const matchesVertical = verticalFilter === "all" || item.vertical === verticalFilter;
       const matchesAssignee = assigneeFilter === "all" || item.assignedTo === assigneeFilter;
       const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter;
+      const matchesMyTasksScope =
+        !isMyTasks ||
+        (!!user && item.status === "UNDER_REVIEW" && isDesignatedReviewer(item, user));
       const matchesDue = (() => {
         if (dueFilter === "all") return true;
         const due = new Date(item.dueDate);
@@ -192,7 +186,15 @@ export default function ActionItemsPage() {
         }
         return true;
       })();
-      return matchesQuery && activeFilter.match(item.status) && matchesVertical && matchesAssignee && matchesPriority && matchesDue;
+      return (
+        matchesQuery &&
+        activeFilter.match(item.status) &&
+        matchesVertical &&
+        matchesAssignee &&
+        matchesPriority &&
+        matchesDue &&
+        matchesMyTasksScope
+      );
     });
 
     return results.sort((a, b) => {
@@ -211,7 +213,7 @@ export default function ActionItemsPage() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy]);
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user]);
 
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
@@ -1066,5 +1068,21 @@ export default function ActionItemsPage() {
 )}
 
     </AppShell>
+  );
+}
+
+export default function ActionItemsPage() {
+  return (
+    <Suspense fallback={
+      <AppShell title="Action Items">
+        <div className="relative space-y-6 px-6 py-6">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+            Loading action items...
+          </div>
+        </div>
+      </AppShell>
+    }>
+      <ActionItemsContent />
+    </Suspense>
   );
 }

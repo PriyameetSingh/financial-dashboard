@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchKPISubmissions, reviewKpiMeasurement } from "@/src/lib/services/kpiService";
@@ -170,14 +171,16 @@ function kpiProgressScore(s: KPISubmission): number | null {
   return null;
 }
 
-export default function KPIsPage() {
+function KPIsPageContent() {
   const user = useRequireAuth();
+  const searchParams = useSearchParams();
+  const initialTabFromUrl = searchParams.get("tab");
   const [submissions, setSubmissions] = useState<KPISubmission[]>([]);
   const [financialEntries, setFinancialEntries] = useState<FinancialEntry[]>([]);
   const [sidebarQuery, setSidebarQuery] = useState("");
   const [focusScheme, setFocusScheme] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(initialTabFromUrl ?? "all");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [viewKpi, setViewKpi] = useState<KPISubmission | null>(null);
@@ -236,9 +239,12 @@ export default function KPIsPage() {
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
+      // If the URL explicitly requested a tab (e.g. ?tab=pending_review), avoid
+      // immediately overriding it while data is still loading.
+      if (initialTabFromUrl && activeTab === initialTabFromUrl) return;
       setActiveTab(tabs[0]?.id ?? "all");
     }
-  }, [tabs, activeTab]);
+  }, [tabs, activeTab, initialTabFromUrl]);
 
   const filtered = useMemo(() => {
     const tab = tabs.find((item) => item.id === activeTab) ?? tabs[0];
@@ -792,5 +798,19 @@ export default function KPIsPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+export default function KPIsPage() {
+  return (
+    <Suspense fallback={
+      <AppShell title="KPI Tracker">
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-[var(--bg-document)]">
+          <div className="text-sm text-[var(--text-muted)]">Loading KPI Performance Monitor...</div>
+        </div>
+      </AppShell>
+    }>
+      <KPIsPageContent />
+    </Suspense>
   );
 }
