@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { Permission, hasPermission } from "@/lib/auth";
 import { useRequireMyTasksHub } from "@/src/lib/route-guards";
-import { hasAnyAssignedActionItems } from "@/src/lib/actionItemAssignment";
+import { hasAnyAssignedActionItems, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import {
   BADGE_TONE_CLASS,
   pendingAssignedBadgeState,
@@ -115,7 +115,8 @@ export default function MyTasksHubPage() {
   const showActionsByPermission =
     hasPermission(user, Permission.UPDATE_ACTION_ITEMS) ||
     hasPermission(user, Permission.CREATE_ACTION_ITEMS);
-  const showActions = showActionsByPermission || hasAnyAssignedActionItems(actionItems, user);
+  const hasAnyReviewItems = actionItems.some((item) => isDesignatedReviewer(item, user));
+  const showActions = showActionsByPermission || hasAnyAssignedActionItems(actionItems, user) || hasAnyReviewItems;
 
   return (
     <AppShell title="My tasks">
@@ -159,7 +160,7 @@ export default function MyTasksHubPage() {
                       href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
                       className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
                     >
-                      <span>Pending review in KPI monitoring</span>
+                      <span>Pending review</span>
                       <span
                         className={`ml-1 text-[11px] font-semibold tabular-nums ${
                           kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--text-muted)]"
@@ -206,7 +207,7 @@ export default function MyTasksHubPage() {
                       href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
                       className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
                     >
-                      <span>Pending review in Decision tracker</span>
+                      <span>Pending review</span>
                       <span
                         className={`ml-1 text-[11px] font-semibold tabular-nums ${
                           actionReviewBadge.tone
