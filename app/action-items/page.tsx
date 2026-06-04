@@ -17,8 +17,19 @@ import PriorityBadge from "@/src/components/ui/PriorityBadge";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
-  { id: "pending", label: "Pending Action", match: (status) => ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED"].includes(status) },
+  {
+    id: "pending",
+    label: "Pending Action",
+    match: (status) => ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED"].includes(status),
+  },
   { id: "review", label: "Under Review", match: (status) => status === "UNDER_REVIEW" },
+  {
+    id: "my_tasks",
+    label: "My tasks",
+    // Same underlying status as "Under Review" – we further scope to the
+    // logged-in reviewer inside the main filter function below.
+    match: (status) => status === "UNDER_REVIEW",
+  },
   { id: "completed", label: "Completed", match: (status) => status === "COMPLETED" },
   { id: "overdue", label: "Overdue", match: (status) => status === "OVERDUE" },
 ];
@@ -167,6 +178,8 @@ export default function ActionItemsPage() {
 
   const filtered = useMemo(() => {
     const activeFilter = STATUS_FILTERS.find((entry) => entry.id === filter) ?? STATUS_FILTERS[0];
+    const isMyTasks = activeFilter.id === "my_tasks";
+
     const results = listItems.filter((item) => {
       const matchesQuery =
         item.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -175,6 +188,9 @@ export default function ActionItemsPage() {
       const matchesVertical = verticalFilter === "all" || item.vertical === verticalFilter;
       const matchesAssignee = assigneeFilter === "all" || item.assignedTo === assigneeFilter;
       const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter;
+      const matchesMyTasksScope =
+        !isMyTasks ||
+        (!!user && item.status === "UNDER_REVIEW" && isDesignatedReviewer(item, user));
       const matchesDue = (() => {
         if (dueFilter === "all") return true;
         const due = new Date(item.dueDate);
@@ -192,7 +208,15 @@ export default function ActionItemsPage() {
         }
         return true;
       })();
-      return matchesQuery && activeFilter.match(item.status) && matchesVertical && matchesAssignee && matchesPriority && matchesDue;
+      return (
+        matchesQuery &&
+        activeFilter.match(item.status) &&
+        matchesVertical &&
+        matchesAssignee &&
+        matchesPriority &&
+        matchesDue &&
+        matchesMyTasksScope
+      );
     });
 
     return results.sort((a, b) => {
@@ -211,7 +235,7 @@ export default function ActionItemsPage() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy]);
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user]);
 
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
