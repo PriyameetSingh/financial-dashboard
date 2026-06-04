@@ -126,7 +126,7 @@ export default function MyTasksHubPage() {
     <AppShell title="My tasks">
       <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
         <header className="max-w-3xl">
-          <h1 className="text-xl font-semibold text-[var(--sidebar-text-primary)]">My tasks</h1>
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">My tasks</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             Jump to the work you own: KPI measurements, financial scheme entry, and decision-tracker items — without
             hunting through the rest of the sidebar.
