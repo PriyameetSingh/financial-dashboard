@@ -133,7 +133,7 @@ export default function MyTasksHubPage() {
           </p>
         </header>
 
-        <div className="grid max-w-3xl gap-4 sm:grid-cols-1">
+        <div className="grid max-w-5xl gap-4 sm:grid-cols-2">
           {showKpi && (
             <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-sm">
               <div className="flex items-start gap-3">
