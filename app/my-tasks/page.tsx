@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { Permission, hasPermission } from "@/lib/auth";
+import { Permission, UserRole, hasPermission } from "@/lib/auth";
 import { useRequireMyTasksHub } from "@/src/lib/route-guards";
 import { hasAnyAssignedActionItems, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import {
@@ -118,6 +118,10 @@ export default function MyTasksHubPage() {
   const hasAnyReviewItems = actionItems.some((item) => isDesignatedReviewer(item, user));
   const showActions = showActionsByPermission || hasAnyAssignedActionItems(actionItems, user) || hasAnyReviewItems;
 
+  const isTasuOrVerticalHead = user.role === UserRole.TASU || user.role === UserRole.VERTICAL_HEAD;
+  const showKpiReviewButton = isTasuOrVerticalHead || kpiReviewBadge.count > 0;
+  const showActionReviewButton = isTasuOrVerticalHead || actionReviewBadge.count > 0;
+
   return (
     <AppShell title="My tasks">
       <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
@@ -156,20 +160,22 @@ export default function MyTasksHubPage() {
                       Open KPI entry
                       <ArrowRight size={14} aria-hidden />
                     </Link>
-                    <Link
-                      href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
-                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
-                    >
-                      <span>Pending review</span>
-                      <span
-                        className={`ml-1 text-[11px] font-semibold tabular-nums ${
-                          kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--text-muted)]"
-                        }`}
+                    {showKpiReviewButton && (
+                      <Link
+                        href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
                       >
-                        {kpiReviewBadge.count}
-                      </span>
-                      <ArrowRight size={14} aria-hidden />
-                    </Link>
+                        <span>Pending review</span>
+                        <span
+                          className={`ml-1 text-[11px] font-semibold tabular-nums ${
+                            kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {kpiReviewBadge.count}
+                        </span>
+                        <ArrowRight size={14} aria-hidden />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,22 +209,24 @@ export default function MyTasksHubPage() {
                       Open full action list
                       <ArrowRight size={14} aria-hidden />
                     </Link>
-                    <Link
-                      href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
-                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
-                    >
-                      <span>Pending review</span>
-                      <span
-                        className={`ml-1 text-[11px] font-semibold tabular-nums ${
-                          actionReviewBadge.tone
-                            ? BADGE_TONE_CLASS[actionReviewBadge.tone]
-                            : "text-[var(--text-muted)]"
-                        }`}
+                    {showActionReviewButton && (
+                      <Link
+                        href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
                       >
-                        {actionReviewBadge.count}
-                      </span>
-                      <ArrowRight size={14} aria-hidden />
-                    </Link>
+                        <span>Pending review</span>
+                        <span
+                          className={`ml-1 text-[11px] font-semibold tabular-nums ${
+                            actionReviewBadge.tone
+                              ? BADGE_TONE_CLASS[actionReviewBadge.tone]
+                              : "text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {actionReviewBadge.count}
+                        </span>
+                        <ArrowRight size={14} aria-hidden />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
