@@ -17,6 +17,7 @@ import { fetchActionItems } from "@/src/lib/services/actionItemService";
 import { fetchKPISubmissions, type KpiLatestMeeting } from "@/src/lib/services/kpiService";
 import type { ActionItem, KPISubmission } from "@/types";
 import { ArrowRight, ClipboardList, IndianRupee, Layers, ListChecks } from "lucide-react";
+import PendanceReportSection from "@/components/pendance-report/PendanceReportSection";
 
 function PendingCountLabel({
   count,
@@ -275,6 +276,10 @@ export default function MyTasksHubPage() {
             </section>
           )}
         </div>
+
+        {user.role === UserRole.VERTICAL_HEAD && (
+          <PendanceReportSection user={user} />
+        )}
       </div>
     </AppShell>
   );

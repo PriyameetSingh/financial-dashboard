@@ -52,6 +52,19 @@ function lastActivityMs(item: ActionItem): number {
   return new Date(item.dueDate).getTime();
 }
 
+function formatDateTime(timestamp: string) {
+  const parsed = new Date(timestamp);
+  if (Number.isNaN(parsed.getTime())) return timestamp;
+  return parsed.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function ActionItemsContent() {
   const user = useRequireAuth();
   const searchParams = useSearchParams();
@@ -634,9 +647,19 @@ function ActionItemsContent() {
                 index % 2 === 0
                   ? "border-[var(--border)] bg-[var(--bg-card)]"
                   : "border-[var(--border)] bg-[var(--bg-alternate-card)]";
-              const sorted = [...(item.updates ?? [])].sort(
-                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-              );
+              const sorted = [...(item.updates ?? [])]
+                .filter((u) => {
+                  const note = u.note?.trim() ?? "";
+                  return (
+                    note !== "Action item created" &&
+                    note !== "Marked in progress" &&
+                    !note.startsWith("Reassigned: performers") &&
+                    !note.startsWith("Reviewer rejected:")
+                  );
+                })
+                .sort(
+                  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+                );
               return (
                 <div
                   key={item.id}
@@ -669,7 +692,7 @@ function ActionItemsContent() {
                             <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full border-2 border-[var(--bg-card)] bg-[var(--text-primary)] ring-2 ring-[var(--border)]" />
                             <div className="space-y-1.5">
                               <p className="text-sm font-bold text-[var(--text-primary)]">
-                                {u.timestamp}
+                                {formatDateTime(u.timestamp)}
                                 {u.actor ? ` · ${u.actor}` : ""}
                                 <span className="ml-2 inline-flex items-center rounded-md bg-[var(--bg-document)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[var(--border)]">
                                   {u.status.replace(/_/g, " ")}

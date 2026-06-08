@@ -101,7 +101,8 @@ function mapActionItem(item: ActionItemWithRelations) {
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,
-      timestamp: toIsoDate(update.timestamp),
+      meetingId: update.meetingId,
+      timestamp: update.timestamp.toISOString(),
       actor: update.createdBy?.name ?? "",
       status: update.status,
       note: update.note,

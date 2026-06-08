@@ -63,7 +63,8 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
     hasUpdateForLatestMeeting,
     updates: item.updates.map((update) => ({
       id: update.id,
-      timestamp: toIsoDate(update.timestamp),
+      meetingId: update.meetingId,
+      timestamp: update.timestamp.toISOString(),
       actor: update.createdBy?.name ?? "",
       status: update.status,
       note: update.note,

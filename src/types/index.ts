@@ -71,6 +71,7 @@ export interface ActionItemUpdate {
   actor: string;
   status: ActionItemStatus;
   note: string;
+  meetingId?: string | null;
 }
 
 export interface ActionItemProof {
@@ -155,8 +156,15 @@ export interface KPISubmission {
   bottleneckReason?: string | null;
   /** ACS escalation flag from latest measurement. */
   escalationFlag?: KpiEscalationFlag | null;
-  /** Last N measurement values for velocity/trajectory display (newest first). */
-  velocityTrail?: Array<{ measuredAt: string; numeratorValue: number | null; yesValue: boolean | null }>;
+  velocityTrail?: Array<{
+    id: string;
+    meetingId: string | null;
+    measuredAt: string;
+    numeratorValue: number | null;
+    yesValue: boolean | null;
+    workflowStatus: string;
+    remarks?: string | null;
+  }>;
   /** Days since last measurement update; null if never updated. */
   staleDays?: number | null;
   /** Whether a measurement exists for the latest dashboard meeting (weekly cycle). */

@@ -74,6 +74,19 @@ function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): b
   return normalize(item.assignedTo) === normalize(u.name);
 }
 
+function formatDateTime(timestamp: string) {
+  const parsed = new Date(timestamp);
+  if (Number.isNaN(parsed.getTime())) return timestamp;
+  return parsed.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export default function ActionItemDetailPage() {
   const user = useRequireAuth();
   const router = useRouter();
@@ -669,7 +682,7 @@ export default function ActionItemDetailPage() {
               <div key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
                 <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
                   <span>{entry.author}</span>
-                  <span>{entry.timestamp}</span>
+                  <span>{formatDateTime(entry.timestamp)}</span>
                 </div>
                 {editingUpdateId === entry.id ? (
                   <div className="mt-2 space-y-2">
