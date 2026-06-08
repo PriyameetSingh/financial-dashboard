@@ -229,7 +229,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
   if (loading && meetings.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 shadow-sm">
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
         <div className="flex flex-col items-center gap-2">
           <RefreshCw className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
           <p className="text-sm text-[var(--text-muted)]">Loading pendance report...</p>
@@ -239,7 +239,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
       {/* Header & Controls */}
       <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 md:flex-row md:items-center md:justify-between">
         <div>
@@ -308,12 +308,12 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
       <div className="mt-5 overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr className="border-b border-[var(--border)] text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)] font-semibold">
-              <th className="pb-3 pr-4 font-semibold">Task Details</th>
-              <th className="pb-3 pr-4 font-semibold">Owner / Performer</th>
-              <th className="pb-3 pr-4 font-semibold">Update for Selected Meeting</th>
-              <th className="pb-3 pr-4 font-semibold">Last Update Date</th>
-              <th className="pb-3 text-right font-semibold">Actions</th>
+            <tr className="border-b border-[var(--border)] bg-[var(--bg-document)]/45 text-[10px] uppercase tracking-[0.25em] text-[var(--text-secondary)] font-semibold">
+              <th className="pb-3 pt-3 pl-4 pr-4 font-semibold">Task Details</th>
+              <th className="pb-3 pt-3 pr-4 font-semibold">Owner / Performer</th>
+              <th className="pb-3 pt-3 pr-4 font-semibold">Update for Selected Meeting</th>
+              <th className="pb-3 pt-3 pr-4 font-semibold">Last Update Date</th>
+              <th className="pb-3 pt-3 pr-4 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -413,12 +413,12 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                 return (
                   <tr
                     key={`${task.type}-${task.id}-${index}`}
-                    className={`border-b border-[var(--border)] hover:bg-[var(--sidebar-hover-bg)]/20 transition ${
-                      index % 2 === 0 ? "bg-[var(--bg-card)]" : "bg-[var(--bg-surface)]"
+                    className={`border-b border-[var(--border)] hover:bg-[var(--bg-content-surface)]/30 transition ${
+                      index % 2 === 0 ? "bg-[var(--bg-card)]" : "bg-[var(--bg-document)]/30"
                     }`}
                   >
                     {/* Task details */}
-                    <td className="py-4 pr-4">
+                    <td className="py-4 pl-4 pr-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
@@ -485,7 +485,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                     </td>
 
                     {/* Actions */}
-                    <td className="py-4 text-right">
+                    <td className="py-4 pr-4 text-right">
                       {canAct ? (
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -528,14 +528,14 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
       {/* Rejection Modal */}
       {rejectingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">Reject Completion</h3>
-            <p className="mt-1.5 text-xs text-[var(--text-muted)]">
+            <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
               Are you sure you want to reject the update for: <span className="font-semibold text-[var(--text-primary)]">{rejectingItem.title}</span>?
             </p>
             
             <div className="mt-4">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
                 Reason for Rejection <span className="text-[var(--alert-critical)]">*</span>
               </label>
               <textarea
@@ -543,7 +543,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                 onChange={(e) => setRejectionComment(e.target.value)}
                 placeholder="Specify what needs to be fixed or updated..."
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-document)]/50 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
               />
             </div>
 
@@ -551,7 +551,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
               <button
                 type="button"
                 onClick={() => setRejectingItem(null)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--sidebar-hover-bg)]/60"
+                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-document)]"
               >
                 Cancel
               </button>
