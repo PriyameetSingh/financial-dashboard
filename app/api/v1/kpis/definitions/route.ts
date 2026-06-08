@@ -176,9 +176,13 @@ export async function GET() {
           bottleneckReason: measurement?.bottleneckReason ?? null,
           escalationFlag: measurement?.escalationFlag ?? null,
           velocityTrail: (target?.measurements ?? []).map((m) => ({
+            id: m.id,
+            meetingId: m.meetingId,
             measuredAt: m.measuredAt.toISOString().slice(0, 10),
             numeratorValue: toNumber(m.numeratorValue),
             yesValue: m.yesValue ?? null,
+            workflowStatus: m.workflowStatus,
+            remarks: m.remarks,
           })),
           staleDays: measurement
             ? Math.floor((today.getTime() - measurement.measuredAt.getTime()) / 86_400_000)
