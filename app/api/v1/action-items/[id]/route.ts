@@ -102,7 +102,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     updates: item.updates.map((update) => ({
       id: update.id,
       meetingId: update.meetingId,
-      timestamp: toIsoDate(update.timestamp),
+      timestamp: update.timestamp.toISOString(),
       actor: update.createdBy?.name ?? "",
       status: update.status,
       note: update.note,
