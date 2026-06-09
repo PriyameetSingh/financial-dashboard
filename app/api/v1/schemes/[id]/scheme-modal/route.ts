@@ -164,7 +164,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
         })
       : Promise.resolve([]),
     prisma.kpiDefinition.findMany({
-      where: { schemeId },
+      where: { schemeId, archived: false },
       include: {
         subscheme: { select: { id: true, code: true, name: true } },
         targets: fy

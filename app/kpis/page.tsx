@@ -176,6 +176,7 @@ function KPIsPageContent() {
   const searchParams = useSearchParams();
   const initialTabFromUrl = searchParams.get("tab");
   const [submissions, setSubmissions] = useState<KPISubmission[]>([]);
+  const [archivedSubmissions, setArchivedSubmissions] = useState<KPISubmission[]>([]);
   const [financialEntries, setFinancialEntries] = useState<FinancialEntry[]>([]);
   const [sidebarQuery, setSidebarQuery] = useState("");
   const [focusScheme, setFocusScheme] = useState<string | null>(null);
@@ -186,13 +187,33 @@ function KPIsPageContent() {
   const [viewKpi, setViewKpi] = useState<KPISubmission | null>(null);
   const [editKpi, setEditKpi] = useState<KPISubmission | null>(null);
 
+  const refreshData = async () => {
+    try {
+      const [data, archivedData] = await Promise.all([
+        fetchKPISubmissions(false),
+        fetchKPISubmissions(true)
+      ]);
+      setSubmissions(data.submissions);
+      setArchivedSubmissions(archivedData.submissions);
+      return { submissions: data.submissions, archivedSubmissions: archivedData.submissions };
+    } catch (e) {
+      console.error(e);
+      return { submissions: [], archivedSubmissions: [] };
+    }
+  };
+
   useEffect(() => {
     let active = true;
     const load = async () => {
       try {
-        const [data, fin] = await Promise.all([fetchKPISubmissions(), fetchFinancialBudgets().catch(() => ({ entries: [] }))]);
+        const [data, archivedData, fin] = await Promise.all([
+          fetchKPISubmissions(false),
+          fetchKPISubmissions(true),
+          fetchFinancialBudgets().catch(() => ({ entries: [] }))
+        ]);
         if (!active) return;
         setSubmissions(data.submissions);
+        setArchivedSubmissions(archivedData.submissions);
         setFinancialEntries(fin.entries);
       } finally {
         if (active) setLoading(false);
@@ -225,6 +246,11 @@ function KPIsPageContent() {
         label: "Not Submitted",
         filter: (item) => item.status === "not_submitted" || item.status === "draft",
       },
+      {
+        id: "archived",
+        label: "Archived",
+        filter: () => true,
+      },
     ];
     if (hasReviewablePending) {
       const pendingTab: TabConfig = {
@@ -247,9 +273,12 @@ function KPIsPageContent() {
   }, [tabs, activeTab, initialTabFromUrl]);
 
   const filtered = useMemo(() => {
+    if (activeTab === "archived") {
+      return archivedSubmissions.filter((item) => !focusScheme || item.scheme === focusScheme);
+    }
     const tab = tabs.find((item) => item.id === activeTab) ?? tabs[0];
     return submissions.filter(tab.filter).filter((item) => !focusScheme || item.scheme === focusScheme);
-  }, [submissions, tabs, activeTab, focusScheme]);
+  }, [submissions, archivedSubmissions, tabs, activeTab, focusScheme]);
 
   const summary = useMemo(() => {
     const total = submissions.length;
@@ -275,9 +304,12 @@ function KPIsPageContent() {
   );
 
   const schemeNames = useMemo(() => {
-    const set = new Set(submissions.map((s) => s.scheme.trim()).filter(Boolean));
+    const set = new Set([
+      ...submissions.map((s) => s.scheme.trim()),
+      ...archivedSubmissions.map((s) => s.scheme.trim())
+    ].filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [submissions]);
+  }, [submissions, archivedSubmissions]);
 
   const filteredSchemes = useMemo(() => {
     const q = sidebarQuery.trim().toLowerCase();
@@ -645,8 +677,7 @@ function KPIsPageContent() {
                               setReviewBusyId(item.id);
                               try {
                                 await reviewKpiMeasurement(item.latestMeasurementId, { decision: "approve" });
-                                const data = await fetchKPISubmissions();
-                                setSubmissions(data.submissions);
+                                await refreshData();
                                 setActionMessage(`Approved ${item.scheme} — ${item.description}.`);
                               } catch (e: unknown) {
                                 setActionMessage(e instanceof Error ? e.message : "Approval failed");
@@ -670,8 +701,7 @@ function KPIsPageContent() {
                               setReviewBusyId(item.id);
                               try {
                                 await reviewKpiMeasurement(item.latestMeasurementId, { decision: "reject", note });
-                                const data = await fetchKPISubmissions();
-                                setSubmissions(data.submissions);
+                                await refreshData();
                                 setActionMessage(`Rejected ${item.scheme} — ${item.description}.`);
                               } catch (e: unknown) {
                                 setActionMessage(e instanceof Error ? e.message : "Reject failed");
@@ -776,10 +806,9 @@ function KPIsPageContent() {
         isReviewer={viewKpi?.currentUserCanReview === true}
         onClose={() => setViewKpi(null)}
         onReviewed={async () => {
-          const data = await fetchKPISubmissions();
-          setSubmissions(data.submissions);
+          const res = await refreshData();
           if (viewKpi) {
-            const updated = data.submissions.find((s) => s.id === viewKpi.id);
+            const updated = res.submissions.find((s) => s.id === viewKpi.id) || res.archivedSubmissions.find((s) => s.id === viewKpi.id);
             if (updated) setViewKpi(updated);
           }
         }}
@@ -791,8 +820,7 @@ function KPIsPageContent() {
           submission={editKpi}
           onClose={() => setEditKpi(null)}
           onSaved={async () => {
-            const data = await fetchKPISubmissions();
-            setSubmissions(data.submissions);
+            await refreshData();
             setActionMessage("KPI updated successfully.");
           }}
         />

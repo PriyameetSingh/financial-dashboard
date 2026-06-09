@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
         reviewerUsers: { select: { userId: true } },
       },
     });
-    if (!definition) {
-      return NextResponse.json({ detail: "KPI definition not found" }, { status: 404 });
+    if (!definition || (definition as any).archived) {
+      return NextResponse.json({ detail: "KPI definition not found or archived" }, { status: 404 });
     }
 
     if (!actor) {

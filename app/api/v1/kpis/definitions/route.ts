@@ -36,9 +36,13 @@ function mapWorkflowStatus(workflowStatus?: string | null): "not_submitted" | "d
   return "submitted";
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const actor = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+
+    const { searchParams } = new URL(request.url);
+    const archivedParam = searchParams.get("archived");
+    const archivedFilter = archivedParam === "true";
 
     const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
@@ -49,6 +53,7 @@ export async function GET() {
 
     const definitions = await prisma.kpiDefinition.findMany({
       where: {
+        archived: archivedFilter,
         scheme: { archived: false },
       },
       include: {
@@ -199,6 +204,7 @@ export async function GET() {
           currentUserCanReview,
           currentUserCanReassignOwners: canManageSchemes,
           canFlagEscalation,
+          archived: definition.archived,
         };
       });
 

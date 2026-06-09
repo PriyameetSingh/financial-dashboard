@@ -132,7 +132,7 @@ function getSubschemeBudgetProgress(sub: {
 }
 
 export default function SchemeEntryPage() {
-  useRequireRole([UserRole.FA, UserRole.NODAL_OFFICER, UserRole.TASU], "/");
+  useRequireRole([UserRole.FA, UserRole.TASU], "/");
 
   const [query, setQuery] = useState("");
 
@@ -422,22 +422,22 @@ export default function SchemeEntryPage() {
         prev.map((e) =>
           e.id === schemeId
             ? appendSupplementToEntry(e, {
-                hasSubschemes,
-                subschemeCode: subCode,
-                row,
-                amountCr,
-              })
+              hasSubschemes,
+              subschemeCode: subCode,
+              row,
+              amountCr,
+            })
             : e,
         ),
       );
       setSelected((prev) =>
         prev && prev.id === schemeId
           ? appendSupplementToEntry(prev, {
-              hasSubschemes,
-              subschemeCode: subCode,
-              row,
-              amountCr,
-            })
+            hasSubschemes,
+            subschemeCode: subCode,
+            row,
+            amountCr,
+          })
           : prev,
       );
       setAddingSupplement(false);
