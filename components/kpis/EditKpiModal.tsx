@@ -22,6 +22,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
   const [description, setDescription] = useState("");
   const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
   const [denominatorValue, setDenominatorValue] = useState<string>("");
+  const [archived, setArchived] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
     setDescription(submission.description);
     setMonitoringLevel((submission.monitoringLevel as "CS" | "ACS" | "CM") ?? "");
     setDenominatorValue(submission.denominator != null ? String(submission.denominator) : "");
+    setArchived(submission.archived ?? false);
     setMsg(null);
   }, [open, submission]);
 
@@ -48,6 +50,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
         description: d,
         monitoringLevel: monitoringLevel || null,
         denominatorValue: denominatorValue.trim() ? Number(denominatorValue) : null,
+        archived,
       });
       onSaved();
       onClose();
@@ -138,6 +141,20 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
               />
             </label>
           )}
+
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="archive-kpi-checkbox"
+              checked={archived}
+              onChange={(e) => setArchived(e.target.checked)}
+              disabled={busy}
+              className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+            />
+            <label htmlFor="archive-kpi-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] cursor-pointer select-none">
+              Archive this KPI
+            </label>
+          </div>
 
           {msg && (
             <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">

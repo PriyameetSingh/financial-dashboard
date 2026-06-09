@@ -143,6 +143,7 @@ export async function GET(request: NextRequest) {
           },
         },
         kpiDefinitions: {
+          where: { archived: false },
           orderBy: { description: "asc" },
           select: {
             id: true,

@@ -30,6 +30,7 @@ type PatchBody = {
   description?: string | null;
   monitoringLevel?: string | null;
   denominatorValue?: number | null;
+  archived?: boolean | null;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -55,7 +56,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       body.reviewerId === undefined &&
       body.description === undefined &&
       body.monitoringLevel === undefined &&
-      body.denominatorValue === undefined
+      body.denominatorValue === undefined &&
+      body.archived === undefined
     ) {
       return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
     }
@@ -84,6 +86,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         schemeId: true,
         description: true,
         monitoringLevel: true,
+        archived: true,
         scheme: { select: { code: true } },
         performers: { select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
@@ -120,6 +123,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       description: existing.description,
       monitoringLevel: existing.monitoringLevel,
       denominatorValue: (existing as any).targets?.[0]?.denominatorValue ? Number((existing as any).targets[0].denominatorValue) : null,
+      archived: existing.archived,
     };
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -135,12 +139,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         }
       }
-      if (newDescription !== undefined || newMonitoringLevel !== undefined) {
+      if (newDescription !== undefined || newMonitoringLevel !== undefined || body.archived !== undefined) {
         await tx.kpiDefinition.update({
           where: { id },
           data: {
             ...(newDescription !== undefined ? { description: newDescription } : {}),
             ...(newMonitoringLevel !== undefined ? { monitoringLevel: newMonitoringLevel } : {}),
+            ...(body.archived !== undefined ? { archived: body.archived === null ? false : body.archived } : {}),
           },
         });
       }
@@ -194,6 +199,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         description: newDescription ?? null,
         monitoringLevel: newMonitoringLevel ?? null,
         denominatorValue: newDenominatorValue ?? null,
+        archived: body.archived !== undefined ? body.archived : null,
       },
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
@@ -209,6 +215,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       description: updated.description,
       monitoringLevel: updated.monitoringLevel,
       denominatorValue: (updated as any).targets?.[0]?.denominatorValue ? Number((updated as any).targets[0].denominatorValue) : null,
+      archived: updated.archived,
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

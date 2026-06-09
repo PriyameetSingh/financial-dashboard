@@ -44,6 +44,9 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     }
 
     const def = measurement.kpiTarget.kpiDefinition;
+    if ((def as any).archived) {
+      return NextResponse.json({ detail: "KPI definition is archived" }, { status: 400 });
+    }
     const roleIds = userRoleIdsFromDbUser(actor);
     const canManageSchemes = hasPermissionForUser(actor, "MANAGE_SCHEMES");
     await assertKpiReviewerForDefinition(

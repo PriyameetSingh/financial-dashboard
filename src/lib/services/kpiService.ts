@@ -50,12 +50,13 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchKPISubmissions(): Promise<{
+export async function fetchKPISubmissions(archived?: boolean): Promise<{
   submissions: KPISubmission[];
   financialYearLabel: string | null;
   latestMeeting: KpiLatestMeeting | null;
 }> {
-  const response = await fetch(withNextBasePath("/api/v1/kpis/definitions"), { cache: "no-store" });
+  const url = withNextBasePath(`/api/v1/kpis/definitions${archived ? "?archived=true" : ""}`);
+  const response = await fetch(url, { cache: "no-store" });
   return parseResponse<KPIResponse>(response);
 }
 
@@ -159,6 +160,7 @@ export async function updateKpiDefinition(
     denominatorValue?: number | null;
     performerUserIds?: string[];
     reviewerUserIds?: string[];
+    archived?: boolean | null;
   },
 ): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {

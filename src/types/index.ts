@@ -173,6 +173,7 @@ export interface KPISubmission {
   canFlagEscalation?: boolean;
   /** Monitoring level for this KPI: CS, ACS, or CM. */
   monitoringLevel?: "CS" | "ACS" | "CM" | null;
+  archived?: boolean;
 }
 
 export type FinancialEntryStatus =

@@ -495,7 +495,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
   if (fy) {
     const definitions = await prisma.kpiDefinition.findMany({
-      where: { scheme: { archived: false } },
+      where: { archived: false, scheme: { archived: false } },
       include: {
         scheme: { select: { name: true, verticalName: true } },
         performers: {
