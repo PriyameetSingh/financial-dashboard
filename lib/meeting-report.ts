@@ -451,7 +451,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
   /** All action items regardless of type or creation date. */
   const decisions = await prisma.actionItem.findMany({
-    where: {},
+    where: { archived: false },
     include: {
       meeting: { select: { meetingDate: true } },
       performers: {

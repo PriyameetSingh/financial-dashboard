@@ -139,7 +139,7 @@ async function answerAgenda(ctx: AssistantMeetingContext): Promise<string> {
 
 async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<string> {
   const items = await prisma.actionItem.findMany({
-    where: { meetingId: ctx.meetingId },
+    where: { meetingId: ctx.meetingId, archived: false },
     orderBy: { dueDate: "asc" },
     take: 25,
     include: {
@@ -159,7 +159,7 @@ async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<strin
 
 async function answerOverdue(): Promise<string> {
   const items = await prisma.actionItem.findMany({
-    where: { status: "OVERDUE" },
+    where: { status: "OVERDUE", archived: false },
     orderBy: { dueDate: "asc" },
     take: 12,
     include: {

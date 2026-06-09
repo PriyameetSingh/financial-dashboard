@@ -32,6 +32,7 @@ const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemSta
   },
   { id: "completed", label: "Completed", match: (status) => status === "COMPLETED" },
   { id: "overdue", label: "Overdue", match: (status) => status === "OVERDUE" },
+  { id: "archived", label: "Archived", match: () => true },
 ];
 
 const STATUS_STEPS: ActionItemStatus[] = ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED"];
@@ -74,6 +75,7 @@ function ActionItemsContent() {
       ? initialFilterFromUrl
       : "all";
   const [items, setItems] = useState<ActionItem[]>([]);
+  const [archivedItems, setArchivedItems] = useState<ActionItem[]>([]);
   const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -95,6 +97,7 @@ function ActionItemsContent() {
   const [reassignError, setReassignError] = useState<string | null>(null);
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
@@ -143,9 +146,14 @@ function ActionItemsContent() {
     let active = true;
     const load = async () => {
       try {
-        const [data, roster] = await Promise.all([fetchActionItems(), fetchDirectoryUsers()]);
+        const [data, archivedData, roster] = await Promise.all([
+          fetchActionItems(false),
+          fetchActionItems(true),
+          fetchDirectoryUsers(),
+        ]);
         if (!active) return;
         setItems(data);
+        setArchivedItems(archivedData);
         setDirectoryUsers(roster);
       } finally {
         if (active) setLoading(false);
@@ -163,9 +171,10 @@ function ActionItemsContent() {
    */
   const listItems = useMemo(() => {
     if (!user) return [];
-    if (canViewAllItems) return items;
-    return items.filter((item) => isAssignedActionOfficer(item, user) || isDesignatedReviewer(item, user));
-  }, [user, items, canViewAllItems]);
+    const sourceItems = filter === "archived" ? archivedItems : items;
+    if (canViewAllItems) return sourceItems;
+    return sourceItems.filter((item) => isAssignedActionOfficer(item, user) || isDesignatedReviewer(item, user));
+  }, [user, items, archivedItems, canViewAllItems, filter]);
 
   const filtered = useMemo(() => {
     const activeFilter = STATUS_FILTERS.find((entry) => entry.id === filter) ?? STATUS_FILTERS[0];
@@ -232,7 +241,7 @@ function ActionItemsContent() {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
     const results = listItems.filter((item) => {
-      if (trackerStatus !== "all" && item.status !== trackerStatus) return false;
+      if (trackerStatus !== "all" && item.status !== trackerStatus && filter !== "archived") return false;
       const last = lastActivityMs(item);
       const age = now - last;
       if (trackerActivity === "recent_7") return age <= 7 * day;
@@ -273,10 +282,12 @@ function ActionItemsContent() {
   };
 
   const stats = useMemo(() => {
-    const total = listItems.length;
-    const overdue = listItems.filter(isItemOverdue).length;
-    const completed = listItems.filter((item) => item.status === "COMPLETED").length;
-    const dueThisWeek = listItems.filter((item) => {
+    const baseList = !user ? [] : (canViewAllItems ? items : items.filter((item) => isAssignedActionOfficer(item, user) || isDesignatedReviewer(item, user)));
+    const activeList = baseList.filter((item) => !item.archived);
+    const total = activeList.length;
+    const overdue = activeList.filter(isItemOverdue).length;
+    const completed = activeList.filter((item) => item.status === "COMPLETED").length;
+    const dueThisWeek = activeList.filter((item) => {
       const due = new Date(item.dueDate);
       const week = new Date(now);
       week.setDate(now.getDate() + 7);
@@ -284,7 +295,7 @@ function ActionItemsContent() {
     }).length;
     return { total, overdue, dueThisWeek, completed };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listItems, now]);
+  }, [items, now, user, canViewAllItems]);
 
   const verticalOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.vertical)))], [items]);
   const assigneeOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.assignedTo)))], [items]);
@@ -372,18 +383,20 @@ function ActionItemsContent() {
                 <option value="inactive_14">Inactive &gt; 14 days</option>
                 <option value="inactive_30">Inactive &gt; 30 days</option>
               </select>
-              <select
-                value={trackerStatus}
-                onChange={(e) => setTrackerStatus(e.target.value)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-              >
-                <option value="all">All statuses</option>
-                {(["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED", "OVERDUE"] as const).map((s) => (
-                  <option key={s} value={s}>
-                    {s.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </select>
+              {filter !== "archived" && (
+                <select
+                  value={trackerStatus}
+                  onChange={(e) => setTrackerStatus(e.target.value)}
+                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                >
+                  <option value="all">All statuses</option>
+                  {(["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED", "OVERDUE"] as const).map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+              )}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -397,7 +410,6 @@ function ActionItemsContent() {
           </div>
         )}
 
-        {pageTab === "list" && (
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((entry) => (
             <button
@@ -412,7 +424,6 @@ function ActionItemsContent() {
             </button>
           ))}
         </div>
-        )}
 
         {pageTab === "list" && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
@@ -567,6 +578,19 @@ function ActionItemsContent() {
                     >
                       View Details
                     </Link>
+                    {item.status === "COMPLETED" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setActionError(null);
+                          setConfirmArchive(true);
+                        }}
+                      >
+                        {item.archived ? "Unarchive" : "Archive"}
+                      </button>
+                    )}
                     {/* {user?.role === UserRole.NODAL_OFFICER && !isViewer && (
                       <>
                         <button className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]">Update Status</button>
@@ -709,7 +733,7 @@ function ActionItemsContent() {
                       </ul>
                     )}
                   </div>
-                  <div className="mt-6 pt-4 border-t border-[var(--border)]/50">
+                  <div className="mt-6 pt-4 border-t border-[var(--border)]/50 flex items-center justify-between">
                     <Link
                       href={`/action-items/${item.id}`}
                       className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
@@ -717,6 +741,19 @@ function ActionItemsContent() {
                       View full details
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
                     </Link>
+                    {item.status === "COMPLETED" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] transition"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setActionError(null);
+                          setConfirmArchive(true);
+                        }}
+                      >
+                        {item.archived ? "Unarchive" : "Archive"}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -1084,6 +1121,90 @@ function ActionItemsContent() {
           }}
         >
           {deleteBusy ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{confirmArchive && selectedItem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+        {selectedItem.archived ? "Confirm Unarchive" : "Confirm Archive"}
+      </h3>
+
+      <p className="mt-2 text-sm text-[var(--text-muted)]">
+        {selectedItem.archived
+          ? `Are you sure you want to unarchive "${selectedItem.title}"?`
+          : `Are you sure you want to archive "${selectedItem.title}"?`}
+      </p>
+
+      {actionError && (
+        <p className="mt-3 text-sm text-[var(--alert-critical)]">
+          {actionError}
+        </p>
+      )}
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+          disabled={actionBusy}
+          onClick={() => {
+            setConfirmArchive(false);
+            setSelectedItem(null);
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+          disabled={actionBusy}
+          onClick={async () => {
+            if (!selectedItem) return;
+
+            setActionBusy(true);
+            setActionError(null);
+
+            try {
+              const nextArchived = !selectedItem.archived;
+              const updated = await updateActionItem(selectedItem.id, {
+                archived: nextArchived,
+              });
+
+              if (nextArchived) {
+                setItems((prev) => prev.filter((row) => row.id !== updated.id));
+                setArchivedItems((prev) => {
+                  if (prev.some((row) => row.id === updated.id)) {
+                    return prev.map((row) => row.id === updated.id ? updated : row);
+                  }
+                  return [...prev, updated];
+                });
+              } else {
+                setArchivedItems((prev) => prev.filter((row) => row.id !== updated.id));
+                setItems((prev) => {
+                  if (prev.some((row) => row.id === updated.id)) {
+                    return prev.map((row) => row.id === updated.id ? updated : row);
+                  }
+                  return [...prev, updated];
+                });
+              }
+
+              setConfirmArchive(false);
+              setSelectedItem(null);
+            } catch (e: unknown) {
+              setActionError(
+                e instanceof Error ? e.message : "Archiving failed"
+              );
+            } finally {
+              setActionBusy(false);
+            }
+          }}
+        >
+          {actionBusy ? "Saving..." : (selectedItem.archived ? "Unarchive" : "Archive")}
         </button>
       </div>
     </div>

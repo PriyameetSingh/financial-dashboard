@@ -108,6 +108,7 @@ export interface ActionItem {
   daysOverdue?: number;
   /** Whether there is at least one progress update linked to the latest dashboard meeting. */
   hasUpdateForLatestMeeting?: boolean;
+  archived?: boolean;
   updates: ActionItemUpdate[];
   proofFiles: ActionItemProof[];
 }

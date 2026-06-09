@@ -679,6 +679,8 @@ model ActionItem {
   createdById  String?          @db.Uuid
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  archived     Boolean          @default(false)
+
 
   meeting   DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   scheme    Scheme?           @relation(fields: [schemeId], references: [id], onDelete: Cascade)

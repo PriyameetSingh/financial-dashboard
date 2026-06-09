@@ -26,6 +26,7 @@ type Body = {
   title?: string;
   description?: string;
   priority?: string;
+  archived?: boolean;
 };
 
 function toIsoDate(value: Date): string {
@@ -87,6 +88,7 @@ function mapActionItem(item: ActionItemWithRelations) {
     dueDate: toIsoDate(item.dueDate),
     createdAt: item.createdAt.toISOString(),
     status: item.status,
+    archived: item.archived,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
     performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designationRel?.name ?? "" })),
@@ -172,6 +174,45 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const canEdit =
       hasPermissionForUser(actor, "UPDATE_ACTION_ITEMS") ||
       hasPermissionForUser(actor, "CREATE_ACTION_ITEMS");
+
+    if (body.archived !== undefined) {
+      if (current.status !== "COMPLETED") {
+        return NextResponse.json({ detail: "Only completed action items can be archived" }, { status: 400 });
+      }
+
+      if (!isAssignee && !isReviewer && !canEdit) {
+        return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
+      }
+
+      await prisma.actionItem.update({
+        where: { id },
+        data: { archived: body.archived },
+      });
+
+      await prisma.actionItemUpdate.create({
+        data: {
+          actionItemId: id,
+          meetingId: current.meetingId,
+          timestamp: new Date(),
+          status: current.status,
+          note: body.archived ? "Action item archived" : "Action item unarchived",
+          createdById: actor.id,
+        },
+      });
+
+      await logAudit(
+        actor.id,
+        "action_item.archive",
+        "action_item",
+        id,
+        { archived: current.archived },
+        { archived: body.archived },
+        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+      );
+
+      const item = await getActionItemById(id);
+      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+    }
 
     if (body.reviewerDecision === "approve" || body.reviewerDecision === "reject") {
       if (!isReviewer && !canApprove) {

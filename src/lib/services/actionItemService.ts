@@ -19,8 +19,9 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchActionItems(): Promise<ActionItem[]> {
-  const response = await fetch(withNextBasePath("/api/v1/action-items"), { cache: "no-store" });
+export async function fetchActionItems(archived?: boolean): Promise<ActionItem[]> {
+  const url = withNextBasePath(`/api/v1/action-items${archived ? "?archived=true" : ""}`);
+  const response = await fetch(url, { cache: "no-store" });
   const data = await parseResponse<ActionItemsResponse>(response);
   return data.items;
 }
@@ -54,6 +55,7 @@ export async function updateActionItem(
     title?: string;
     description?: string;
     priority?: string;
+    archived?: boolean;
   },
 ): Promise<ActionItem> {
   const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}`), {

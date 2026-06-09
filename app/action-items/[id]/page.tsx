@@ -99,6 +99,7 @@ export default function ActionItemDetailPage() {
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const [manualUpdateText, setManualUpdateText] = useState("");
@@ -637,6 +638,16 @@ export default function ActionItemDetailPage() {
                 </div>
               </>
             )}
+
+            {item.status === "COMPLETED" && !isViewer && (
+              <button
+                type="button"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] transition"
+                onClick={() => setConfirmArchive(true)}
+              >
+                {item.archived ? "Unarchive Action Item" : "Archive Action Item"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -815,6 +826,30 @@ export default function ActionItemDetailPage() {
             setRejectComment("");
           } catch (e: unknown) {
             setActionSuccess(e instanceof Error ? e.message : "Reject failed");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+      <ConfirmModal
+        open={confirmArchive}
+        title={item.archived ? "Confirm Unarchive" : "Confirm Archive"}
+        message={
+          item.archived
+            ? `Are you sure you want to unarchive "${item.title}"?`
+            : `Are you sure you want to archive "${item.title}"?`
+        }
+        confirmLabel={item.archived ? "Unarchive" : "Archive"}
+        onCancel={() => setConfirmArchive(false)}
+        onConfirm={async () => {
+          setConfirmArchive(false);
+          setBusy(true);
+          try {
+            await updateActionItem(id, { archived: !item.archived });
+            await refresh();
+            setActionSuccess(item.archived ? "Action item unarchived." : "Action item archived.");
+          } catch (e: unknown) {
+            setActionSuccess(e instanceof Error ? e.message : "Operation failed");
           } finally {
             setBusy(false);
           }
