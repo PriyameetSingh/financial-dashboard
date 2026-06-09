@@ -148,7 +148,7 @@ export async function getCommandCentreDashboard(
     await Promise.all([
       getFinancialBudgetEntriesOverview(actor),
       prisma.actionItem.findMany({
-        where: { status: "OVERDUE" },
+        where: { status: "OVERDUE", archived: false },
         orderBy: { dueDate: "asc" },
         take: 5,
         include: {
@@ -174,7 +174,7 @@ export async function getCommandCentreDashboard(
             select: { asOfDate: true },
           })
         : Promise.resolve(null),
-      prisma.actionItem.count({ where: { status: "OVERDUE" } }),
+      prisma.actionItem.count({ where: { status: "OVERDUE", archived: false } }),
     ]);
 
   const fy = fyRow;

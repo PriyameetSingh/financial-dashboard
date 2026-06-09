@@ -48,6 +48,7 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
     dueDate: toIsoDate(item.dueDate),
     createdAt: item.createdAt.toISOString(),
     status: item.status,
+    archived: item.archived,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
     reviewer: revUsers.map((u) => u.name).join(", ") || "",
     performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
@@ -113,7 +114,10 @@ export async function GET(request: NextRequest) {
     });
     const latestMeetingId = latestMeeting?.id ?? null;
 
+    const archivedParam = new URL(request.url).searchParams.get("archived") === "true";
+
     const items = await prisma.actionItem.findMany({
+      where: { archived: archivedParam },
       include: actionInclude,
       orderBy: [{ dueDate: "asc" }, { title: "asc" }],
       take,

@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
       orderBy: { meetingDate: "desc" },
       include: {
         topics: { orderBy: { createdAt: "asc" } },
-        actionItems: { select: { id: true, title: true, status: true } },
+        actionItems: {
+          where: { archived: false },
+          select: { id: true, title: true, status: true },
+        },
         createdBy: { select: { name: true } },
         materials: {
           orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],

@@ -15,6 +15,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
       include: {
         topics: { orderBy: { createdAt: "asc" } },
         actionItems: {
+          where: { archived: false },
           select: { id: true, title: true, status: true, dueDate: true },
         },
         createdBy: { select: { name: true } },
