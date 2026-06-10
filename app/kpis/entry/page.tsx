@@ -7,7 +7,7 @@ import AppShell from "@/components/AppShell";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission } from "@/lib/auth";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
-import { fetchKPISubmissions, submitKPIMeasurement } from "@/src/lib/services/kpiService";
+import { fetchKPISubmissions, submitKPIMeasurement, reviewKpiMeasurement } from "@/src/lib/services/kpiService";
 import { KPISubmission, KpiEscalationFlag } from "@/types";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 
@@ -181,6 +181,11 @@ export default function KPIEntryPage() {
     return selectedItem.currentUserCanEnter !== false;
   }, [selectedItem]);
 
+  const isReviewerOnly = useMemo(() => {
+    if (!selectedItem) return false;
+    return selectedItem.currentUserCanReview === true && selectedItem.currentUserCanEnter === false;
+  }, [selectedItem]);
+
   const getValidationError = (item: KPISubmission, newNum: number | ""): string | null => {
     // Only enforce numeric validation for OUTPUT KPIs; OUTCOME KPIs are remarks-only.
     if (item.type !== "OUTPUT") return null;
@@ -249,6 +254,29 @@ export default function KPIEntryPage() {
       setRowState((prev) => ({
         ...prev,
         [id]: { saving: false, error: e instanceof Error ? e.message : "Save failed" },
+      }));
+    }
+  };
+
+  const handleReviewAction = async (id: string, decision: "approve" | "reject") => {
+    const item = submissions.find((row) => row.id === id);
+    if (!item || !item.latestMeasurementId) return;
+
+    setRowState((prev) => ({ ...prev, [id]: { saving: true } }));
+    try {
+      await reviewKpiMeasurement(item.latestMeasurementId, { decision });
+      await reload();
+      setRowState((prev) => ({
+        ...prev,
+        [id]: { saving: false, submitted: true },
+      }));
+      setTimeout(() => {
+        setRowState((prev) => ({ ...prev, [id]: {} }));
+      }, 2200);
+    } catch (e: unknown) {
+      setRowState((prev) => ({
+        ...prev,
+        [id]: { saving: false, error: e instanceof Error ? e.message : "Review failed" },
       }));
     }
   };
@@ -435,23 +463,38 @@ export default function KPIEntryPage() {
                   </div>
                 )} */}
 
-                {!canEditSelected && (
+                {!canEditSelected && !isReviewerOnly && (
                   <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
                     You can view this KPI, but only the assigned action owner may enter or update progress (unless an administrator overrides).
                   </div>
                 )}
 
+                {isReviewerOnly && (
+                  <div className="rounded-xl border border-[var(--accent)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--sidebar-text-primary)]">
+                    {item.status === "submitted" || item.status === "submitted_pending" ? (
+                      <span>Pending your review — approve or reject below.</span>
+                    ) : item.status === "approved" ? (
+                      <span className="text-[var(--alert-success)]">✓ Approved</span>
+                    ) : item.hasEntryForLatestMeeting === false ? (
+                      <span className="text-[var(--text-muted)]">Pending entry from action owner</span>
+                    ) : (
+                      <span>Review only — inputs are read-only.</span>
+                    )}
+                  </div>
+                )}
+
                 <div
-                  className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-6 ${!canEditSelected ? "pointer-events-none opacity-50" : ""}`}
+                  className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-6 ${!canEditSelected && !isReviewerOnly ? "pointer-events-none opacity-50" : ""}`}
                 >
                   <div className="mb-5 space-y-2 border-b border-[var(--border)] pb-5">
                     <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
-                      Meeting <span className="text-[var(--alert-critical)]">*</span>
+                      Meeting {!isReviewerOnly && <span className="text-[var(--alert-critical)]">*</span>}
                     </label>
                     <select
                       value={meetingId}
                       onChange={(e) => setMeetingId(e.target.value)}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
+                      disabled={isReviewerOnly}
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option value="">Select meeting…</option>
                       {meetings.map((m) => (
@@ -474,20 +517,22 @@ export default function KPIEntryPage() {
                       </p>
                       <div className="flex flex-wrap gap-3">
                         <button
+                          disabled={isReviewerOnly}
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === true
                             ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                             : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                            }`}
-                          onClick={() => setBinaryResponses((prev) => ({ ...prev, [item.id]: true }))}
+                            } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                          onClick={() => !isReviewerOnly && setBinaryResponses((prev) => ({ ...prev, [item.id]: true }))}
                         >
                           Yes
                         </button>
                         <button
+                          disabled={isReviewerOnly}
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === false
                             ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                             : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                            }`}
-                          onClick={() => setBinaryResponses((prev) => ({ ...prev, [item.id]: false }))}
+                            } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                          onClick={() => !isReviewerOnly && setBinaryResponses((prev) => ({ ...prev, [item.id]: false }))}
                         >
                           No
                         </button>
@@ -504,7 +549,9 @@ export default function KPIEntryPage() {
                           inputMode="decimal"
                           value={numeratorById[item.id] ?? ""}
                           min={isApproved && approvedNum != null ? approvedNum : undefined}
+                          readOnly={isReviewerOnly}
                           onChange={(e) => {
+                            if (isReviewerOnly) return;
                             const val = e.target.value === "" ? "" : Number(e.target.value);
                             setNumeratorById((prev) => ({ ...prev, [item.id]: val }));
                             if (rowState[item.id]?.error) {
@@ -515,7 +562,7 @@ export default function KPIEntryPage() {
                             validationError
                               ? "border-[var(--alert-critical)] focus:ring-[var(--alert-critical)]"
                               : "border-[var(--border)] focus:ring-[var(--text-primary)]"
-                          }`}
+                          } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
                         />
                         {validationError && (
                           <p className="text-[11px] text-[var(--alert-critical)]">{validationError}</p>
@@ -577,11 +624,13 @@ export default function KPIEntryPage() {
                     <textarea
                       rows={2}
                       value={remarksById[item.id] ?? ""}
-                      onChange={(e) =>
-                        setRemarksById((prev) => ({ ...prev, [item.id]: e.target.value }))
-                      }
+                      readOnly={isReviewerOnly}
+                      onChange={(e) => {
+                        if (isReviewerOnly) return;
+                        setRemarksById((prev) => ({ ...prev, [item.id]: e.target.value }));
+                      }}
                       placeholder="Add any notes or context…"
-                      className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
+                      className={`w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
                     />
                   </div>
 
@@ -609,12 +658,14 @@ export default function KPIEntryPage() {
                               <button
                                 key={value}
                                 type="button"
-                                onClick={() =>
+                                disabled={isReviewerOnly}
+                                onClick={() => {
+                                  if (isReviewerOnly) return;
                                   setEscalationById((prev) => ({
                                     ...prev,
                                     [item.id]: active ? "" : value,
-                                  }))
-                                }
+                                  }));
+                                }}
                                 className={`rounded-lg border px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] transition ${
                                   active
                                     ? value === "needs_acs_decision"
@@ -623,7 +674,7 @@ export default function KPIEntryPage() {
                                         ? "border-[var(--alert-warning)] bg-[rgba(245,158,11,0.1)] text-[var(--alert-warning)]"
                                         : "border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] text-[var(--alert-success)]"
                                     : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                                }`}
+                                } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
                               >
                                 {label}
                               </button>
@@ -640,11 +691,13 @@ export default function KPIEntryPage() {
                         <textarea
                           rows={2}
                           value={bottleneckById[item.id] ?? ""}
-                          onChange={(e) =>
-                            setBottleneckById((prev) => ({ ...prev, [item.id]: e.target.value }))
-                          }
+                          readOnly={isReviewerOnly}
+                          onChange={(e) => {
+                            if (isReviewerOnly) return;
+                            setBottleneckById((prev) => ({ ...prev, [item.id]: e.target.value }));
+                          }}
                           placeholder="e.g. Awaiting circular from HQ / tender not yet floated…"
-                          className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)]"
+                          className={`w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
                         />
                       </div>
                     </div>
@@ -658,22 +711,43 @@ export default function KPIEntryPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <button
-                      disabled={row.saving || !!validationError || !meetingId.trim()}
-                      onClick={() => handleRowAction(item.id, "draft")}
-                      className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {row.saving ? "Saving…" : row.saved ? "Draft Saved ✓" : "Save Draft"}
-                    </button>
-                    <button
-                      disabled={row.saving || !!validationError || !meetingId.trim()}
-                      onClick={() => handleRowAction(item.id, "submit")}
-                      className="rounded-xl bg-[var(--text-primary)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--bg-primary)] transition disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {row.saving ? "Submitting…" : row.submitted ? "Submitted ✓" : "Submit"}
-                    </button>
-                  </div>
+                  {!isReviewerOnly ? (
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <button
+                        disabled={row.saving || !!validationError || !meetingId.trim()}
+                        onClick={() => handleRowAction(item.id, "draft")}
+                        className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {row.saving ? "Saving…" : row.saved ? "Draft Saved ✓" : "Save Draft"}
+                      </button>
+                      <button
+                        disabled={row.saving || !!validationError || !meetingId.trim()}
+                        onClick={() => handleRowAction(item.id, "submit")}
+                        className="rounded-xl bg-[var(--text-primary)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--bg-primary)] transition disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {row.saving ? "Submitting…" : row.submitted ? "Submitted ✓" : "Submit"}
+                      </button>
+                    </div>
+                  ) : (
+                    (item.status === "submitted" || item.status === "submitted_pending") && (
+                      <div className="mt-6 flex flex-wrap items-center gap-3">
+                        <button
+                          disabled={row.saving}
+                          onClick={() => handleReviewAction(item.id, "approve")}
+                          className="rounded-xl bg-[var(--alert-success)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {row.saving ? "Processing…" : row.submitted ? "Approved ✓" : "Approve"}
+                        </button>
+                        <button
+                          disabled={row.saving}
+                          onClick={() => handleReviewAction(item.id, "reject")}
+                          className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {row.saving ? "Processing…" : "Reject"}
+                        </button>
+                      </div>
+                    )
+                  )}
                 </div>
 
                 {/* Meta footer */}
