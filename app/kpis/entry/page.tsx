@@ -50,6 +50,8 @@ export default function KPIEntryPage() {
   const [escalationById, setEscalationById] = useState<Record<string, KpiEscalationFlag | "">>({});
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [meetingId, setMeetingId] = useState("");
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
 
   const meetingLabel = (m: MeetingListItem) => {
     const t = m.title?.trim();
@@ -168,6 +170,12 @@ export default function KPIEntryPage() {
     [submissions, selectedId],
   );
 
+  // Reset reject dialog when selection changes
+  useEffect(() => {
+    setShowRejectDialog(false);
+    setRejectNote("");
+  }, [selectedId]);
+
   const completion = useMemo(() => {
     const total = submissions.length;
     const submitted = submissions.filter((s) =>
@@ -258,18 +266,20 @@ export default function KPIEntryPage() {
     }
   };
 
-  const handleReviewAction = async (id: string, decision: "approve" | "reject") => {
+  const handleReviewAction = async (id: string, decision: "approve" | "reject", note?: string) => {
     const item = submissions.find((row) => row.id === id);
     if (!item || !item.latestMeasurementId) return;
 
     setRowState((prev) => ({ ...prev, [id]: { saving: true } }));
     try {
-      await reviewKpiMeasurement(item.latestMeasurementId, { decision });
+      await reviewKpiMeasurement(item.latestMeasurementId, { decision, note });
       await reload();
       setRowState((prev) => ({
         ...prev,
         [id]: { saving: false, submitted: true },
       }));
+      setShowRejectDialog(false);
+      setRejectNote("");
       setTimeout(() => {
         setRowState((prev) => ({ ...prev, [id]: {} }));
       }, 2200);
@@ -730,22 +740,58 @@ export default function KPIEntryPage() {
                     </div>
                   ) : (
                     (item.status === "submitted" || item.status === "submitted_pending") && (
-                      <div className="mt-6 flex flex-wrap items-center gap-3">
-                        <button
-                          disabled={row.saving}
-                          onClick={() => handleReviewAction(item.id, "approve")}
-                          className="rounded-xl bg-[var(--alert-success)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {row.saving ? "Processing…" : row.submitted ? "Approved ✓" : "Approve"}
-                        </button>
-                        <button
-                          disabled={row.saving}
-                          onClick={() => handleReviewAction(item.id, "reject")}
-                          className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {row.saving ? "Processing…" : "Reject"}
-                        </button>
-                      </div>
+                      <>
+                        {!showRejectDialog && (
+                          <div className="mt-6 flex flex-wrap items-center gap-3">
+                            <button
+                              disabled={row.saving}
+                              onClick={() => handleReviewAction(item.id, "approve")}
+                              className="rounded-xl bg-[var(--alert-success)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {row.saving ? "Processing…" : row.submitted ? "Approved ✓" : "Approve"}
+                            </button>
+                            <button
+                              disabled={row.saving}
+                              onClick={() => setShowRejectDialog(true)}
+                              className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Reject with Comment
+                            </button>
+                          </div>
+                        )}
+
+                        {showRejectDialog && (
+                          <div className="mt-6 space-y-3 rounded-xl border border-[var(--alert-critical)] bg-[rgba(239,68,68,0.04)] p-4">
+                            <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                              Rejection note <span className="text-[var(--alert-critical)]">*</span>
+                              <textarea
+                                value={rejectNote}
+                                onChange={(e) => setRejectNote(e.target.value)}
+                                rows={3}
+                                autoFocus
+                                placeholder="Explain why this submission is being rejected..."
+                                className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--alert-critical)]"
+                              />
+                            </label>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                disabled={row.saving || !rejectNote.trim()}
+                                onClick={() => handleReviewAction(item.id, "reject", rejectNote.trim())}
+                                className="rounded-xl bg-[var(--alert-critical)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {row.saving ? "Processing…" : "Confirm Reject"}
+                              </button>
+                              <button
+                                disabled={row.saving}
+                                onClick={() => { setShowRejectDialog(false); setRejectNote(""); }}
+                                className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )
                   )}
                 </div>
