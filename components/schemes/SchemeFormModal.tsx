@@ -378,7 +378,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+            className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-accent)]"
           >
             Close
           </button>
