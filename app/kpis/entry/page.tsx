@@ -480,7 +480,7 @@ export default function KPIEntryPage() {
                 )}
 
                 {isReviewerOnly && (
-                  <div className="rounded-xl border border-[var(--accent)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--sidebar-text-primary)]">
+                  <div className="rounded-xl border border-[var(--accent)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)]">
                     {item.status === "submitted" || item.status === "submitted_pending" ? (
                       <span>Pending your review — approve or reject below.</span>
                     ) : item.status === "approved" ? (
