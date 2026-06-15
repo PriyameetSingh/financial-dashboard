@@ -474,7 +474,7 @@ export default function SchemesBoardClient() {
                 className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
                   activeTab === tab
                     ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)]"
                 }`}
               >
                 {tab === "board" ? (

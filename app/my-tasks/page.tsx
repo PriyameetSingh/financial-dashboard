@@ -164,7 +164,7 @@ export default function MyTasksHubPage() {
                     {showKpiReviewButton && (
                       <Link
                         href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
                       >
                         <span>Pending review</span>
                         <span
@@ -213,7 +213,7 @@ export default function MyTasksHubPage() {
                     {showActionReviewButton && (
                       <Link
                         href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
                       >
                         <span>Pending review</span>
                         <span
@@ -255,7 +255,7 @@ export default function MyTasksHubPage() {
                     </Link>
                     <Link
                       href="/financial/entry/summary"
-                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
                     >
                       Summary entry
                       <ArrowRight size={14} aria-hidden />
@@ -263,7 +263,7 @@ export default function MyTasksHubPage() {
                     {showBulkFinancial && (
                       <Link
                         href="/financial/entry/bulk"
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
                       >
                         <Layers size={13} aria-hidden />
                         Bulk entry
