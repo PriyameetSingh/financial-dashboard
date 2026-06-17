@@ -174,6 +174,16 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       await tx.kpiDefinition.deleteMany({ where: { schemeId: id } });
       await tx.subscheme.deleteMany({ where: { schemeId: id } });
       await tx.scheme.delete({ where: { id } });
+
+      // Shift sortOrder of remaining schemes with higher indices down by 1
+      await tx.scheme.updateMany({
+        where: {
+          sortOrder: { gt: before.sortOrder },
+        },
+        data: {
+          sortOrder: { decrement: 1 },
+        },
+      });
     });
 
     await logAudit(

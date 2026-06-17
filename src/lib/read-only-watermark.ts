@@ -14,6 +14,7 @@ const EDIT_SIGNALS: Permission[] = [
   Permission.APPROVE_KPI,
   Permission.APPROVE_ACTION_ITEMS,
   Permission.UPLOAD_PROOF,
+  Permission.REORDER_SCHEMES,
 ];
 
 /** True when the user has no workflow or admin mutation permissions (read-focused UI watermark). */

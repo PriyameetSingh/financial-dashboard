@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { name: "asc" },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
       getReferenceData(),
     ]);

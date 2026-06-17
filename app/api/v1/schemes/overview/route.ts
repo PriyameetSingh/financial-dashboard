@@ -134,6 +134,7 @@ export async function GET(request: NextRequest) {
         verticalName: true,
         sponsorshipType: true,
         archived: true,
+        sortOrder: true,
         subschemes: { orderBy: { name: "asc" } },
         assignments: {
           orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
@@ -155,7 +156,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     getReferenceData(),
     fy

@@ -23,6 +23,7 @@ const PERMISSIONS = [
   { code: "MANAGE_PERMISSIONS", name: "Manage permissions" },
   { code: "MANAGE_FINANCIAL_YEARS", name: "Manage financial years" },
   { code: "FLAG_KPI_ESCALATION", name: "Flag KPI escalation / bottleneck" },
+  { code: "REORDER_SCHEMES", name: "Reorder schemes for all users" },
 ];
 
 /** Merged former AS / PS HUDD / similar desk roles — permission set aligned with Nodal Officer. */
@@ -49,6 +50,7 @@ const ROLES = [
       "APPROVE_KPI",
       "APPROVE_ACTION_ITEMS",
       "FLAG_KPI_ESCALATION",
+      "REORDER_SCHEMES",
     ],
   },
   {
@@ -78,6 +80,7 @@ const ROLES = [
       "MANAGE_USERS",
       "MANAGE_PERMISSIONS",
       "MANAGE_FINANCIAL_YEARS",
+      "REORDER_SCHEMES",
     ],
   },
   {
@@ -156,7 +159,6 @@ async function ensureBootstrapTasuAdmin(prisma) {
     update: {
       name: "TASU Bootstrap Admin",
       department: "Technical & Advisory Support Unit",
-      designation: "Bootstrap admin (seed)",
       code: "tasu-bootstrap",
       isActive: true,
     },
@@ -164,7 +166,6 @@ async function ensureBootstrapTasuAdmin(prisma) {
       email,
       name: "TASU Bootstrap Admin",
       department: "Technical & Advisory Support Unit",
-      designation: "Bootstrap admin (seed)",
       code: "tasu-bootstrap",
       isActive: true,
     },

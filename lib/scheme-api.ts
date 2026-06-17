@@ -7,6 +7,7 @@ type SchemeWithRelations = {
   verticalName: string;
   sponsorshipType: string;
   archived?: boolean;
+  sortOrder?: number;
   subschemes: Array<{ id: string; schemeId: string; code: string; name: string }>;
   assignments: Array<{
     id: string;
@@ -47,6 +48,7 @@ export function mapSchemeView(scheme: SchemeWithRelations) {
     verticalName: scheme.verticalName,
     sponsorshipType: normalizeSponsorshipType(scheme.sponsorshipType),
     archived: scheme.archived ?? false,
+    sortOrder: scheme.sortOrder ?? 0,
     subschemes: scheme.subschemes.map((subscheme) => ({
       id: subscheme.id,
       schemeId: subscheme.schemeId,

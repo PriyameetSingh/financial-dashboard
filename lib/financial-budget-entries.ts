@@ -132,7 +132,7 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
       include: {
         subschemes: { orderBy: { name: "asc" } },
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.financeBudget.findMany({
       where: { financialYearId: fy.id },
@@ -345,6 +345,11 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
     if (pa !== undefined && pb === undefined) return -1;
     if (pa === undefined && pb !== undefined) return 1;
     if (pa !== undefined && pb !== undefined && pa !== pb) return pa - pb;
+
+    const sa = schemes.find((s) => s.id === a.schemeId)?.sortOrder ?? 0;
+    const sb = schemes.find((s) => s.id === b.schemeId)?.sortOrder ?? 0;
+    if (sa !== sb) return sa - sb;
+
     return a.scheme.localeCompare(b.scheme);
   });
 
@@ -359,6 +364,7 @@ function buildEntry(params: {
     verticalName: string;
     sponsorshipType: SponsorshipType;
     subschemes: Array<{ id: string; code: string; name: string }>;
+    sortOrder?: number;
   };
   schemeBudgets: Array<{
     id: string;
@@ -441,6 +447,7 @@ function buildEntry(params: {
     scheme: scheme.name,
     vertical: scheme.verticalName,
     status,
+    sortOrder: scheme.sortOrder,
     annualBudget,
     totalSupplementCr,
     effectiveBudgetCr: annualBudget + totalSupplementCr,

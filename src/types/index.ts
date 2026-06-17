@@ -59,6 +59,7 @@ export enum Permission {
   MANAGE_FINANCIAL_YEARS = "MANAGE_FINANCIAL_YEARS",
   /** Set bottleneck reason and ACS escalation flag on KPI measurements. */
   FLAG_KPI_ESCALATION = "FLAG_KPI_ESCALATION",
+  REORDER_SCHEMES = "REORDER_SCHEMES",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";
@@ -217,6 +218,7 @@ export interface FinancialEntry {
   /** Internal id for ordering and APIs */
   schemeId?: string;
   dashboardPriority?: boolean;
+  sortOrder?: number;
   totalSupplementCr: number;
   effectiveBudgetCr: number;
   supplements: Array<{
@@ -324,6 +326,7 @@ export interface SchemeView {
   archived: boolean;
   subschemes: SubschemeView[];
   assignments: SchemeAssignmentView[];
+  sortOrder?: number;
 }
 
 export interface SchemeReferenceData {
