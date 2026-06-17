@@ -87,7 +87,11 @@ export async function GET(request: NextRequest) {
               take: 1,
             },
       },
-      orderBy: [{ scheme: { name: "asc" } }, { description: "asc" }],
+      orderBy: [
+        { scheme: { sortOrder: "asc" } },
+        { scheme: { name: "asc" } },
+        { description: "asc" },
+      ],
     });
 
     const roleIds = userRoleIdsFromDbUser(actor);

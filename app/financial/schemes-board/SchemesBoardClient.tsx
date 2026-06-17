@@ -177,7 +177,7 @@ const COLUMN_UI: Record<
 };
 
 type ViewTab = "board" | "list";
-type SortKey = "scheme" | "vertical" | "re" | "spent" | "pct" | "bucket";
+type SortKey = "default" | "scheme" | "vertical" | "re" | "spent" | "pct" | "bucket";
 type SortDir = "asc" | "desc";
 
 export default function SchemesBoardClient() {
@@ -189,7 +189,7 @@ export default function SchemesBoardClient() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [schemeModalEntry, setSchemeModalEntry] = useState<FinancialEntry | null>(null);
   const [activeTab, setActiveTab] = useState<ViewTab>("board");
-  const [sortKey, setSortKey] = useState<SortKey>("pct");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   useEffect(() => {
@@ -262,6 +262,12 @@ export default function SchemesBoardClient() {
     rows.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
+        case "default":
+          cmp = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+          if (cmp === 0) {
+            cmp = a.scheme.localeCompare(b.scheme);
+          }
+          break;
         case "scheme":
           cmp = a.scheme.localeCompare(b.scheme);
           break;
@@ -291,11 +297,24 @@ export default function SchemesBoardClient() {
   }, [filtered, sortKey, sortDir]);
 
   function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    if (key === "scheme") {
+      if (sortKey === "scheme") {
+        setSortKey("default");
+        setSortDir("asc");
+      } else if (sortKey === "default") {
+        setSortKey("scheme");
+        setSortDir("desc");
+      } else {
+        setSortKey("default");
+        setSortDir("asc");
+      }
     } else {
-      setSortKey(key);
-      setSortDir("asc");
+      if (sortKey === key) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setSortKey(key);
+        setSortDir("asc");
+      }
     }
   }
 
@@ -320,7 +339,9 @@ export default function SchemesBoardClient() {
   };
 
   function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="ml-1 opacity-30">↕</span>;
+    if (sortKey !== col && !(sortKey === "default" && col === "scheme")) {
+      return <span className="ml-1 opacity-30">↕</span>;
+    }
     return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
   }
 
