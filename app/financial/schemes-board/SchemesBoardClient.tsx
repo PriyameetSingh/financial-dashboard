@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import SchemeModal from "@/components/schemes/SchemeModal";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
@@ -380,7 +380,7 @@ export default function SchemesBoardClient() {
                 Total RE ₹{fmtCr(totals.totalRe)} Cr
               </span>
               <span className="rounded-full border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-xs tabular-nums text-[var(--text-primary)]">
-                Spent ₹{fmtCr(totals.spent)} Cr
+                Expenditure ₹{fmtCr(totals.spent)} Cr
               </span>
               <span className="rounded-full border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold tabular-nums text-[var(--text-primary)]">
                 {totals.overallPct.toFixed(1)}% overall
@@ -514,7 +514,7 @@ export default function SchemesBoardClient() {
             ))}
           </div>
 
-          {!loading && !error && activeTab === "board" && (
+          {!loading && !error && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -800,12 +800,13 @@ export default function SchemesBoardClient() {
               <table className="w-full min-w-[700px] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)] text-xs uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                    <th scope="col" className="w-10 px-4 py-3" />
                     {(
                       [
                         { key: "scheme" as SortKey, label: "Scheme" },
                         { key: "vertical" as SortKey, label: "Vertical" },
                         { key: "re" as SortKey, label: "RE (Cr)" },
-                        { key: "spent" as SortKey, label: "Spent (Cr)" },
+                        { key: "spent" as SortKey, label: "Expenditure (Cr)" },
                         { key: "pct" as SortKey, label: "Utilisation" },
                       ] as { key: SortKey; label: string }[]
                     ).map(({ key, label }) => (
@@ -832,6 +833,7 @@ export default function SchemesBoardClient() {
                     const qp = getQuarterlyProgress(entry);
                     const bucket = bucketForQuarterlyVariance(qp.variancePct);
                     const kind = sponsorshipKind(entry);
+                    const expanded = expandedIds.has(entry.id);
 
                     const barFill =
                       bucket === "critical"
@@ -841,59 +843,184 @@ export default function SchemesBoardClient() {
                           : "bg-emerald-500";
 
                     return (
-                      <tr
-                        key={entry.id}
-                        className="group cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
-                        onClick={() => setSchemeModalEntry(entry)}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : "bg-orange-500"}`}
-                              title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
-                            />
-                            <div>
-                              <p className="font-medium leading-snug text-[var(--text-primary)]">
-                                {entry.scheme}
-                              </p>
-                              <p className="text-[11px] text-[var(--text-muted)]">{entry.id}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-[var(--text-secondary)]">
-                          {entry.vertical}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
-                          ₹{fmtCr(effBudget(entry))}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
-                          ₹{fmtCr(entry.ifms)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--border)]">
-                              <div
-                                className={`h-full rounded-full ${barFill}`}
-                                style={{ width: `${Math.min(100, pct)}%` }}
+                      <Fragment key={entry.id}>
+                        <tr
+                          className="group cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
+                          onClick={() => setSchemeModalEntry(entry)}
+                        >
+                          <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(entry.id)}
+                              className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${
+                                expanded ? "rotate-180" : ""
+                              }`}
+                            >
+                              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : "bg-orange-500"}`}
+                                title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
                               />
+                              <div>
+                                <p className="font-medium leading-snug text-[var(--text-primary)]">
+                                  {entry.scheme}
+                                </p>
+                                <p className="text-[11px] text-[var(--text-muted)]">{entry.id}</p>
+                              </div>
                             </div>
-                            <span className="w-12 text-right text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
-                              {pct.toFixed(1)}%
+                          </td>
+                          <td className="px-4 py-3 text-[var(--text-secondary)]">
+                            {entry.vertical}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                            ₹{fmtCr(effBudget(entry))}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                            ₹{fmtCr(entry.ifms)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--border)]">
+                                <div
+                                  className={`h-full rounded-full ${barFill}`}
+                                  style={{ width: `${Math.min(100, pct)}%` }}
+                                />
+                              </div>
+                              <span className="w-12 text-right text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                {pct.toFixed(1)}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-xs font-medium text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100">
+                              View →
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-xs font-medium text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100">
-                            View →
-                          </span>
-                        </td>
-                      </tr>
+                          </td>
+                        </tr>
+                        {expanded && (
+                          <tr className="bg-[var(--bg-surface)]/20">
+                            <td colSpan={7} className="p-4 border-b border-[var(--border)]">
+                              <div className="mx-auto max-w-5xl grid gap-6 md:grid-cols-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                {/* Quarterly Progress */}
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                    Quarterly Target Details
+                                  </p>
+                                  {(() => {
+                                    const qp = getQuarterlyProgress(entry);
+                                    const isBehind = qp.variancePct < 0;
+                                    const isOnTrack = qp.variancePct >= -5;
+
+                                    const accentColors = isBehind
+                                      ? isOnTrack
+                                        ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
+                                        : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
+                                      : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
+                                    const barColor = isBehind
+                                      ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
+                                      : "bg-emerald-500";
+                                    const varianceColor = qp.variancePct >= 0
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : accentColors.text;
+
+                                    return (
+                                      <div className={`rounded-lg border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} p-3`}>
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="text-xs font-semibold text-[var(--text-primary)]">
+                                            Q{qp.quarter} Target Progress
+                                          </span>
+                                          <span className={`text-xs font-bold tabular-nums ${accentColors.text}`}>
+                                            {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
+                                          </span>
+                                        </div>
+                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--border)]">
+                                          <div
+                                            className={`h-full rounded-full ${barColor}`}
+                                            style={{
+                                              width: `${Math.min(100, (qp.actualPct / qp.cumulativeTargetPct) * 100)}%`,
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between">
+                                          <span className="text-xs text-[var(--text-muted)]">
+                                            Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
+                                          </span>
+                                          <span className={`text-xs font-bold tabular-nums ${varianceColor}`}>
+                                            {qp.variancePct >= 0 ? "+" : ""}
+                                            {qp.variancePct.toFixed(1)}%
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+
+                                {/* Sub-schemes */}
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                    Sub-schemes
+                                  </p>
+                                  {entry.subschemes && entry.subschemes.length > 0 ? (
+                                    <ul className="space-y-2">
+                                      {entry.subschemes.map((sub) => {
+                                        const sp = subUtilPct(sub);
+                                        const re = subEffBudget(sub);
+                                        return (
+                                          <li
+                                            key={sub.id}
+                                            className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-xs"
+                                          >
+                                            <span
+                                              className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
+                                                kind === "SS"
+                                                  ? "bg-sky-400"
+                                                  : "bg-orange-400"
+                                              }`}
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                              <p className="font-semibold text-[var(--text-primary)]">
+                                                {sub.name}
+                                              </p>
+                                              <p className="text-[10px] text-[var(--text-muted)]">
+                                                {sub.code}
+                                              </p>
+                                              <div className="mt-1 flex flex-wrap gap-x-4 text-xs tabular-nums text-[var(--text-secondary)]">
+                                                <span>RE ₹{fmtCr(re)} Cr</span>
+                                                <span>
+                                                  Spent ₹{fmtCr(sub.ifms ?? 0)} Cr
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <span className="shrink-0 self-start rounded bg-[var(--bg-document)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--text-secondary)]">
+                                              {sp.toFixed(1)}%
+                                            </span>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  ) : (
+                                    <div className="flex h-[88px] items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-card)] p-4 text-xs text-[var(--text-muted)]">
+                                      No sub-schemes configured
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                   {sortedList.length === 0 && (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="py-12 text-center text-xs text-[var(--text-muted)]"
                       >
                         No schemes match your search.
