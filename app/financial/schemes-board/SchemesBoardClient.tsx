@@ -400,59 +400,7 @@ export default function SchemesBoardClient() {
           </div>
         </div>
 
-        {/* Sponsorship Filters */}
-        <div className="flex flex-wrap items-center gap-2 border-y border-[var(--border)] py-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mr-2">
-            Sponsorship:
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedSponsorship("ALL")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              selectedSponsorship === "ALL"
-                ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm animate-in fade-in duration-200"
-                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedSponsorship("STATE")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              selectedSponsorship === "STATE"
-                ? "bg-sky-600 text-white shadow-sm animate-in fade-in duration-200"
-                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-            }`}
-          >
-            <span className={`size-1.5 rounded-full ${selectedSponsorship === "STATE" ? "bg-white" : "bg-sky-500"}`} />
-            State Sector
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedSponsorship("CENTRAL")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              selectedSponsorship === "CENTRAL"
-                ? "bg-orange-600 text-white shadow-sm animate-in fade-in duration-200"
-                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-            }`}
-          >
-            <span className={`size-1.5 rounded-full ${selectedSponsorship === "CENTRAL" ? "bg-white" : "bg-orange-500"}`} />
-            Central Sponsor
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedSponsorship("CENTRAL_SECTOR")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              selectedSponsorship === "CENTRAL_SECTOR"
-                ? "bg-purple-600 text-white shadow-sm animate-in fade-in duration-200"
-                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-            }`}
-          >
-            <span className={`size-1.5 rounded-full ${selectedSponsorship === "CENTRAL_SECTOR" ? "bg-white" : "bg-purple-500"}`} />
-            Central Sector
-          </button>
-        </div>
+
 
         {/* Legend / Info Section */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -585,6 +533,17 @@ export default function SchemesBoardClient() {
 
           {!loading && !error && (
             <div className="flex items-center gap-3">
+              <select
+                value={selectedSponsorship}
+                onChange={(e) => setSelectedSponsorship(e.target.value as any)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-all shadow-sm focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All Sponsorships</option>
+                <option value="STATE">State Sector</option>
+                <option value="CENTRAL">Central Sponsor</option>
+                <option value="CENTRAL_SECTOR">Central Sector</option>
+              </select>
+
               <button
                 type="button"
                 onClick={expandAll}
