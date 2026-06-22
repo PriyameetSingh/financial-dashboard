@@ -130,14 +130,14 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
         sponsorshipType: { not: "NON_FINANCIAL" }
       },
       include: {
-        subschemes: { orderBy: { name: "asc" } },
+        subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
       },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.financeBudget.findMany({
       where: { financialYearId: fy.id },
       include: {
-        scheme: { select: { id: true, code: true, name: true, verticalName: true, sponsorshipType: true, subschemes: { orderBy: { name: "asc" } } } },
+        scheme: { select: { id: true, code: true, name: true, verticalName: true, sponsorshipType: true, subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } } },
         createdBy: { select: { name: true } },
         financialYear: { select: { label: true } },
         revisions: {
@@ -221,6 +221,7 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
           id: sub.id,
           code: sub.code,
           name: sub.name,
+          sortOrder: sub.sortOrder,
           so: toNumber(snap?.soExpenditureCr ?? 0),
           ifms: toNumber(snap?.ifmsExpenditureCr ?? 0),
           annualBudget: annBudget,
@@ -363,7 +364,7 @@ function buildEntry(params: {
     name: string;
     verticalName: string;
     sponsorshipType: SponsorshipType;
-    subschemes: Array<{ id: string; code: string; name: string }>;
+    subschemes: Array<{ id: string; code: string; name: string; sortOrder?: number }>;
     sortOrder?: number;
   };
   schemeBudgets: Array<{
@@ -467,7 +468,7 @@ function buildEntry(params: {
     submitter: latest?.createdBy?.name ?? budgetRow?.createdBy?.name ?? "",
     updates,
     dashboardPriority: params.priority.has(scheme.id),
-    subschemes: params.subschemeDetails ?? scheme.subschemes.map((s) => ({ id: s.id, code: s.code, name: s.name })),
+    subschemes: params.subschemeDetails ?? scheme.subschemes.map((s) => ({ id: s.id, code: s.code, name: s.name, sortOrder: s.sortOrder })),
     metadata: {
       sponsorshipType: scheme.sponsorshipType,
     },

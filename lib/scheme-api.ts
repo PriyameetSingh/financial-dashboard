@@ -8,7 +8,7 @@ type SchemeWithRelations = {
   sponsorshipType: string;
   archived?: boolean;
   sortOrder?: number;
-  subschemes: Array<{ id: string; schemeId: string; code: string; name: string }>;
+  subschemes: Array<{ id: string; schemeId: string; code: string; name: string; sortOrder?: number }>;
   assignments: Array<{
     id: string;
     assignmentKind: "dashboard_owner" | "kpi_owner_1" | "kpi_owner_2" | "action_item_owner_1" | "action_item_owner_2";
@@ -54,6 +54,7 @@ export function mapSchemeView(scheme: SchemeWithRelations) {
       schemeId: subscheme.schemeId,
       code: subscheme.code,
       name: subscheme.name,
+      sortOrder: subscheme.sortOrder ?? 0,
     })),
     assignments: scheme.assignments.map((assignment) => ({
       id: assignment.id,

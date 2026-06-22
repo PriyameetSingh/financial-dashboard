@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       prisma.scheme.findMany({
         where: whereClause as Prisma.SchemeWhereInput,
         include: {
-          subschemes: { orderBy: { name: "asc" } },
+          subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
             include: {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       return tx.scheme.findUniqueOrThrow({
         where: { id: scheme.id },
         include: {
-          subschemes: { orderBy: { name: "asc" } },
+          subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
             include: {

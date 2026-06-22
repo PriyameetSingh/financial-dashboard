@@ -36,7 +36,7 @@ async function loadScheme(id: string) {
   return prisma.scheme.findUnique({
     where: { id },
     include: {
-      subschemes: { orderBy: { name: "asc" } },
+      subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
       assignments: {
         orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
         include: {
@@ -122,7 +122,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return tx.scheme.findUniqueOrThrow({
         where: { id },
         include: {
-          subschemes: { orderBy: { name: "asc" } },
+          subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
           assignments: {
             orderBy: [{ assignmentKind: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
             include: {

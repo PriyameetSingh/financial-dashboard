@@ -32,7 +32,7 @@ export async function syncSchemeFyCategoryLines(
         archived: false,
         sponsorshipType: { not: "NON_FINANCIAL" }
       },
-      include: { subschemes: { orderBy: { name: "asc" } } },
+      include: { subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } },
       orderBy: { name: "asc" },
     }),
     prisma.financeBudget.findMany({ where: { financialYearId } }),

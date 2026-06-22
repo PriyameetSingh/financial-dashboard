@@ -243,7 +243,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
           archived: false,
           sponsorshipType: { not: "NON_FINANCIAL" }
         },
-        include: { subschemes: { orderBy: { name: "asc" } } },
+        include: { subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } },
         orderBy: [{ verticalName: "asc" }, { name: "asc" }],
       }),
       prisma.financeBudget.findMany({ where: { financialYearId: fy.id } }),

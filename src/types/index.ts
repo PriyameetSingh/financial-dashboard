@@ -238,6 +238,7 @@ export interface FinancialEntry {
     id: string;
     code: string;
     name: string;
+    sortOrder?: number;
     /** Latest snapshot SO expenditure for this subscheme (₹ Cr) */
     so?: number;
     /** Latest snapshot IFMS expenditure for this subscheme (₹ Cr) */
@@ -315,6 +316,7 @@ export interface SubschemeView {
   schemeId: string;
   code: string;
   name: string;
+  sortOrder?: number;
 }
 
 export interface SchemeView {

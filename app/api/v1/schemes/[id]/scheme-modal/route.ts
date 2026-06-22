@@ -126,7 +126,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   const scheme = await prisma.scheme.findUnique({
     where: { id: schemeId },
     include: {
-      subschemes: { orderBy: { name: "asc" } },
+      subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
     },
   });
 

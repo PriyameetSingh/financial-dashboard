@@ -15,6 +15,7 @@ function getPrismaErrorCode(error: unknown): string | null {
 type Body = {
   code?: string;
   name?: string;
+  sortOrder?: number;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -35,6 +36,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       data: {
         code: body.code?.trim().toUpperCase(),
         name: body.name?.trim(),
+        sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : undefined,
       },
     });
 
@@ -43,8 +45,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       "subscheme.update",
       "subscheme",
       id,
-      { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name },
-      { id: updated.id, schemeId: updated.schemeId, code: updated.code, name: updated.name },
+      { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name, sortOrder: before.sortOrder },
+      { id: updated.id, schemeId: updated.schemeId, code: updated.code, name: updated.name, sortOrder: updated.sortOrder },
       { ...auditContext, schemeId: updated.schemeId },
     );
 

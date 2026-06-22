@@ -16,6 +16,7 @@ export default function AdminOverviewPage() {
   const showUsers = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
   const showPermissions = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
   const showSchemes = user && hasPermission(user, Permission.MANAGE_SCHEMES);
+  const showReorder = user && hasPermission(user, Permission.REORDER_SCHEMES);
   const showFinancialYears = user && hasPermission(user, Permission.MANAGE_FINANCIAL_YEARS);
   const showSystemSettings = showPermissions || showFinancialYears;
 
@@ -59,6 +60,16 @@ export default function AdminOverviewPage() {
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Schemes</p>
               <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Scheme Registry</h3>
               <p className="mt-2 text-sm text-[var(--text-muted)]">Review scheme coverage and approval flags.</p>
+            </Link>
+          )}
+          {showReorder && (
+            <Link
+              href="/admin/schemes-order"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Priority Ordering</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Reorder Schemes</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Arrange display priorities of schemes and subschemes.</p>
             </Link>
           )}
           {showFinancialYears && (
