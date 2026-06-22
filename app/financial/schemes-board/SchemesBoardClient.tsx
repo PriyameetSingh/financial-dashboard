@@ -43,11 +43,12 @@ function bucketLabel(bucket: Bucket): string {
   }
 }
 
-type SponsorshipKind = "SS" | "CSS";
+type SponsorshipKind = "SS" | "CSS" | "CS";
 
 function sponsorshipKind(e: FinancialEntry): SponsorshipKind {
   const t = e.metadata?.sponsorshipType;
   if (t === "STATE") return "SS";
+  if (t === "CENTRAL_SECTOR") return "CS";
   return "CSS";
 }
 
@@ -186,6 +187,7 @@ export default function SchemesBoardClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [selectedSponsorship, setSelectedSponsorship] = useState<"ALL" | "STATE" | "CENTRAL" | "CENTRAL_SECTOR">("ALL");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [schemeModalEntry, setSchemeModalEntry] = useState<FinancialEntry | null>(null);
   const [activeTab, setActiveTab] = useState<ViewTab>("board");
@@ -213,15 +215,24 @@ export default function SchemesBoardClient() {
   }, []);
 
   const filtered = useMemo(() => {
+    let result = entries;
+
+    if (selectedSponsorship !== "ALL") {
+      result = result.filter(
+        (e) => (e.metadata?.sponsorshipType as string | undefined) === selectedSponsorship
+      );
+    }
+
     const q = query.trim().toLowerCase();
-    if (!q) return entries;
-    return entries.filter(
+    if (!q) return result;
+
+    return result.filter(
       (e) =>
         e.scheme.toLowerCase().includes(q) ||
         e.id.toLowerCase().includes(q) ||
         e.vertical.toLowerCase().includes(q),
     );
-  }, [entries, query]);
+  }, [entries, query, selectedSponsorship]);
 
   const columns = useMemo(() => {
     const cols: Record<Bucket, FinancialEntry[]> = {
@@ -389,6 +400,60 @@ export default function SchemesBoardClient() {
           </div>
         </div>
 
+        {/* Sponsorship Filters */}
+        <div className="flex flex-wrap items-center gap-2 border-y border-[var(--border)] py-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mr-2">
+            Sponsorship:
+          </span>
+          <button
+            type="button"
+            onClick={() => setSelectedSponsorship("ALL")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              selectedSponsorship === "ALL"
+                ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm animate-in fade-in duration-200"
+                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            }`}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSponsorship("STATE")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              selectedSponsorship === "STATE"
+                ? "bg-sky-600 text-white shadow-sm animate-in fade-in duration-200"
+                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            }`}
+          >
+            <span className={`size-1.5 rounded-full ${selectedSponsorship === "STATE" ? "bg-white" : "bg-sky-500"}`} />
+            State Sector
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSponsorship("CENTRAL")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              selectedSponsorship === "CENTRAL"
+                ? "bg-orange-600 text-white shadow-sm animate-in fade-in duration-200"
+                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            }`}
+          >
+            <span className={`size-1.5 rounded-full ${selectedSponsorship === "CENTRAL" ? "bg-white" : "bg-orange-500"}`} />
+            Central Sponsor
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSponsorship("CENTRAL_SECTOR")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              selectedSponsorship === "CENTRAL_SECTOR"
+                ? "bg-purple-600 text-white shadow-sm animate-in fade-in duration-200"
+                : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            }`}
+          >
+            <span className={`size-1.5 rounded-full ${selectedSponsorship === "CENTRAL_SECTOR" ? "bg-white" : "bg-purple-500"}`} />
+            Central Sector
+          </button>
+        </div>
+
         {/* Legend / Info Section */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Targets Card */}
@@ -458,6 +523,10 @@ export default function SchemesBoardClient() {
               <div className="flex items-center gap-2.5">
                 <span className="size-2.5 rounded-full bg-orange-500 shadow-sm" />
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="size-2.5 rounded-full bg-purple-500 shadow-sm" />
+                <span className="text-[11px] font-bold text-[var(--text-primary)]">Central Sector (CS)</span>
               </div>
             </div>
           </div>
@@ -647,9 +716,15 @@ export default function SchemesBoardClient() {
                             <div className="mt-2 flex items-center gap-2">
                               <span
                                 className={`mt-0.5 size-2 shrink-0 rounded-full ${
-                                  kind === "SS" ? "bg-sky-500" : "bg-orange-500"
+                                  kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
                                 }`}
-                                title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
+                                title={
+                                  kind === "SS"
+                                    ? "State Scheme"
+                                    : kind === "CS"
+                                      ? "Central Sector"
+                                      : "Centrally Sponsored"
+                                }
                               />
                               <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
                                 <div
@@ -736,7 +811,9 @@ export default function SchemesBoardClient() {
                                             className={`mt-1 size-1.5 shrink-0 rounded-full ${
                                               kind === "SS"
                                                 ? "bg-sky-400"
-                                                : "bg-orange-400"
+                                                : kind === "CS"
+                                                  ? "bg-purple-400"
+                                                  : "bg-orange-400"
                                             }`}
                                           />
                                           <div className="min-w-0 flex-1">
@@ -864,8 +941,16 @@ export default function SchemesBoardClient() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : "bg-orange-500"}`}
-                                title={kind === "SS" ? "State Scheme" : "Centrally Sponsored"}
+                                className={`size-2 shrink-0 rounded-full ${
+                                  kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
+                                }`}
+                                title={
+                                  kind === "SS"
+                                    ? "State Scheme"
+                                    : kind === "CS"
+                                      ? "Central Sector"
+                                      : "Centrally Sponsored"
+                                }
                               />
                               <div>
                                 <p className="font-medium leading-snug text-[var(--text-primary)]">
@@ -980,7 +1065,9 @@ export default function SchemesBoardClient() {
                                               className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
                                                 kind === "SS"
                                                   ? "bg-sky-400"
-                                                  : "bg-orange-400"
+                                                  : kind === "CS"
+                                                    ? "bg-purple-400"
+                                                    : "bg-orange-400"
                                               }`}
                                             />
                                             <div className="min-w-0 flex-1">
