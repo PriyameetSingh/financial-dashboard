@@ -187,10 +187,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const overlap = performerCodes.filter((c) => reviewerCodes.includes(c));
-    if (overlap.length > 0) {
-      return NextResponse.json({ detail: "A user cannot be both a performer and a reviewer on the same item" }, { status: 400 });
-    }
 
     let scheme = null;
     if (body.schemeCode) {
@@ -239,10 +235,6 @@ export async function POST(request: NextRequest) {
     const performerIds = performerCodes.map((code) => performers.find((u) => u.code === code)!.id);
     const reviewerIds = reviewerCodes.map((code) => reviewers.find((u) => u.code === code)!.id);
 
-    const idSet = new Set([...performerIds, ...reviewerIds]);
-    if (idSet.size !== performerIds.length + reviewerIds.length) {
-      return NextResponse.json({ detail: "Performers and reviewers must be distinct users" }, { status: 400 });
-    }
 
     const dueDate = new Date(`${body.dueDate}T00:00:00.000Z`);
 

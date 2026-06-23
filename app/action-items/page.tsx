@@ -798,7 +798,6 @@ function ActionItemsContent() {
                           label={index === 0 ? "Assigned to" : `Performer ${index + 1}`}
                           catalog={directoryUsers}
                           users={directoryUsers.filter((u) => {
-                            if (reassignReviewers.some((r) => r === u.id)) return false;
                             if (reassignPerformers.some((p, i) => i !== index && p === u.id)) return false;
                             return true;
                           })}
@@ -840,7 +839,6 @@ function ActionItemsContent() {
                           label={index === 0 ? "Reviewer" : `Reviewer ${index + 1}`}
                           catalog={directoryUsers}
                           users={directoryUsers.filter((u) => {
-                            if (reassignPerformers.some((p) => p === u.id)) return false;
                             if (reassignReviewers.some((r, i) => i !== index && r === u.id)) return false;
                             return true;
                           })}

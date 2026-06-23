@@ -292,10 +292,6 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
       const nextPerformerIds = performerCodes.map((code) => performers.find((u) => u.code === code)!.id);
       const nextReviewerIds = reviewerCodes.map((code) => reviewers.find((u) => u.code === code)!.id);
-      const combined = new Set([...nextPerformerIds, ...nextReviewerIds]);
-      if (combined.size !== nextPerformerIds.length + nextReviewerIds.length) {
-        return NextResponse.json({ detail: "Performers and reviewers must be distinct users" }, { status: 400 });
-      }
 
       const prevItem = await getActionItemById(id);
       const prevAssignName = prevItem
@@ -437,7 +433,19 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       if (!isAssignee && !canEdit) {
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
-      const noteTrimmed = body.note?.trim() ?? "";
+      let nextStatus = body.status;
+      let noteTrimmed = body.note?.trim() ?? "";
+
+      const hasOverlap = [...performerIds].some((id) => reviewerIds.has(id));
+      if (nextStatus === ActionItemStatus.UNDER_REVIEW && hasOverlap) {
+        nextStatus = ActionItemStatus.COMPLETED;
+        if (!noteTrimmed || noteTrimmed === "Submitted for reviewer approval") {
+          noteTrimmed = "Completed & reviewed automatically";
+        } else {
+          noteTrimmed = `${noteTrimmed} (Completed & reviewed automatically)`;
+        }
+      }
+
       let noteMeetingId: string | null = null;
       if (noteTrimmed.length > 0) {
         if (!body.meetingId?.trim()) {
@@ -452,10 +460,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         }
         noteMeetingId = meeting.id;
       }
-      if (body.status && body.status !== current.status) {
+      if (nextStatus && nextStatus !== current.status) {
         await prisma.actionItem.update({
           where: { id },
-          data: { status: body.status },
+          data: { status: nextStatus },
         });
       }
       if (noteTrimmed.length > 0 && noteMeetingId) {
@@ -464,7 +472,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             actionItemId: id,
             meetingId: noteMeetingId,
             timestamp: new Date(),
-            status: body.status ?? current.status,
+            status: nextStatus ?? current.status,
             note: noteTrimmed,
             createdById: actor.id,
           },
@@ -476,7 +484,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         "action_item",
         id,
         { status: beforeStatus },
-        { status: body.status ?? current.status },
+        { status: nextStatus ?? current.status },
         {
           ...auditContext,
           meetingId: noteMeetingId ?? current.meetingId,

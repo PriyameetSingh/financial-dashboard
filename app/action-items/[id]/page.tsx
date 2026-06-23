@@ -775,13 +775,14 @@ export default function ActionItemDetailPage() {
           }
           setBusy(true);
           try {
-            await updateActionItem(id, {
+            const updated = await updateActionItem(id, {
               status: "UNDER_REVIEW",
               note: "Submitted for reviewer approval",
               meetingId: progressMeetingId.trim(),
             });
             await refresh();
-            setActionSuccess("Submitted for review.");
+            const isAutoApproved = updated?.status === "COMPLETED";
+            setActionSuccess(isAutoApproved ? "Action item completed and reviewed automatically." : "Submitted for review.");
           } catch (e: unknown) {
             setActionSuccess(e instanceof Error ? e.message : "Update failed");
           } finally {
