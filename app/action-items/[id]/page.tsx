@@ -154,7 +154,6 @@ export default function ActionItemDetailPage() {
   }, [id]);
 
   const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
-  const isNodal = user?.role === UserRole.NODAL_OFFICER;
   const canReviewerAct = Boolean(
     item &&
       user &&
@@ -163,7 +162,7 @@ export default function ActionItemDetailPage() {
       isDesignatedReviewer(item, user),
   );
   const showNodalActions = Boolean(
-    item && isNodal && !isViewer && user && isAssignedOfficer(item, user),
+    item && !isViewer && user && isAssignedOfficer(item, user),
   );
 
   const canEdit = useMemo(() => {
