@@ -11,7 +11,7 @@ import { fetchMeetings } from "@/src/lib/services/meetingService";
 import { fetchSchemesAdmin } from "@/src/lib/services/schemeService";
 import { ActionItemPriority } from "@/types";
 import SchemeSelector from "@/src/components/ui/SchemeSelector";
-import UserSelector from "@/src/components/ui/UserSelector";
+import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 import ProofUpload from "@/src/components/ui/ProofUpload";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
@@ -175,8 +175,8 @@ export default function ActionItemCreatePage() {
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
                 />
               </label>
-              <UserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" />
-              <UserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
+              <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" />
+              <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
               <div className="md:col-span-2">
                 <ProofUpload label="Attach initial notes" onUpload={() => undefined} />
               </div>

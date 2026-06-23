@@ -8,7 +8,7 @@ import { createActionItem } from "@/src/lib/services/actionItemService";
 import { fetchSchemesAdmin } from "@/src/lib/services/schemeService";
 import { ActionItemPriority } from "@/types";
 import SchemeSelector from "@/src/components/ui/SchemeSelector";
-import UserSelector from "@/src/components/ui/UserSelector";
+import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 
 const PRIORITIES: ActionItemPriority[] = ["Critical", "High", "Medium", "Low"];
 
@@ -190,8 +190,8 @@ export default function CreateActionItemMeetingModal({
                 </label>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <UserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" />
-                <UserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
+                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" />
+                <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
               </div>
               <p className="text-xs text-[var(--text-muted)]">
                 Assigned to <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? "—"}</span>

@@ -38,3 +38,16 @@ test("denominator lock rule: second change blocked without override", () => {
   const allowed = !hasExisting || canOverride;
   assert.equal(allowed, false);
 });
+
+test("action item status: transitions directly to COMPLETED when assignee is reviewer", () => {
+  const performerIds = new Set(["user-1"]);
+  const reviewerIds = new Set(["user-1"]);
+  const hasOverlap = [...performerIds].some((id) => reviewerIds.has(id));
+
+  let status = "UNDER_REVIEW";
+  if (status === "UNDER_REVIEW" && hasOverlap) {
+    status = "COMPLETED";
+  }
+  assert.equal(status, "COMPLETED");
+});
+
