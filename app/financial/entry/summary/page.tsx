@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import AppShell from "@/components/AppShell";
-import { useRequireRole } from "@/src/lib/route-guards";
-import { UserRole } from "@/lib/auth";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
+import { Permission } from "@/lib/auth";
 import { fetchFyBudgetAllocation, saveFyBudgetAllocation } from "@/src/lib/services/financialService";
 import type { FinanceYearBudgetAllocationLineRow } from "@/types";
 import {
@@ -29,7 +29,7 @@ function defaultLines(): FinanceYearBudgetAllocationLineRow[] {
 }
 
 export default function SummaryEntryPage() {
-  useRequireRole([UserRole.FA, UserRole.TASU], "/");
+  useRequireAnyPermission([Permission.ENTER_FINANCIAL_DATA, Permission.MANAGE_FINANCIAL_DATA], "/");
 
   const [financialYearLabel, setFinancialYearLabel] = useState<string | null>(null);
   const [allocationLines, setAllocationLines] = useState<FinanceYearBudgetAllocationLineRow[]>(defaultLines);

@@ -3,8 +3,8 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Loader2, Lock, Plus, Search } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import { useRequireRole } from "@/src/lib/route-guards";
-import { getCurrentUser, UserRole, Permission, hasPermission } from "@/lib/auth";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
+import { getCurrentUser, Permission, hasPermission } from "@/lib/auth";
 import {
   fetchFinancialBudgets,
   submitFinancialSnapshot,
@@ -132,7 +132,7 @@ function getSubschemeBudgetProgress(sub: {
 }
 
 export default function SchemeEntryPage() {
-  useRequireRole([UserRole.FA, UserRole.TASU], "/");
+  useRequireAnyPermission([Permission.ENTER_FINANCIAL_DATA, Permission.MANAGE_FINANCIAL_DATA], "/");
 
   const [query, setQuery] = useState("");
 

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { IndianRupee, BarChart3, Layers } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import { hasPermission, Permission, UserRole } from "@/lib/auth";
-import { useRequireRole } from "@/src/lib/route-guards";
+import { hasPermission, Permission } from "@/lib/auth";
+import { useRequireAnyPermission } from "@/src/lib/route-guards";
 
 export default function FinancialEntryLanding() {
-  const user = useRequireRole([UserRole.FA, UserRole.TASU], "/");
+  const user = useRequireAnyPermission([Permission.ENTER_FINANCIAL_DATA, Permission.MANAGE_FINANCIAL_DATA], "/");
   const showBulk = user && hasPermission(user, Permission.MANAGE_FINANCIAL_DATA);
 
   return (
