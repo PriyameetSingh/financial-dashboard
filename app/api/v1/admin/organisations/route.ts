@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,46 @@ export async function GET() {
     const auth = toAuthErrorResponse(error);
     if (auth) {
       return NextResponse.json({ detail: auth.detail }, { status: auth.status });
+    }
+    throw error;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const actor = await requireAnyPermissionAndDbUser("MANAGE_PERMISSIONS");
+    const body = (await request.json()) as { name?: string };
+    const name = body.name?.trim() ?? "";
+
+    if (!name) {
+      return NextResponse.json({ detail: "name is required" }, { status: 400 });
+    }
+
+    const auditContext = getAuditRequestContext(request);
+
+    const created = await prisma.organisation.create({
+      data: { name },
+      select: { id: true, name: true },
+    });
+
+    await logAudit(
+      actor?.id ?? null,
+      "CREATE",
+      "Organisation",
+      created.id,
+      null,
+      { name: created.name },
+      auditContext
+    );
+
+    return NextResponse.json(created);
+  } catch (error: unknown) {
+    const auth = toAuthErrorResponse(error);
+    if (auth) {
+      return NextResponse.json({ detail: auth.detail }, { status: auth.status });
+    }
+    if (error && typeof error === "object" && "code" in error && (error as { code: string }).code === "P2002") {
+      return NextResponse.json({ detail: "An organisation with this name already exists" }, { status: 409 });
     }
     throw error;
   }

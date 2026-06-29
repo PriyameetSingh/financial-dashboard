@@ -36,6 +36,7 @@ import {
   User,
   Shield,
   FileText,
+  Settings,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -146,6 +147,12 @@ const items: NavItem[] = [
         href: "/admin/financial-years",
         icon: Calendar,
         roles: [UserRole.TASU,],
+      },
+      {
+        label: "System settings",
+        href: "/admin/system",
+        icon: Settings,
+        roles: [UserRole.TASU],
       }
     ],
   },

@@ -5,53 +5,45 @@ import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  try {
-    await requireAnyPermissionAndDbUser("MANAGE_USERS", "MANAGE_PERMISSIONS");
-
-    const designations = await prisma.designation.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    });
-
-    return NextResponse.json({ designations });
-  } catch (error) {
-    const auth = toAuthErrorResponse(error);
-    if (auth) {
-      return NextResponse.json({ detail: auth.detail }, { status: auth.status });
-    }
-    throw error;
-  }
-}
-
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const actor = await requireAnyPermissionAndDbUser("MANAGE_PERMISSIONS");
+    const { id } = await ctx.params;
     const body = (await request.json()) as { name?: string };
     const name = body.name?.trim() ?? "";
 
     if (!name) {
-      return NextResponse.json({ detail: "name is required" }, { status: 400 });
+      return NextResponse.json({ detail: "name cannot be empty" }, { status: 400 });
+    }
+
+    const existing = await prisma.designation.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ detail: "Designation not found" }, { status: 404 });
     }
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.designation.create({
+    const updated = await prisma.designation.update({
+      where: { id },
       data: { name },
       select: { id: true, name: true },
     });
 
     await logAudit(
       actor?.id ?? null,
-      "CREATE",
+      "UPDATE",
       "Designation",
-      created.id,
-      null,
-      { name: created.name },
+      updated.id,
+      { name: existing.name },
+      { name: updated.name },
       auditContext
     );
 
-    return NextResponse.json(created);
+    return NextResponse.json(updated);
   } catch (error: unknown) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
@@ -63,4 +55,3 @@ export async function POST(request: NextRequest) {
     throw error;
   }
 }
-

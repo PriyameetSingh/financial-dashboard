@@ -9,12 +9,12 @@ export async function GET() {
   try {
     await requireAnyPermissionAndDbUser("MANAGE_USERS", "MANAGE_PERMISSIONS");
 
-    const designations = await prisma.designation.findMany({
-      select: { id: true, name: true },
+    const verticals = await prisma.vertical.findMany({
+      select: { id: true, code: true, name: true },
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ designations });
+    return NextResponse.json({ verticals });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
@@ -27,27 +27,31 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const actor = await requireAnyPermissionAndDbUser("MANAGE_PERMISSIONS");
-    const body = (await request.json()) as { name?: string };
+    const body = (await request.json()) as { code?: string; name?: string };
+    const code = body.code?.trim() ?? "";
     const name = body.name?.trim() ?? "";
 
+    if (!code) {
+      return NextResponse.json({ detail: "code is required" }, { status: 400 });
+    }
     if (!name) {
       return NextResponse.json({ detail: "name is required" }, { status: 400 });
     }
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.designation.create({
-      data: { name },
-      select: { id: true, name: true },
+    const created = await prisma.vertical.create({
+      data: { code, name },
+      select: { id: true, code: true, name: true },
     });
 
     await logAudit(
       actor?.id ?? null,
       "CREATE",
-      "Designation",
+      "Vertical",
       created.id,
       null,
-      { name: created.name },
+      { code: created.code, name: created.name },
       auditContext
     );
 
@@ -58,9 +62,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: auth.detail }, { status: auth.status });
     }
     if (error && typeof error === "object" && "code" in error && (error as { code: string }).code === "P2002") {
-      return NextResponse.json({ detail: "A designation with this name already exists" }, { status: 409 });
+      return NextResponse.json({ detail: "A vertical with this code already exists" }, { status: 409 });
     }
     throw error;
   }
 }
-
