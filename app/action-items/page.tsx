@@ -17,7 +17,7 @@ import PriorityBadge from "@/src/components/ui/PriorityBadge";
 import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import { useSearchParams } from "next/navigation";
 
-const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus) => boolean }[] = [
+const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus, item: ActionItem) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
   {
     id: "pending",
@@ -31,7 +31,11 @@ const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemSta
     match: (status) => status === "UNDER_REVIEW",
   },
   { id: "completed", label: "Completed", match: (status) => status === "COMPLETED" },
-  { id: "overdue", label: "Overdue", match: (status) => status === "OVERDUE" },
+  {
+    id: "overdue",
+    label: "Overdue",
+    match: (status, item) => status === "OVERDUE" || (status !== "COMPLETED" && new Date(item.dueDate) < new Date()),
+  },
   { id: "archived", label: "Archived", match: () => true },
 ];
 
@@ -210,7 +214,7 @@ function ActionItemsContent() {
       })();
       return (
         matchesQuery &&
-        activeFilter.match(item.status) &&
+        activeFilter.match(item.status, item) &&
         matchesVertical &&
         matchesAssignee &&
         matchesPriority &&
