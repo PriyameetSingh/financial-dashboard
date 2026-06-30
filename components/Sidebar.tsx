@@ -536,60 +536,59 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
               : [];
           const isOpen = !!openSubmenus[item.label];
 
+          const isParentActive = isTopNavActive(pathname, item.href);
+          const hasChildren = childLinks.length > 0;
+
           return (
             <div key={item.href}>
-              <Link
-                href={item.href}
-                title={isCollapsed ? item.label : undefined}
-                className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors text-sm font-medium ${isTopNavActive(pathname, item.href) ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"} ${isCollapsed ? "justify-center px-0" : ""}`}
-                onClick={(e) => handleParentClick(e, item)}
+              <div
+                className={`group flex items-center justify-between rounded-md transition-colors text-sm font-medium ${isParentActive ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"}`}
               >
-                <item.icon size={isCollapsed ? 20 : 16} />
-                {!isCollapsed && (
-                  <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                    <span className="truncate">{item.label}</span>
-                    {item.href === "/action-items" && actionItemsBadge && actionItemsBadge.count > 0 && actionItemsBadge.tone && (
-                      <span
-                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
-                        title="Pending action items assigned to you"
-                      >
-                        ({actionItemsBadge.count})
-                      </span>
-                    )}
-                    {item.href === "/my-tasks" && myTasksHubBadge.count > 0 && myTasksHubBadge.tone && (
-                      <span
-                        className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
-                        title="Pending items across KPI and decision-tracker work assigned to you"
-                      >
-                        ({myTasksHubBadge.count})
-                      </span>
-                    )}
-                  </span>
-                )}
-                {!isCollapsed && item.badge && <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">{item.badge}</span>}
-                {!isCollapsed && childLinks.length > 0 && (
-                  <span
-                    role="button"
-                    tabIndex={0}
+                <Link
+                  href={item.href}
+                  title={isCollapsed ? item.label : undefined}
+                  className={`flex-1 flex items-center gap-3 pl-4 ${!isCollapsed && hasChildren ? "pr-2" : "pr-4"} py-2 rounded-l-md ${isCollapsed ? "justify-center px-0 rounded-md" : ""}`}
+                  onClick={hasChildren ? (e) => handleParentClick(e, item) : undefined}
+                >
+                  <item.icon size={isCollapsed ? 20 : 16} />
+                  {!isCollapsed && (
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="truncate">{item.label}</span>
+                      {item.href === "/action-items" && actionItemsBadge && actionItemsBadge.count > 0 && actionItemsBadge.tone && (
+                        <span
+                          className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[actionItemsBadge.tone]}`}
+                          title="Pending action items assigned to you"
+                        >
+                          ({actionItemsBadge.count})
+                        </span>
+                      )}
+                      {item.href === "/my-tasks" && myTasksHubBadge.count > 0 && myTasksHubBadge.tone && (
+                        <span
+                          className={`shrink-0 tabular-nums text-[13px] font-semibold ${SIDEBAR_BADGE_TONE_CLASS[myTasksHubBadge.tone]}`}
+                          title="Pending items across KPI and decision-tracker work assigned to you"
+                        >
+                          ({myTasksHubBadge.count})
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {!isCollapsed && item.badge && (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+                {!isCollapsed && hasChildren && (
+                  <button
+                    type="button"
                     title={isOpen ? "Collapse menu" : "Expand menu"}
-                    className="ml-auto p-1 rounded hover:bg-[var(--sidebar-hover-bg)]/80 text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-all flex items-center justify-center cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleSubmenu(item.label);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleSubmenu(item.label);
-                      }
-                    }}
+                    className="p-1 rounded-r-md text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-all flex items-center justify-center cursor-pointer pr-3 pl-1 py-2 select-none focus:outline-none"
+                    onClick={() => toggleSubmenu(item.label)}
                   >
                     <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-                  </span>
+                  </button>
                 )}
-              </Link>
+              </div>
               {!isCollapsed && childLinks.length > 0 && (
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 pointer-events-none"}`}>
                   <div className="overflow-hidden">
