@@ -74,6 +74,20 @@ export default function SummaryEntryPage() {
       return;
     }
     setError(null);
+
+    const exceedingCategories = allocationLines.filter(
+      (r) => MANUAL_CATEGORY_SET.has(r.category) && r.soExpenditureCr > r.budgetEstimateCr
+    );
+    if (exceedingCategories.length > 0) {
+      const names = exceedingCategories.map((r) => r.label);
+      const confirmMsg = exceedingCategories.length === 1
+        ? `Warning: The Sanction Order (SO) value for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
+        : `Warning: The Sanction Order (SO) values for the following categories exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await saveFyBudgetAllocation({

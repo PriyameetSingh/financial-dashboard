@@ -77,9 +77,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (username.length < 10) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { detail: "phone is required: enter at least 10 digits; the number (digits only) is used as the login username" },
+        { detail: "Please enter a valid email address." },
+        { status: 400 },
+      );
+    }
+
+    if (username.length !== 10) {
+      return NextResponse.json(
+        { detail: "Phone number is required: exactly 10 digits." },
         { status: 400 },
       );
     }

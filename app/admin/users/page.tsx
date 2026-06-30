@@ -240,7 +240,10 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
 
   return (
     <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-      {label}
+      <span>
+        {label}
+        {required && <span className="text-[var(--alert-critical)] ml-0.5">*</span>}
+      </span>
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
@@ -605,6 +608,14 @@ function CreateUserModal({
   onSubmit,
   onClose,
 }: CreateUserModalProps) {
+  const [phoneTouched, setPhoneTouched] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPhoneTouched(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const officerTypeOptions: ReferenceOption[] = [
@@ -615,6 +626,8 @@ function CreateUserModal({
     id: role,
     name: formatRoleLabel(role),
   }));
+
+  const isPhoneInvalid = form.phone.length > 10 || (phoneTouched && form.phone.length < 10);
 
   return (
     <div
@@ -644,7 +657,7 @@ function CreateUserModal({
         <div className="flex-1 overflow-y-auto px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Name
+              <span>Name <span className="text-[var(--alert-critical)]">*</span></span>
               <input
                 value={form.name}
                 onChange={(e) => onChange("name", e.target.value)}
@@ -654,7 +667,7 @@ function CreateUserModal({
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Email
+              <span>Email <span className="text-[var(--alert-critical)]">*</span></span>
               <input
                 type="email"
                 value={form.email}
@@ -665,23 +678,28 @@ function CreateUserModal({
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Phone number
+              <span>Phone number <span className="text-[var(--alert-critical)]">*</span></span>
               <input
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => {
-                  const cleaned = e.target.value.replace(/[^0-9+\-()\s]/g, "");
+                  const cleaned = e.target.value.replace(/\D/g, "");
                   onChange("phone", cleaned);
                 }}
-                placeholder="e.g. +91 98765 43210"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                onBlur={() => setPhoneTouched(true)}
+                placeholder="e.g. 9876543210"
+                className={`rounded-lg border bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none ${
+                  isPhoneInvalid
+                    ? "border-[var(--alert-critical)] focus:border-[var(--alert-critical)]"
+                    : "border-[var(--border)] focus:border-[var(--text-muted)]"
+                }`}
               />
               <span className="text-[10px] text-[var(--text-muted)]">
                 {phoneUsernamePreview.length >= 10
                   ? `Login username (digits): ${phoneUsernamePreview}`
-                  : "Enter at least 10 digits; spaces and symbols are stripped for the username."}
+                  : "Enter exactly 10 digits; non-digits are stripped for the username."}
               </span>
             </label>
 
@@ -737,7 +755,7 @@ function CreateUserModal({
             />
 
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              Default Password
+              <span>Default Password <span className="text-[var(--alert-critical)]">*</span></span>
               <input
                 type="password"
                 value={form.defaultPassword}
@@ -1286,16 +1304,16 @@ export default function AdminUsersPage() {
       return;
     }
 
-    const phoneRaw = createUserForm.phone.trim();
-    const phoneDigits = usernameDigitsFromPhone(phoneRaw);
-    if (phoneDigits.length < 10) {
-      setCreateUserAlert("Phone number is required: at least 10 digits. Digits are used as the login username.");
+    const emailRaw = createUserForm.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailRaw)) {
+      setCreateUserAlert("Please enter a valid email address.");
       return;
     }
 
-    const phoneRegex = /^[+\-() \s\d]+$/;
-    if (!phoneRegex.test(phoneRaw)) {
-      setCreateUserAlert("Phone number contains invalid characters. Only digits, spaces, and +, -, (, ) are allowed.");
+    const phoneRaw = createUserForm.phone.trim();
+    if (phoneRaw.length !== 10) {
+      setCreateUserAlert("Phone number is required: exactly 10 digits.");
       return;
     }
 
@@ -1468,6 +1486,13 @@ export default function AdminUsersPage() {
     setProfileEditAlert("");
     if (!profileEditForm.name.trim() || !profileEditForm.email.trim()) {
       setProfileEditAlert("Name and email are required.");
+      return;
+    }
+
+    const emailRaw = profileEditForm.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailRaw)) {
+      setProfileEditAlert("Please enter a valid email address.");
       return;
     }
 

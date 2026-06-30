@@ -278,6 +278,24 @@ export default function BulkEntryPage() {
       return;
     }
 
+    if (mode === "snapshot") {
+      const exceedingRows = dirtyRows.filter((r) => {
+        const d = getDraft(r.key);
+        if (d.so === "") return false;
+        const totalSo = r.currentSo + Number(d.so);
+        return totalSo > r.effectiveBudget;
+      });
+      if (exceedingRows.length > 0) {
+        const names = exceedingRows.map((r) => r.componentName || r.schemeName);
+        const confirmMsg = exceedingRows.length === 1
+          ? `Warning: The proposed total Sanction Order (SO) for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
+          : `Warning: The proposed total Sanction Order (SO) for the following schemes/components exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
+        if (!window.confirm(confirmMsg)) {
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
     setGlobalMsg(null);
 

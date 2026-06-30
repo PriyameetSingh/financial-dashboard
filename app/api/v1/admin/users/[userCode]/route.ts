@@ -137,6 +137,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
       if (!email) {
         return NextResponse.json({ detail: "email cannot be empty" }, { status: 400 });
       }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return NextResponse.json({ detail: "Please enter a valid email address." }, { status: 400 });
+      }
       if (email !== user.email) {
         const taken = await prisma.user.findFirst({
           where: { email, id: { not: user.id } },

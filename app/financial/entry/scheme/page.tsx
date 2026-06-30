@@ -504,10 +504,18 @@ export default function SchemeEntryPage() {
       triggerAlert("error", "Select the meeting this financial update is attributed to.");
       return;
     }
+
+    const totalSO = currentSO + soToAdd;
+    if (totalSO > activeEffectiveBudgetCr) {
+      const proceed = window.confirm(
+        `Warning: Proposed total Sanction Order (SO) value of ₹${totalSO.toFixed(2)} Cr will exceed the Budget Estimate (BE) of ₹${activeEffectiveBudgetCr.toFixed(2)} Cr. Do you want to proceed?`
+      );
+      if (!proceed) return;
+    }
+
     setIsSubmitting(true);
     setPendingSubmit("so");
     try {
-      const totalSO = currentSO + soToAdd;
       // Per instructions SO update logic; substituting submitFinancialSnapshot for SO update
       await submitFinancialSnapshot({
         schemeCode: selected.id,
