@@ -30,8 +30,6 @@ export default function AdminSystemSettingsPage() {
     "/dashboard",
   );
 
-  if (!user) return null;
-
   const [activeTab, setActiveTab] = useState<EntityTab>("organisations");
   const [items, setItems] = useState<MasterDataItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,6 +171,8 @@ export default function AdminSystemSettingsPage() {
   });
 
   const activeTabMeta = TABS.find((t) => t.id === activeTab) || TABS[0];
+
+  if (!user) return null;
 
   return (
     <AppShell title="System Settings">

@@ -18,8 +18,6 @@ type FyRow = {
 export default function AdminFinancialYearsPage() {
   const user = useRequireAnyPermission([Permission.MANAGE_FINANCIAL_YEARS], "/dashboard");
 
-  if (!user) return null;
-
   const [items, setItems] = useState<FyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +103,8 @@ export default function AdminFinancialYearsPage() {
       setBusy(false);
     }
   }
+
+  if (!user) return null;
 
   return (
     <AppShell title="Financial years">

@@ -25,8 +25,6 @@ function formatRoleLabel(code: string): string {
 export default function AdminRolesPage() {
   const user = useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
 
-  if (!user) return null;
-
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
   const [alert, setAlert] = useState("");
@@ -127,6 +125,8 @@ export default function AdminRolesPage() {
       setSaving((prev) => ({ ...prev, [originalCode]: false }));
     }
   }, [editingRoleName, editingRoleCodeInput, refresh]);
+
+  if (!user) return null;
 
   return (
     <AppShell title="Admin · Roles">

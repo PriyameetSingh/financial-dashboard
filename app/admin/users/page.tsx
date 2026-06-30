@@ -1002,8 +1002,6 @@ export default function AdminUsersPage() {
     [sessionUser, canManagePermissions],
   );
 
-  if (!sessionUser) return null;
-
   const [users, setUsers] = useState<DbUserRow[]>([]);
   const [alert, setAlert] = useState("");
   const [selectedUser, setSelectedUser] = useState<DbUserRow | null>(null);
@@ -1606,6 +1604,8 @@ export default function AdminUsersPage() {
       return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [openDropdownCode]);
+
+  if (!sessionUser) return null;
 
   return (
     <AppShell title="Admin · Users">
