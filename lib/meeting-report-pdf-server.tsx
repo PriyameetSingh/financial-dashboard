@@ -84,7 +84,7 @@ const s = StyleSheet.create({
     borderColor: C.primaryBlue,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
   },
   documentHeaderTextBlock: {
@@ -517,6 +517,9 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
 
         {/* ── Document Header ── */}
         <View style={[s.documentHeader, s.mb16]}>
+          <View style={[s.documentHeaderSeal, { marginBottom: 6 }]}>
+            <Image src={LOGO_PATH} style={{ width: 52, height: 52 }} />
+          </View>
           <View style={s.documentHeaderTextBlock}>
             <Text style={s.departmentName}>Government of Odisha</Text>
             <Text style={s.departmentName}>Housing &amp; Urban Development Department</Text>
@@ -524,43 +527,37 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
             <Text style={s.meetingTitle}>{meetingLine}</Text>
             <Text style={s.meetingDetails}>{scheduleLine}</Text>
           </View>
-          <View style={s.documentHeaderSeal}>
-            <Image src={LOGO_PATH} style={{ width: 52, height: 52 }} />
-          </View>
         </View>
 
-        {/* ── 1. Presentations ── */}
-        <View style={[s.sectionContainer, s.mb16]}>
-          <SectionHeader number={1} title="Proposed Presentations by Verticals" />
-          <View style={s.listContainer}>
-            {presentationRows.length === 0 ? (
-              <Text style={s.emptyState}>No presentation files uploaded for this meeting.</Text>
-            ) : (
-              presentationRows.map((row) => (
-                <View key={`${row.letter}-${row.label}`} style={s.listItem}>
-                  <Text style={s.listItemText}>
-                    <Text style={s.bold}>{row.letter})</Text> {row.label}
-                  </Text>
-                </View>
-              ))
-            )}
-          </View>
-        </View>
-
-        {/* ── 2. Topics ── */}
+        {/* ── 1. Topics ── */}
         <View style={s.sectionContainer}>
-          <SectionHeader number={2} title="Important Topics for Discussion" />
+          <SectionHeader number={1} title="Important Topics for Discussion" />
           <View style={s.listContainer}>
-            {data.topics.length === 0 ? (
-              <Text style={s.emptyState}>No topics recorded.</Text>
+            {data.topics.length === 0 && presentationRows.length === 0 ? (
+              <Text style={s.emptyState}>No topics or presentations recorded.</Text>
             ) : (
-              data.topics.map((t, i) => (
-                <View key={t.id} style={s.listItem}>
-                  <Text style={s.listItemText}>
-                    <Text style={s.bold}>{i + 1}.</Text> {t.topic}
-                  </Text>
-                </View>
-              ))
+              <React.Fragment>
+                {data.topics.map((t, i) => (
+                  <View key={t.id} style={s.listItem}>
+                    <Text style={s.listItemText}>
+                      <Text style={s.bold}>{i + 1}.</Text> {t.topic}
+                    </Text>
+                  </View>
+                ))}
+                {presentationRows.length > 0 && (
+                  <View style={s.listItem}>
+                    <Text style={[s.listItemText, s.bold]}>
+                      <Text style={s.bold}>{data.topics.length + 1}.</Text> Proposed Presentations
+                    </Text>
+                    {presentationRows.map((row) => (
+                      <View key={`${row.letter}-${row.label}`} style={{ marginLeft: 12, marginTop: 4, flexDirection: "row" }}>
+                        <Text style={[s.listItemText, { marginRight: 6 }]}>•</Text>
+                        <Text style={s.listItemText}>{row.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </React.Fragment>
             )}
           </View>
         </View>
@@ -570,9 +567,9 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
       {/* ── Finance Tables ── */}
       <Page size="A4" style={s.page}>
 
-        {/* ── 3. Financial Progress ── */}
+        {/* ── 2. Financial Progress ── */}
         <View style={[s.sectionContainer, s.mb16]}>
-          <SectionHeader number={3} title={`Financial Progress ${fy} (In Cr.)`} />
+          <SectionHeader number={2} title={`Financial Progress ${fy} (In Cr.)`} />
           <View style={s.tableContainer}>
             <FinanceTableHeader asOf={asOf} fyLabel={fy} />
             {data.financeProgress.map((row, i) => (
@@ -581,9 +578,9 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
           </View>
         </View>
 
-        {/* ── 4. Scheme-wise Financial Progress ── */}
+        {/* ── 3. Scheme-wise Financial Progress ── */}
         <View style={s.sectionContainer}>
-          <SectionHeader number={4} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
+          <SectionHeader number={3} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
           {data.schemesFinancialProgress.map((block, bi) => (
             <View key={block.sponsorshipKey} style={{ marginBottom: bi < data.schemesFinancialProgress.length - 1 ? 8 : 0 }}>
               <View style={s.schemeSubheader}>
@@ -604,9 +601,9 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
       {/* ── Key Decisions & KPIs ── */}
       <Page size="A4" style={s.page}>
 
-        {/* ── 5. Key Decisions ── */}
+        {/* ── 4. Key Decisions ── */}
         <View style={[s.sectionContainer, s.mb16]}>
-          <SectionHeader number={5} title="Key Decisions from Last Dashboard Meetings" />
+          <SectionHeader number={4} title="Key Decisions from Last Dashboard Meetings" />
           <View style={s.tableContainer}>
             <View style={s.tableHeaderRow}>
               <Text style={[s.tableHeaderCell, { flex: 3 }]}>Decision &amp; Details</Text>
@@ -663,7 +660,7 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
       {/* ── KPIs (may span multiple pages) ── */}
       <Page size="A4" style={s.page}>
         <View style={s.sectionContainer}>
-          <SectionHeader number={6} title="Key Performance Indicators (KPIs) — Weekly Update" />
+          <SectionHeader number={5} title="Key Performance Indicators (KPIs) — Weekly Update" />
           <View style={s.tableContainer}>
             <View style={s.tableHeaderRow}>
               <Text style={[s.tableHeaderCell, { width: KPI_COLS.num }]}>#</Text>

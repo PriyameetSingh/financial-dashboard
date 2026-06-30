@@ -200,46 +200,27 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
       style={{ fontFamily: "Arial, Helvetica, system-ui, sans-serif" }}
     >
       <header className="mb-6 border-b border-black pb-4">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1 text-center text-sm font-bold leading-snug sm:text-base">
+        <div className="flex flex-col items-center gap-3">
+          <div className="shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element -- runtime URL from public + basePath */}
+            <img src={logoSrc} alt="" width={80} height={80} className="h-16 w-16 object-contain sm:h-20 sm:w-20" />
+          </div>
+          <div className="min-w-0 text-center text-sm font-bold leading-snug sm:text-base">
             <p>Government of Odisha</p>
             <p>Housing &amp; Urban Development Department</p>
             <p>{fyLine}</p>
             <p>{meetingLine}</p>
             <p className="font-semibold">{scheduleLine}</p>
           </div>
-          <div className="shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element -- runtime URL from public + basePath */}
-            <img src={logoSrc} alt="" width={80} height={80} className="h-16 w-16 object-contain sm:h-20 sm:w-20" />
-          </div>
         </div>
       </header>
 
-      {/* 1 — formatted like formal agenda table */}
-      <section className="mb-8 break-inside-avoid">
-        <SectionTitleBar n={1} title="Proposed Presentations by Verticals" />
-        <div className="border border-t-0 border-black bg-white">
-          {presentationRows.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-neutral-600">No presentation files uploaded for this meeting.</p>
-          ) : (
-            presentationRows.map((row) => (
-              <div key={`${row.letter}-${row.label}`} className="flex border-b border-black last:border-b-0">
-                <div className="flex w-11 shrink-0 items-start justify-center border-r border-black px-2 py-2 text-sm">{row.letter}</div>
-                <div className="flex-1 px-3 py-2 text-sm font-semibold text-rose-900">
-                  Presentation on {row.label}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* 2 */}
+      {/* 1 */}
       <section className="mb-8 break-inside-avoid space-y-0">
-        <SectionTitleBar n={2} title="Important Topics for Discussion" />
+        <SectionTitleBar n={1} title="Important Topics for Discussion" />
         <div className="border border-t-0 border-black bg-white px-3 py-3">
-          {data.topics.length === 0 ? (
-            <p className="text-sm text-neutral-600">No topics recorded.</p>
+          {data.topics.length === 0 && presentationRows.length === 0 ? (
+            <p className="text-sm text-neutral-600">No topics or presentations recorded.</p>
           ) : (
             <ol className="ml-6 list-decimal space-y-1 text-sm">
               {data.topics.map((t) => (
@@ -247,14 +228,26 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
                   {t.topic}
                 </li>
               ))}
+              {presentationRows.length > 0 && (
+                <li className="text-black font-semibold">
+                  Proposed Presentations
+                  <ul className="ml-6 list-disc font-normal text-neutral-800 space-y-1 mt-1">
+                    {presentationRows.map((row) => (
+                      <li key={`${row.letter}-${row.label}`}>
+                        {row.label}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )}
             </ol>
           )}
         </div>
       </section>
 
-      {/* 3 */}
+      {/* 2 */}
       <div className="mb-8 space-y-0">
-        <SectionTitleBar n={3} title={`Financial Progress ${fy} (In Cr.)`} />
+        <SectionTitleBar n={2} title={`Financial Progress ${fy} (In Cr.)`} />
         <FinanceTable
           hideTitle
           title={`Financial Progress ${fy}`}
@@ -264,9 +257,9 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
         />
       </div>
 
-      {/* 4 */}
+      {/* 3 */}
       <div className="mb-8 space-y-6">
-        <SectionTitleBar n={4} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
+        <SectionTitleBar n={3} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
         {data.schemesFinancialProgress.map((block, i) => (
           <FinanceTable
             key={block.sponsorshipKey}
@@ -279,9 +272,9 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
         ))}
       </div>
 
-      {/* 5 */}
+      {/* 4 */}
       <section className="mb-8 break-inside-avoid space-y-0">
-        <SectionTitleBar n={5} title="Key Decisions from Last Dashboard Meetings" />
+        <SectionTitleBar n={4} title="Key Decisions from Last Dashboard Meetings" />
         <div className="overflow-x-auto border border-t-0 border-black">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
@@ -337,10 +330,10 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
         </div>
       </section>
 
-      {/* 6 */}
+      {/* 5 */}
       <section className="mb-8 break-inside-avoid space-y-0">
         <SectionTitleBar
-          n={6}
+          n={5}
           title="Scheme / Outcome based Key Performance Indicators (KPIs) — Weekly Update"
         />
         <div className="overflow-x-auto border border-t-0 border-black">
