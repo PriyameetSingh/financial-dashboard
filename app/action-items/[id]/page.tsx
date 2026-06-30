@@ -16,7 +16,6 @@ import RoleBadge from "@/src/components/ui/RoleBadge";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
 import StatusTimeline from "@/src/components/ui/StatusTimeline";
-import ProofUpload from "@/src/components/ui/ProofUpload";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const DESIGNATIONS: Record<UserRole, string> = {
@@ -578,54 +577,38 @@ export default function ActionItemDetailPage() {
                 ))}
               </div>
             </div>
-            {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE") && (
+            {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
               <>
-                <button
-                  className="w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                  disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
-                  onClick={async () => {
-                    setBusy(true);
-                    try {
-                      await updateActionItem(id, {
-                        status: "IN_PROGRESS",
-                        note: "Marked in progress",
-                        meetingId: progressMeetingId.trim(),
-                      });
-                      await refresh();
-                      setActionSuccess("Marked as in progress.");
-                    } catch (e: unknown) {
-                      setActionSuccess(e instanceof Error ? e.message : "Update failed");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Mark In Progress
-                </button>
-                <ProofUpload
-                  accept="application/pdf,image/*,*/*"
-                  disabled={isViewer || busy}
-                  onUpload={async (files) => {
-                    const f = files[0];
-                    if (!f) return;
-                    setBusy(true);
-                    try {
-                      const url = typeof window !== "undefined" ? URL.createObjectURL(f) : "";
-                      await addActionItemProof(id, { name: f.name, url: url || `https://local.invalid/${encodeURIComponent(f.name)}` });
-                      await refresh();
-                      setActionSuccess("Proof uploaded.");
-                    } catch (e: unknown) {
-                      setActionSuccess(e instanceof Error ? e.message : "Upload failed");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                />
+                {(item.status === "OPEN" || item.status === "OVERDUE") && (
+                  <button
+                    className="w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
+                    disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await updateActionItem(id, {
+                          status: "IN_PROGRESS",
+                          note: "Marked in progress",
+                          meetingId: progressMeetingId.trim(),
+                        });
+                        await refresh();
+                        setActionSuccess("Marked as in progress.");
+                      } catch (e: unknown) {
+                        setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    Mark In Progress
+                  </button>
+                )}
                 <button
                   className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60"
+                  disabled={busy || !progressMeetingId.trim()}
                   onClick={() => setConfirmClose(true)}
                 >
-                  Upload Proof + Mark Complete
+                  Submit
                 </button>
               </>
             )}
