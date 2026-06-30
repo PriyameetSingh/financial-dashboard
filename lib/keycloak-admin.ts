@@ -455,7 +455,7 @@ export async function deleteKeycloakUserById(userId: string): Promise<void> {
   }
 }
 
-export async function setKeycloakUserTemporaryPassword(userId: string, password: string): Promise<void> {
+export async function setKeycloakUserPassword(userId: string, password: string, temporary: boolean = false): Promise<void> {
   const config = getKeycloakConfig();
   const accessToken = await getAdminAccessToken(config);
 
@@ -470,7 +470,7 @@ export async function setKeycloakUserTemporaryPassword(userId: string, password:
       body: JSON.stringify({
         type: "password",
         value: password,
-        temporary: true,
+        temporary,
       }),
     },
   );
@@ -478,6 +478,35 @@ export async function setKeycloakUserTemporaryPassword(userId: string, password:
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     throw new Error(`Keycloak password reset failed (${response.status}): ${detail || "unknown error"}`);
+  }
+}
+
+export async function setKeycloakUserTemporaryPassword(userId: string, password: string): Promise<void> {
+  return setKeycloakUserPassword(userId, password, true);
+}
+
+export async function verifyKeycloakUserPassword(username: string, password: string): Promise<boolean> {
+  const config = getKeycloakConfig();
+  const clientSecret = requiredEnv("KEYCLOAK_CLIENT_SECRET");
+
+  const body = new URLSearchParams({
+    grant_type: "password",
+    client_id: config.appClientId,
+    client_secret: clientSecret,
+    username,
+    password,
+  });
+
+  try {
+    const response = await fetch(`${config.issuer}/protocol/openid-connect/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("[keycloak-admin] Error verifying user password:", error);
+    return false;
   }
 }
 

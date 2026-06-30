@@ -995,6 +995,12 @@ export default function AdminUsersPage() {
   const [profileEditForm, setProfileEditForm] = useState<EditProfileFormState | null>(null);
   const [profileEditAlert, setProfileEditAlert] = useState("");
   const [profileSaveLoadingCodes, setProfileSaveLoadingCodes] = useState<Record<string, boolean>>({});
+
+  const [resetPasswordUser, setResetPasswordUser] = useState<DbUserRow | null>(null);
+  const [resetPasswordVal, setResetPasswordVal] = useState("");
+  const [resetSuccessPwd, setResetSuccessPwd] = useState<string | null>(null);
+  const [isResettingPwd, setIsResettingPwd] = useState(false);
+  const [resetPasswordAlert, setResetPasswordAlert] = useState("");
   const [seedDraftRows, setSeedDraftRows] = useState<SeedDraftRow[]>([]);
   const [seedAlert, setSeedAlert] = useState("");
   const [isSeedingUsers, setIsSeedingUsers] = useState(false);
@@ -1399,6 +1405,35 @@ export default function AdminUsersPage() {
     }
   }, [refreshUsers, selectedUser?.code, profileEditUser?.code]);
 
+  const handleResetPassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPasswordUser || !resetPasswordUser.code) return;
+    setIsResettingPwd(true);
+    setResetPasswordAlert("");
+    try {
+      const response = await fetch(
+        withNextBasePath(`/api/v1/admin/users/${encodeURIComponent(resetPasswordUser.code)}/reset-password`),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password: resetPasswordVal }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        setResetPasswordAlert(data.detail || "Failed to reset password.");
+      } else {
+        setResetSuccessPwd(resetPasswordVal);
+      }
+    } catch {
+      setResetPasswordAlert("Unable to reset password.");
+    } finally {
+      setIsResettingPwd(false);
+    }
+  }, [resetPasswordUser, resetPasswordVal]);
+
   const handleProfileEditChange = useCallback((key: Exclude<keyof EditProfileFormState, "sectionIds" | "organisationIds">, value: string) => {
     setProfileEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   }, []);
@@ -1789,18 +1824,33 @@ export default function AdminUsersPage() {
                                   </button>
                                 )}
                                 {canMutateUsers && (
-                                  <button
-                                    onClick={() => {
-                                      setProfileEditAlert("");
-                                      setProfileEditUser(user);
-                                      setProfileEditForm(editProfileFormFromUser(user));
-                                      setOpenDropdownCode(null);
-                                    }}
-                                    disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
-                                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    Edit profile
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setProfileEditAlert("");
+                                        setProfileEditUser(user);
+                                        setProfileEditForm(editProfileFormFromUser(user));
+                                        setOpenDropdownCode(null);
+                                      }}
+                                      disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
+                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      Edit profile
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setResetPasswordAlert("");
+                                        setResetSuccessPwd(null);
+                                        setResetPasswordVal(generateRandomPassword());
+                                        setResetPasswordUser(user);
+                                        setOpenDropdownCode(null);
+                                      }}
+                                      disabled={!userCode || isDeleting || isUpdatingRole}
+                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      Reset password
+                                    </button>
+                                  </>
                                 )}
                                 <button
                                   onClick={() => {
@@ -1895,6 +1945,171 @@ export default function AdminUsersPage() {
         onSubmit={handleCreateUser}
         onClose={() => { if (!isCreatingUser) setIsCreateUserOpen(false); }}
       />
+
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          user={resetPasswordUser}
+          passwordVal={resetPasswordVal}
+          setPasswordVal={setResetPasswordVal}
+          successPwd={resetSuccessPwd}
+          isResetting={isResettingPwd}
+          alert={resetPasswordAlert}
+          onSubmit={handleResetPassword}
+          onClose={() => {
+            setResetPasswordUser(null);
+            setResetPasswordVal("");
+            setResetSuccessPwd(null);
+            setResetPasswordAlert("");
+          }}
+        />
+      )}
     </AppShell>
+  );
+}
+
+function generateRandomPassword() {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let pwd = "";
+  for (let i = 0; i < 12; i++) {
+    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pwd;
+}
+
+type ResetPasswordModalProps = {
+  user: DbUserRow;
+  passwordVal: string;
+  setPasswordVal: (val: string) => void;
+  successPwd: string | null;
+  isResetting: boolean;
+  alert: string;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+};
+
+function ResetPasswordModal({
+  user,
+  passwordVal,
+  setPasswordVal,
+  successPwd,
+  isResetting,
+  alert,
+  onSubmit,
+  onClose,
+}: ResetPasswordModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (successPwd) {
+      navigator.clipboard.writeText(successPwd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="flex w-full max-w-md flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl overflow-y-auto">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 bg-[var(--bg-primary)]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Reset Password</h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Reset account password for {user.name} ({user.code}).
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+            aria-label="Close reset password dialog"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5">
+          {successPwd ? (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
+                Password reset successfully!
+              </div>
+              
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">New Temporary Password</p>
+                <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-sm font-mono text-[var(--text-primary)]">
+                  <span>{successPwd}</span>
+                  <button
+                    onClick={handleCopy}
+                    className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-1 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+                <strong className="text-[var(--text-primary)]">Important:</strong> Since email service is not set up, copy and share this password with the user manually. Keycloak will force the user to change this password upon their next login.
+              </p>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={onClose}
+                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-4">
+              {alert && (
+                <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
+                  {alert}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  New Password
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={passwordVal}
+                  onChange={(e) => setPasswordVal(e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none font-mono"
+                />
+                <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+                  A secure random password has been generated. You can modify it if needed.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isResetting}
+                  className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-surface)] transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResetting}
+                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {isResetting ? "Resetting..." : "Reset Password"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
