@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Loader2, Lock, Plus, Search } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { getCurrentUser, Permission, hasPermission } from "@/lib/auth";
 import {
@@ -184,6 +185,14 @@ export default function SchemeEntryPage() {
   // Local alert state
   const [alertInfo, setAlertInfo] = useState<{ type: "success" | "draft" | "error", message: string } | null>(null);
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   const triggerAlert = (type: "success" | "draft" | "error", message: string) => {
     setAlertInfo({ type, message });
     if (type !== "error") {
@@ -333,14 +342,8 @@ export default function SchemeEntryPage() {
   const handleSaveDraft = () => persistSnapshot("draft");
   const handleSaveSubmit = () => persistSnapshot("submitted");
 
-  const persistSnapshot = async (workflowStatus: "draft" | "submitted") => {
+  const executePersistSnapshot = async (workflowStatus: "draft" | "submitted") => {
     if (!selected || !financialYearLabel) return;
-    if (addingSupplement || revisingBudget || isEditingSO) {
-      if (!window.confirm("You have open unsaved forms. Proceed anyway?")) {
-        return;
-      }
-    }
-
     if (ifmsValue === "" || Number(ifmsValue) === 0) {
       triggerAlert("error", "Enter a valid IFMS expenditure value to add.");
       return;
@@ -388,6 +391,23 @@ export default function SchemeEntryPage() {
       setIsSubmitting(false);
       setPendingSubmit(null);
     }
+  };
+
+  const persistSnapshot = async (workflowStatus: "draft" | "submitted") => {
+    if (!selected || !financialYearLabel) return;
+    if (addingSupplement || revisingBudget || isEditingSO) {
+      setConfirmConfig({
+        title: "Unsaved Changes",
+        message: "You have open unsaved forms. Proceed anyway?",
+        confirmLabel: "Proceed",
+        cancelLabel: "Cancel",
+        onConfirm: () => {
+          void executePersistSnapshot(workflowStatus);
+        },
+      });
+      return;
+    }
+    await executePersistSnapshot(workflowStatus);
   };
 
   const handleAddSupplement = async () => {
@@ -493,26 +513,8 @@ export default function SchemeEntryPage() {
     }
   };
 
-  const handleUpdateSO = async () => {
+  const executeUpdateSO = async (totalSO: number) => {
     if (!selected || !financialYearLabel) return;
-    const soToAdd = editSoValue === "" ? 0 : Number(editSoValue);
-    if (isNaN(soToAdd) || soToAdd < 0) {
-      triggerAlert("error", "Enter a valid non-negative SO amount to add.");
-      return;
-    }
-    if (!ifmsMeetingId.trim()) {
-      triggerAlert("error", "Select the meeting this financial update is attributed to.");
-      return;
-    }
-
-    const totalSO = currentSO + soToAdd;
-    if (totalSO > activeEffectiveBudgetCr) {
-      const proceed = window.confirm(
-        `Warning: Proposed total Sanction Order (SO) value of ₹${totalSO.toFixed(2)} Cr will exceed the Budget Estimate (BE) of ₹${activeEffectiveBudgetCr.toFixed(2)} Cr. Do you want to proceed?`
-      );
-      if (!proceed) return;
-    }
-
     setIsSubmitting(true);
     setPendingSubmit("so");
     try {
@@ -542,6 +544,35 @@ export default function SchemeEntryPage() {
       setIsSubmitting(false);
       setPendingSubmit(null);
     }
+  };
+
+  const handleUpdateSO = async () => {
+    if (!selected || !financialYearLabel) return;
+    const soToAdd = editSoValue === "" ? 0 : Number(editSoValue);
+    if (isNaN(soToAdd) || soToAdd < 0) {
+      triggerAlert("error", "Enter a valid non-negative SO amount to add.");
+      return;
+    }
+    if (!ifmsMeetingId.trim()) {
+      triggerAlert("error", "Select the meeting this financial update is attributed to.");
+      return;
+    }
+
+    const totalSO = currentSO + soToAdd;
+    if (totalSO > activeEffectiveBudgetCr) {
+      setConfirmConfig({
+        title: "Exceed Budget Warning",
+        message: `Warning: Proposed total Sanction Order (SO) value of ₹${totalSO.toFixed(2)} Cr will exceed the Budget Estimate (BE) of ₹${activeEffectiveBudgetCr.toFixed(2)} Cr. Do you want to proceed?`,
+        confirmLabel: "Proceed",
+        cancelLabel: "Cancel",
+        onConfirm: () => {
+          void executeUpdateSO(totalSO);
+        },
+      });
+      return;
+    }
+
+    await executeUpdateSO(totalSO);
   };
 
   const groupedSchemes = useMemo(() => {
@@ -1136,6 +1167,22 @@ export default function SchemeEntryPage() {
           )}
         </div>
       </div>
+      {confirmConfig && (
+        <ConfirmModal
+          open={!!confirmConfig}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmLabel={confirmConfig.confirmLabel}
+          cancelLabel={confirmConfig.cancelLabel}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => {
+            setConfirmConfig(null);
+          }}
+        />
+      )}
     </AppShell>
   );
 }

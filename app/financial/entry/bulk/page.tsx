@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import { Permission } from "@/lib/auth";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import {
@@ -120,6 +121,14 @@ export default function BulkEntryPage() {
   // ── Submit state ──────────────────────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalMsg, setGlobalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // ── Load ──────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -231,71 +240,8 @@ export default function BulkEntryPage() {
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  const submitAll = async () => {
+  const executeSubmitAll = async (dirtyRows: FlatRow[]) => {
     if (!financialYearLabel) return;
-
-    if (mode === "snapshot" && !selectedMeetingId.trim()) {
-      setGlobalMsg({ type: "error", text: "Select a meeting before submitting." });
-      return;
-    }
-
-    if (dirtyRows.length === 0) {
-      setGlobalMsg({ type: "error", text: "No changes to submit. Edit SO or IFMS values to proceed." });
-      return;
-    }
-
-    // Validation check
-    const validationErrors: Record<string, string> = {};
-    for (const r of dirtyRows) {
-      const d = getDraft(r.key);
-      if (mode === "snapshot") {
-        const soInvalid = d.so !== "" && !isValidPositiveNumeric(d.so);
-        const ifmsInvalid = d.ifms !== "" && !isValidPositiveNumeric(d.ifms);
-        if (soInvalid && ifmsInvalid) {
-          validationErrors[r.key] = "SO and IFMS must be valid positive numeric values.";
-        } else if (soInvalid) {
-          validationErrors[r.key] = "SO must be a valid positive numeric value.";
-        } else if (ifmsInvalid) {
-          validationErrors[r.key] = "IFMS must be a valid positive numeric value.";
-        }
-      } else {
-        const supplementInvalid = d.supplement !== "" && !isValidSignedNumeric(d.supplement);
-        if (supplementInvalid) {
-          validationErrors[r.key] = "Supplement must be a valid numeric value.";
-        }
-      }
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setRowStatuses((prev) => {
-        const next = { ...prev };
-        for (const [key, err] of Object.entries(validationErrors)) {
-          next[key] = { state: "error", error: err };
-        }
-        return next;
-      });
-      setGlobalMsg({ type: "error", text: "Please fix validation errors in the highlighted rows." });
-      return;
-    }
-
-    if (mode === "snapshot") {
-      const exceedingRows = dirtyRows.filter((r) => {
-        const d = getDraft(r.key);
-        if (d.so === "") return false;
-        const totalSo = r.currentSo + Number(d.so);
-        return totalSo > r.effectiveBudget;
-      });
-      if (exceedingRows.length > 0) {
-        const names = exceedingRows.map((r) => r.componentName || r.schemeName);
-        const confirmMsg = exceedingRows.length === 1
-          ? `Warning: The proposed total Sanction Order (SO) for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
-          : `Warning: The proposed total Sanction Order (SO) for the following schemes/components exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
-        if (!window.confirm(confirmMsg)) {
-          return;
-        }
-      }
-    }
-
     setIsSubmitting(true);
     setGlobalMsg(null);
 
@@ -365,6 +311,82 @@ export default function BulkEntryPage() {
         text: `${errorCount} ${errorCount === 1 ? "row" : "rows"} failed — ${successCount} succeeded.`,
       });
     }
+  };
+
+  const submitAll = async () => {
+    if (!financialYearLabel) return;
+
+    if (mode === "snapshot" && !selectedMeetingId.trim()) {
+      setGlobalMsg({ type: "error", text: "Select a meeting before submitting." });
+      return;
+    }
+
+    if (dirtyRows.length === 0) {
+      setGlobalMsg({ type: "error", text: "No changes to submit. Edit SO or IFMS values to proceed." });
+      return;
+    }
+
+    // Validation check
+    const validationErrors: Record<string, string> = {};
+    for (const r of dirtyRows) {
+      const d = getDraft(r.key);
+      if (mode === "snapshot") {
+        const soInvalid = d.so !== "" && !isValidPositiveNumeric(d.so);
+        const ifmsInvalid = d.ifms !== "" && !isValidPositiveNumeric(d.ifms);
+        if (soInvalid && ifmsInvalid) {
+          validationErrors[r.key] = "SO and IFMS must be valid positive numeric values.";
+        } else if (soInvalid) {
+          validationErrors[r.key] = "SO must be a valid positive numeric value.";
+        } else if (ifmsInvalid) {
+          validationErrors[r.key] = "IFMS must be a valid positive numeric value.";
+        }
+      } else {
+        const supplementInvalid = d.supplement !== "" && !isValidSignedNumeric(d.supplement);
+        if (supplementInvalid) {
+          validationErrors[r.key] = "Supplement must be a valid numeric value.";
+        }
+      }
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setRowStatuses((prev) => {
+        const next = { ...prev };
+        for (const [key, err] of Object.entries(validationErrors)) {
+          next[key] = { state: "error", error: err };
+        }
+        return next;
+      });
+      setGlobalMsg({ type: "error", text: "Please fix validation errors in the highlighted rows." });
+      return;
+    }
+
+    if (mode === "snapshot") {
+      const exceedingRows = dirtyRows.filter((r) => {
+        const d = getDraft(r.key);
+        if (d.so === "") return false;
+        const totalSo = r.currentSo + Number(d.so);
+        return totalSo > r.effectiveBudget;
+      });
+      if (exceedingRows.length > 0) {
+        const names = exceedingRows.map((r) => r.componentName || r.schemeName);
+        const confirmMsg = exceedingRows.length === 1
+          ? `Warning: The proposed total Sanction Order (SO) for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
+          : `Warning: The proposed total Sanction Order (SO) for the following schemes/components exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
+        
+        setConfirmConfig({
+          title: "Exceed Budget Warning",
+          message: confirmMsg,
+          confirmLabel: "Proceed",
+          cancelLabel: "Cancel",
+          onConfirm: () => {
+            void executeSubmitAll(dirtyRows);
+          },
+        });
+        return;
+      }
+    }
+
+    await executeSubmitAll(dirtyRows);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -852,6 +874,22 @@ export default function BulkEntryPage() {
           </div>
         </div>
       </div>
+      {confirmConfig && (
+        <ConfirmModal
+          open={!!confirmConfig}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmLabel={confirmConfig.confirmLabel}
+          cancelLabel={confirmConfig.cancelLabel}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => {
+            setConfirmConfig(null);
+          }}
+        />
+      )}
     </AppShell>
   );
 }

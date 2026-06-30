@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import AppShell from "@/components/AppShell";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission } from "@/lib/auth";
 import { fetchFyBudgetAllocation, saveFyBudgetAllocation } from "@/src/lib/services/financialService";
@@ -38,6 +39,14 @@ export default function SummaryEntryPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   const loadAllocation = useCallback(async (fyLabel?: string) => {
     setLoading(true);
     try {
@@ -68,26 +77,8 @@ export default function SummaryEntryPage() {
     [allocationLines],
   );
 
-  const handleSave = async () => {
-    if (!financialYearLabel) {
-      setError("Financial year not loaded.");
-      return;
-    }
-    setError(null);
-
-    const exceedingCategories = allocationLines.filter(
-      (r) => MANUAL_CATEGORY_SET.has(r.category) && r.soExpenditureCr > r.budgetEstimateCr
-    );
-    if (exceedingCategories.length > 0) {
-      const names = exceedingCategories.map((r) => r.label);
-      const confirmMsg = exceedingCategories.length === 1
-        ? `Warning: The Sanction Order (SO) value for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
-        : `Warning: The Sanction Order (SO) values for the following categories exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
-      if (!window.confirm(confirmMsg)) {
-        return;
-      }
-    }
-
+  const executeSave = async () => {
+    if (!financialYearLabel) return;
     setIsSubmitting(true);
     try {
       await saveFyBudgetAllocation({
@@ -109,6 +100,37 @@ export default function SummaryEntryPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!financialYearLabel) {
+      setError("Financial year not loaded.");
+      return;
+    }
+    setError(null);
+
+    const exceedingCategories = allocationLines.filter(
+      (r) => MANUAL_CATEGORY_SET.has(r.category) && r.soExpenditureCr > r.budgetEstimateCr
+    );
+    if (exceedingCategories.length > 0) {
+      const names = exceedingCategories.map((r) => r.label);
+      const confirmMsg = exceedingCategories.length === 1
+        ? `Warning: The Sanction Order (SO) value for "${names[0]}" exceeds its Budget Estimate (BE). Do you want to proceed?`
+        : `Warning: The Sanction Order (SO) values for the following categories exceed their Budget Estimates (BE):\n${names.map((n) => `- ${n}`).join("\n")}\n\nDo you want to proceed?`;
+      
+      setConfirmConfig({
+        title: "Exceed Budget Warning",
+        message: confirmMsg,
+        confirmLabel: "Proceed",
+        cancelLabel: "Cancel",
+        onConfirm: () => {
+          void executeSave();
+        },
+      });
+      return;
+    }
+
+    await executeSave();
   };
 
   const updateRow = (
@@ -240,6 +262,22 @@ export default function SummaryEntryPage() {
           </div>
         </div>
       </div>
+      {confirmConfig && (
+        <ConfirmModal
+          open={!!confirmConfig}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmLabel={confirmConfig.confirmLabel}
+          cancelLabel={confirmConfig.cancelLabel}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => {
+            setConfirmConfig(null);
+          }}
+        />
+      )}
     </AppShell>
   );
 }
