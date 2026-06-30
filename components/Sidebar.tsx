@@ -451,20 +451,23 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     );
   }, [user]);
 
-  const visibleItems = user
-    ? items.filter(
-        (item) =>
-          item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
-      )
-    : [];
+  const visibleItems = useMemo(() => {
+    return user
+      ? items.filter(
+          (item) =>
+            item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
+        )
+      : [];
+  }, [user, actionItems]);
   const roleLabel = user?.role.replaceAll("_", " ");
 
   // Auto-expand submenus if their children are active
   useEffect(() => {
     if (!user) return;
     setOpenSubmenus((prev) => {
+      let changed = false;
       const updated = { ...prev };
-      visibleItems.forEach((item) => {
+      items.forEach((item) => {
         if (item.children?.length) {
           const childLinks = item.children.filter((child) => child.roles.includes(user.role));
           const hasActiveChild = childLinks.some(
@@ -475,13 +478,14 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
           if (hasActiveChild || isParentActive) {
             if (updated[item.label] === undefined) {
               updated[item.label] = true;
+              changed = true;
             }
           }
         }
       });
-      return updated;
+      return changed ? updated : prev;
     });
-  }, [pathname, user, visibleItems]);
+  }, [pathname, user]);
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus((prev) => ({
