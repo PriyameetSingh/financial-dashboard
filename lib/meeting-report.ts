@@ -3,6 +3,8 @@ import {
   FinancialWorkflowStatus,
   KPIWorkflowStatus,
   SponsorshipType,
+  ActionItemPriority,
+  KpiMonitoringLevel,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { computeSchemeFyMetrics, sponsorshipToSchemeBudgetCategory } from "@/lib/scheme-fy-bucket-metrics";
@@ -89,6 +91,7 @@ export type MeetingReportPayload = {
     latestNote: string;
     /** True when the visible status/note was last recorded against an earlier meeting than this report. */
     statusCarriedForward: boolean;
+    priority: ActionItemPriority;
   }>;
   kpiRows: Array<{
     index: number;
@@ -103,6 +106,7 @@ export type MeetingReportPayload = {
     denominatorUnit: string;
     remarks: string;
     warnLowPct: boolean;
+    monitoringLevel: KpiMonitoringLevel | null;
   }>;
 };
 
@@ -488,6 +492,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
       statusLabel,
       latestNote,
       statusCarriedForward,
+      priority: d.priority,
     };
   });
 
@@ -562,6 +567,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
         denominatorUnit: def.denominatorUnit ?? "",
         remarks: measurement?.remarks ?? "",
         warnLowPct,
+        monitoringLevel: def.monitoringLevel,
       });
     }
   }

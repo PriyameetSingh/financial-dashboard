@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildMeetingReport } from "@/lib/meeting-report";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { filterMeetingReportPayload } from "@/lib/meeting-report-filter";
 
 export const runtime = "nodejs";
 
-export async function GET(_request: NextRequest, ctx: { params: Promise<{ meetingId: string }> }) {
+export async function GET(request: NextRequest, ctx: { params: Promise<{ meetingId: string }> }) {
   try {
     await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
 
@@ -19,7 +20,18 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ meetin
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }
 
-    return NextResponse.json(payload);
+    const searchParams = request.nextUrl.searchParams;
+    const monitoringLevel = searchParams.get("monitoringLevel") || undefined;
+    const priority = searchParams.get("priority") || undefined;
+    const status = searchParams.get("status") || undefined;
+
+    const filteredPayload = filterMeetingReportPayload(payload, {
+      monitoringLevel,
+      priority,
+      status,
+    });
+
+    return NextResponse.json(filteredPayload);
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
