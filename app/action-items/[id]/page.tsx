@@ -195,6 +195,27 @@ export default function ActionItemDetailPage() {
     }));
   }, [item]);
 
+  const hasManualUpdates = useMemo(() => {
+    if (!item) return false;
+    const systemNotes = [
+      "Action item created",
+      "Marked in progress",
+      "Action item archived",
+      "Action item unarchived",
+      "Reviewer approved completion",
+      "Submitted for reviewer approval",
+      "Completed & reviewed automatically",
+    ];
+    return item.updates.some((u) => {
+      const note = u.note || "";
+      if (systemNotes.includes(note)) return false;
+      if (note.startsWith("Reassigned: performers")) return false;
+      if (note.startsWith("Reviewer rejected: ")) return false;
+      if (note.includes("Completed & reviewed automatically")) return false;
+      return true;
+    });
+  }, [item]);
+
   if (loading) {
     return (
       <AppShell title="Action Item">
@@ -557,11 +578,11 @@ export default function ActionItemDetailPage() {
                 ))}
               </div>
             </div>
-            {showNodalActions && (
+            {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE") && (
               <>
                 <button
                   className="w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                  disabled={busy || !progressMeetingId.trim()}
+                  disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
                   onClick={async () => {
                     setBusy(true);
                     try {
@@ -671,10 +692,15 @@ export default function ActionItemDetailPage() {
                   if (!note || !progressMeetingId.trim()) return;
                   setBusy(true);
                   try {
-                    await updateActionItem(id, { note, meetingId: progressMeetingId.trim() });
+                    const shouldMarkInProgress = (item.status === "OPEN" || item.status === "OVERDUE") && !hasManualUpdates;
+                    await updateActionItem(id, {
+                      note,
+                      meetingId: progressMeetingId.trim(),
+                      ...(shouldMarkInProgress ? { status: "IN_PROGRESS" } : {}),
+                    });
                     await refresh();
                     setManualUpdateText("");
-                    setActionSuccess("Update posted.");
+                    setActionSuccess(shouldMarkInProgress ? "Update posted and marked In Progress." : "Update posted.");
                   } catch (e: unknown) {
                     setActionSuccess(e instanceof Error ? e.message : "Could not post update");
                   } finally {

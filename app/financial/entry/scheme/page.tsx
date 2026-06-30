@@ -1076,7 +1076,8 @@ export default function SchemeEntryPage() {
                   Last updated {selected.lastUpdated} by <span className="font-medium text-[var(--text-primary)]">{selected.submitter || "Finance Desk"}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
+                  {/* // draft commented for now* */}
+                  {/* <button
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting || !ifmsMeetingId.trim()}
@@ -1090,7 +1091,7 @@ export default function SchemeEntryPage() {
                     ) : (
                       "Save Draft"
                     )}
-                  </button>
+                  </button> */}
                   <button
                     type="button"
                     onClick={handleSaveSubmit}

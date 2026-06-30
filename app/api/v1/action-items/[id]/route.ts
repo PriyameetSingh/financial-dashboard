@@ -152,6 +152,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       include: {
         performers: { select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
+        updates: true,
       },
     });
     if (!current) {
@@ -430,6 +431,33 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
 
     if (body.status || (body.note && body.note.trim())) {
+      if (body.status === "IN_PROGRESS") {
+        const systemNotes = [
+          "Action item created",
+          "Marked in progress",
+          "Action item archived",
+          "Action item unarchived",
+          "Reviewer approved completion",
+          "Submitted for reviewer approval",
+          "Completed & reviewed automatically",
+        ];
+        const hasManualUpdates = current.updates.some((u) => {
+          const note = u.note || "";
+          if (systemNotes.includes(note)) return false;
+          if (note.startsWith("Reassigned: performers")) return false;
+          if (note.startsWith("Reviewer rejected: ")) return false;
+          if (note.includes("Completed & reviewed automatically")) return false;
+          return true;
+        });
+
+        if (current.status !== "OPEN" && current.status !== "OVERDUE" && current.status !== "UNDER_REVIEW") {
+          return NextResponse.json({ detail: "Cannot transition back to In Progress state" }, { status: 400 });
+        }
+        if ((current.status === "OPEN" || current.status === "OVERDUE") && hasManualUpdates) {
+          return NextResponse.json({ detail: "Cannot mark In Progress after updates have been added" }, { status: 400 });
+        }
+      }
+
       if (!isAssignee && !canEdit) {
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
