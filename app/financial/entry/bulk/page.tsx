@@ -69,10 +69,36 @@ function formatMeetingLabel(m: MeetingListItem): string {
   return t ? `${m.meetingDate} — ${t}` : m.meetingDate;
 }
 
+function isValidPositiveNumeric(val: string): boolean {
+  if (val === "") return true;
+  const num = Number(val);
+  return !isNaN(num) && isFinite(num) && num >= 0 && !/[eE]/.test(val);
+}
+
+function isValidSignedNumeric(val: string): boolean {
+  if (val === "") return true;
+  const num = Number(val);
+  return !isNaN(num) && isFinite(num) && !/[eE]/.test(val);
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BulkEntryPage() {
   useRequireAnyPermission([Permission.MANAGE_FINANCIAL_DATA], "/");
+
+  // Block invalid numeric characters (e, E, +, -) for positive inputs
+  const handlePositiveNumericKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "e" || e.key === "E" || e.key === "+" || e.key === "-") {
+      e.preventDefault();
+    }
+  };
+
+  // Block invalid numeric characters (e, E) for signed inputs
+  const handleSignedNumericKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "e" || e.key === "E") {
+      e.preventDefault();
+    }
+  };
 
   // ── Remote state ─────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
@@ -215,6 +241,40 @@ export default function BulkEntryPage() {
 
     if (dirtyRows.length === 0) {
       setGlobalMsg({ type: "error", text: "No changes to submit. Edit SO or IFMS values to proceed." });
+      return;
+    }
+
+    // Validation check
+    const validationErrors: Record<string, string> = {};
+    for (const r of dirtyRows) {
+      const d = getDraft(r.key);
+      if (mode === "snapshot") {
+        const soInvalid = d.so !== "" && !isValidPositiveNumeric(d.so);
+        const ifmsInvalid = d.ifms !== "" && !isValidPositiveNumeric(d.ifms);
+        if (soInvalid && ifmsInvalid) {
+          validationErrors[r.key] = "SO and IFMS must be valid positive numeric values.";
+        } else if (soInvalid) {
+          validationErrors[r.key] = "SO must be a valid positive numeric value.";
+        } else if (ifmsInvalid) {
+          validationErrors[r.key] = "IFMS must be a valid positive numeric value.";
+        }
+      } else {
+        const supplementInvalid = d.supplement !== "" && !isValidSignedNumeric(d.supplement);
+        if (supplementInvalid) {
+          validationErrors[r.key] = "Supplement must be a valid numeric value.";
+        }
+      }
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setRowStatuses((prev) => {
+        const next = { ...prev };
+        for (const [key, err] of Object.entries(validationErrors)) {
+          next[key] = { state: "error", error: err };
+        }
+        return next;
+      });
+      setGlobalMsg({ type: "error", text: "Please fix validation errors in the highlighted rows." });
       return;
     }
 
@@ -601,13 +661,21 @@ export default function BulkEntryPage() {
                             placeholder="+ Add"
                             value={draft.so}
                             onChange={(e) => setDraftField(row.key, "so", e.target.value)}
+                            onKeyDown={handlePositiveNumericKeyDown}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              draft.so !== ""
-                                ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
-                                : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                              isRowError && status?.error?.includes("SO")
+                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                : draft.so !== ""
+                                  ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
+                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
+                          {isRowError && status?.error?.includes("SO") && (
+                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                              {status.error.includes("and") ? "Invalid SO value" : status.error}
+                            </p>
+                          )}
                         </td>
 
                         {/* Current IFMS */}
@@ -624,13 +692,21 @@ export default function BulkEntryPage() {
                             placeholder="+ Add"
                             value={draft.ifms}
                             onChange={(e) => setDraftField(row.key, "ifms", e.target.value)}
+                            onKeyDown={handlePositiveNumericKeyDown}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              draft.ifms !== ""
-                                ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
-                                : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                              isRowError && status?.error?.includes("IFMS")
+                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                : draft.ifms !== ""
+                                  ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
+                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
+                          {isRowError && status?.error?.includes("IFMS") && (
+                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                              {status.error.includes("and") ? "Invalid IFMS value" : status.error}
+                            </p>
+                          )}
                         </td>
 
                         {/* Utilisation badge */}
@@ -654,6 +730,7 @@ export default function BulkEntryPage() {
                         </td>
 
                         {/* Supplementary amount input (+/-) */}
+                        {/* Supplementary amount input (+/-) */}
                         <td className="px-4 py-1.5 text-center">
                           <input
                             type="number"
@@ -661,15 +738,23 @@ export default function BulkEntryPage() {
                             placeholder="e.g. +5.00 or -2.50"
                             value={draft.supplement}
                             onChange={(e) => setDraftField(row.key, "supplement", e.target.value)}
+                            onKeyDown={handleSignedNumericKeyDown}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              draft.supplement !== ""
-                                ? Number(draft.supplement) >= 0
-                                  ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
-                                  : "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
-                                : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                              isRowError && status?.error?.includes("Supplement")
+                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                : draft.supplement !== ""
+                                  ? Number(draft.supplement) >= 0
+                                    ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
+                                    : "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
+                          {isRowError && status?.error?.includes("Supplement") && (
+                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                              {status.error}
+                            </p>
+                          )}
                         </td>
 
 
@@ -683,7 +768,7 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           />
-                          {isRowError && status?.error && (
+                          {isRowError && status?.error && !status.error.includes("Supplement") && (
                             <p className="mt-0.5 text-[10px] text-[#e74c3c]">{status.error}</p>
                           )}
                         </td>
