@@ -490,29 +490,6 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     }));
   };
 
-  const handleParentClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
-    if (item.children?.length) {
-      const childLinks = user
-        ? item.children.filter((child) => child.roles.includes(user.role))
-        : [];
-      if (childLinks.length > 0) {
-        const isParentActive = isTopNavActive(pathname, item.href);
-        if (isParentActive) {
-          // If already on the parent page, toggle expansion
-          setOpenSubmenus((prev) => ({
-            ...prev,
-            [item.label]: !prev[item.label],
-          }));
-        } else {
-          // If navigating to the parent page, ensure submenu is expanded
-          setOpenSubmenus((prev) => ({
-            ...prev,
-            [item.label]: true,
-          }));
-        }
-      }
-    }
-  };
 
   return (
     <aside className={`${isCollapsed ? "w-20" : "w-64"} h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0 transition-all duration-300`}>
@@ -548,7 +525,6 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                   href={item.href}
                   title={isCollapsed ? item.label : undefined}
                   className={`flex-1 flex items-center gap-3 pl-4 ${!isCollapsed && hasChildren ? "pr-2" : "pr-4"} py-2 rounded-l-md ${isCollapsed ? "justify-center px-0 rounded-md" : ""}`}
-                  onClick={hasChildren ? (e) => handleParentClick(e, item) : undefined}
                 >
                   <item.icon size={isCollapsed ? 20 : 16} />
                   {!isCollapsed && (
