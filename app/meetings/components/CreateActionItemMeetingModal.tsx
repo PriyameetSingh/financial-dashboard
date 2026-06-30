@@ -143,7 +143,9 @@ export default function CreateActionItemMeetingModal({
           {!loading && (
             <>
               <label className="block">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Title</span>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  Title <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                </span>
                 <input
                   type="text"
                   value={title}
@@ -151,17 +153,23 @@ export default function CreateActionItemMeetingModal({
                   className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                   placeholder="Short title"
                   autoFocus
+                  required
+                  aria-required="true"
                 />
               </label>
               <SchemeSelector schemes={schemes} value={scheme} onChange={setScheme} label="Scheme (optional)" />
               <label className="block">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Description</span>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  Description <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                </span>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                   rows={3}
                   placeholder="What needs to be done"
+                  required
+                  aria-required="true"
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -180,18 +188,22 @@ export default function CreateActionItemMeetingModal({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Due date</span>
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    Due date <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                  </span>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                    required
+                    aria-required="true"
                   />
                 </label>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" />
-                <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
+                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" required={true} />
+                <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
               </div>
               <p className="text-xs text-[var(--text-muted)]">
                 Assigned to <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? "—"}</span>

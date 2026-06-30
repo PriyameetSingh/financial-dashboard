@@ -118,23 +118,31 @@ export default function ActionItemCreatePage() {
           {!loading && (
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
-                <span className="text-xs uppercase tracking-[0.3em]">Title</span>
+                <span className="text-xs uppercase tracking-[0.3em]">
+                  Title <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                </span>
                 <input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   placeholder="Enter action item title"
+                  required
+                  aria-required="true"
                 />
               </label>
               <SchemeSelector schemes={schemes} value={scheme} onChange={setScheme} label="Scheme (Optional)" />
               <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:col-span-2">
-                <span className="text-xs uppercase tracking-[0.3em]">Description</span>
+                <span className="text-xs uppercase tracking-[0.3em]">
+                  Description <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                </span>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   rows={3}
                   placeholder="Describe the expected action"
+                  required
+                  aria-required="true"
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
@@ -167,16 +175,20 @@ export default function ActionItemCreatePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
-                <span className="text-xs uppercase tracking-[0.3em]">Due Date</span>
+                <span className="text-xs uppercase tracking-[0.3em]">
+                  Due Date <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                </span>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.target.value)}
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  required
+                  aria-required="true"
                 />
               </label>
-              <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" />
-              <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" />
+              <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" required={true} />
+              <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
               <div className="md:col-span-2">
                 <ProofUpload label="Attach initial notes" onUpload={() => undefined} />
               </div>

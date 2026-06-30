@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
 import type { SessionUser } from "@/types";
 
 interface SearchableUserSelectorProps {
@@ -15,6 +16,7 @@ interface SearchableUserSelectorProps {
   placeholder?: string;
   showAllOption?: boolean;
   allOptionLabel?: string;
+  required?: boolean;
 }
 
 const formatRole = (role: string) => role.replace(/_/g, " ");
@@ -40,6 +42,7 @@ export default function SearchableUserSelector({
   placeholder,
   showAllOption = false,
   allOptionLabel = "All",
+  required = false,
 }: SearchableUserSelectorProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -69,7 +72,12 @@ export default function SearchableUserSelector({
 
   return (
     <div ref={rootRef} className={clsx("relative flex flex-col text-sm text-[var(--text-muted)]", className)}>
-      {label && <span className="mb-2 text-xs uppercase tracking-[0.3em]">{label}</span>}
+      {label && (
+        <span className="mb-2 text-xs uppercase tracking-[0.3em]">
+          {label}
+          {required && <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>}
+        </span>
+      )}
       <div className="relative">
         <input
           ref={inputRef}
@@ -95,8 +103,13 @@ export default function SearchableUserSelector({
             setOpen(true);
             setQuery("");
           }}
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/25"
+          required={required}
+          aria-required={required ? "true" : undefined}
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] pl-3 pr-10 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/25"
         />
+        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+          <ChevronDown className="h-4 w-4" />
+        </div>
         {open && (
           <ul
             id={listId}
