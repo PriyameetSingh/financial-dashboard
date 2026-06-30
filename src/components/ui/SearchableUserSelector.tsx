@@ -12,6 +12,9 @@ interface SearchableUserSelectorProps {
   className?: string;
   /** Used to show the current selection label when the selected user is not in `users` (e.g. edge cases). */
   catalog?: SessionUser[];
+  placeholder?: string;
+  showAllOption?: boolean;
+  allOptionLabel?: string;
 }
 
 const formatRole = (role: string) => role.replace(/_/g, " ");
@@ -34,6 +37,9 @@ export default function SearchableUserSelector({
   label = "Assignee",
   className,
   catalog,
+  placeholder,
+  showAllOption = false,
+  allOptionLabel = "All",
 }: SearchableUserSelectorProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -62,8 +68,8 @@ export default function SearchableUserSelector({
   const displayHint = selected ? `${selected.name} — ${formatRole(selected.role)}` : "";
 
   return (
-    <div ref={rootRef} className={clsx("relative flex flex-col gap-2 text-sm text-[var(--text-muted)]", className)}>
-      <span className="text-xs uppercase tracking-[0.3em]">{label}</span>
+    <div ref={rootRef} className={clsx("relative flex flex-col text-sm text-[var(--text-muted)]", className)}>
+      {label && <span className="mb-2 text-xs uppercase tracking-[0.3em]">{label}</span>}
       <div className="relative">
         <input
           ref={inputRef}
@@ -72,7 +78,7 @@ export default function SearchableUserSelector({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
-          placeholder="Search by name, email, or role…"
+          placeholder={open ? "Search by name, email, or role…" : placeholder || "Search by name, email, or role…"}
           value={open ? query : query || displayHint}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -97,7 +103,27 @@ export default function SearchableUserSelector({
             role="listbox"
             className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-lg"
           >
-            {filtered.length === 0 && (
+            {showAllOption && !query.trim() && (
+              <li role="option" aria-selected={value === "all"}>
+                <button
+                  type="button"
+                  className={clsx(
+                    "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[var(--bg-hover)]",
+                    value === "all" && "bg-[var(--bg-hover)]",
+                  )}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onChange("all");
+                    setOpen(false);
+                    setQuery("");
+                    inputRef.current?.blur();
+                  }}
+                >
+                  <span className="font-medium text-[var(--text-primary)]">{allOptionLabel}</span>
+                </button>
+              </li>
+            )}
+            {filtered.length === 0 && (!showAllOption || query.trim() !== "") && (
               <li className="px-3 py-2 text-sm text-[var(--text-muted)]">No users match your search.</li>
             )}
             {filtered.map((user) => (

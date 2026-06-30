@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const phoneRegex = /^[+\-() \s\d]+$/;
+    if (!phoneRegex.test(phone)) {
+      return NextResponse.json(
+        { detail: "phone contains invalid characters: only digits, spaces, and +, -, (, ) are allowed" },
+        { status: 400 },
+      );
+    }
+
     const role = await prisma.role.findUnique({ where: { code: roleCode } });
     if (!role) {
       return NextResponse.json({ detail: `Role not found: ${roleCode}` }, { status: 400 });

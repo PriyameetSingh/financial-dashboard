@@ -193,7 +193,7 @@ export default function ActionItemCreatePage() {
               </p>
             </div>
             <button
-              className="flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 if (!canSubmit) {
                   setError("Please complete title, description, and due date before submitting.");

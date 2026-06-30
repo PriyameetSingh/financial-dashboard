@@ -341,7 +341,12 @@ export default function SchemeEntryPage() {
       }
     }
 
-    const ifmsToAdd = ifmsValue === "" ? 0 : Number(ifmsValue);
+    if (ifmsValue === "" || Number(ifmsValue) === 0) {
+      triggerAlert("error", "Enter a valid IFMS expenditure value to add.");
+      return;
+    }
+
+    const ifmsToAdd = Number(ifmsValue);
     if (isNaN(ifmsToAdd) || ifmsToAdd < 0) {
       triggerAlert("error", "Enter a valid non-negative IFMS value to add.");
       return;

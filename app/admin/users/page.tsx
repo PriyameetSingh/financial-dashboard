@@ -671,7 +671,10 @@ function CreateUserModal({
                 inputMode="tel"
                 autoComplete="tel"
                 value={form.phone}
-                onChange={(e) => onChange("phone", e.target.value)}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/[^0-9+\-()\s]/g, "");
+                  onChange("phone", cleaned);
+                }}
                 placeholder="e.g. +91 98765 43210"
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
               />
@@ -1283,9 +1286,16 @@ export default function AdminUsersPage() {
       return;
     }
 
-    const phoneDigits = usernameDigitsFromPhone(createUserForm.phone);
+    const phoneRaw = createUserForm.phone.trim();
+    const phoneDigits = usernameDigitsFromPhone(phoneRaw);
     if (phoneDigits.length < 10) {
       setCreateUserAlert("Phone number is required: at least 10 digits. Digits are used as the login username.");
+      return;
+    }
+
+    const phoneRegex = /^[+\-() \s\d]+$/;
+    if (!phoneRegex.test(phoneRaw)) {
+      setCreateUserAlert("Phone number contains invalid characters. Only digits, spaces, and +, -, (, ) are allowed.");
       return;
     }
 

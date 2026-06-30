@@ -190,7 +190,12 @@ function ActionItemsContent() {
         item.vertical.toLowerCase().includes(query.toLowerCase()) ||
         item.schemeId.toLowerCase().includes(query.toLowerCase());
       const matchesVertical = verticalFilter === "all" || item.vertical === verticalFilter;
-      const matchesAssignee = assigneeFilter === "all" || item.assignedTo === assigneeFilter;
+      const matchesAssignee = (() => {
+        if (assigneeFilter === "all") return true;
+        const selectedUser = directoryUsers.find((u) => u.id === assigneeFilter);
+        if (!selectedUser) return false;
+        return isAssignedActionOfficer(item, selectedUser);
+      })();
       const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter;
       const matchesMyTasksScope =
         !isMyTasks ||
@@ -239,7 +244,7 @@ function ActionItemsContent() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user]);
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user, directoryUsers]);
 
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
@@ -301,8 +306,19 @@ function ActionItemsContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, now, user, canViewAllItems]);
 
-  const verticalOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.vertical)))], [items]);
-  const assigneeOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.assignedTo)))], [items]);
+  const verticalOptions = useMemo(
+    () => [
+      "all",
+      ...Array.from(
+        new Set(
+          items
+            .map((item) => item.vertical?.trim())
+            .filter((v): v is string => Boolean(v))
+        )
+      ),
+    ],
+    [items]
+  );
   const priorityOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.priority)))], [items]);
 
   const showStats = !!user;
@@ -448,17 +464,16 @@ function ActionItemsContent() {
               </option>
             ))}
           </select>
-          <select
+          <SearchableUserSelector
+            users={directoryUsers}
             value={assigneeFilter}
-            onChange={(event) => setAssigneeFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-          >
-            {assigneeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "Assigned to" : option}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setAssigneeFilter(val)}
+            label=""
+            placeholder="Assigned to"
+            showAllOption={true}
+            allOptionLabel="Assigned to"
+            className="w-[220px]"
+          />
           <select
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value)}

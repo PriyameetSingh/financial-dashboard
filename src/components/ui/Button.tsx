@@ -18,7 +18,7 @@ export default function Button({ variant = "primary", loading, className, childr
   return (
     <button
       className={clsx(
-        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition",
+        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer",
         VARIANT_STYLES[variant],
         (disabled || loading) && "opacity-60 cursor-not-allowed",
         className,

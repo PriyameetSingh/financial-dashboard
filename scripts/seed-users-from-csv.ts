@@ -221,6 +221,13 @@ async function main() {
         continue;
       }
 
+      const phoneRegex = /^[+\-() \s\d]+$/;
+      if (!phoneRegex.test(row.phone)) {
+        failedCount += 1;
+        console.warn(`Skipping ${row.email}: phone contains invalid characters.`);
+        continue;
+      }
+
       const designationId = fuzzyMatchOptionId(row.designationRaw, designationOptions);
       const organisationIds = fuzzyMatchManyOptionIds(row.organisationRaw, organisationOptions);
       const sectionIds = fuzzyMatchManyOptionIds(row.sectionRaw, sectionOptions);
