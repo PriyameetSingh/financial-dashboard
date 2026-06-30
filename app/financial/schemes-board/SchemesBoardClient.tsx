@@ -260,7 +260,16 @@ export default function SchemesBoardClient() {
     const spent = filtered.reduce((s, e) => s + e.ifms, 0);
     const overallPct = totalRe > 0 ? (spent / totalRe) * 100 : 0;
     const verticalCount = new Set(filtered.map((e) => e.vertical)).size;
-    return { totalRe, spent, overallPct, verticalCount };
+    let ss = 0;
+    let css = 0;
+    let cs = 0;
+    for (const e of filtered) {
+      const kind = sponsorshipKind(e);
+      if (kind === "SS") ss++;
+      else if (kind === "CSS") css++;
+      else if (kind === "CS") cs++;
+    }
+    return { totalRe, spent, overallPct, verticalCount, ss, css, cs };
   }, [filtered]);
 
   const isViewer = isReadOnlyWatermarkUser(currentUser);
@@ -464,17 +473,32 @@ export default function SchemesBoardClient() {
               Scheme Categories
             </h3>
             <div className="mt-3 space-y-2.5">
-              <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-sky-500 shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">State Sector (SS)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="size-2.5 rounded-full bg-sky-500 shadow-sm" />
+                  <span className="text-[11px] font-bold text-[var(--text-primary)]">State Sector (SS)</span>
+                </div>
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                  {totals.ss}
+                </span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-orange-500 shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="size-2.5 rounded-full bg-orange-500 shadow-sm" />
+                  <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
+                </div>
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                  {totals.css}
+                </span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-purple-500 shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">Central Sector (CS)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="size-2.5 rounded-full bg-purple-500 shadow-sm" />
+                  <span className="text-[11px] font-bold text-[var(--text-primary)]">Central Sector (CS)</span>
+                </div>
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                  {totals.cs}
+                </span>
               </div>
             </div>
           </div>
