@@ -37,6 +37,7 @@ import {
   Shield,
   FileText,
   Settings,
+  ChevronDown,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -358,6 +359,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const user = useHydratedCurrentUser();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
@@ -457,6 +459,61 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     : [];
   const roleLabel = user?.role.replaceAll("_", " ");
 
+  // Auto-expand submenus if their children are active
+  useEffect(() => {
+    if (!user) return;
+    setOpenSubmenus((prev) => {
+      const updated = { ...prev };
+      visibleItems.forEach((item) => {
+        if (item.children?.length) {
+          const childLinks = item.children.filter((child) => child.roles.includes(user.role));
+          const hasActiveChild = childLinks.some(
+            (child) => pathname === child.href || isTopNavActive(pathname, child.href)
+          );
+          const isParentActive = isTopNavActive(pathname, item.href);
+
+          if (hasActiveChild || isParentActive) {
+            if (updated[item.label] === undefined) {
+              updated[item.label] = true;
+            }
+          }
+        }
+      });
+      return updated;
+    });
+  }, [pathname, user, visibleItems]);
+
+  const toggleSubmenu = (label: string) => {
+    setOpenSubmenus((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
+
+  const handleParentClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
+    if (item.children?.length) {
+      const childLinks = user
+        ? item.children.filter((child) => child.roles.includes(user.role))
+        : [];
+      if (childLinks.length > 0) {
+        const isParentActive = isTopNavActive(pathname, item.href);
+        if (isParentActive) {
+          // If already on the parent page, toggle expansion
+          setOpenSubmenus((prev) => ({
+            ...prev,
+            [item.label]: !prev[item.label],
+          }));
+        } else {
+          // If navigating to the parent page, ensure submenu is expanded
+          setOpenSubmenus((prev) => ({
+            ...prev,
+            [item.label]: true,
+          }));
+        }
+      }
+    }
+  };
+
   return (
     <aside className={`${isCollapsed ? "w-20" : "w-64"} h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0 transition-all duration-300`}>
       <div className={`px-4 py-5 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
@@ -477,6 +534,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
             user && item.children?.length
               ? item.children.filter(child => child.roles.includes(user.role))
               : [];
+          const isOpen = !!openSubmenus[item.label];
 
           return (
             <div key={item.href}>
@@ -484,6 +542,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors text-sm font-medium ${isTopNavActive(pathname, item.href) ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"} ${isCollapsed ? "justify-center px-0" : ""}`}
+                onClick={(e) => handleParentClick(e, item)}
               >
                 <item.icon size={isCollapsed ? 20 : 16} />
                 {!isCollapsed && (
@@ -508,38 +567,64 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                   </span>
                 )}
                 {!isCollapsed && item.badge && <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">{item.badge}</span>}
+                {!isCollapsed && childLinks.length > 0 && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={isOpen ? "Collapse menu" : "Expand menu"}
+                    className="ml-auto p-1 rounded hover:bg-[var(--sidebar-hover-bg)]/80 text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-all flex items-center justify-center cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleSubmenu(item.label);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleSubmenu(item.label);
+                      }
+                    }}
+                  >
+                    <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                  </span>
+                )}
               </Link>
               {!isCollapsed && childLinks.length > 0 && (
-                <ul
-                  className="mt-2 ml-3 flex list-none flex-col gap-0.5 border-l-2 border-[var(--sidebar-text-muted)]/30 py-0.5 pl-3"
-                  aria-label={`${item.label} — related links`}
-                >
-                  {childLinks.map(child => {
-                    const active = pathname === child.href;
-                    return (
-                      <li key={child.href}>
-                        <Link
-                          href={child.href}
-                          className={[
-                            "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-[13px] leading-snug transition-colors",
-                            active
-                              ? "bg-[var(--sidebar-active-bg)] font-medium text-[var(--sidebar-text-primary)]"
-                              : child.emphasis
-                                ? "bg-[var(--sidebar-hover-bg)]/70 text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)]"
-                                : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)]/50 hover:text-[var(--sidebar-text-primary)]",
-                          ].join(" ")}
-                        >
-                          <span className="shrink-0 opacity-90" aria-hidden>
-                            <child.icon size={14} />
-                          </span>
-                          <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                            <span className="truncate">{child.label}</span>
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 pointer-events-none"}`}>
+                  <div className="overflow-hidden">
+                    <ul
+                      className="ml-3 flex list-none flex-col gap-0.5 border-l-2 border-[var(--sidebar-text-muted)]/30 py-0.5 pl-3"
+                      aria-label={`${item.label} — related links`}
+                    >
+                      {childLinks.map(child => {
+                        const active = pathname === child.href;
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              className={[
+                                "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-[13px] leading-snug transition-colors",
+                                active
+                                  ? "bg-[var(--sidebar-active-bg)] font-medium text-[var(--sidebar-text-primary)]"
+                                  : child.emphasis
+                                    ? "bg-[var(--sidebar-hover-bg)]/70 text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)]"
+                                    : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)]/50 hover:text-[var(--sidebar-text-primary)]",
+                              ].join(" ")}
+                            >
+                              <span className="shrink-0 opacity-90" aria-hidden>
+                                <child.icon size={14} />
+                              </span>
+                              <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                                <span className="truncate">{child.label}</span>
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
               )}
             </div>
           );

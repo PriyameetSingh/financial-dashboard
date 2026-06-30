@@ -621,8 +621,8 @@ function CreateUserModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 sticky top-0 bg-[var(--bg-primary)] z-10">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
             <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Create User</h2>
@@ -641,7 +641,7 @@ function CreateUserModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 pb-28" data-dropdown-boundary>
+        <div className="flex-1 overflow-y-auto px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Name
@@ -756,12 +756,14 @@ function CreateUserModal({
         </div>
 
         {alert && (
-          <div className="border-t border-[var(--border)] px-6 py-3">
-            <p className="text-xs text-[var(--text-muted)]">{alert}</p>
+          <div className="border-t border-[var(--border)] bg-[var(--bg-primary)] px-6 py-3">
+            <div className="rounded-lg border border-[var(--alert-critical)]/20 bg-[var(--alert-critical)]/10 px-4 py-2.5">
+              <p className="text-xs font-medium text-[var(--alert-critical)]">{alert}</p>
+            </div>
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 sticky bottom-0 bg-[var(--bg-primary)]">
+        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 bg-[var(--bg-primary)]">
           <button
             onClick={onClose}
             className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
@@ -830,8 +832,8 @@ function EditUserProfileModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 sticky top-0 bg-[var(--bg-primary)] z-10">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
             <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Edit profile</h2>
@@ -851,7 +853,7 @@ function EditUserProfileModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 pb-28" data-dropdown-boundary>
+        <div className="flex-1 overflow-y-auto px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
               Name
@@ -933,12 +935,14 @@ function EditUserProfileModal({
         </div>
 
         {alert && (
-          <div className="border-t border-[var(--border)] px-6 py-3">
-            <p className="text-xs text-[var(--alert-critical)]">{alert}</p>
+          <div className="border-t border-[var(--border)] bg-[var(--bg-primary)] px-6 py-3">
+            <div className="rounded-lg border border-[var(--alert-critical)]/20 bg-[var(--alert-critical)]/10 px-4 py-2.5">
+              <p className="text-xs font-medium text-[var(--alert-critical)]">{alert}</p>
+            </div>
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 sticky bottom-0 bg-[var(--bg-primary)]">
+        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 bg-[var(--bg-primary)]">
           <button
             onClick={onClose}
             disabled={isSaving}
