@@ -7,12 +7,14 @@ import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 
 export default function AdminOverviewPage() {
-  useRequireAnyPermission(
+  const sessionUser = useRequireAnyPermission(
     [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_FINANCIAL_YEARS],
     "/dashboard",
   );
 
   const user = useHydratedCurrentUser();
+
+  if (!sessionUser || !user) return null;
   const showUsers = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
   const showPermissions = user && hasPermission(user, Permission.MANAGE_PERMISSIONS);
   const showSchemes = user && hasPermission(user, Permission.MANAGE_SCHEMES);

@@ -25,10 +25,12 @@ const TABS: Array<{ id: EntityTab; label: string; description: string }> = [
 ];
 
 export default function AdminSystemSettingsPage() {
-  useRequireAnyPermission(
+  const user = useRequireAnyPermission(
     [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_FINANCIAL_YEARS],
     "/dashboard",
   );
+
+  if (!user) return null;
 
   const [activeTab, setActiveTab] = useState<EntityTab>("organisations");
   const [items, setItems] = useState<MasterDataItem[]>([]);
@@ -68,6 +70,7 @@ export default function AdminSystemSettingsPage() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!user) return;
     void load();
     // Clear notifications and input state on tab change
     setError(null);
@@ -76,7 +79,7 @@ export default function AdminSystemSettingsPage() {
     setNewCode("");
     setEditingId(null);
     setSearchQuery("");
-  }, [activeTab, load]);
+  }, [user, activeTab, load]);
 
   // Create handler
   async function onCreate(e: React.FormEvent) {

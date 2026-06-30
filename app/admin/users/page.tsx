@@ -1002,6 +1002,8 @@ export default function AdminUsersPage() {
     [sessionUser, canManagePermissions],
   );
 
+  if (!sessionUser) return null;
+
   const [users, setUsers] = useState<DbUserRow[]>([]);
   const [alert, setAlert] = useState("");
   const [selectedUser, setSelectedUser] = useState<DbUserRow | null>(null);
@@ -1206,6 +1208,7 @@ export default function AdminUsersPage() {
   }, [designations, isSeedingUsers, organisations, refreshUsers, sections, seedDraftRows, ulbs]);
 
   useEffect(() => {
+    if (!sessionUser) return;
     let active = true;
     const load = async () => {
       try {
@@ -1221,7 +1224,7 @@ export default function AdminUsersPage() {
     return () => {
       active = false;
     };
-  }, [refreshRoles, refreshUsers, refreshPermissionCatalog, refreshReferenceData]);
+  }, [sessionUser, refreshRoles, refreshUsers, refreshPermissionCatalog, refreshReferenceData]);
 
   const managePermissionCount = useMemo(() => {
     return users.filter((user) => user.effectivePermissions.includes(Permission.MANAGE_PERMISSIONS)).length;

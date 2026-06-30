@@ -49,15 +49,18 @@ export function useRequireRole(roles: UserRole[] = [], redirectTo = "/dashboard"
       await refreshSessionUserFromApi();
       if (cancelled) return;
       const currentUser = getCurrentUser();
-      setUser(currentUser);
       if (!currentUser) {
         router.replace("/login");
+        setUser(null);
         return;
       }
       const allowedRoles = rolesKey ? (rolesKey.split(",") as UserRole[]) : [];
       if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.role)) {
         router.replace(redirectTo);
+        setUser(null);
+        return;
       }
+      setUser(currentUser);
     })();
     return () => {
       cancelled = true;
@@ -78,16 +81,19 @@ export function useRequireAnyPermission(permissions: Permission[], redirectTo = 
       await refreshSessionUserFromApi();
       if (cancelled) return;
       const currentUser = getCurrentUser();
-      setUser(currentUser);
       if (!currentUser) {
         router.replace("/login");
+        setUser(null);
         return;
       }
       const list = permKey ? (permKey.split(",") as Permission[]) : [];
       const allowed = list.some((p) => hasPermission(currentUser, p));
       if (!allowed) {
         router.replace(redirectTo);
+        setUser(null);
+        return;
       }
+      setUser(currentUser);
     })();
     return () => {
       cancelled = true;

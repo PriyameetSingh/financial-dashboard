@@ -16,7 +16,9 @@ type FyRow = {
 };
 
 export default function AdminFinancialYearsPage() {
-  useRequireAnyPermission([Permission.MANAGE_FINANCIAL_YEARS], "/dashboard");
+  const user = useRequireAnyPermission([Permission.MANAGE_FINANCIAL_YEARS], "/dashboard");
+
+  if (!user) return null;
 
   const [items, setItems] = useState<FyRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +50,9 @@ export default function AdminFinancialYearsPage() {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
     void load();
-  }, [load]);
+  }, [user, load]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();

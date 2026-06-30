@@ -23,7 +23,9 @@ function formatRoleLabel(code: string): string {
 }
 
 export default function AdminRolesPage() {
-  useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
+  const user = useRequireAnyPermission([Permission.MANAGE_PERMISSIONS], "/dashboard");
+
+  if (!user) return null;
 
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
@@ -47,6 +49,7 @@ export default function AdminRolesPage() {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
     let active = true;
     const load = async () => {
       try {
@@ -60,7 +63,7 @@ export default function AdminRolesPage() {
     return () => {
       active = false;
     };
-  }, [refresh]);
+  }, [user, refresh]);
 
   const rolePermissionSet = useMemo(() => {
     const map = new Map<string, Set<string>>();

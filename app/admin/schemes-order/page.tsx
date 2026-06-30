@@ -29,6 +29,7 @@ export default function SchemesOrderPage() {
   const [initialSubschemesMap, setInitialSubschemesMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
+    if (!user) return;
     let active = true;
     const load = async () => {
       try {
@@ -64,7 +65,7 @@ export default function SchemesOrderPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const filteredSchemes = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -135,6 +136,7 @@ export default function SchemesOrderPage() {
   const handleSaveSchemesOrder = async () => {
     setSchemesSaving(true);
     setSchemesSuccess(false);
+    setSubschemesSuccess(false);
     setError(null);
 
     const schemeIds = schemes.map((s) => s.id);
@@ -163,6 +165,7 @@ export default function SchemesOrderPage() {
     if (!selectedSchemeId) return;
     setSubschemesSaving(true);
     setSubschemesSuccess(false);
+    setSchemesSuccess(false);
     setError(null);
 
     const currentList = subschemesMap[selectedSchemeId] || [];
@@ -212,6 +215,18 @@ export default function SchemesOrderPage() {
           </div>
         )}
 
+        {schemesSuccess && (
+          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+            Scheme order saved successfully.
+          </div>
+        )}
+
+        {subschemesSuccess && (
+          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+            Subscheme order saved successfully.
+          </div>
+        )}
+
         {loading ? (
           <div className="text-sm text-[var(--text-muted)]">Loading registry items...</div>
         ) : (
@@ -258,7 +273,10 @@ export default function SchemesOrderPage() {
                   return (
                     <div
                       key={scheme.id}
-                      onClick={() => setSelectedSchemeId(scheme.id)}
+                      onClick={() => {
+                        setSelectedSchemeId(scheme.id);
+                        setSubschemesSuccess(false);
+                      }}
                       className={`group flex items-center justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${
                         isSelected
                           ? "border-[var(--accent)] bg-[var(--bg-content-surface)] ring-1 ring-[var(--accent)]"
