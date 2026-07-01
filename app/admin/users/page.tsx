@@ -2119,7 +2119,7 @@ function ResetPasswordModal({
                   required
                   value={passwordVal}
                   onChange={(e) => setPasswordVal(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none font-mono"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none font-mono"
                 />
                 <p className="mt-1 text-[10px] text-[var(--text-muted)]">
                   A secure random password has been generated. You can modify it if needed.

@@ -5,6 +5,8 @@ import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import { withNextBasePath } from "@/lib/next-base-path";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { X } from "lucide-react";
 
 export default function ProfilePage() {
   const user = useRequireAuth();
@@ -15,6 +17,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const initials = useMemo(() => {
     if (!user) return "HN";
@@ -25,7 +29,22 @@ export default function ProfilePage() {
       .join("");
   }, [user]);
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
+  const openModal = () => {
+    setSuccess("");
+    setError("");
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setIsConfirmOpen(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setError("");
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -40,7 +59,13 @@ export default function ProfilePage() {
       return;
     }
 
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmChange = async () => {
+    setIsConfirmOpen(false);
     setLoading(true);
+    setError("");
 
     try {
       const res = await fetch(withNextBasePath("/api/v1/profile/change-password"), {
@@ -60,6 +85,7 @@ export default function ProfilePage() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setIsModalOpen(false);
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -96,69 +122,120 @@ export default function ProfilePage() {
             Update your account password. You will continue to remain logged in.
           </p>
 
-          <form onSubmit={handlePasswordChange} className="mt-6 space-y-4">
-            {error && (
-              <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
-                {success}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                Current Password
-              </label>
-              <input
-                type="password"
-                required
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none"
-              />
+          {success && (
+            <div className="mt-4 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
+              {success}
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none"
-              />
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Updating..." : "Update Password"}
-              </button>
-            </div>
-          </form>
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={openModal}
+              className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition"
+            >
+              Change Password
+            </button>
+          </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
+        >
+          <div className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Change Password</h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Update your account password. You will continue to remain logged in.
+            </p>
+
+            <form onSubmit={handleFormSubmit} className="mt-6 space-y-4">
+              {error && (
+                <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--text-muted)] focus:ring-2 focus:ring-[var(--text-muted)]/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--text-muted)] focus:ring-2 focus:ring-[var(--text-muted)]/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--text-muted)] focus:ring-2 focus:ring-[var(--text-muted)]/20"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-surface)] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Updating..." : "Update Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={isConfirmOpen}
+        title="Confirm Password Change"
+        message="Are you sure you want to change your password? This action cannot be undone."
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        confirmVariant="primary"
+        onConfirm={handleConfirmChange}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </AppShell>
   );
 }
