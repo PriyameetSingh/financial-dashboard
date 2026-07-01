@@ -9,4 +9,4 @@ Do NOT automatically run the `npm run build` command or any production build scr
 
 # Prisma Database Migration Behaviour
 
-Do not directly make any changes or migrations on production DB, migration
+Do not directly make any changes or migrations on production DB,
