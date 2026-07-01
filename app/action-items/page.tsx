@@ -16,6 +16,7 @@ import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
 import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import { useSearchParams } from "next/navigation";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus, item: ActionItem) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
@@ -100,6 +101,46 @@ function ActionItemsContent() {
   const [reassignBusy, setReassignBusy] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
   const [reassignIsSelfApproved, setReassignIsSelfApproved] = useState(false);
+  const [showReassignNodalWarning, setShowReassignNodalWarning] = useState(false);
+
+  const handleReassignPerformerChange = (value: string, index: number) => {
+    const nextPerf = reassignPerformers.map((v, i) => (i === index ? value : v));
+    setReassignPerformers(nextPerf);
+    const hasNodal = nextPerf.some((pid) => {
+      const user = directoryUsers.find((u) => u.id === pid);
+      return user?.role === UserRole.NODAL_OFFICER;
+    });
+    if (reassignIsSelfApproved && hasNodal) {
+      setShowReassignNodalWarning(true);
+    }
+  };
+
+  const handleReassignSelfApproveChange = (checked: boolean) => {
+    setReassignIsSelfApproved(checked);
+    if (checked) {
+      setReassignReviewers([]);
+      const hasNodal = reassignPerformers.some((pid) => {
+        const user = directoryUsers.find((u) => u.id === pid);
+        return user?.role === UserRole.NODAL_OFFICER;
+      });
+      if (hasNodal) {
+        setShowReassignNodalWarning(true);
+      }
+    } else {
+      const firstPerf = reassignPerformers[0] || "";
+      const pick = directoryUsers.find((u) => u.id !== firstPerf)?.id || directoryUsers[0]?.id || "";
+      setReassignReviewers([pick]);
+    }
+  };
+
+  const handleReassignWarningCancel = () => {
+    setShowReassignNodalWarning(false);
+    setReassignIsSelfApproved(false);
+    const firstPerf = reassignPerformers[0] || "";
+    const pick = directoryUsers.find((u) => u.id !== firstPerf)?.id || directoryUsers[0]?.id || "";
+    setReassignReviewers([pick]);
+  };
+
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -840,9 +881,7 @@ function ActionItemsContent() {
                             return true;
                           })}
                           value={pid}
-                          onChange={(value) =>
-                            setReassignPerformers((prev) => prev.map((v, i) => (i === index ? value : v)))
-                          }
+                          onChange={(value) => handleReassignPerformerChange(value, index)}
                         />
                       </div>
                       {reassignPerformers.length > 1 && (
@@ -865,16 +904,7 @@ function ActionItemsContent() {
                   id="reassign-self-approve-checkbox"
                   checked={reassignIsSelfApproved}
                   disabled={reassignBusy}
-                  onChange={(e) => {
-                    setReassignIsSelfApproved(e.target.checked);
-                    if (e.target.checked) {
-                      setReassignReviewers([]);
-                    } else {
-                      const firstPerf = reassignPerformers[0] || "";
-                      const pick = directoryUsers.find((u) => u.id !== firstPerf)?.id || directoryUsers[0]?.id || "";
-                      setReassignReviewers([pick]);
-                    }
-                  }}
+                  onChange={(e) => handleReassignSelfApproveChange(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
                 />
                 <label htmlFor="reassign-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
@@ -982,6 +1012,15 @@ function ActionItemsContent() {
               </button>
             </div>
           </div>
+          <ConfirmModal
+            open={showReassignNodalWarning}
+            title="Warning: Nodal Officer Self-Approval"
+            message="Assigning a Nodal Officer as a self-reviewer should technically never happen unless in a very specific case. Only TASU, FA, or Vertical Heads ideally should have self-approval privileges. Are you sure you want to proceed?"
+            confirmLabel="Proceed"
+            cancelLabel="Cancel"
+            onConfirm={() => setShowReassignNodalWarning(false)}
+            onCancel={handleReassignWarningCancel}
+          />
         </div>
       )}
       {confirmApprove && selectedItem && (

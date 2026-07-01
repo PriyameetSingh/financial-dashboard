@@ -36,6 +36,7 @@ export default function ActionItemCreatePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSelfApproved, setIsSelfApproved] = useState(false);
+  const [showNodalWarning, setShowNodalWarning] = useState(false);
 
   function resetForm() {
     setTitle("");
@@ -49,7 +50,31 @@ export default function ActionItemCreatePage() {
     setMeetingId("");
     setDueDate("");
     setIsSelfApproved(false);
+    setShowNodalWarning(false);
   }
+
+  const handleAssigneeChange = (value: string) => {
+    setAssignee(value);
+    const user = directoryUsers.find((u) => u.id === value);
+    if (isSelfApproved && user?.role === UserRole.NODAL_OFFICER) {
+      setShowNodalWarning(true);
+    }
+  };
+
+  const handleSelfApproveChange = (checked: boolean) => {
+    setIsSelfApproved(checked);
+    if (checked) {
+      setReviewer("");
+      const user = directoryUsers.find((u) => u.id === assignee);
+      if (user?.role === UserRole.NODAL_OFFICER) {
+        setShowNodalWarning(true);
+      }
+    } else {
+      const first = directoryUsers[0]?.id ?? "";
+      const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+      setReviewer(second);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -194,22 +219,13 @@ export default function ActionItemCreatePage() {
                 />
               </label>
               <div className="flex flex-col gap-2">
-                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" required={true} />
+                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={handleAssigneeChange} label="Assigned Officer" required={true} />
                 <div className="flex items-center gap-2 pt-1">
                   <input
                     type="checkbox"
                     id="self-approve-checkbox"
                     checked={isSelfApproved}
-                    onChange={(e) => {
-                      setIsSelfApproved(e.target.checked);
-                      if (e.target.checked) {
-                        setReviewer("");
-                      } else {
-                        const first = directoryUsers[0]?.id ?? "";
-                        const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
-                        setReviewer(second);
-                      }
-                    }}
+                    onChange={(e) => handleSelfApproveChange(e.target.checked)}
                     className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
                   />
                   <label htmlFor="self-approve-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] cursor-pointer select-none">
@@ -301,6 +317,22 @@ export default function ActionItemCreatePage() {
           } finally {
             setSubmitting(false);
           }
+        }}
+      />
+
+      <ConfirmModal
+        open={showNodalWarning}
+        title="Warning: Nodal Officer Self-Approval"
+        message="Assigning a Nodal Officer as a self-reviewer should technically never happen unless in a very specific case. Only TASU, FA, or Vertical Heads ideally should have self-approval privileges. Are you sure you want to proceed?"
+        confirmLabel="Proceed"
+        cancelLabel="Cancel"
+        onConfirm={() => setShowNodalWarning(false)}
+        onCancel={() => {
+          setShowNodalWarning(false);
+          setIsSelfApproved(false);
+          const first = directoryUsers[0]?.id ?? "";
+          const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+          setReviewer(second);
         }}
       />
     </AppShell>

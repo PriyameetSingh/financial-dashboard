@@ -6,9 +6,10 @@ import type { SessionUser } from "@/types";
 import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { createActionItem } from "@/src/lib/services/actionItemService";
 import { fetchSchemesAdmin } from "@/src/lib/services/schemeService";
-import { ActionItemPriority } from "@/types";
+import { ActionItemPriority, UserRole } from "@/types";
 import SchemeSelector from "@/src/components/ui/SchemeSelector";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const PRIORITIES: ActionItemPriority[] = ["Critical", "High", "Medium", "Low"];
 
@@ -38,6 +39,30 @@ export default function CreateActionItemMeetingModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSelfApproved, setIsSelfApproved] = useState(false);
+  const [showNodalWarning, setShowNodalWarning] = useState(false);
+
+  const handleAssigneeChange = (value: string) => {
+    setAssignee(value);
+    const user = directoryUsers.find((u) => u.id === value);
+    if (isSelfApproved && user?.role === UserRole.NODAL_OFFICER) {
+      setShowNodalWarning(true);
+    }
+  };
+
+  const handleSelfApproveChange = (checked: boolean) => {
+    setIsSelfApproved(checked);
+    if (checked) {
+      setReviewer("");
+      const user = directoryUsers.find((u) => u.id === assignee);
+      if (user?.role === UserRole.NODAL_OFFICER) {
+        setShowNodalWarning(true);
+      }
+    } else {
+      const first = directoryUsers[0]?.id ?? "";
+      const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+      setReviewer(second);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +73,7 @@ export default function CreateActionItemMeetingModal({
     setPriority("High");
     setDueDate("");
     setIsSelfApproved(false);
+    setShowNodalWarning(false);
   }, [open]);
 
   useEffect(() => {
@@ -214,22 +240,13 @@ export default function CreateActionItemMeetingModal({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
-                  <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" required={true} />
+                  <SearchableUserSelector users={directoryUsers} value={assignee} onChange={handleAssigneeChange} label="Assigned officer" required={true} />
                   <div className="flex items-center gap-2 pt-1">
                     <input
                       type="checkbox"
                       id="meeting-self-approve-checkbox"
                       checked={isSelfApproved}
-                      onChange={(e) => {
-                        setIsSelfApproved(e.target.checked);
-                        if (e.target.checked) {
-                          setReviewer("");
-                        } else {
-                          const first = directoryUsers[0]?.id ?? "";
-                          const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
-                          setReviewer(second);
-                        }
-                      }}
+                      onChange={(e) => handleSelfApproveChange(e.target.checked)}
                       className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
                     />
                     <label htmlFor="meeting-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
@@ -271,6 +288,22 @@ export default function CreateActionItemMeetingModal({
           {submitting ? "Creating…" : "Create action item"}
         </button>
       </div>
+
+      <ConfirmModal
+        open={showNodalWarning}
+        title="Warning: Nodal Officer Self-Approval"
+        message="Assigning a Nodal Officer as a self-reviewer should technically never happen unless in a very specific case. Only TASU, FA, or Vertical Heads ideally should have self-approval privileges. Are you sure you want to proceed?"
+        confirmLabel="Proceed"
+        cancelLabel="Cancel"
+        onConfirm={() => setShowNodalWarning(false)}
+        onCancel={() => {
+          setShowNodalWarning(false);
+          setIsSelfApproved(false);
+          const first = directoryUsers[0]?.id ?? "";
+          const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+          setReviewer(second);
+        }}
+      />
     </div>
   );
 }

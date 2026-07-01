@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KPISubmission } from "@/types";
-import { SearchableKpiUserField } from "@/components/schemes/AddKpiModal";
+import { KPISubmission, UserRole } from "@/types";
+import { SearchableKpiUserField, type KpiUserOption } from "@/components/schemes/AddKpiModal";
 import { fetchSchemesOverview } from "@/src/lib/services/schemeService";
 import { updateKpiDefinitionAssignments } from "@/src/lib/services/kpiService";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 type Props = {
   open: boolean;
@@ -14,18 +15,20 @@ type Props = {
 };
 
 export default function ReassignKpiModal({ open, submission, onClose, onSaved }: Props) {
-  const [users, setUsers] = useState<Array<{ id: string; code: string | null; name: string; email: string }> | null>(null);
+  const [users, setUsers] = useState<KpiUserOption[] | null>(null);
   const [usersError, setUsersError] = useState<string | null>(null);
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
   const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
   const [isSelfApproved, setIsSelfApproved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showNodalWarning, setShowNodalWarning] = useState(false);
 
   useEffect(() => {
     if (!open || !submission) return;
     setUsers(null);
     setUsersError(null);
+    setShowNodalWarning(false);
     const initialIsSelfApproved =
       submission.isSelfApproved === true ||
       (submission.reviewerUserIds !== undefined
@@ -59,6 +62,44 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
       cancelled = true;
     };
   }, [open, submission]);
+
+  const handlePerformerChange = (id: string, index: number) => {
+    const nextPerf = performerIds.map((v, i) => (i === index ? id : v));
+    setPerformerIds(nextPerf);
+    if (users) {
+      const hasNodal = nextPerf.some((pid) => {
+        const u = users.find((user) => user.id === pid);
+        return u?.role === UserRole.NODAL_OFFICER;
+      });
+      if (isSelfApproved && hasNodal) {
+        setShowNodalWarning(true);
+      }
+    }
+  };
+
+  const handleSelfApproveChange = (checked: boolean) => {
+    setIsSelfApproved(checked);
+    if (checked) {
+      setReviewerIds([]);
+      if (users) {
+        const hasNodal = performerIds.some((pid) => {
+          const u = users.find((user) => user.id === pid);
+          return u?.role === UserRole.NODAL_OFFICER;
+        });
+        if (hasNodal) {
+          setShowNodalWarning(true);
+        }
+      }
+    } else {
+      setReviewerIds([""]);
+    }
+  };
+
+  const handleWarningCancel = () => {
+    setShowNodalWarning(false);
+    setIsSelfApproved(false);
+    setReviewerIds([""]);
+  };
 
   if (!open || !submission) return null;
 
@@ -165,7 +206,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                           label={index === 0 ? "Action owner" : `Owner (${index + 1})`}
                           users={users}
                           value={pid}
-                          onChange={(id) => setPerformerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                          onChange={(id) => handlePerformerChange(id, index)}
                           disabled={busy}
                           excludeUserId=""
                           excludeUserIds={allExcludedForPerformers(index)}
@@ -191,14 +232,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                   id="reassign-kpi-self-approve-checkbox"
                   checked={isSelfApproved}
                   disabled={userPickerDisabled}
-                  onChange={(e) => {
-                    setIsSelfApproved(e.target.checked);
-                    if (e.target.checked) {
-                      setReviewerIds([]);
-                    } else {
-                      setReviewerIds([""]);
-                    }
-                  }}
+                  onChange={(e) => handleSelfApproveChange(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
                 />
                 <label htmlFor="reassign-kpi-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
@@ -276,6 +310,15 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={showNodalWarning}
+        title="Warning: Nodal Officer Self-Approval"
+        message="Assigning a Nodal Officer as a self-reviewer should technically never happen unless in a very specific case. Only TASU, FA, or Vertical Heads ideally should have self-approval privileges. Are you sure you want to proceed?"
+        confirmLabel="Proceed"
+        cancelLabel="Cancel"
+        onConfirm={() => setShowNodalWarning(false)}
+        onCancel={handleWarningCancel}
+      />
     </div>
   );
 }

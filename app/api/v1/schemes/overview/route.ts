@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { mapSchemeView } from "@/lib/scheme-api";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { UserRole } from "@/types";
 
 export const runtime = "nodejs";
 
@@ -16,10 +17,38 @@ function toNumber(value: unknown): number {
 }
 
 async function getReferenceData() {
-  const [roles, users] = await Promise.all([
+  const [roles, usersRaw] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
-    prisma.user.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, email: true } }),
+    prisma.user.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        email: true,
+        userRoles: {
+          take: 1,
+          orderBy: { roleId: "asc" },
+          select: { role: { select: { code: true } } },
+        },
+      },
+    }),
   ]);
+
+  const ROLE_VALUES = new Set<string>(Object.values(UserRole));
+  const users = usersRaw.map((u) => {
+    const roleCode = u.userRoles[0]?.role.code;
+    const parsedRole = roleCode && ROLE_VALUES.has(roleCode) ? (roleCode as UserRole) : UserRole.NODAL_OFFICER;
+    return {
+      id: u.id,
+      code: u.code,
+      name: u.name,
+      email: u.email,
+      role: parsedRole,
+    };
+  });
+
   return { roles, users };
 }
 
