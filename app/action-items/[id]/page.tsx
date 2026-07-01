@@ -185,13 +185,30 @@ export default function ActionItemDetailPage() {
 
   const thread = useMemo(() => {
     if (!item) return [];
-    return item.updates.map((update, index) => ({
-      id: update.id ?? `${item.id}-upd-${index}`,
-      author: update.actor,
-      note: update.note,
-      status: update.status,
-      timestamp: update.timestamp,
-    }));
+    const systemNotes = [
+      "Action item created",
+      "Marked in progress",
+      "Action item archived",
+      "Action item unarchived",
+      "Reviewer approved completion",
+      "Submitted for reviewer approval",
+      "Completed & reviewed automatically",
+    ];
+    return item.updates.map((update, index) => {
+      const note = update.note || "";
+      const isSystem = systemNotes.includes(note) ||
+        note.startsWith("Reassigned: performers") ||
+        note.startsWith("Reviewer rejected: ") ||
+        note.includes("Completed & reviewed automatically");
+      return {
+        id: update.id ?? `${item.id}-upd-${index}`,
+        author: update.actor,
+        note: update.note,
+        status: update.status,
+        timestamp: update.timestamp,
+        isSystem,
+      };
+    });
   }, [item]);
 
   const hasManualUpdates = useMemo(() => {
@@ -697,74 +714,98 @@ export default function ActionItemDetailPage() {
           )}
           <div className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
             {thread.length === 0 && "No updates yet."}
-            {thread.map((entry) => (
-              <div key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-                <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                  <span>{entry.author}</span>
-                  <span>{formatDateTime(entry.timestamp)}</span>
-                </div>
-                {editingUpdateId === entry.id ? (
-                  <div className="mt-2 space-y-2">
-                    <textarea
-                      value={editingUpdateNote}
-                      onChange={(e) => setEditingUpdateNote(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                    />
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={busy || !editingUpdateNote.trim()}
-                        className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
-                        onClick={async () => {
-                          if (!editingUpdateNote.trim() || !entry.id) return;
-                          setBusy(true);
-                          try {
-                            await updateActionItem(id, {
-                              updateId: entry.id,
-                              updateNote: editingUpdateNote.trim(),
-                            });
-                            await refresh();
-                            setEditingUpdateId(null);
-                            setActionSuccess("Update history edited.");
-                          } catch (e: unknown) {
-                            setActionSuccess(e instanceof Error ? e.message : "Edit failed");
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        <Check size={12} /> Save
-                      </button>
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
-                        onClick={() => setEditingUpdateId(null)}
-                      >
-                        <X size={12} /> Cancel
-                      </button>
+            {thread.map((entry) => {
+              if (entry.isSystem) {
+                return (
+                  <div key={entry.id} className="relative pl-6 py-2 border-l border-[var(--border)] ml-3">
+                    <div className="absolute -left-[5px] top-[14px] h-2 w-2 rounded-full bg-[var(--text-muted)] opacity-60" />
+                    
+                    <div className="flex items-center flex-wrap gap-2 text-xs text-[var(--text-muted)]">
+                      <span className="font-semibold">{entry.author}</span>
+                      <span>·</span>
+                      <span>{formatDateTime(entry.timestamp)}</span>
+                      <span>·</span>
+                      <span className="rounded bg-[var(--bg-card)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] border border-[var(--border)]">
+                        {entry.status.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    
+                    <div className="mt-1 text-sm text-[var(--text-secondary)] leading-relaxed italic">
+                      {entry.note}
                     </div>
                   </div>
-                ) : (
-                  <div className="mt-2 flex items-start justify-between gap-2">
-                    <span className="text-sm text-[var(--text-primary)]">{entry.note}</span>
-                    {canEdit && entry.id && (
-                      <button
-                        type="button"
-                        className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                        onClick={() => {
-                          setEditingUpdateId(entry.id!);
-                          setEditingUpdateNote(entry.note ?? "");
-                        }}
-                      >
-                        <Pencil size={13} />
-                      </button>
-                    )}
+                );
+              }
+
+              return (
+                <div key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
+                  <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                    <span>{entry.author}</span>
+                    <span>{formatDateTime(entry.timestamp)}</span>
                   </div>
-                )}
-                <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{entry.status.replace(/_/g, " ")}</div>
-              </div>
-            ))}
+                  {editingUpdateId === entry.id ? (
+                    <div className="mt-2 space-y-2">
+                      <textarea
+                        value={editingUpdateNote}
+                        onChange={(e) => setEditingUpdateNote(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={busy || !editingUpdateNote.trim()}
+                          className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
+                          onClick={async () => {
+                            if (!editingUpdateNote.trim() || !entry.id) return;
+                            setBusy(true);
+                            try {
+                              await updateActionItem(id, {
+                                updateId: entry.id,
+                                updateNote: editingUpdateNote.trim(),
+                              });
+                              await refresh();
+                              setEditingUpdateId(null);
+                              setActionSuccess("Update history edited.");
+                            } catch (e: unknown) {
+                              setActionSuccess(e instanceof Error ? e.message : "Edit failed");
+                            } finally {
+                              setBusy(false);
+                            }
+                          }}
+                        >
+                          <Check size={12} /> Save
+                        </button>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                          onClick={() => setEditingUpdateId(null)}
+                        >
+                          <X size={12} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-start justify-between gap-2">
+                      <span className="text-sm text-[var(--text-primary)]">{entry.note}</span>
+                      {canEdit && entry.id && (
+                        <button
+                          type="button"
+                          className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          onClick={() => {
+                            setEditingUpdateId(entry.id!);
+                            setEditingUpdateNote(entry.note ?? "");
+                          }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{entry.status.replace(/_/g, " ")}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

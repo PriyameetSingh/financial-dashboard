@@ -118,6 +118,7 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
     where: { isActive: true },
     include: {
       kpiDefinitionPerformers: {
+        where: { isActive: true },
         include: {
           kpiDefinition: {
             include: {
@@ -140,6 +141,7 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
         },
       },
       actionItemPerformers: {
+        where: { isActive: true },
         include: {
           actionItem: {
             include: {

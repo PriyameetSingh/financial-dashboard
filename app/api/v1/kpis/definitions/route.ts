@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
       include: {
         scheme: { select: { name: true, verticalName: true } },
         performers: {
+          where: { isActive: true },
           orderBy: { sortOrder: "asc" },
           include: { user: { select: { id: true, name: true } } },
         },
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
               include: {
                 measurements: {
                   orderBy: { measuredAt: "desc" },
+                  include: { createdBy: { select: { id: true, name: true } } },
                   take: 5,
                 },
               },
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
               include: {
                 measurements: {
                   orderBy: { measuredAt: "desc" },
+                  include: { createdBy: { select: { id: true, name: true } } },
                   take: 5,
                 },
               },
@@ -192,6 +195,8 @@ export async function GET(request: NextRequest) {
             yesValue: m.yesValue ?? null,
             workflowStatus: m.workflowStatus,
             remarks: m.remarks,
+            createdById: m.createdById,
+            createdBy: m.createdBy ? { id: m.createdBy.id, name: m.createdBy.name } : null,
           })),
           staleDays: measurement
             ? Math.floor((today.getTime() - measurement.measuredAt.getTime()) / 86_400_000)

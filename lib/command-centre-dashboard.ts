@@ -153,6 +153,7 @@ export async function getCommandCentreDashboard(
         take: 5,
         include: {
           performers: {
+            where: { isActive: true },
             orderBy: { sortOrder: "asc" },
             include: { user: { select: { name: true } } },
           },

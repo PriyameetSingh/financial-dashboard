@@ -50,6 +50,7 @@ const actionInclude = {
   vertical: { select: { name: true } },
   meeting: { select: { meetingDate: true } },
   performers: {
+    where: { isActive: true },
     orderBy: { sortOrder: "asc" as const },
     include: { user: { select: { id: true, name: true, code: true, designationId: true, designationRel: { select: { name: true } } } } },
   },
@@ -72,7 +73,7 @@ const actionInclude = {
 
 type ActionItemWithRelations = Prisma.ActionItemGetPayload<{ include: typeof actionInclude }>;
 
-function mapActionItem(item: ActionItemWithRelations) {
+function mapActionItem(item: ActionItemWithRelations, assignmentHistory?: any[]) {
   const now = Date.now();
   const dueTime = item.dueDate.getTime();
   const overdueDays = dueTime < now ? Math.floor((now - dueTime) / (24 * 60 * 60 * 1000)) : undefined;
@@ -108,6 +109,7 @@ function mapActionItem(item: ActionItemWithRelations) {
       meetingId: update.meetingId,
       timestamp: update.timestamp.toISOString(),
       actor: update.createdBy?.name ?? "",
+      createdById: update.createdById,
       status: update.status,
       note: update.note,
     })),
@@ -115,7 +117,24 @@ function mapActionItem(item: ActionItemWithRelations) {
       name: proof.file.name,
       link: proof.file.url,
     })),
+    assignmentHistory: assignmentHistory ?? [],
   };
+}
+
+async function getAssignmentHistory(actionItemId: string) {
+  const history = await prisma.actionItemPerformer.findMany({
+    where: { actionItemId },
+    orderBy: { assignedAt: "desc" },
+    include: { user: { select: { id: true, name: true, code: true } } },
+  });
+  return history.map((h) => ({
+    userId: h.userId,
+    userName: h.user.name,
+    userCode: h.user.code,
+    assignedAt: h.assignedAt.toISOString(),
+    unassignedAt: h.unassignedAt ? h.unassignedAt.toISOString() : null,
+    isActive: h.isActive,
+  }));
 }
 
 async function getActionItemById(id: string) {
@@ -134,7 +153,8 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
     if (!item) {
       return NextResponse.json({ detail: "Action item not found" }, { status: 404 });
     }
-    return NextResponse.json({ item: mapActionItem(item) });
+    const history = await getAssignmentHistory(id);
+    return NextResponse.json({ item: mapActionItem(item, history) });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
@@ -214,7 +234,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       );
 
       const item = await getActionItemById(id);
-      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+      const history = await getAssignmentHistory(id);
+      return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
     }
 
     if (body.reviewerDecision === "approve" || body.reviewerDecision === "reject") {
@@ -252,7 +273,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
       );
       const item = await getActionItemById(id);
-      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+      const history = await getAssignmentHistory(id);
+      return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
     }
 
     if (
@@ -276,7 +298,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         : [];
       if (body.performerUserCodes === undefined) {
         const currentPerformers = await prisma.actionItemPerformer.findMany({
-          where: { actionItemId: id },
+          where: { actionItemId: id, isActive: true },
           include: { user: { select: { code: true } } },
         });
         performerCodes = currentPerformers.map((p) => p.user.code).filter((c): c is string => !!c);
@@ -343,11 +365,40 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         : "—";
 
       await prisma.$transaction(async (tx) => {
-        await tx.actionItemPerformer.deleteMany({ where: { actionItemId: id } });
-        await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
-        await tx.actionItemPerformer.createMany({
-          data: nextPerformerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
+        const currentlyActive = await tx.actionItemPerformer.findMany({
+          where: { actionItemId: id, isActive: true },
         });
+        const currentlyActiveUserIds = currentlyActive.map((p) => p.userId);
+
+        const toUnassign = currentlyActive.filter((p) => !nextPerformerIds.includes(p.userId));
+        for (const p of toUnassign) {
+          await tx.actionItemPerformer.updateMany({
+            where: { actionItemId: id, userId: p.userId, isActive: true },
+            data: { isActive: false, unassignedAt: new Date() },
+          });
+        }
+
+        for (let i = 0; i < nextPerformerIds.length; i++) {
+          const userId = nextPerformerIds[i];
+          if (currentlyActiveUserIds.includes(userId)) {
+            await tx.actionItemPerformer.updateMany({
+              where: { actionItemId: id, userId, isActive: true },
+              data: { sortOrder: i },
+            });
+          } else {
+            await tx.actionItemPerformer.create({
+              data: {
+                actionItemId: id,
+                userId,
+                isActive: true,
+                assignedAt: new Date(),
+                sortOrder: i,
+              },
+            });
+          }
+        }
+
+        await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
         if (nextReviewerIds.length > 0) {
           await tx.actionItemReviewerUser.createMany({
             data: nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
@@ -375,7 +426,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
       );
       const item = await getActionItemById(id);
-      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+      const history = await getAssignmentHistory(id);
+      return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
     }
 
     if (
@@ -469,7 +521,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       }
 
       const item = await getActionItemById(id);
-      return NextResponse.json({ item: item ? mapActionItem(item) : null });
+      const history = await getAssignmentHistory(id);
+      return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
     }
 
     if (body.status || (body.note && body.note.trim())) {
@@ -564,7 +617,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
 
     const item = await getActionItemById(id);
-    return NextResponse.json({ item: item ? mapActionItem(item) : null });
+    const history = await getAssignmentHistory(id);
+    return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {

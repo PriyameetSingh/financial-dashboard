@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         monitoringLevel: true,
         archived: true,
         scheme: { select: { code: true } },
-        performers: { select: { userId: true } },
+        performers: { where: { isActive: true }, select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
         targets: fy
           ? {
@@ -157,11 +157,40 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     const updated = await prisma.$transaction(async (tx) => {
       if (isAssignmentUpdate) {
-        await tx.kpiDefinitionPerformer.deleteMany({ where: { kpiDefinitionId: id } });
-        await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
-        await tx.kpiDefinitionPerformer.createMany({
-          data: performerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+        const currentlyActive = await tx.kpiDefinitionPerformer.findMany({
+          where: { kpiDefinitionId: id, isActive: true },
         });
+        const currentlyActiveUserIds = currentlyActive.map((p) => p.userId);
+
+        const toUnassign = currentlyActive.filter((p) => !performerUserIds.includes(p.userId));
+        for (const p of toUnassign) {
+          await tx.kpiDefinitionPerformer.updateMany({
+            where: { kpiDefinitionId: id, userId: p.userId, isActive: true },
+            data: { isActive: false, unassignedAt: new Date() },
+          });
+        }
+
+        for (let i = 0; i < performerUserIds.length; i++) {
+          const userId = performerUserIds[i];
+          if (currentlyActiveUserIds.includes(userId)) {
+            await tx.kpiDefinitionPerformer.updateMany({
+              where: { kpiDefinitionId: id, userId, isActive: true },
+              data: { sortOrder: i },
+            });
+          } else {
+            await tx.kpiDefinitionPerformer.create({
+              data: {
+                kpiDefinitionId: id,
+                userId,
+                isActive: true,
+                assignedAt: new Date(),
+                sortOrder: i,
+              },
+            });
+          }
+        }
+
+        await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
         if (reviewerUserIds.length > 0) {
           await tx.kpiDefinitionReviewerUser.createMany({
             data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
@@ -199,6 +228,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         where: { id },
         include: {
           performers: {
+            where: { isActive: true },
             orderBy: { sortOrder: "asc" },
             include: { user: { select: { id: true, name: true } } },
           },
@@ -209,6 +239,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           targets: fy
             ? {
                 where: { financialYearId: fy.id },
+                include: {
+                  measurements: {
+                    orderBy: { measuredAt: "desc" },
+                    include: { createdBy: { select: { id: true, name: true } } },
+                    take: 1,
+                  },
+                },
                 take: 1,
               }
             : false,
@@ -233,6 +270,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
 
+    const history = await getKpiAssignmentHistory(id);
+
     return NextResponse.json({
       ok: true,
       assignedToUserId: updated.performers[0]?.userId ?? null,
@@ -246,6 +285,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       monitoringLevel: updated.monitoringLevel,
       denominatorValue: (updated as any).targets?.[0]?.denominatorValue ? Number((updated as any).targets[0].denominatorValue) : null,
       archived: updated.archived,
+      assignmentHistory: history,
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
@@ -254,4 +294,20 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
     throw error;
   }
+}
+
+async function getKpiAssignmentHistory(kpiDefinitionId: string) {
+  const history = await prisma.kpiDefinitionPerformer.findMany({
+    where: { kpiDefinitionId },
+    orderBy: { assignedAt: "desc" },
+    include: { user: { select: { id: true, name: true, code: true } } },
+  });
+  return history.map((h) => ({
+    userId: h.userId,
+    userName: h.user.name,
+    userCode: h.user.code,
+    assignedAt: h.assignedAt.toISOString(),
+    unassignedAt: h.unassignedAt ? h.unassignedAt.toISOString() : null,
+    isActive: h.isActive,
+  }));
 }

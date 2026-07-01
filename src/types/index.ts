@@ -73,6 +73,16 @@ export interface ActionItemUpdate {
   status: ActionItemStatus;
   note: string;
   meetingId?: string | null;
+  createdById?: string;
+}
+
+export interface PerformerAssignmentLog {
+  userId: string;
+  userName: string;
+  userCode: string | null;
+  assignedAt: string;
+  unassignedAt: string | null;
+  isActive: boolean;
 }
 
 export interface ActionItemProof {
@@ -113,6 +123,7 @@ export interface ActionItem {
   archived?: boolean;
   updates: ActionItemUpdate[];
   proofFiles: ActionItemProof[];
+  assignmentHistory?: PerformerAssignmentLog[];
 }
 
 type KPICategory = "STATE" | "CENTRAL";
@@ -168,6 +179,8 @@ export interface KPISubmission {
     yesValue: boolean | null;
     workflowStatus: string;
     remarks?: string | null;
+    createdById?: string | null;
+    createdBy?: { id: string; name: string } | null;
   }>;
   /** Days since last measurement update; null if never updated. */
   staleDays?: number | null;
@@ -178,6 +191,7 @@ export interface KPISubmission {
   /** Monitoring level for this KPI: CS, ACS, or CM. */
   monitoringLevel?: "CS" | "ACS" | "CM" | null;
   archived?: boolean;
+  assignmentHistory?: PerformerAssignmentLog[];
 }
 
 export type FinancialEntryStatus =

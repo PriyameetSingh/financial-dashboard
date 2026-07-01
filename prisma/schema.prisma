@@ -543,14 +543,18 @@ model KpiDefinition {
 
 /// Users who may enter / update KPI measurements for this definition (when non-empty, overrides scheme-level kpi_owner_1).
 model KpiDefinitionPerformer {
-  kpiDefinitionId String @db.Uuid
-  userId          String @db.Uuid
-  sortOrder       Int    @default(0)
+  id              String   @id @default(uuid()) @db.Uuid
+  kpiDefinitionId String   @db.Uuid
+  userId          String   @db.Uuid
+  sortOrder       Int      @default(0)
+  assignedAt      DateTime @default(now())
+  unassignedAt    DateTime?
+  isActive        Boolean  @default(true)
 
   kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([kpiDefinitionId, userId])
+  @@index([kpiDefinitionId, isActive])
   @@map("kpi_definition_performers")
 }
 
@@ -702,14 +706,18 @@ model ActionItem {
 }
 
 model ActionItemPerformer {
-  actionItemId String @db.Uuid
-  userId       String @db.Uuid
-  sortOrder    Int    @default(0)
+  id           String   @id @default(uuid()) @db.Uuid
+  actionItemId String   @db.Uuid
+  userId       String   @db.Uuid
+  sortOrder    Int      @default(0)
+  assignedAt   DateTime @default(now())
+  unassignedAt DateTime?
+  isActive     Boolean  @default(true)
 
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([actionItemId, userId])
+  @@index([actionItemId, isActive])
   @@map("action_item_performers")
 }
 

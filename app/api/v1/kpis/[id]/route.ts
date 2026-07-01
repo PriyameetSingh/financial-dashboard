@@ -12,6 +12,7 @@ async function loadKpi(id: string) {
     include: {
       scheme: { select: { id: true, code: true, name: true } },
       performers: {
+        where: { isActive: true },
         orderBy: { sortOrder: "asc" },
         include: { user: { select: { id: true, name: true } } },
       },

@@ -30,6 +30,26 @@ interface PendanceReportSectionProps {
   user: SessionUser;
 }
 
+function renderUpdateAttribution(performerUserIds: string[] | undefined, createdById: string | undefined | null, actorName: string) {
+  if (!performerUserIds || performerUserIds.length === 0) {
+    return actorName ? <span className="text-[10px] text-[var(--text-muted)]">Posted by {actorName}</span> : null;
+  }
+
+  if (performerUserIds.length > 1) {
+    return <span className="text-[10px] text-[var(--text-muted)]">Posted by {actorName}</span>;
+  }
+
+  if (createdById && createdById !== performerUserIds[0]) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600 border border-amber-500/20 italic">
+        Posted by {actorName} (Previous Owner)
+      </span>
+    );
+  }
+
+  return null;
+}
+
 export default function PendanceReportSection({ user }: PendanceReportSectionProps) {
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
@@ -352,8 +372,9 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                             &ldquo;{m.remarks}&rdquo;
                           </div>
                         )}
-                        <div className="mt-1 flex items-center gap-1.5">
+                        <div className="mt-1 flex items-center flex-wrap gap-1.5">
                           <StatusBadge size="sm" status={m.workflowStatus === "submitted" ? "submitted_pending" : m.workflowStatus === "reviewed" ? "approved" : "draft"} />
+                          {renderUpdateAttribution(task.rawKpi.performerUserIds, m.createdById, m.createdBy?.name || "Unknown")}
                         </div>
                       </div>
                     );
@@ -379,8 +400,9 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                         <div className="font-medium text-[var(--text-primary)] max-w-xs truncate" title={latestUp.note}>
                           {latestUp.note}
                         </div>
-                        <div className="mt-1 text-[10px] text-[var(--text-muted)]">
-                          Posted by {latestUp.actor} · <StatusBadge size="sm" status={latestUp.status} />
+                        <div className="mt-1 flex items-center flex-wrap gap-1.5">
+                          <StatusBadge size="sm" status={latestUp.status} />
+                          {renderUpdateAttribution(task.rawActionItem.assignedToUserIds, latestUp.createdById, latestUp.actor || "Unknown")}
                         </div>
                       </div>
                     );

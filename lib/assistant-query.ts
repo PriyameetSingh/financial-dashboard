@@ -144,6 +144,7 @@ async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<strin
     take: 25,
     include: {
       performers: {
+        where: { isActive: true },
         orderBy: { sortOrder: "asc" },
         include: { user: { select: { name: true } } },
       },
@@ -164,6 +165,7 @@ async function answerOverdue(): Promise<string> {
     take: 12,
     include: {
       performers: {
+        where: { isActive: true },
         orderBy: { sortOrder: "asc" },
         include: { user: { select: { name: true } } },
       },

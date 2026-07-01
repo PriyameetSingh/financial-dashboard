@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       where: { id },
       include: {
         kpiDefinition: {
-          include: { performers: { select: { userId: true } } },
+          include: { performers: { where: { isActive: true }, select: { userId: true } } },
         },
       },
     });

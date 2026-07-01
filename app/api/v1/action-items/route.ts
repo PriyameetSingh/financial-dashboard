@@ -68,6 +68,7 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
       meetingId: update.meetingId,
       timestamp: update.timestamp.toISOString(),
       actor: update.createdBy?.name ?? "",
+      createdById: update.createdById,
       status: update.status,
       note: update.note,
     })),
@@ -83,6 +84,7 @@ const actionInclude = {
   vertical: { select: { name: true } },
   meeting: { select: { meetingDate: true } },
   performers: {
+    where: { isActive: true },
     orderBy: { sortOrder: "asc" as const },
     include: { user: { select: { id: true, name: true, code: true } } },
   },

@@ -459,6 +459,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
     include: {
       meeting: { select: { meetingDate: true } },
       performers: {
+        where: { isActive: true },
         orderBy: { sortOrder: "asc" },
         include: { user: { select: { name: true } } },
       },
@@ -504,6 +505,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
       include: {
         scheme: { select: { name: true, verticalName: true } },
         performers: {
+          where: { isActive: true },
           orderBy: { sortOrder: "asc" },
           include: { user: { select: { name: true } } },
         },

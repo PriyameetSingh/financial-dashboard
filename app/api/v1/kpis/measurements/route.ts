@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const definition = await prisma.kpiDefinition.findUnique({
       where: { id: body.kpiDefinitionId },
       include: {
-        performers: { select: { userId: true } },
+        performers: { where: { isActive: true }, select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
       },
     });
