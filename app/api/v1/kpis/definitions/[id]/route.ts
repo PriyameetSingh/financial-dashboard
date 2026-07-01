@@ -70,7 +70,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const currentIsSelfApproved = existing.reviewerUsers.length === 0;
     const isSelfApproved = body.isSelfApproved !== undefined
       ? body.isSelfApproved === true
-      : (body.reviewerUserIds !== undefined ? body.reviewerUserIds.length === 0 : currentIsSelfApproved);
+      : (body.reviewerUserIds !== undefined && body.reviewerUserIds !== null ? body.reviewerUserIds.length === 0 : currentIsSelfApproved);
 
     let performerUserIds = body.performerUserIds !== undefined ? normalizeUuidList(body.performerUserIds) : [];
     if (body.performerUserIds === undefined) {
