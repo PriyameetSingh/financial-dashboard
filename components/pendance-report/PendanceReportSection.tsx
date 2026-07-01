@@ -437,6 +437,11 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           {task.type === "ActionItem" && (
                             <PriorityBadge priority={task.priority} />
                           )}
+                          {((task.type === "KPI" && task.rawKpi?.isSelfApproved) || (task.type === "ActionItem" && task.rawActionItem?.isSelfApproved)) && (
+                            <span className="inline-flex items-center rounded-md border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                              Self-Approved
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1.5 text-sm font-semibold text-[var(--text-primary)] leading-snug">
                           {task.title}

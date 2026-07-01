@@ -199,11 +199,12 @@ export async function GET(request: NextRequest) {
           assignedToUserId: definition.performers[0]?.userId ?? null,
           assignedToName:
             definition.performers.map((p) => p.user.name).join(", ") || null,
-          reviewerUserId: definition.reviewerUsers[0]?.userId ?? null,
+          reviewerUserId: definition.reviewerUsers.length === 0 ? "Self-Approved" : (definition.reviewerUsers[0]?.userId ?? null),
           reviewerName:
-            definition.reviewerUsers.map((r) => r.user.name).join(", ") || null,
+            definition.reviewerUsers.length === 0 ? "Self-Approved" : (definition.reviewerUsers.map((r) => r.user.name).join(", ") || null),
           performerUserIds,
           reviewerUserIds,
+          isSelfApproved: definition.reviewerUsers.length === 0,
           currentUserCanEnter,
           currentUserCanReview,
           currentUserCanReassignOwners: canManageSchemes,
@@ -273,6 +274,7 @@ type CreateBody = {
   assignedToId?: string | null;
   /** @deprecated Use performerUserIds / reviewerUserIds arrays */
   reviewerId?: string | null;
+  isSelfApproved?: boolean;
 };
 
 export async function POST(request: NextRequest) {
@@ -285,12 +287,13 @@ export async function POST(request: NextRequest) {
     const category = parseCategory(body.category);
     const kpiType = parseKpiType(body.kpiType);
 
+    const isSelfApproved = body.isSelfApproved === true;
     let performerUserIds = normalizeUuidList(body.performerUserIds);
-    let reviewerUserIds = normalizeUuidList(body.reviewerUserIds);
+    let reviewerUserIds = isSelfApproved ? [] : normalizeUuidList(body.reviewerUserIds);
     if (performerUserIds.length === 0 && body.assignedToId?.trim()) {
       performerUserIds = [body.assignedToId.trim()];
     }
-    if (reviewerUserIds.length === 0 && body.reviewerId?.trim()) {
+    if (!isSelfApproved && reviewerUserIds.length === 0 && body.reviewerId?.trim()) {
       reviewerUserIds = [body.reviewerId.trim()];
     }
 
@@ -301,14 +304,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (performerUserIds.length === 0) {
+    if (performerUserIds.length === 0 || (!isSelfApproved && reviewerUserIds.length === 0)) {
       return NextResponse.json(
-        { detail: "performerUserIds (non-empty array of user ids) is required" },
+        { detail: isSelfApproved 
+          ? "performerUserIds (non-empty array of user ids) is required when self-approved"
+          : "performerUserIds and reviewerUserIds (non-empty arrays of user ids) are required"
+        },
         { status: 400 },
       );
     }
 
-    if (reviewerUserIds.length > 0) {
+    if (!isSelfApproved) {
       const overlap = performerUserIds.filter((id) => reviewerUserIds.includes(id));
       if (overlap.length > 0) {
         return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });

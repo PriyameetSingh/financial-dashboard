@@ -230,6 +230,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
   const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
+  const [isSelfApproved, setIsSelfApproved] = useState(false);
 
   const derivedCategory: "STATE" | "CENTRAL" = scheme?.sponsorshipType === "STATE" ? "STATE" : "CENTRAL";
 
@@ -243,6 +244,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setMonitoringLevel("");
     setPerformerIds([""]);
     setReviewerIds([""]);
+    setIsSelfApproved(false);
     setAlert(null);
   }, [open, scheme]);
 
@@ -254,15 +256,21 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
       return;
     }
     const performers = performerIds.map((id) => id.trim()).filter(Boolean);
-    const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
+    const reviewers = isSelfApproved ? [] : reviewerIds.map((id) => id.trim()).filter(Boolean);
     if (performers.length === 0) {
       setAlert("Select at least one action owner.");
       return;
     }
-    const overlap = reviewers.length > 0 ? performers.filter((id) => reviewers.includes(id)) : [];
-    if (overlap.length > 0) {
-      setAlert("Action owners and reviewers must not include the same user.");
+    if (!isSelfApproved && reviewers.length === 0) {
+      setAlert("Select at least one reviewer when separate review is required.");
       return;
+    }
+    if (!isSelfApproved) {
+      const overlap = performers.filter((id) => reviewers.includes(id));
+      if (overlap.length > 0) {
+        setAlert("Action owners and reviewers must not include the same user.");
+        return;
+      }
     }
     setSaving(true);
     setAlert(null);
@@ -281,6 +289,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
         monitoringLevel: monitoringLevel || null,
         performerUserIds: performers,
         reviewerUserIds: reviewers,
+        isSelfApproved,
       });
       onSaved();
       onClose();
@@ -482,50 +491,77 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
                   </div>
                 ))}
               </div>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                Optional. Anyone listed may approve or reject submissions. If none are listed, submissions are marked
-                complete when saved (no separate review).
-              </p>
-              <button
-                type="button"
-                disabled={userPickerDisabled}
-                onClick={() => setReviewerIds((prev) => [...prev, ""])}
-                className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
-              >
-                Add reviewer
-              </button>
-              <div className="mt-3 space-y-3">
-                {reviewerIds.map((rid, index) => (
-                  <div key={`rev-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
-                    <div className="min-w-0 flex-1">
-                      <SearchableKpiUserField
-                        label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
-                        hint={index === 0 ? "Confirms submitted updates" : undefined}
-                        users={users}
-                        value={rid}
-                        onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
-                        disabled={userPickerDisabled}
-                        excludeUserId=""
-                        excludeUserIds={allExcludedForReviewers(index)}
-                      />
-                    </div>
-                    {reviewerIds.length > 1 && (
-                      <button
-                        type="button"
-                        disabled={userPickerDisabled}
-                        onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
-                        className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+                <input
+                  type="checkbox"
+                  id="kpi-self-approve-checkbox"
+                  checked={isSelfApproved}
+                  disabled={userPickerDisabled}
+                  onChange={(e) => {
+                    setIsSelfApproved(e.target.checked);
+                    if (e.target.checked) {
+                      setReviewerIds([]);
+                    } else {
+                      setReviewerIds([""]);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="kpi-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                  No separate review needed — owner will self-approve
+                </label>
               </div>
+              {isSelfApproved && (
+                <p className="text-xs text-[var(--alert-success)]">
+                  ✓ KPI progress submissions will be approved immediately upon entry.
+                </p>
+              )}
             </div>
+            {!isSelfApproved && (
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  Optional. Anyone listed may approve or reject submissions. If none are listed, submissions are marked
+                  complete when saved (no separate review).
+                </p>
+                <button
+                  type="button"
+                  disabled={userPickerDisabled}
+                  onClick={() => setReviewerIds((prev) => [...prev, ""])}
+                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                >
+                  Add reviewer
+                </button>
+                <div className="mt-3 space-y-3">
+                  {reviewerIds.map((rid, index) => (
+                    <div key={`rev-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                      <div className="min-w-0 flex-1">
+                        <SearchableKpiUserField
+                          label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
+                          hint={index === 0 ? "Confirms submitted updates" : undefined}
+                          users={users}
+                          value={rid}
+                          onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                          disabled={userPickerDisabled}
+                          excludeUserId=""
+                          excludeUserIds={allExcludedForReviewers(index)}
+                        />
+                      </div>
+                      {reviewerIds.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={userPickerDisabled}
+                          onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {kpiType === "OUTPUT" && (
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 space-y-3">

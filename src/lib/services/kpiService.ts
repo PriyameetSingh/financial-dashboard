@@ -121,7 +121,7 @@ export async function fetchKpiHistory(kpiDefinitionId: string): Promise<KpiHisto
 
 export async function updateKpiDefinitionAssignments(
   kpiDefinitionId: string,
-  input: { performerUserIds: string[]; reviewerUserIds: string[] },
+  input: { performerUserIds: string[]; reviewerUserIds: string[]; isSelfApproved?: boolean | null },
 ): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {
     method: "PATCH",
@@ -143,6 +143,7 @@ export async function createKpiDefinition(input: {
   monitoringLevel?: "CS" | "ACS" | "CM" | null;
   performerUserIds: string[];
   reviewerUserIds: string[];
+  isSelfApproved?: boolean;
 }): Promise<void> {
   const response = await fetch(withNextBasePath("/api/v1/kpis/definitions"), {
     method: "POST",
@@ -161,6 +162,7 @@ export async function updateKpiDefinition(
     performerUserIds?: string[];
     reviewerUserIds?: string[];
     archived?: boolean | null;
+    isSelfApproved?: boolean | null;
   },
 ): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {

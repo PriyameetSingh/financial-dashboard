@@ -50,13 +50,14 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
     status: item.status,
     archived: item.archived,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
-    reviewer: revUsers.map((u) => u.name).join(", ") || "",
+    reviewer: revUsers.length === 0 ? "Self-Approved" : (revUsers.map((u) => u.name).join(", ") || ""),
     performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
     reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code })),
     assignedToUserIds: perfUsers.map((u) => u.id),
     reviewerUserIds: revUsers.map((u) => u.id),
     assignedToUserCode: perfUsers[0]?.code ?? null,
     reviewerUserCode: revUsers[0]?.code ?? null,
+    isSelfApproved: revUsers.length === 0,
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
     meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
@@ -162,6 +163,7 @@ type CreateBody = {
   assignedToUserCode?: string;
   reviewerUserCode?: string;
   itemType?: ActionItemType;
+  isSelfApproved?: boolean;
 };
 
 export async function POST(request: NextRequest) {
@@ -171,20 +173,34 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CreateBody;
     const auditContext = getAuditRequestContext(request);
 
+    const isSelfApproved = body.isSelfApproved === true;
     let performerCodes = normalizeCodes(body.performerUserCodes);
-    let reviewerCodes = normalizeCodes(body.reviewerUserCodes);
+    let reviewerCodes = isSelfApproved ? [] : normalizeCodes(body.reviewerUserCodes);
     if (performerCodes.length === 0 && body.assignedToUserCode?.trim()) {
       performerCodes = [body.assignedToUserCode.trim()];
     }
-    if (reviewerCodes.length === 0 && body.reviewerUserCode?.trim()) {
+    if (!isSelfApproved && reviewerCodes.length === 0 && body.reviewerUserCode?.trim()) {
       reviewerCodes = [body.reviewerUserCode.trim()];
     }
 
-    if (performerCodes.length === 0 || reviewerCodes.length === 0) {
+    if (performerCodes.length === 0 || (!isSelfApproved && reviewerCodes.length === 0)) {
       return NextResponse.json(
-        { detail: "performerUserCodes and reviewerUserCodes (non-empty arrays), or legacy assignedToUserCode and reviewerUserCode, are required" },
+        { detail: isSelfApproved 
+          ? "performerUserCodes (non-empty array) is required when self-approved" 
+          : "performerUserCodes and reviewerUserCodes (non-empty arrays), or legacy assignedToUserCode and reviewerUserCode, are required" 
+        },
         { status: 400 },
       );
+    }
+
+    if (!isSelfApproved) {
+      const overlap = performerCodes.filter((c) => reviewerCodes.includes(c));
+      if (overlap.length > 0) {
+        return NextResponse.json(
+          { detail: "Assigned officer and reviewer must not be the same person" },
+          { status: 400 },
+        );
+      }
     }
 
 

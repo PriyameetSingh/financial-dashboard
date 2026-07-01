@@ -466,8 +466,13 @@ export default function KPIEntryPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="shrink-0">
+                  <div className="shrink-0 flex items-center gap-2">
                     <StatusBadge status={item.status} />
+                    {item.isSelfApproved && (
+                      <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                        Self-Approved
+                      </span>
+                    )}
                   </div>
                 </div>
 

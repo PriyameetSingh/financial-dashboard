@@ -56,6 +56,7 @@ export async function updateActionItem(
     description?: string;
     priority?: string;
     archived?: boolean;
+    isSelfApproved?: boolean;
   },
 ): Promise<ActionItem> {
   const response = await fetch(withNextBasePath(`/api/v1/action-items/${id}`), {
@@ -77,6 +78,7 @@ export async function createActionItem(input: {
   dueDate: string;
   performerUserCodes: string[];
   reviewerUserCodes: string[];
+  isSelfApproved?: boolean;
 }): Promise<{ id: string }> {
   const response = await fetch(withNextBasePath("/api/v1/action-items"), {
     method: "POST",

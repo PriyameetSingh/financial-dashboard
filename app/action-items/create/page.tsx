@@ -35,6 +35,7 @@ export default function ActionItemCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSelfApproved, setIsSelfApproved] = useState(false);
 
   function resetForm() {
     setTitle("");
@@ -47,6 +48,7 @@ export default function ActionItemCreatePage() {
     setReviewer(second);
     setMeetingId("");
     setDueDate("");
+    setIsSelfApproved(false);
   }
 
   useEffect(() => {
@@ -83,7 +85,11 @@ export default function ActionItemCreatePage() {
     };
   }, []);
 
-  const canSubmit = title.trim().length > 0 && description.trim().length > 0 && dueDate;
+  const canSubmit =
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    dueDate &&
+    (isSelfApproved || (reviewer && assignee !== reviewer));
 
   const selectedAssignee = useMemo(() => directoryUsers.find((user) => user.id === assignee), [assignee, directoryUsers]);
   const selectedReviewer = useMemo(() => directoryUsers.find((user) => user.id === reviewer), [reviewer, directoryUsers]);
@@ -187,8 +193,40 @@ export default function ActionItemCreatePage() {
                   aria-required="true"
                 />
               </label>
-              <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" required={true} />
-              <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
+              <div className="flex flex-col gap-2">
+                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned Officer" required={true} />
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="self-approve-checkbox"
+                    checked={isSelfApproved}
+                    onChange={(e) => {
+                      setIsSelfApproved(e.target.checked);
+                      if (e.target.checked) {
+                        setReviewer("");
+                      } else {
+                        const first = directoryUsers[0]?.id ?? "";
+                        const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+                        setReviewer(second);
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                  />
+                  <label htmlFor="self-approve-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] cursor-pointer select-none">
+                    No separate review needed — owner will self-approve
+                  </label>
+                </div>
+                {isSelfApproved && (
+                  <p className="text-xs text-[var(--alert-success)] normal-case tracking-normal">
+                    ✓ This item will be marked approved immediately with no pending review step.
+                  </p>
+                )}
+              </div>
+              {!isSelfApproved ? (
+                <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
+              ) : (
+                <div />
+              )}
               <div className="md:col-span-2">
                 <ProofUpload label="Attach initial notes" onUpload={() => undefined} />
               </div>
@@ -200,15 +238,21 @@ export default function ActionItemCreatePage() {
               <p>
                 Assigned to: <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? ""}</span>
               </p>
-              <p>
-                Reviewer: <span className="text-[var(--text-primary)]">{selectedReviewer?.name ?? ""}</span>
-              </p>
+              {!isSelfApproved && (
+                <p>
+                  Reviewer: <span className="text-[var(--text-primary)]">{selectedReviewer?.name ?? ""}</span>
+                </p>
+              )}
             </div>
             <button
               className="flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 if (!canSubmit) {
-                  setError("Please complete title, description, and due date before submitting.");
+                  if (!isSelfApproved && assignee === reviewer) {
+                    setError("Assigned officer and reviewer must be different people.");
+                  } else {
+                    setError("Please complete title, description, due date, and select valid assignees before submitting.");
+                  }
                   return;
                 }
                 setError(null);
@@ -231,7 +275,7 @@ export default function ActionItemCreatePage() {
       <ConfirmModal
         open={confirmOpen}
         title="Confirm submission"
-        message="Once submitted, this action item will be visible to assigned officers and the reviewer."
+        message={isSelfApproved ? "Once submitted, this action item will be marked approved immediately upon owner submission, skipping the normal review step." : "Once submitted, this action item will be visible to assigned officers and the reviewer."}
         confirmLabel="Submit"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={async () => {
@@ -247,7 +291,8 @@ export default function ActionItemCreatePage() {
               priority,
               dueDate,
               performerUserCodes: [assignee],
-              reviewerUserCodes: [reviewer],
+              reviewerUserCodes: isSelfApproved ? [] : [reviewer],
+              isSelfApproved,
             });
             resetForm();
             setSuccess(true);

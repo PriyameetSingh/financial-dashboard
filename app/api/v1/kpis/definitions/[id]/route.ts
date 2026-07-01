@@ -40,43 +40,6 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const { id } = await ctx.params;
     const body = (await request.json()) as PatchBody;
 
-    let performerUserIds = normalizeUuidList(body.performerUserIds);
-    let reviewerUserIds = normalizeUuidList(body.reviewerUserIds);
-    if (performerUserIds.length === 0 && typeof body.assignedToId === "string" && body.assignedToId.trim()) {
-      performerUserIds = [body.assignedToId.trim()];
-    }
-    if (reviewerUserIds.length === 0 && typeof body.reviewerId === "string" && body.reviewerId.trim()) {
-      reviewerUserIds = [body.reviewerId.trim()];
-    }
-
-    if (
-      body.performerUserIds === undefined &&
-      body.reviewerUserIds === undefined &&
-      body.assignedToId === undefined &&
-      body.reviewerId === undefined &&
-      body.description === undefined &&
-      body.monitoringLevel === undefined &&
-      body.denominatorValue === undefined &&
-      body.archived === undefined
-    ) {
-      return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
-    }
-
-    const isAssignmentUpdate = body.performerUserIds !== undefined || body.reviewerUserIds !== undefined || body.assignedToId !== undefined || body.reviewerId !== undefined;
-    if (isAssignmentUpdate && performerUserIds.length === 0) {
-      return NextResponse.json(
-        { detail: "At least one performer must be set (active user ids)" },
-        { status: 400 },
-      );
-    }
-
-    if (reviewerUserIds.length > 0) {
-      const overlap = performerUserIds.filter((uid) => reviewerUserIds.includes(uid));
-      if (overlap.length > 0) {
-        return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
-      }
-    }
-
     const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
     const existing = await prisma.kpiDefinition.findUnique({
@@ -101,6 +64,71 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     if (!existing) {
       return NextResponse.json({ detail: "KPI definition not found" }, { status: 404 });
+    }
+
+    const currentIsSelfApproved = existing.reviewerUsers.length === 0;
+    const isSelfApproved = body.isSelfApproved !== undefined
+      ? body.isSelfApproved === true
+      : (body.reviewerUserIds !== undefined ? body.reviewerUserIds.length === 0 : currentIsSelfApproved);
+
+    let performerUserIds = body.performerUserIds !== undefined ? normalizeUuidList(body.performerUserIds) : [];
+    if (body.performerUserIds === undefined) {
+      performerUserIds = existing.performers.map((p) => p.userId);
+    }
+    if (performerUserIds.length === 0 && typeof body.assignedToId === "string" && body.assignedToId.trim()) {
+      performerUserIds = [body.assignedToId.trim()];
+    }
+
+    let reviewerUserIds = isSelfApproved
+      ? []
+      : (body.reviewerUserIds !== undefined ? normalizeUuidList(body.reviewerUserIds) : []);
+    if (!isSelfApproved && body.reviewerUserIds === undefined) {
+      reviewerUserIds = existing.reviewerUsers.map((r) => r.userId);
+    }
+    if (!isSelfApproved && reviewerUserIds.length === 0 && typeof body.reviewerId === "string" && body.reviewerId.trim()) {
+      reviewerUserIds = [body.reviewerId.trim()];
+    }
+
+    if (
+      body.performerUserIds === undefined &&
+      body.reviewerUserIds === undefined &&
+      body.assignedToId === undefined &&
+      body.reviewerId === undefined &&
+      body.description === undefined &&
+      body.monitoringLevel === undefined &&
+      body.denominatorValue === undefined &&
+      body.archived === undefined &&
+      body.isSelfApproved === undefined
+    ) {
+      return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
+    }
+
+    const isAssignmentUpdate =
+      body.performerUserIds !== undefined ||
+      body.reviewerUserIds !== undefined ||
+      body.assignedToId !== undefined ||
+      body.reviewerId !== undefined ||
+      body.isSelfApproved !== undefined;
+
+    if (isAssignmentUpdate && performerUserIds.length === 0) {
+      return NextResponse.json(
+        { detail: "At least one performer must be set (active user ids)" },
+        { status: 400 },
+      );
+    }
+
+    if (isAssignmentUpdate && !isSelfApproved && reviewerUserIds.length === 0) {
+      return NextResponse.json(
+        { detail: "At least one reviewer must be set (active user ids) when not self-approved" },
+        { status: 400 },
+      );
+    }
+
+    if (!isSelfApproved && reviewerUserIds.length > 0) {
+      const overlap = performerUserIds.filter((uid) => reviewerUserIds.includes(uid));
+      if (overlap.length > 0) {
+        return NextResponse.json({ detail: "Performers and reviewers must not include the same user" }, { status: 400 });
+      }
     }
 
     const allIds = [...performerUserIds, ...reviewerUserIds];
@@ -208,10 +236,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       ok: true,
       assignedToUserId: updated.performers[0]?.userId ?? null,
       assignedToName: updated.performers.map((p) => p.user.name).join(", ") || null,
-      reviewerUserId: updated.reviewerUsers[0]?.userId ?? null,
-      reviewerName: updated.reviewerUsers.map((r) => r.user.name).join(", ") || null,
+      reviewerUserId: updated.reviewerUsers.length === 0 ? "Self-Approved" : (updated.reviewerUsers[0]?.userId ?? null),
+      reviewerName: updated.reviewerUsers.length === 0 ? "Self-Approved" : (updated.reviewerUsers.map((r) => r.user.name).join(", ") || null),
       performerUserIds: updated.performers.map((p) => p.userId),
       reviewerUserIds: updated.reviewerUsers.map((r) => r.userId),
+      isSelfApproved: updated.reviewerUsers.length === 0,
       description: updated.description,
       monitoringLevel: updated.monitoringLevel,
       denominatorValue: (updated as any).targets?.[0]?.denominatorValue ? Number((updated as any).targets[0].denominatorValue) : null,

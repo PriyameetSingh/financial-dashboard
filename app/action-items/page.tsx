@@ -99,6 +99,7 @@ function ActionItemsContent() {
   const [reassignReviewers, setReassignReviewers] = useState<string[]>([""]);
   const [reassignBusy, setReassignBusy] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
+  const [reassignIsSelfApproved, setReassignIsSelfApproved] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -116,6 +117,9 @@ function ActionItemsContent() {
   const pickAnotherUserId = (exclude: string) => directoryUsers.find((u) => u.id !== exclude)?.id ?? "";
 
   const openReassignModal = (item: ActionItem) => {
+    const isSelfApproved = item.isSelfApproved === true;
+    setReassignIsSelfApproved(isSelfApproved);
+
     const perfCodes =
       item.performers?.map((p) => p.code).filter((c): c is string => Boolean(c)) ?? [];
     const revCodes =
@@ -126,15 +130,18 @@ function ActionItemsContent() {
       directoryUsers.find((u) => normalize(u.name) === normalize(item.assignedTo))?.id ||
       directoryUsers[0]?.id ||
       "";
-    let rev =
-      revCodes[0] ||
-      item.reviewerUserCode?.trim() ||
-      directoryUsers.find((u) => normalize(u.name) === normalize(item.reviewer))?.id ||
-      "";
-    if (!rev) rev = pickAnotherUserId(assign);
-    if (rev === assign) rev = pickAnotherUserId(assign) || rev;
+    let rev = "";
+    if (!isSelfApproved) {
+      rev =
+        revCodes[0] ||
+        item.reviewerUserCode?.trim() ||
+        directoryUsers.find((u) => normalize(u.name) === normalize(item.reviewer))?.id ||
+        "";
+      if (!rev) rev = pickAnotherUserId(assign);
+      if (rev === assign) rev = pickAnotherUserId(assign) || rev;
+    }
     setReassignPerformers(perfCodes.length > 0 ? perfCodes : [assign]);
-    setReassignReviewers(revCodes.length > 0 ? revCodes : [rev]);
+    setReassignReviewers(!isSelfApproved ? (revCodes.length > 0 ? revCodes : [rev]) : []);
     setReassignError(null);
     setReassignItem(item);
   };
@@ -553,6 +560,11 @@ function ActionItemsContent() {
                         <span className="inline-flex max-w-full items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--accent-text)]">
                           {item.vertical}
                         </span>
+                        {item.isSelfApproved && (
+                          <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--alert-success)]">
+                            Self-Approved
+                          </span>
+                        )}
                         {overdue && (
                           <span className="inline-flex items-center rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide text-[var(--alert-critical)]">
                             {daysOv} {daysOv === 1 ? "day" : "days"} overdue
@@ -710,7 +722,14 @@ function ActionItemsContent() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
                     <div className="space-y-1">
-                      <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
+                        {item.isSelfApproved && (
+                          <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                            Self-Approved
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm font-medium text-[var(--text-muted)]">
                         {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
                       </p>
@@ -840,47 +859,76 @@ function ActionItemsContent() {
                   ))}
                 </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Reviewers</p>
-                <button
-                  type="button"
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+                <input
+                  type="checkbox"
+                  id="reassign-self-approve-checkbox"
+                  checked={reassignIsSelfApproved}
                   disabled={reassignBusy}
-                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
-                  onClick={() => setReassignReviewers((prev) => [...prev, ""])}
-                >
-                  Add reviewer
-                </button>
-                <div className="mt-3 space-y-3">
-                  {reassignReviewers.map((rid, index) => (
-                    <div key={`rr-${index}`} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <div className="min-w-0 flex-1">
-                        <SearchableUserSelector
-                          label={index === 0 ? "Reviewer" : `Reviewer ${index + 1}`}
-                          catalog={directoryUsers}
-                          users={directoryUsers.filter((u) => {
-                            if (reassignReviewers.some((r, i) => i !== index && r === u.id)) return false;
-                            return true;
-                          })}
-                          value={rid}
-                          onChange={(value) =>
-                            setReassignReviewers((prev) => prev.map((v, i) => (i === index ? value : v)))
-                          }
-                        />
-                      </div>
-                      {reassignReviewers.length > 1 && (
-                        <button
-                          type="button"
-                          disabled={reassignBusy}
-                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
-                          onClick={() => setReassignReviewers((prev) => prev.filter((_, i) => i !== index))}
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                  onChange={(e) => {
+                    setReassignIsSelfApproved(e.target.checked);
+                    if (e.target.checked) {
+                      setReassignReviewers([]);
+                    } else {
+                      const firstPerf = reassignPerformers[0] || "";
+                      const pick = directoryUsers.find((u) => u.id !== firstPerf)?.id || directoryUsers[0]?.id || "";
+                      setReassignReviewers([pick]);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="reassign-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                  No separate review needed — owner will self-approve
+                </label>
               </div>
+              {reassignIsSelfApproved && (
+                <p className="text-xs text-[var(--alert-success)]">
+                  ✓ Marked approved immediately upon owner submission.
+                </p>
+              )}
+              {!reassignIsSelfApproved && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Reviewers</p>
+                  <button
+                    type="button"
+                    disabled={reassignBusy}
+                    className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                    onClick={() => setReassignReviewers((prev) => [...prev, ""])}
+                  >
+                    Add reviewer
+                  </button>
+                  <div className="mt-3 space-y-3">
+                    {reassignReviewers.map((rid, index) => (
+                      <div key={`rr-${index}`} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          <SearchableUserSelector
+                            label={index === 0 ? "Reviewer" : `Reviewer ${index + 1}`}
+                            catalog={directoryUsers}
+                            users={directoryUsers.filter((u) => {
+                              if (reassignReviewers.some((r, i) => i !== index && r === u.id)) return false;
+                              return true;
+                            })}
+                            value={rid}
+                            onChange={(value) =>
+                              setReassignReviewers((prev) => prev.map((v, i) => (i === index ? value : v)))
+                            }
+                          />
+                        </div>
+                        {reassignReviewers.length > 1 && (
+                          <button
+                            type="button"
+                            disabled={reassignBusy}
+                            className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                            onClick={() => setReassignReviewers((prev) => prev.filter((_, i) => i !== index))}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -897,15 +945,21 @@ function ActionItemsContent() {
                 disabled={reassignBusy}
                 onClick={async () => {
                   const perf = reassignPerformers.map((c) => c.trim()).filter(Boolean);
-                  const rev = reassignReviewers.map((c) => c.trim()).filter(Boolean);
-                  if (perf.length === 0 || rev.length === 0) {
-                    setReassignError("Select at least one performer and one reviewer.");
+                  const rev = reassignIsSelfApproved ? [] : reassignReviewers.map((c) => c.trim()).filter(Boolean);
+                  if (perf.length === 0) {
+                    setReassignError("Select at least one performer.");
                     return;
                   }
-                  const overlap = perf.filter((c) => rev.includes(c));
-                  if (overlap.length > 0) {
-                    setReassignError("Performers and reviewers must be different users.");
+                  if (!reassignIsSelfApproved && rev.length === 0) {
+                    setReassignError("Select at least one reviewer when separate review is required.");
                     return;
+                  }
+                  if (!reassignIsSelfApproved) {
+                    const overlap = perf.filter((c) => rev.includes(c));
+                    if (overlap.length > 0) {
+                      setReassignError("Performers and reviewers must be different users.");
+                      return;
+                    }
                   }
                   setReassignBusy(true);
                   setReassignError(null);
@@ -913,6 +967,7 @@ function ActionItemsContent() {
                     const updated = await updateActionItem(reassignItem.id, {
                       performerUserCodes: perf,
                       reviewerUserCodes: rev,
+                      isSelfApproved: reassignIsSelfApproved,
                     });
                     setItems((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
                     setReassignItem(null);

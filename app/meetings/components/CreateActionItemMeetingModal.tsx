@@ -37,6 +37,7 @@ export default function CreateActionItemMeetingModal({
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSelfApproved, setIsSelfApproved] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -46,6 +47,7 @@ export default function CreateActionItemMeetingModal({
     setScheme("");
     setPriority("High");
     setDueDate("");
+    setIsSelfApproved(false);
   }, [open]);
 
   useEffect(() => {
@@ -73,7 +75,11 @@ export default function CreateActionItemMeetingModal({
     };
   }, [open]);
 
-  const canSubmit = title.trim().length > 0 && description.trim().length > 0 && dueDate;
+  const canSubmit =
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    dueDate &&
+    (isSelfApproved || (reviewer && assignee !== reviewer));
 
   const selectedAssignee = useMemo(() => directoryUsers.find((user) => user.id === assignee), [assignee, directoryUsers]);
   const selectedReviewer = useMemo(() => directoryUsers.find((user) => user.id === reviewer), [reviewer, directoryUsers]);
@@ -82,7 +88,11 @@ export default function CreateActionItemMeetingModal({
 
   const handleSubmit = async () => {
     if (!canSubmit) {
-      setError("Please complete title, description, and due date.");
+      if (!isSelfApproved && assignee === reviewer) {
+        setError("Assigned officer and reviewer must be different people.");
+      } else {
+        setError("Please complete title, description, and due date.");
+      }
       return;
     }
     setError(null);
@@ -96,7 +106,8 @@ export default function CreateActionItemMeetingModal({
         priority,
         dueDate,
         performerUserCodes: [assignee],
-        reviewerUserCodes: [reviewer],
+        reviewerUserCodes: isSelfApproved ? [] : [reviewer],
+        isSelfApproved,
       });
       onCreated?.();
       onClose();
@@ -202,13 +213,49 @@ export default function CreateActionItemMeetingModal({
                 </label>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" required={true} />
-                <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
+                <div className="flex flex-col gap-2">
+                  <SearchableUserSelector users={directoryUsers} value={assignee} onChange={setAssignee} label="Assigned officer" required={true} />
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="meeting-self-approve-checkbox"
+                      checked={isSelfApproved}
+                      onChange={(e) => {
+                        setIsSelfApproved(e.target.checked);
+                        if (e.target.checked) {
+                          setReviewer("");
+                        } else {
+                          const first = directoryUsers[0]?.id ?? "";
+                          const second = directoryUsers.find((u) => u.id !== assignee)?.id ?? directoryUsers.find((u) => u.id !== first)?.id ?? first;
+                          setReviewer(second);
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                    />
+                    <label htmlFor="meeting-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                      Owner will self-approve
+                    </label>
+                  </div>
+                  {isSelfApproved && (
+                    <p className="text-[10px] text-[var(--alert-success)]">
+                      ✓ Marked approved immediately upon owner submission.
+                    </p>
+                  )}
+                </div>
+                {!isSelfApproved ? (
+                  <SearchableUserSelector users={directoryUsers} value={reviewer} onChange={setReviewer} label="Reviewer" required={true} />
+                ) : (
+                  <div />
+                )}
               </div>
               <p className="text-xs text-[var(--text-muted)]">
                 Assigned to <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? "—"}</span>
-                {" · "}
-                Reviewer <span className="text-[var(--text-primary)]">{selectedReviewer?.name ?? "—"}</span>
+                {!isSelfApproved && (
+                  <>
+                    {" · "}
+                    Reviewer <span className="text-[var(--text-primary)]">{selectedReviewer?.name ?? "—"}</span>
+                  </>
+                )}
               </p>
             </>
           )}

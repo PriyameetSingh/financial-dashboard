@@ -27,6 +27,7 @@ type Body = {
   description?: string;
   priority?: string;
   archived?: boolean;
+  isSelfApproved?: boolean;
 };
 
 function toIsoDate(value: Date): string {
@@ -90,13 +91,14 @@ function mapActionItem(item: ActionItemWithRelations) {
     status: item.status,
     archived: item.archived,
     assignedTo: perfUsers.map((u) => u.name).join(", ") || "",
-    reviewer: revUsers.map((u) => u.name).join(", ") || "",
+    reviewer: revUsers.length === 0 ? "Self-Approved" : (revUsers.map((u) => u.name).join(", ") || ""),
     performers: perfUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designationRel?.name ?? "" })),
     reviewers: revUsers.map((u) => ({ id: u.id, name: u.name, code: u.code, designation: u.designationRel?.name ?? "" })),
     assignedToUserIds: perfUsers.map((u) => u.id),
     reviewerUserIds: revUsers.map((u) => u.id),
     assignedToUserCode: perfUsers[0]?.code ?? null,
     reviewerUserCode: revUsers[0]?.code ?? null,
+    isSelfApproved: revUsers.length === 0,
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
     meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
@@ -254,6 +256,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
 
     if (
+      body.isSelfApproved !== undefined ||
       body.performerUserCodes !== undefined ||
       body.reviewerUserCodes !== undefined ||
       body.assignedToUserCode !== undefined ||
@@ -263,36 +266,73 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
 
-      let performerCodes = normalizeCodes(body.performerUserCodes);
-      let reviewerCodes = normalizeCodes(body.reviewerUserCodes);
+      const currentIsSelfApproved = current.reviewerUsers.length === 0;
+      const isSelfApproved = body.isSelfApproved !== undefined
+        ? body.isSelfApproved === true
+        : (body.reviewerUserCodes !== undefined ? body.reviewerUserCodes.length === 0 : currentIsSelfApproved);
+
+      let performerCodes = body.performerUserCodes !== undefined
+        ? normalizeCodes(body.performerUserCodes)
+        : [];
+      if (body.performerUserCodes === undefined) {
+        const currentPerformers = await prisma.actionItemPerformer.findMany({
+          where: { actionItemId: id },
+          include: { user: { select: { code: true } } },
+        });
+        performerCodes = currentPerformers.map((p) => p.user.code).filter((c): c is string => !!c);
+      }
+
+      let reviewerCodes = isSelfApproved
+        ? []
+        : (body.reviewerUserCodes !== undefined ? normalizeCodes(body.reviewerUserCodes) : []);
+      if (!isSelfApproved && body.reviewerUserCodes === undefined) {
+        const currentReviewers = await prisma.actionItemReviewerUser.findMany({
+          where: { actionItemId: id },
+          include: { user: { select: { code: true } } },
+        });
+        reviewerCodes = currentReviewers.map((r) => r.user.code).filter((c): c is string => !!c);
+      }
+
       if (performerCodes.length === 0 && body.assignedToUserCode?.trim()) {
         performerCodes = [body.assignedToUserCode.trim()];
       }
-      if (reviewerCodes.length === 0 && body.reviewerUserCode?.trim()) {
+      if (!isSelfApproved && reviewerCodes.length === 0 && body.reviewerUserCode?.trim()) {
         reviewerCodes = [body.reviewerUserCode.trim()];
       }
 
-      if (performerCodes.length === 0 || reviewerCodes.length === 0) {
+      if (performerCodes.length === 0 || (!isSelfApproved && reviewerCodes.length === 0)) {
         return NextResponse.json(
-          { detail: "performerUserCodes and reviewerUserCodes (non-empty arrays), or legacy single-code fields, are required" },
+          { detail: isSelfApproved
+            ? "performerUserCodes (non-empty array) is required when self-approved"
+            : "performerUserCodes and reviewerUserCodes (non-empty arrays), or legacy single-code fields, are required"
+          },
           { status: 400 },
         );
       }
 
-      const performers = await prisma.user.findMany({
-        where: { code: { in: performerCodes } },
+      if (!isSelfApproved) {
+        const overlap = performerCodes.filter((c) => reviewerCodes.includes(c));
+        if (overlap.length > 0) {
+          return NextResponse.json(
+            { detail: "Performers and reviewers must be different users" },
+            { status: 400 },
+          );
+        }
+      }
+
+      const allCodes = [...performerCodes, ...reviewerCodes];
+      const usersFound = await prisma.user.findMany({
+        where: { code: { in: allCodes } },
         select: { id: true, code: true, name: true },
       });
-      const reviewers = await prisma.user.findMany({
-        where: { code: { in: reviewerCodes } },
-        select: { id: true, code: true, name: true },
-      });
-      if (performers.length !== performerCodes.length || reviewers.length !== reviewerCodes.length) {
+      const performersFound = usersFound.filter((u) => u.code && performerCodes.includes(u.code));
+      const reviewersFound = usersFound.filter((u) => u.code && reviewerCodes.includes(u.code));
+      if (performersFound.length !== performerCodes.length || reviewersFound.length !== reviewerCodes.length) {
         return NextResponse.json({ detail: "Assignee or reviewer user not found" }, { status: 400 });
       }
 
-      const nextPerformerIds = performerCodes.map((code) => performers.find((u) => u.code === code)!.id);
-      const nextReviewerIds = reviewerCodes.map((code) => reviewers.find((u) => u.code === code)!.id);
+      const nextPerformerIds = performerCodes.map((code) => performersFound.find((u) => u.code === code)!.id);
+      const nextReviewerIds = reviewerCodes.map((code) => reviewersFound.find((u) => u.code === code)!.id);
 
       const prevItem = await getActionItemById(id);
       const prevAssignName = prevItem
@@ -308,9 +348,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         await tx.actionItemPerformer.createMany({
           data: nextPerformerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
         });
-        await tx.actionItemReviewerUser.createMany({
-          data: nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
-        });
+        if (nextReviewerIds.length > 0) {
+          await tx.actionItemReviewerUser.createMany({
+            data: nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
+          });
+        }
       });
 
       await prisma.actionItemUpdate.create({
@@ -319,7 +361,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           meetingId: current.meetingId,
           timestamp: new Date(),
           status: current.status,
-          note: `Reassigned: performers ${prevAssignName} → ${performers.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${reviewers.map((u) => u.name).join(", ")}`,
+          note: `Reassigned: performers ${prevAssignName} → ${performersFound.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${isSelfApproved ? "Self-Approved" : (reviewersFound.map((u) => u.name).join(", ") || "—")}`,
           createdById: actor.id,
         },
       });
@@ -464,7 +506,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       let nextStatus = body.status;
       let noteTrimmed = body.note?.trim() ?? "";
 
-      const hasOverlap = [...performerIds].some((id) => reviewerIds.has(id));
+      const hasOverlap = reviewerIds.size === 0 || [...performerIds].some((id) => reviewerIds.has(id));
       if (nextStatus === ActionItemStatus.UNDER_REVIEW && hasOverlap) {
         nextStatus = ActionItemStatus.COMPLETED;
         if (!noteTrimmed || noteTrimmed === "Submitted for reviewer approval") {

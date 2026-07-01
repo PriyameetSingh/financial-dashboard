@@ -18,6 +18,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
   const [usersError, setUsersError] = useState<string | null>(null);
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
   const [reviewerIds, setReviewerIds] = useState<string[]>([""]);
+  const [isSelfApproved, setIsSelfApproved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -25,16 +26,24 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
     if (!open || !submission) return;
     setUsers(null);
     setUsersError(null);
+    const initialIsSelfApproved =
+      submission.isSelfApproved === true ||
+      (submission.reviewerUserIds !== undefined
+        ? submission.reviewerUserIds.length === 0
+        : (!submission.reviewerUserId || submission.reviewerUserId === "Self-Approved"));
+    setIsSelfApproved(initialIsSelfApproved);
+
     const p =
       submission.performerUserIds?.length ?
         submission.performerUserIds
       : submission.assignedToUserId ? [submission.assignedToUserId]
       : [""];
     const r =
-      submission.reviewerUserIds?.length ?
+      initialIsSelfApproved ? [] :
+      (submission.reviewerUserIds?.length ?
         submission.reviewerUserIds
-      : submission.reviewerUserId ? [submission.reviewerUserId]
-      : [""];
+      : (submission.reviewerUserId && submission.reviewerUserId !== "Self-Approved") ? [submission.reviewerUserId]
+      : [""]);
     setPerformerIds(p);
     setReviewerIds(r);
     setMsg(null);
@@ -60,15 +69,21 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
 
   const handleSave = async () => {
     const performers = performerIds.map((id) => id.trim()).filter(Boolean);
-    const reviewers = reviewerIds.map((id) => id.trim()).filter(Boolean);
+    const reviewers = isSelfApproved ? [] : reviewerIds.map((id) => id.trim()).filter(Boolean);
     if (performers.length === 0) {
       setMsg("Select at least one action owner.");
       return;
     }
-    const overlap = reviewers.length > 0 ? performers.filter((id) => reviewers.includes(id)) : [];
-    if (overlap.length > 0) {
-      setMsg("Action owners and reviewers must not include the same user.");
+    if (!isSelfApproved && reviewers.length === 0) {
+      setMsg("Select at least one reviewer when separate review is required.");
       return;
+    }
+    if (!isSelfApproved) {
+      const overlap = performers.filter((id) => reviewers.includes(id));
+      if (overlap.length > 0) {
+        setMsg("Action owners and reviewers must not include the same user.");
+        return;
+      }
     }
     setBusy(true);
     setMsg(null);
@@ -76,6 +91,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
       await updateKpiDefinitionAssignments(submission.id, {
         performerUserIds: performers,
         reviewerUserIds: reviewers,
+        isSelfApproved,
       });
       onSaved();
       onClose();
@@ -169,47 +185,74 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                   ))}
                 </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
-                  Optional. If none are listed, submitted updates are marked complete without a separate review step.
-                </p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setReviewerIds((prev) => [...prev, ""])}
-                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
-                >
-                  Add reviewer
-                </button>
-                <div className="mt-3 space-y-3">
-                  {reviewerIds.map((rid, index) => (
-                    <div key={`r-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
-                      <div className="min-w-0 flex-1">
-                        <SearchableKpiUserField
-                          label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
-                          users={users}
-                          value={rid}
-                          onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
-                          disabled={busy}
-                          excludeUserId=""
-                          excludeUserIds={allExcludedForReviewers(index)}
-                        />
-                      </div>
-                      {reviewerIds.length > 1 && (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
-                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+                <input
+                  type="checkbox"
+                  id="reassign-kpi-self-approve-checkbox"
+                  checked={isSelfApproved}
+                  disabled={userPickerDisabled}
+                  onChange={(e) => {
+                    setIsSelfApproved(e.target.checked);
+                    if (e.target.checked) {
+                      setReviewerIds([]);
+                    } else {
+                      setReviewerIds([""]);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="reassign-kpi-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                  No separate review needed — owner will self-approve
+                </label>
               </div>
+              {isSelfApproved && (
+                <p className="text-xs text-[var(--alert-success)]">
+                  ✓ KPI progress submissions will be approved immediately upon entry.
+                </p>
+              )}
+              {!isSelfApproved && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Optional. If none are listed, submitted updates are marked complete without a separate review step.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setReviewerIds((prev) => [...prev, ""])}
+                    className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                  >
+                    Add reviewer
+                  </button>
+                  <div className="mt-3 space-y-3">
+                    {reviewerIds.map((rid, index) => (
+                      <div key={`r-${index}`} className="flex flex-col gap-2 md:flex-row md:items-end">
+                        <div className="min-w-0 flex-1">
+                          <SearchableKpiUserField
+                            label={index === 0 ? "Reviewer" : `Reviewer (${index + 1})`}
+                            users={users}
+                            value={rid}
+                            onChange={(id) => setReviewerIds((prev) => prev.map((v, i) => (i === index ? id : v)))}
+                            disabled={busy}
+                            excludeUserId=""
+                            excludeUserIds={allExcludedForReviewers(index)}
+                          />
+                        </div>
+                        {reviewerIds.length > 1 && (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
+                            className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
           {msg && <p className="text-sm text-[var(--text-muted)]">{msg}</p>}

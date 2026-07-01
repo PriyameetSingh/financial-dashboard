@@ -102,6 +102,7 @@ export interface ActionItem {
   reviewerUserCode?: string | null;
   assignedToUserId?: string;
   reviewerUserId?: string;
+  isSelfApproved?: boolean;
   schemeId: string;
   /** Source meeting when the action item was created from a meeting; used to default progress attribution. */
   meetingId?: string | null;
@@ -148,6 +149,7 @@ export interface KPISubmission {
   reviewerUserId?: string | null;
   performerUserIds?: string[];
   reviewerUserIds?: string[];
+  isSelfApproved?: boolean;
   /** Server-computed for the current session (ENTER_KPI_DATA + assignment). */
   currentUserCanEnter?: boolean;
   /** Server-computed for the current session (APPROVE_KPI + assignment). */

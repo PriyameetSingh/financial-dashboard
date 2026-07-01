@@ -622,7 +622,14 @@ function KPIsPageContent() {
                           <p className="mt-1 text-xs text-[var(--text-muted)]">{item.vertical} · {item.category}</p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
-                          <StatusBadge status={item.status} />
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={item.status} />
+                            {item.isSelfApproved && (
+                              <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                                Self-Approved
+                              </span>
+                            )}
+                          </div>
                           <EscalationBadge flag={item.escalationFlag} />
                         </div>
                       </div>
@@ -777,6 +784,11 @@ function KPIsPageContent() {
                           <td className="py-3">
                             <div className="flex items-center gap-2">
                               <StatusBadge status={item.status} />
+                              {item.isSelfApproved && (
+                                <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                                  Self-Approved
+                                </span>
+                              )}
                               {canManageSchemes && (
                                 <button
                                   type="button"
