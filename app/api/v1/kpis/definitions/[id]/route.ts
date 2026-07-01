@@ -31,6 +31,7 @@ type PatchBody = {
   monitoringLevel?: string | null;
   denominatorValue?: number | null;
   archived?: boolean | null;
+  isSelfApproved?: boolean | null;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
