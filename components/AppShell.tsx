@@ -51,7 +51,7 @@ export default function AppShell({ children, title }: Props) {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
       <Sidebar isCollapsed={isSidebarCollapsed} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
             <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -69,7 +69,7 @@ export default function AppShell({ children, title }: Props) {
                 {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:flex-nowrap lg:justify-end">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
               <TextSizeToolbarControl />
               <button
                 className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"

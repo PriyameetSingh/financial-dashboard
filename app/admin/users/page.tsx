@@ -253,21 +253,20 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
         >
           {selectedOption ? selectedOption.name : placeholder || "Select..."}
         </button>
-        <svg 
+        <svg
           className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-          width="16" 
-          height="16" 
-          viewBox="0 0 16 16" 
-          fill="none" 
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {isOpen && (
           <div
-            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${
-              openUpward ? "bottom-full mb-1" : "top-full mt-1"
-            }`}
+            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
+              }`}
           >
             <div className="p-2">
               <input
@@ -302,9 +301,8 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
                     setIsOpen(false);
                     setSearch("");
                   }}
-                  className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${
-                    option.id === value ? "bg-[var(--bg-accent)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
-                  }`}
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${option.id === value ? "bg-[var(--bg-accent)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                    }`}
                 >
                   {option.name}
                 </button>
@@ -389,21 +387,20 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
             ? selectedOptions.map((opt) => opt.name).join(", ")
             : placeholder || "Select..."}
         </button>
-        <svg 
+        <svg
           className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-          width="16" 
-          height="16" 
-          viewBox="0 0 16 16" 
-          fill="none" 
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {isOpen && (
           <div
-            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${
-              openUpward ? "bottom-full mb-1" : "top-full mt-1"
-            }`}
+            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
+              }`}
           >
             <div className="p-2">
               <input
@@ -421,14 +418,13 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
                   key={option.id}
                   type="button"
                   onClick={() => toggleOption(option.id)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${
-                    values.includes(option.id) ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
-                  }`}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${values.includes(option.id) ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                    }`}
                 >
                   <input
                     type="checkbox"
                     checked={values.includes(option.id)}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     className="pointer-events-none"
                   />
                   {option.name}
@@ -690,11 +686,10 @@ function CreateUserModal({
                 }}
                 onBlur={() => setPhoneTouched(true)}
                 placeholder="e.g. 9876543210"
-                className={`rounded-lg border bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none ${
-                  isPhoneInvalid
-                    ? "border-[var(--alert-critical)] focus:border-[var(--alert-critical)]"
-                    : "border-[var(--border)] focus:border-[var(--text-muted)]"
-                }`}
+                className={`rounded-lg border bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none ${isPhoneInvalid
+                  ? "border-[var(--alert-critical)] focus:border-[var(--alert-critical)]"
+                  : "border-[var(--border)] focus:border-[var(--text-muted)]"
+                  }`}
               />
               <span className="text-[10px] text-[var(--text-muted)]">
                 {phoneUsernamePreview.length >= 10
@@ -940,12 +935,12 @@ function EditUserProfileModal({
                   <option value="GOVERNMENT">Government</option>
                   <option value="PMU">PMU</option>
                 </select>
-                <svg 
+                <svg
                   className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
-                  fill="none" 
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1034,7 +1029,7 @@ export default function AdminUsersPage() {
     Object.fromEntries(Object.values(UserRole).map((role) => [role, [] as Permission[]])) as Record<UserRole, Permission[]>,
   );
   const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
-  
+
   const [designations, setDesignations] = useState<ReferenceOption[]>([]);
   const [organisations, setOrganisations] = useState<ReferenceOption[]>([]);
   const [ulbs, setUlbs] = useState<ReferenceOption[]>([]);
@@ -1681,12 +1676,12 @@ export default function AdminUsersPage() {
                     </option>
                   ))}
                 </select>
-                <svg 
+                <svg
                   className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
-                  fill="none" 
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1759,12 +1754,12 @@ export default function AdminUsersPage() {
                                 </option>
                               ))}
                             </select>
-                            <svg 
+                            <svg
                               className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                              width="12" 
-                              height="12" 
-                              viewBox="0 0 16 16" 
-                              fill="none" 
+                              width="12"
+                              height="12"
+                              viewBox="0 0 16 16"
+                              fill="none"
                               xmlns="http://www.w3.org/2000/svg"
                             >
                               <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1840,7 +1835,7 @@ export default function AdminUsersPage() {
                             onClick={() => setOpenDropdownCode(openDropdownCode === userCode ? null : userCode)}
                             className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
                           >
-            •••
+                            •••
                           </button>
                           {openDropdownCode === userCode && (
                             <div
@@ -2080,10 +2075,10 @@ function ResetPasswordModal({
               <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
                 Password reset successfully!
               </div>
-              
+
               <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">New Temporary Password</p>
-                <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-sm font-mono text-[var(--text-primary)]">
+                <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-mono text-[var(--text-primary)]">
                   <span>{successPwd}</span>
                   <button
                     onClick={handleCopy}
