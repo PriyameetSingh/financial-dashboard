@@ -248,37 +248,136 @@ async function main() {
   }
 
   console.log("Seeding releases & changelog entries...");
-  await prisma.release.upsert({
-    where: { version: "1.3.0" },
-    update: {},
-    create: {
-      version: "1.3.0",
+
+  // Clear existing releases to avoid duplicate key issues during seeding
+  await prisma.release.deleteMany({});
+
+  await prisma.release.create({
+    data: {
+      version: "1.1.0",
       isCurrent: false,
+      createdAt: new Date("2026-05-15T00:00:00Z"),
       entries: {
         create: [
           {
             type: "NEW_FEATURE",
-            title: "Scheme priority re-ordering for TASU users",
-            description: "Allows TASU administrators to change the list order of schemes in the side panel.",
+            title: "Vertical Head <-> Nodal Officer task visibility linkage",
+            description: "Each task has both a Vertical Head and a Nodal Officer assigned. A Vertical Head must be able to see all pending tasks of Nodal Officers who report to them. Requires a hierarchical relationship mapping between these roles. - Vertical head goes to my task and a pendance report table is visible",
           },
           {
-            type: "IMPROVEMENT",
-            title: "Performance improvements on KPI dashboard pages",
-            description: "Faster query loading time on major tables.",
+            type: "NEW_FEATURE",
+            title: "KPI Archive",
+            description: "Ability to archive KPIs rather than permanently deleting them. Archived KPIs should be retrievable and excluded from active dashboards.",
+          },
+          {
+            type: "BREAKING_CHANGE",
+            title: "Nodal Officer to not have access to IFMS data",
+            description: "Nodal Officers should not have visibility into IFMS (financial) data. Role-based access control must be updated immediately to restrict this permission.",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "Archive for decision items",
+            description: "Completed decision items should support archiving similar to schemes and KPIs, allowing retrieval without cluttering active views.",
           },
         ]
       }
     }
   });
 
-  await prisma.release.upsert({
-    where: { version: "1.4.0" },
-    update: {
-      isCurrent: true,
-    },
-    create: {
+  await prisma.release.create({
+    data: {
+      version: "1.2.0",
+      isCurrent: false,
+      createdAt: new Date("2026-06-10T00:00:00Z"),
+      entries: {
+        create: [
+          {
+            type: "IMPROVEMENT",
+            title: "Colour-coded pending / approved items in reports and dashboard",
+            description: "Pending and approved items should be visually differentiated using a consistent colour scheme across all report views and the main dashboard.",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "Re-ordering schemes",
+            description: "Add feature to rearrange and save preset for schemes list view",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "Separate FA role for Nodal Officers (financial data entry)",
+            description: "A distinct Financial Assistant (FA) role should be creatable and assignable to Nodal Officers specifically for financial data entry, separate from their standard Nodal Officer permissions.",
+          },
+          {
+            type: "IMPROVEMENT",
+            title: "Schemes list view expand state",
+            description: "add an expand state in List view similar to kahnban board view with scheme components",
+          },
+          {
+            type: "IMPROVEMENT",
+            title: "Scheme List view Filters",
+            description: "Add filters for State sector, central sector and central sponsor in Schemes",
+          },
+          {
+            type: "IMPROVEMENT",
+            title: "Decision items — optional reviewer (auto-approval if action = reviewer)",
+            description: "The reviewer field on decision items should be optional. If the action person and reviewer are the same individual, the item should be automatically marked as approved without a separate review step.",
+          },
+        ]
+      }
+    }
+  });
+
+  await prisma.release.create({
+    data: {
+      version: "1.3.0",
+      isCurrent: false,
+      createdAt: new Date("2026-06-25T00:00:00Z"),
+      entries: {
+        create: [
+          {
+            type: "IMPROVEMENT",
+            title: "UI — logo repositioning, colour changes, and header update",
+            description: "Reposition logo as per design spec, apply colour updates, and rename the header field from Source Date to Meeting Date.",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "System settings — CRUD for master data",
+            description: "Admin interface to create, read, update, and delete master data entities: Organisations, Verticals, Sections, ULBs, and Designations.",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "User profile page — change password and reset password",
+            description: "Users should be able to change their own password from their profile page. Admins should have a reset password option for other users.",
+          },
+          {
+            type: "IMPROVEMENT",
+            title: "Report download filters",
+            description: "When downloading reports, users should be able to apply filters including: monitoring level (CM / CS / ACS), priority, and status (in-progress / completed).",
+          },
+          {
+            type: "IMPROVEMENT",
+            title: "Proposed presentations to appear under Topics for Discussion in reports",
+            description: "In report views, proposed presentations should be grouped under the Topics for Discussion section rather than displayed as a separate standalone section.",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "multiple owners for same task",
+            description: "If multiple owners are assigned to a task, system should moniter which user is adding what update, same to be shown on reports",
+          },
+          {
+            type: "NEW_FEATURE",
+            title: "Past task owner",
+            description: "System should remember is someone was assigned to a task before, and show his work in reports too",
+          },
+        ]
+      }
+    }
+  });
+
+  await prisma.release.create({
+    data: {
       version: "1.4.0",
       isCurrent: true,
+      createdAt: new Date("2026-07-02T00:00:00Z"),
       entries: {
         create: [
           {
