@@ -227,6 +227,8 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
   const [kpiType, setKpiType] = useState<"OUTPUT" | "OUTCOME" | "BINARY">("OUTPUT");
   const [subschemeId, setSubschemeId] = useState<string>("");
   const [unit, setUnit] = useState("");
+  const [differentUnits, setDifferentUnits] = useState(false);
+  const [denominatorUnit, setDenominatorUnit] = useState("");
   const [denominator, setDenominator] = useState("");
   const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
   const [performerIds, setPerformerIds] = useState<string[]>([""]);
@@ -276,6 +278,8 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setKpiType("OUTPUT");
     setSubschemeId("");
     setUnit("");
+    setDifferentUnits(false);
+    setDenominatorUnit("");
     setDenominator("");
     setMonitoringLevel("");
     setPerformerIds([""]);
@@ -313,6 +317,9 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
     setAlert(null);
     try {
       const unitTrimmed = kpiType === "OUTPUT" ? (unit.trim() || null) : null;
+      const denomUnitTrimmed = kpiType === "OUTPUT"
+        ? (differentUnits ? (denominatorUnit.trim() || null) : unitTrimmed)
+        : null;
       const denominatorValue = kpiType === "OUTPUT" && denominator.trim() ? Number(denominator.trim()) : null;
       await createKpiDefinition({
         schemeId: scheme.id,
@@ -321,7 +328,7 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
         description: d,
         kpiType,
         numeratorUnit: unitTrimmed,
-        denominatorUnit: unitTrimmed,
+        denominatorUnit: denomUnitTrimmed,
         denominatorValue: isNaN(denominatorValue as number) ? null : denominatorValue,
         monitoringLevel: monitoringLevel || null,
         performerUserIds: performers,
@@ -594,20 +601,53 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
           {kpiType === "OUTPUT" && (
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 space-y-3">
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Measurement</p>
+              
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="different-units-checkbox-add"
+                  checked={differentUnits}
+                  onChange={(e) => {
+                    setDifferentUnits(e.target.checked);
+                    if (!e.target.checked) {
+                      setDenominatorUnit("");
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="different-units-checkbox-add" className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)] cursor-pointer select-none">
+                  Use different numerator from denominator units
+                </label>
+              </div>
+
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  Unit
+                  {differentUnits ? "Numerator Unit" : "Unit"}
                   <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
-                    What is being measured (e.g. households, km, %)
+                    {differentUnits ? "Unit of the numerator value" : "What is being measured (e.g. households, km, %)"}
                   </span>
                   <input
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    placeholder="e.g. households"
+                    placeholder={differentUnits ? "e.g. households target reached" : "e.g. households"}
                     className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
                   />
                 </label>
-                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                {differentUnits && (
+                  <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    Denominator Unit
+                    <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                      Unit of the denominator (target) value
+                    </span>
+                    <input
+                      value={denominatorUnit}
+                      onChange={(e) => setDenominatorUnit(e.target.value)}
+                      placeholder="e.g. total households planned"
+                      className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
+                    />
+                  </label>
+                )}
+                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)] col-span-1">
                   Target
                   <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
                     The total target value to reach
@@ -621,9 +661,14 @@ export default function AddKpiModal({ open, onClose, scheme, users, onSaved }: P
                   />
                 </label>
               </div>
-              {unit && denominator && (
+              {(unit || denominatorUnit) && denominator && (
                 <p className="text-[11px] text-[var(--text-muted)] normal-case tracking-normal">
-                  Progress will show as: <span className="font-medium text-[var(--text-primary)]">__ / {denominator} {unit}</span>
+                  Progress will show as:{" "}
+                  <span className="font-medium text-[var(--text-primary)]">
+                    {differentUnits
+                      ? `__ ${unit} / ${denominator} ${denominatorUnit}`
+                      : `__ / ${denominator} ${unit}`}
+                  </span>
                 </p>
               )}
             </div>

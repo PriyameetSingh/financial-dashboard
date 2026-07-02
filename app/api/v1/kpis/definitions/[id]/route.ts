@@ -32,6 +32,8 @@ type PatchBody = {
   denominatorValue?: number | null;
   archived?: boolean | null;
   isSelfApproved?: boolean | null;
+  numeratorUnit?: string | null;
+  denominatorUnit?: string | null;
 };
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -51,6 +53,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         description: true,
         monitoringLevel: true,
         archived: true,
+        numeratorUnit: true,
+        denominatorUnit: true,
         scheme: { select: { code: true } },
         performers: { where: { isActive: true }, select: { userId: true } },
         reviewerUsers: { select: { userId: true } },
@@ -99,7 +103,9 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       body.monitoringLevel === undefined &&
       body.denominatorValue === undefined &&
       body.archived === undefined &&
-      body.isSelfApproved === undefined
+      body.isSelfApproved === undefined &&
+      body.numeratorUnit === undefined &&
+      body.denominatorUnit === undefined
     ) {
       return NextResponse.json({ detail: "At least one field to update is required" }, { status: 400 });
     }
@@ -145,6 +151,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const newDescription = typeof body.description === "string" && body.description.trim() ? body.description.trim() : undefined;
     const newMonitoringLevel = body.monitoringLevel !== undefined ? parseMonitoringLevel(body.monitoringLevel) : undefined;
     const newDenominatorValue = body.denominatorValue !== undefined ? (body.denominatorValue === null ? null : Number(body.denominatorValue)) : undefined;
+    const newNumeratorUnit = body.numeratorUnit !== undefined ? (body.numeratorUnit?.trim() || null) : undefined;
+    const newDenominatorUnit = body.denominatorUnit !== undefined ? (body.denominatorUnit?.trim() || null) : undefined;
 
     const before = {
       performerUserIds: existing.performers.map((p) => p.userId),
@@ -153,6 +161,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       monitoringLevel: existing.monitoringLevel,
       denominatorValue: (existing as any).targets?.[0]?.denominatorValue ? Number((existing as any).targets[0].denominatorValue) : null,
       archived: existing.archived,
+      numeratorUnit: existing.numeratorUnit,
+      denominatorUnit: existing.denominatorUnit,
     };
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -197,13 +207,21 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         }
       }
-      if (newDescription !== undefined || newMonitoringLevel !== undefined || body.archived !== undefined) {
+      if (
+        newDescription !== undefined ||
+        newMonitoringLevel !== undefined ||
+        body.archived !== undefined ||
+        newNumeratorUnit !== undefined ||
+        newDenominatorUnit !== undefined
+      ) {
         await tx.kpiDefinition.update({
           where: { id },
           data: {
             ...(newDescription !== undefined ? { description: newDescription } : {}),
             ...(newMonitoringLevel !== undefined ? { monitoringLevel: newMonitoringLevel } : {}),
             ...(body.archived !== undefined ? { archived: body.archived === null ? false : body.archived } : {}),
+            ...(newNumeratorUnit !== undefined ? { numeratorUnit: newNumeratorUnit } : {}),
+            ...(newDenominatorUnit !== undefined ? { denominatorUnit: newDenominatorUnit } : {}),
           },
         });
       }
@@ -266,6 +284,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         monitoringLevel: newMonitoringLevel ?? null,
         denominatorValue: newDenominatorValue ?? null,
         archived: body.archived !== undefined ? body.archived : null,
+        numeratorUnit: newNumeratorUnit !== undefined ? newNumeratorUnit : null,
+        denominatorUnit: newDenominatorUnit !== undefined ? newDenominatorUnit : null,
       },
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
@@ -285,6 +305,8 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       monitoringLevel: updated.monitoringLevel,
       denominatorValue: (updated as any).targets?.[0]?.denominatorValue ? Number((updated as any).targets[0].denominatorValue) : null,
       archived: updated.archived,
+      numeratorUnit: updated.numeratorUnit,
+      denominatorUnit: updated.denominatorUnit,
       assignmentHistory: history,
     });
   } catch (error) {

@@ -200,7 +200,7 @@ export default function KPIEntryPage() {
     if (item.type !== "OUTPUT") return null;
     if (item.status === "approved" && item.numerator != null && newNum !== "") {
       if (Number(newNum) < item.numerator) {
-        return `Value cannot go below the approved value of ${item.numerator} ${item.unit}.`;
+        return `Value cannot go below the approved value of ${item.numerator} ${item.numeratorUnit || item.unit}.`;
       }
     }
     return null;
@@ -462,7 +462,11 @@ export default function KPIEntryPage() {
                         {item.category}
                       </span>
                       <span className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--text-secondary)]">
-                        Unit: {item.unit}
+                        {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
+                          <span>Units: {item.numeratorUnit} (Num) / {item.denominatorUnit} (Den)</span>
+                        ) : (
+                          <span>Unit: {item.unit}</span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -479,7 +483,7 @@ export default function KPIEntryPage() {
                 {/* Approved-decrease warning
                 {isApproved && approvedNum != null && (
                   <div className="rounded-xl border border-[var(--alert-warning,#f59e0b)] bg-[rgba(245,158,11,0.08)] px-4 py-3 text-xs text-[var(--alert-warning,#f59e0b)]">
-                    Last approved value: <strong>{approvedNum} {item.unit}</strong>. New numerator cannot be set lower than this.
+                    Last approved value: <strong>{approvedNum} {item.numeratorUnit || item.unit}</strong>. New numerator cannot be set lower than this.
                   </div>
                 )} */}
 
@@ -562,7 +566,7 @@ export default function KPIEntryPage() {
                     <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
-                          Numerator
+                          Numerator{item.numeratorUnit ? ` (${item.numeratorUnit})` : ""}
                         </label>
                         <input
                           type="number"
@@ -590,7 +594,7 @@ export default function KPIEntryPage() {
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
-                          Denominator
+                          Denominator{item.denominatorUnit ? ` (${item.denominatorUnit})` : ""}
                         </label>
                         <input
                           type="number"

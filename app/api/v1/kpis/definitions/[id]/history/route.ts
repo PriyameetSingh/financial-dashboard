@@ -82,6 +82,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       type: definition.kpiType,
       category: definition.category,
       unit: definition.numeratorUnit ?? definition.denominatorUnit ?? "value",
+      numeratorUnit: definition.numeratorUnit,
+      denominatorUnit: definition.denominatorUnit,
       scheme: definition.scheme.name,
       vertical: definition.scheme.verticalName,
     },

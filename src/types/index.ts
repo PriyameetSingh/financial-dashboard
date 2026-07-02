@@ -145,6 +145,8 @@ export interface KPISubmission {
   description: string;
   type: KPIType;
   unit: string;
+  numeratorUnit?: string | null;
+  denominatorUnit?: string | null;
   numerator?: number | null;
   denominator?: number | null;
   yes?: boolean | null;
@@ -360,6 +362,10 @@ export interface SchemeKpiSummary {
   monitoringLevel: "CS" | "ACS" | "CM" | null;
   subschemeCode: string | null;
   subschemeName: string | null;
+  numeratorUnit?: string | null;
+  denominatorUnit?: string | null;
+  denominatorValue?: number | null;
+  archived?: boolean;
 }
 
 export interface SchemeExpenditureSummary {

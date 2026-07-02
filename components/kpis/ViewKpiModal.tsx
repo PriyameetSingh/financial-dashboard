@@ -44,12 +44,16 @@ function ValueDisplay({
   denominator,
   yes,
   unit,
+  numeratorUnit,
+  denominatorUnit,
 }: {
   type: string;
   numerator: number | null;
   denominator: number | null;
   yes: boolean | null;
   unit: string;
+  numeratorUnit?: string | null;
+  denominatorUnit?: string | null;
 }) {
   if (type === "BINARY") {
     return <span>{yes === null ? "—" : yes ? "Yes" : "No"}</span>;
@@ -57,6 +61,25 @@ function ValueDisplay({
   if (numerator === null && denominator === null) return <span>—</span>;
   const num = numerator ?? 0;
   const den = denominator;
+  
+  const hasDiffUnits =
+    numeratorUnit &&
+    denominatorUnit &&
+    numeratorUnit !== denominatorUnit;
+
+  if (hasDiffUnits) {
+    return (
+      <span>
+        {num} <span className="text-[var(--text-muted)] font-normal text-xs">{numeratorUnit}</span>
+        {den !== null ? (
+          <>
+            {" / "}{den} <span className="text-[var(--text-muted)] font-normal text-xs">{denominatorUnit}</span>
+          </>
+        ) : ""}
+      </span>
+    );
+  }
+
   return (
     <span>
       {num}
@@ -68,7 +91,14 @@ function ValueDisplay({
 export default function ViewKpiModal({ open, submission, isReviewer, onClose, onReviewed }: Props) {
   const [loading, setLoading] = useState(false);
   const [measurements, setMeasurements] = useState<KpiMeasurementHistory[]>([]);
-  const [kpiMeta, setKpiMeta] = useState<{ scheme: string; vertical: string; unit: string; type: string } | null>(null);
+  const [kpiMeta, setKpiMeta] = useState<{
+    scheme: string;
+    vertical: string;
+    unit: string;
+    numeratorUnit?: string | null;
+    denominatorUnit?: string | null;
+    type: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -93,6 +123,8 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
           scheme: data.kpi.scheme,
           vertical: data.kpi.vertical,
           unit: data.kpi.unit,
+          numeratorUnit: data.kpi.numeratorUnit,
+          denominatorUnit: data.kpi.denominatorUnit,
           type: data.kpi.type,
         });
       })
@@ -179,7 +211,11 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                 {submission.category}
               </span>
               <span className="rounded-full border border-[var(--border)] px-2 py-0.5">
-                Unit: {kpiMeta?.unit ?? submission.unit}
+                {kpiMeta?.numeratorUnit && kpiMeta?.denominatorUnit && kpiMeta.numeratorUnit !== kpiMeta.denominatorUnit ? (
+                  <span>Units: {kpiMeta.numeratorUnit} (Num) / {kpiMeta.denominatorUnit} (Den)</span>
+                ) : (
+                  <span>Unit: {kpiMeta?.unit ?? submission.unit}</span>
+                )}
               </span>
             </div>
           </div>
@@ -235,6 +271,8 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     denominator={latestPending.denominatorValue}
                     yes={latestPending.yesValue}
                     unit={kpiMeta?.unit ?? submission.unit}
+                    numeratorUnit={kpiMeta?.numeratorUnit ?? submission.numeratorUnit}
+                    denominatorUnit={kpiMeta?.denominatorUnit ?? submission.denominatorUnit}
                   />
                 </span>
                 {latestPending.remarks && (
@@ -347,6 +385,8 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                         denominator={m.denominatorValue}
                         yes={m.yesValue}
                         unit={kpiMeta?.unit ?? submission.unit}
+                        numeratorUnit={kpiMeta?.numeratorUnit ?? submission.numeratorUnit}
+                        denominatorUnit={m.denominatorValue !== null ? kpiMeta?.denominatorUnit ?? submission.denominatorUnit : undefined}
                       />
                     </div>
 

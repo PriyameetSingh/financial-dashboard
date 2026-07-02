@@ -176,6 +176,8 @@ export async function GET(request: NextRequest) {
           description: definition.description,
           type: definition.kpiType,
           unit: definition.numeratorUnit ?? definition.denominatorUnit ?? "value",
+          numeratorUnit: definition.numeratorUnit,
+          denominatorUnit: definition.denominatorUnit,
           monitoringLevel: definition.monitoringLevel ?? null,
           numerator: toNumber(measurement?.numeratorValue),
           denominator: toNumber(target?.denominatorValue),

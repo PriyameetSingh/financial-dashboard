@@ -22,6 +22,9 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
   const [description, setDescription] = useState("");
   const [monitoringLevel, setMonitoringLevel] = useState<"CS" | "ACS" | "CM" | "">("");
   const [denominatorValue, setDenominatorValue] = useState<string>("");
+  const [differentUnits, setDifferentUnits] = useState(false);
+  const [unit, setUnit] = useState("");
+  const [denominatorUnit, setDenominatorUnit] = useState("");
   const [archived, setArchived] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -31,6 +34,17 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
     setDescription(submission.description);
     setMonitoringLevel((submission.monitoringLevel as "CS" | "ACS" | "CM") ?? "");
     setDenominatorValue(submission.denominator != null ? String(submission.denominator) : "");
+    const initialNumeratorUnit = submission.numeratorUnit ?? submission.unit ?? "";
+    const initialDenominatorUnit = submission.denominatorUnit ?? submission.unit ?? "";
+    setUnit(initialNumeratorUnit);
+    setDenominatorUnit(initialDenominatorUnit);
+    setDifferentUnits(
+      submission.numeratorUnit !== undefined &&
+      submission.denominatorUnit !== undefined &&
+      submission.numeratorUnit !== null &&
+      submission.denominatorUnit !== null &&
+      submission.numeratorUnit !== submission.denominatorUnit
+    );
     setArchived(submission.archived ?? false);
     setMsg(null);
   }, [open, submission]);
@@ -51,6 +65,10 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
         monitoringLevel: monitoringLevel || null,
         denominatorValue: denominatorValue.trim() ? Number(denominatorValue) : null,
         archived,
+        numeratorUnit: submission.type === "OUTPUT" ? (unit.trim() || null) : undefined,
+        denominatorUnit: submission.type === "OUTPUT"
+          ? (differentUnits ? (denominatorUnit.trim() || null) : (unit.trim() || null))
+          : undefined,
       });
       onSaved();
       onClose();
@@ -140,6 +158,60 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
                 className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
               />
             </label>
+          )}
+
+          {submission.type === "OUTPUT" && (
+            <div className="space-y-4 pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="different-units-checkbox-edit"
+                  checked={differentUnits}
+                  onChange={(e) => {
+                    setDifferentUnits(e.target.checked);
+                    if (!e.target.checked) {
+                      setDenominatorUnit("");
+                    }
+                  }}
+                  disabled={busy}
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="different-units-checkbox-edit" className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)] cursor-pointer select-none">
+                  Use different numerator from denominator units
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  {differentUnits ? "Numerator Unit" : "Unit"}
+                  <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                    {differentUnits ? "Unit of the numerator value" : "What is being measured"}
+                  </span>
+                  <input
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    disabled={busy}
+                    placeholder={differentUnits ? "e.g. households target reached" : "e.g. households"}
+                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+                  />
+                </label>
+                {differentUnits && (
+                  <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    Denominator Unit
+                    <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                      Unit of the denominator value
+                    </span>
+                    <input
+                      value={denominatorUnit}
+                      onChange={(e) => setDenominatorUnit(e.target.value)}
+                      disabled={busy}
+                      placeholder="e.g. total households planned"
+                      className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
           )}
 
           <div className="flex items-center gap-2 pt-2">

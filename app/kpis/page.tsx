@@ -666,12 +666,24 @@ function KPIsPageContent() {
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Values</p>
                           <p className="mt-1 text-sm font-medium tabular-nums text-[var(--text-primary)]">
-                            {item.type === "BINARY" ? (item.yes ? "Yes" : "No") : `${item.numerator ?? 0} / ${item.denominator ?? 0}`}
+                            {item.type === "BINARY" ? (
+                              item.yes ? "Yes" : "No"
+                            ) : item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
+                              `${item.numerator ?? 0} ${item.numeratorUnit} / ${item.denominator ?? 0} ${item.denominatorUnit}`
+                            ) : (
+                              `${item.numerator ?? 0} / ${item.denominator ?? 0}`
+                            )}
                           </p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Unit</p>
-                          <p className="mt-1 text-sm text-[var(--text-primary)]">{item.unit}</p>
+                          <p className="mt-1 text-sm text-[var(--text-primary)]">
+                            {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
+                              `${item.numeratorUnit} (Num) / ${item.denominatorUnit} (Den)`
+                            ) : (
+                              item.unit
+                            )}
+                          </p>
                         </div>
                       </div>
                       {!isViewer && item.latestMeasurementId && item.currentUserCanReview && (
@@ -772,9 +784,23 @@ function KPIsPageContent() {
                               </p>
                             ) : item.numerator != null || item.denominator != null ? (
                               <p className="text-base font-bold tabular-nums text-[var(--text-primary)]">
-                                {item.numerator ?? 0}
-                                {item.denominator != null && <span className="font-bold"> / {item.denominator}</span>}
-                                {item.unit && <span className="ml-1 text-sm font-normal text-[var(--text-muted)]">{item.unit}</span>}
+                                {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
+                                  <>
+                                    {item.numerator ?? 0} <span className="text-xs font-normal text-[var(--text-muted)]">{item.numeratorUnit}</span>
+                                    {item.denominator != null && (
+                                      <>
+                                        <span className="font-bold"> / </span>
+                                        {item.denominator} <span className="text-xs font-normal text-[var(--text-muted)]">{item.denominatorUnit}</span>
+                                      </>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    {item.numerator ?? 0}
+                                    {item.denominator != null && <span className="font-bold"> / {item.denominator}</span>}
+                                    {item.unit && <span className="ml-1 text-sm font-normal text-[var(--text-muted)]">{item.unit}</span>}
+                                  </>
+                                )}
                               </p>
                             ) : (
                               <span className="text-[var(--text-muted)]">—</span>

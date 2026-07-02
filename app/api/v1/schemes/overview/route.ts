@@ -181,7 +181,16 @@ export async function GET(request: NextRequest) {
             kpiType: true,
             category: true,
             monitoringLevel: true,
+            numeratorUnit: true,
+            denominatorUnit: true,
+            archived: true,
             subscheme: { select: { code: true, name: true } },
+            targets: fy
+              ? {
+                  where: { financialYearId: fy.id },
+                  select: { denominatorValue: true },
+                }
+              : false,
           },
         },
       },
@@ -240,6 +249,10 @@ export async function GET(request: NextRequest) {
         monitoringLevel: k.monitoringLevel ?? null,
         subschemeCode: k.subscheme?.code ?? null,
         subschemeName: k.subscheme?.name ?? null,
+        numeratorUnit: k.numeratorUnit,
+        denominatorUnit: k.denominatorUnit,
+        denominatorValue: k.targets?.[0]?.denominatorValue != null ? toNumber(k.targets[0].denominatorValue) : null,
+        archived: k.archived,
       })),
       expenditure,
     };

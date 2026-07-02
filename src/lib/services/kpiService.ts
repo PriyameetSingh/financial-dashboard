@@ -25,6 +25,8 @@ export type KpiHistoryResponse = {
     type: string;
     category: string;
     unit: string;
+    numeratorUnit?: string | null;
+    denominatorUnit?: string | null;
     scheme: string;
     vertical: string;
   };
@@ -163,6 +165,8 @@ export async function updateKpiDefinition(
     reviewerUserIds?: string[];
     archived?: boolean | null;
     isSelfApproved?: boolean | null;
+    numeratorUnit?: string | null;
+    denominatorUnit?: string | null;
   },
 ): Promise<void> {
   const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}`), {
