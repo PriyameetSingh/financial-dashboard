@@ -111,13 +111,13 @@ const items: NavItem[] = [
     label: "Dashboard Meetings",
     href: "/meetings",
     icon: CalendarDays,
-        roles: [UserRole.TASU, UserRole.VERTICAL_HEAD, UserRole.ACS],
+    roles: [UserRole.TASU, UserRole.VERTICAL_HEAD, UserRole.ACS],
   },
   {
     label: "Reports & Export",
     href: "/reports",
     icon: FileText,
-    roles: [ UserRole.ACS, UserRole.VERTICAL_HEAD, UserRole.TASU],
+    roles: [UserRole.ACS, UserRole.VERTICAL_HEAD, UserRole.TASU],
   },
   // {
   //   label: "Execution Efficiency",
@@ -375,7 +375,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
           setVersion(data.release.version);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       active = false;
     };
@@ -470,9 +470,9 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
   const visibleItems = useMemo(() => {
     return user
       ? items.filter(
-          (item) =>
-            item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
-        )
+        (item) =>
+          item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
+      )
       : [];
   }, [user, actionItems]);
   const roleLabel = user?.role.replaceAll("_", " ");
@@ -661,19 +661,23 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
               <div className="pt-3">
                 <LogoutButton />
               </div>
+              <div>
+                {!isCollapsed && version && (
+                  <div className="text-center pt-1 border-t border-[var(--sidebar-border)]/20 mt-2">
+                    <Link
+                      href="/changelog"
+                      className="text-[10px] font-semibold tracking-wider text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-colors hover:underline"
+                    >
+                      System Version {version}
+                    </Link>
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
         </div>
-        {!isCollapsed && version && (
-          <div className="text-center pt-1 border-t border-[var(--sidebar-border)]/20 mt-2">
-            <Link
-              href="/changelog"
-              className="text-[10px] font-semibold tracking-wider text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-colors hover:underline"
-            >
-              System Version {version}
-            </Link>
-          </div>
-        )}
+
       </div>
     </aside>
   );
