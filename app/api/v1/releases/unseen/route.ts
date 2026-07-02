@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDbUserBySession } from "@/lib/server-rbac";
 import { getSessionUser } from "@/lib/server-auth";
+import { syncReleases } from "@/lib/release-sync";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
     if (!isTasu) {
       return NextResponse.json({ releases: [] });
     }
+
+    await syncReleases();
 
     // Fetch releases that this user hasn't seen/dismissed yet
     const unseen = await prisma.release.findMany({

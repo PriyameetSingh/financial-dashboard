@@ -21,7 +21,6 @@ export default function AdminOverviewPage() {
   const showReorder = user && hasPermission(user, Permission.REORDER_SCHEMES);
   const showFinancialYears = user && hasPermission(user, Permission.MANAGE_FINANCIAL_YEARS);
   const showSystemSettings = showPermissions || showFinancialYears;
-  const showReleases = user && user.role === "TASU";
 
   return (
     <AppShell title="Administration">
@@ -83,16 +82,6 @@ export default function AdminOverviewPage() {
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial years</p>
               <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">FY calendar</h3>
               <p className="mt-2 text-sm text-[var(--text-muted)]">Add or edit financial year rows used across finance and KPIs.</p>
-            </Link>
-          )}
-          {showReleases && (
-            <Link
-              href="/admin/releases"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
-            >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Releases</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Release Management</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Author releases, manage changelog entries, and set the current active version.</p>
             </Link>
           )}
           {showSystemSettings && (
