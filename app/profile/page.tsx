@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import RoleBadge from "@/src/components/ui/RoleBadge";
@@ -19,6 +20,22 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void fetch(withNextBasePath("/api/v1/releases/current"))
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.release?.version) {
+          setVersion(data.release.version);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const initials = useMemo(() => {
     if (!user) return "HN";
@@ -138,6 +155,29 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+
+        {version && (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 max-w-xl">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Application Version</h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              HUDD Nexus Dashboard software details and release notes.
+            </p>
+            <div className="mt-4 flex items-center justify-between border-t border-[var(--border)]/50 pt-4">
+              <span className="text-sm font-medium text-[var(--text-secondary)]">Current Release</span>
+              <span className="rounded-full bg-[var(--bg-primary)] px-3 py-1 text-xs font-semibold text-[var(--text-primary)]">
+                v{version}
+              </span>
+            </div>
+            <div className="mt-6">
+              <Link
+                href="/changelog"
+                className="inline-flex items-center text-sm font-semibold text-[var(--accent)] hover:underline"
+              >
+                View release history &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

@@ -177,6 +177,7 @@ model User {
   auditLogs             AuditLog[]
 
   schemeAssignments      SchemeAssignment[]
+  seenReleases          UserSeenRelease[]
 
   @@map("users")
 }
@@ -855,4 +856,50 @@ model FinanceYearBudgetCategoryLine {
 
   @@unique([allocationId, category])
   @@map("finance_year_budget_category_lines")
+}
+
+enum ChangelogEntryType {
+  NEW_FEATURE
+  FIX
+  IMPROVEMENT
+  BREAKING_CHANGE
+}
+
+model Release {
+  id        String   @id @default(uuid()) @db.Uuid
+  version   String   @unique
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries   ChangelogEntry[]
+  seenBy    UserSeenRelease[]
+
+  @@map("releases")
+}
+
+model ChangelogEntry {
+  id          String             @id @default(uuid()) @db.Uuid
+  releaseId   String             @db.Uuid
+  type        ChangelogEntryType
+  title       String
+  description String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  release     Release            @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@map("changelog_entries")
+}
+
+model UserSeenRelease {
+  userId    String   @db.Uuid
+  releaseId String   @db.Uuid
+  seenAt    DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release   Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, releaseId])
+  @@map("user_seen_releases")
 }

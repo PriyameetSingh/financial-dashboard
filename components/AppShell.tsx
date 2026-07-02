@@ -8,6 +8,7 @@ import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
+import WhatsNewNotification from "@/components/WhatsNewNotification";
 
 interface Props {
   children: React.ReactNode;
@@ -132,6 +133,7 @@ export default function AppShell({ children, title }: Props) {
           </div>
         </div>
       )}
+      <WhatsNewNotification />
     </div>
   );
 }

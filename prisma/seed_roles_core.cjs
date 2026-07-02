@@ -182,7 +182,7 @@ async function ensureBootstrapTasuAdmin(prisma) {
 
 /** Link real users (e.g. after Keycloak sync) to a DB role so `/rbac/me` gets `role_permissions`. */
 async function ensureKnownUserRoleLinks(prisma) {
-  const links = [{ email: "priya.nair@hudd.ori", roleCode: "TASU" }];
+  const links = [];
   for (const { email, roleCode } of links) {
     const user = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },

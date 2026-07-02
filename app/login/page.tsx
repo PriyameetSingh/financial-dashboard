@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import GovLoginBranding from "@/components/GovLoginBranding";
 import LoginGrid from "@/components/LoginGrid";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Secure Login | HUDD Dashboard",
@@ -9,7 +10,13 @@ export const metadata: Metadata = {
     "Official access portal for the Housing & Urban Development Department, Government of Odisha — authenticated entry only.",
 };
 
-export default function Page() {
+export default async function Page() {
+  const currentRelease = await prisma.release.findFirst({
+    where: { isCurrent: true },
+    select: { version: true },
+  });
+  const currentVersion = currentRelease?.version || "1.0.0";
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900">
       {/* National colour band — common on Government of India portals */}
@@ -53,7 +60,10 @@ export default function Page() {
                     By continuing, you acknowledge that access is monitored and must comply with applicable Government
                     of India and State IT policies.
                   </p>
-                  <p className="font-medium text-slate-600">Need help? Contact your departmental IT / SSO administrator.</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                    <p className="font-medium text-slate-600">Need help? Contact your departmental IT / SSO administrator.</p>
+                    <p className="text-[10px] font-semibold text-slate-400">Version {currentVersion}</p>
+                  </div>
                 </footer>
               </div>
             </div>

@@ -364,6 +364,22 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [kpiSubmissions, setKpiSubmissions] = useState<KPISubmission[]>([]);
   const [latestKpiMeeting, setLatestKpiMeeting] = useState<KpiLatestMeeting | null>(null);
+  const [version, setVersion] = useState<string>("");
+
+  useEffect(() => {
+    let active = true;
+    void fetch(withNextBasePath("/api/v1/releases/current"))
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.release?.version) {
+          setVersion(data.release.version);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -648,6 +664,16 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
             </div>
           )}
         </div>
+        {!isCollapsed && version && (
+          <div className="text-center pt-1 border-t border-[var(--sidebar-border)]/20 mt-2">
+            <Link
+              href="/changelog"
+              className="text-[10px] font-semibold tracking-wider text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-colors hover:underline"
+            >
+              System Version {version}
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   );
