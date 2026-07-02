@@ -48,7 +48,7 @@ function normalizeCodes(codes: unknown): string[] {
 const actionInclude = {
   scheme: { select: { code: true, verticalName: true } },
   vertical: { select: { name: true } },
-  meeting: { select: { meetingDate: true } },
+  meeting: { select: { meetingDate: true, title: true } },
   performers: {
     where: { isActive: true },
     orderBy: { sortOrder: "asc" as const },
@@ -103,6 +103,7 @@ function mapActionItem(item: ActionItemWithRelations, assignmentHistory?: any[])
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
     meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
+    meetingTitle: item.meeting ? item.meeting.title : null,
     daysOverdue: overdueDays,
     updates: item.updates.map((update) => ({
       id: update.id,

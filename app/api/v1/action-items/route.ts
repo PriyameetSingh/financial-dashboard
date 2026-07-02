@@ -15,7 +15,7 @@ type ActionItemWithRelations = Prisma.ActionItemGetPayload<{
   include: {
     scheme: { select: { code: true; verticalName: true } };
     vertical: { select: { name: true } };
-    meeting: { select: { meetingDate: true } };
+    meeting: { select: { meetingDate: true; title: true } };
     performers: { include: { user: { select: { id: true; name: true; code: true } } }; orderBy: { sortOrder: "asc" } };
     reviewerUsers: { include: { user: { select: { id: true; name: true; code: true } } }; orderBy: { sortOrder: "asc" } };
     updates: {
@@ -61,6 +61,7 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
     schemeId: item.scheme?.code ?? "",
     meetingId: item.meetingId,
     meetingDate: item.meeting ? toIsoDate(item.meeting.meetingDate) : null,
+    meetingTitle: item.meeting ? item.meeting.title : null,
     daysOverdue: overdueDays,
     hasUpdateForLatestMeeting,
     updates: item.updates.map((update) => ({
@@ -82,7 +83,7 @@ function mapActionItem(item: ActionItemWithRelations, latestMeetingId: string | 
 const actionInclude = {
   scheme: { select: { code: true, verticalName: true } },
   vertical: { select: { name: true } },
-  meeting: { select: { meetingDate: true } },
+  meeting: { select: { meetingDate: true, title: true } },
   performers: {
     where: { isActive: true },
     orderBy: { sortOrder: "asc" as const },

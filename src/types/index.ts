@@ -117,6 +117,7 @@ export interface ActionItem {
   /** Source meeting when the action item was created from a meeting; used to default progress attribution. */
   meetingId?: string | null;
   meetingDate?: string | null;
+  meetingTitle?: string | null;
   daysOverdue?: number;
   /** Whether there is at least one progress update linked to the latest dashboard meeting. */
   hasUpdateForLatestMeeting?: boolean;

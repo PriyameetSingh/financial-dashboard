@@ -608,7 +608,7 @@ function ActionItemsContent() {
               return (
                 <div
                   key={item.id}
-                  className={`relative overflow-hidden rounded-2xl border p-5 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
+                  className={`relative rounded-2xl border p-5 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
                 >
                   {/* <div className={`absolute left-0 top-0 h-full w-1 ${PRIORITY_COLORS[item.priority] ?? "bg-[var(--border)]"}`} /> */}
                   
@@ -639,7 +639,13 @@ function ActionItemsContent() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal text-[var(--text-secondary)]">
-                    <span>Assigned to {item.assignedTo}</span>
+                    <span>Assigned to {item.assignedTo} on {item.createdAt.slice(0, 10)}</span>
+                    {item.meetingDate && (
+                      <>
+                        <span>·</span>
+                        <span>Meeting: {item.meetingTitle ? `${item.meetingTitle} (${item.meetingDate})` : item.meetingDate}</span>
+                      </>
+                    )}
                     <span>·</span>
                     <span>Reviewer {item.reviewer}</span>
                     <span>·</span>
@@ -650,15 +656,41 @@ function ActionItemsContent() {
                     <span>{item.vertical}</span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em]">
-                    {STATUS_STEPS.map((step, index) => (
-                      <span
-                        key={step}
-                        className={`rounded-full border px-2.5 py-1 leading-none ${index <= currentIndex ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]" : "border-[var(--border-strong)] text-[var(--text-secondary)]"}`}
-                      >
-                        {step.replace(/_/g, " ")}
-                      </span>
-                    ))}
+                  <div className="relative group mt-4 inline-block">
+                    <div className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.15em] text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-all">
+                      <span className={`w-2 h-2 rounded-full ${item.status === "COMPLETED" ? "bg-[var(--alert-success)]" : item.status === "OVERDUE" ? "bg-[var(--alert-critical)]" : "bg-[var(--alert-warning)]"} animate-pulse`} />
+                      <span>{item.status.replace(/_/g, " ")}</span>
+                      <svg className="w-3.5 h-3.5 text-[var(--text-secondary)] group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+
+                    <div className="absolute left-0 bottom-full mb-2 hidden group-hover:flex flex-row items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-30 transition-all whitespace-nowrap">
+                      {STATUS_STEPS.map((step, idx) => {
+                        const isDone = idx <= currentIndex;
+                        const isCurrent = idx === currentIndex;
+                        return (
+                          <div key={step} className="flex items-center">
+                            <span
+                              className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none ${
+                                isCurrent
+                                  ? "border-[var(--alert-warning)] bg-[rgba(255,184,0,0.12)] text-[var(--alert-warning)]"
+                                  : isDone
+                                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
+                                  : "border-[var(--border)] text-[var(--text-muted)]"
+                              }`}
+                            >
+                              {step.replace(/_/g, " ")}
+                            </span>
+                            {idx < STATUS_STEPS.length - 1 && (
+                              <svg className={`mx-1.5 w-3.5 h-3.5 ${isDone ? "text-[var(--text-primary)]" : "text-[var(--border)]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                              </svg>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="mt-5 flex flex-wrap items-center gap-2">
