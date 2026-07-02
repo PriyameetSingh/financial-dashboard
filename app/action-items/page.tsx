@@ -297,7 +297,17 @@ function ActionItemsContent() {
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
+    const activeFilter = STATUS_FILTERS.find((entry) => entry.id === filter) ?? STATUS_FILTERS[0];
+    const isMyTasks = activeFilter.id === "my_tasks";
+
     const results = listItems.filter((item) => {
+      if (!activeFilter.match(item.status, item)) return false;
+
+      const matchesMyTasksScope =
+        !isMyTasks ||
+        (!!user && item.status === "UNDER_REVIEW" && isDesignatedReviewer(item, user));
+      if (!matchesMyTasksScope) return false;
+
       if (trackerStatus !== "all" && item.status !== trackerStatus && filter !== "archived") return false;
       const last = lastActivityMs(item);
       const age = now - last;
@@ -324,7 +334,7 @@ function ActionItemsContent() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, trackerActivity, trackerStatus, sortBy]);
+  }, [listItems, trackerActivity, trackerStatus, sortBy, filter, user]);
 
   const now = useMemo(() => new Date(), []);
 
@@ -454,7 +464,12 @@ function ActionItemsContent() {
               {filter !== "archived" && (
                 <select
                   value={trackerStatus}
-                  onChange={(e) => setTrackerStatus(e.target.value)}
+                  onChange={(e) => {
+                    setTrackerStatus(e.target.value);
+                    if (e.target.value !== "all") {
+                      setFilter("all");
+                    }
+                  }}
                   className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
                 >
                   <option value="all">All statuses</option>
@@ -482,7 +497,10 @@ function ActionItemsContent() {
           {STATUS_FILTERS.map((entry) => (
             <button
               key={entry.id}
-              onClick={() => setFilter(entry.id)}
+              onClick={() => {
+                setFilter(entry.id);
+                setTrackerStatus("all");
+              }}
               className={`rounded-full border px-4 py-1 text-[11px] uppercase tracking-[0.3em] transition ${filter === entry.id
                 ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                 : "border-[var(--border)] text-[var(--text-muted)]"
