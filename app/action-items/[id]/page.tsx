@@ -7,7 +7,7 @@ import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { addActionItemProof, getActionItemById, updateActionItem } from "@/src/lib/services/actionItemService";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
-import { ActionItem, UserRole } from "@/types";
+import { ActionItem, UserRole, ActionItemStatus } from "@/types";
 import { hasPermission, Permission } from "@/lib/auth";
 import type { SessionUser } from "@/types";
 import { fetchDirectoryUsers } from "@/src/lib/directory-users";
@@ -15,7 +15,6 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
-import StatusTimeline from "@/src/components/ui/StatusTimeline";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const DESIGNATIONS: Record<UserRole, string> = {
@@ -24,6 +23,15 @@ const DESIGNATIONS: Record<UserRole, string> = {
   [UserRole.FA]: "Finance Advisor",
   [UserRole.TASU]: "TASU Lead",
   [UserRole.NODAL_OFFICER]: "Nodal Officer",
+};
+
+const DOT_COLORS: Record<ActionItemStatus, string> = {
+  OPEN: "var(--text-muted)",
+  IN_PROGRESS: "var(--alert-warning)",
+  PROOF_UPLOADED: "var(--alert-warning)",
+  UNDER_REVIEW: "var(--alert-warning)",
+  COMPLETED: "var(--alert-success)",
+  OVERDUE: "var(--alert-critical)",
 };
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -232,6 +240,10 @@ export default function ActionItemDetailPage() {
     });
   }, [item]);
 
+  const sortedThread = useMemo(() => {
+    return [...thread].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [thread]);
+
   if (loading) {
     return (
       <AppShell title="Action Item">
@@ -250,7 +262,7 @@ export default function ActionItemDetailPage() {
 
   return (
     <AppShell title="Action Item">
-      <div className="relative space-y-6 px-6 py-6">
+      <div className="relative space-y-6 px-6 py-6 animate-fadeIn">
         {isViewer && (
           <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
             Read-only
@@ -259,7 +271,7 @@ export default function ActionItemDetailPage() {
 
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-[var(--text-muted)]"
+          className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
         >
           <ArrowLeft size={16} /> Back to list
         </button>
@@ -270,10 +282,15 @@ export default function ActionItemDetailPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{item.schemeId}</p>
+        {/* Combined Details Card */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-[var(--text-muted)] font-semibold">
+                <span>Scheme: {item.schemeId}</span>
+                <span>•</span>
+                <span>Vertical: {item.vertical}</span>
+              </div>
 
               {/* Title */}
               {editingTitle ? (
@@ -315,7 +332,7 @@ export default function ActionItemDetailPage() {
                 </div>
               ) : (
                 <div className="mt-2 flex items-start gap-2">
-                  <h1 className="text-2xl font-semibold text-[var(--text-primary)]">{item.title}</h1>
+                  <h1 className="text-2xl font-semibold text-[var(--text-primary)] leading-tight">{item.title}</h1>
                   {canEdit && (
                     <button
                       type="button"
@@ -370,7 +387,7 @@ export default function ActionItemDetailPage() {
                 </div>
               ) : (
                 <div className="mt-2 flex items-start gap-2">
-                  <p className="text-sm text-[var(--text-muted)]">{item.description}</p>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.description}</p>
                   {canEdit && (
                     <button
                       type="button"
@@ -384,8 +401,11 @@ export default function ActionItemDetailPage() {
               )}
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              <StatusBadge status={item.status} />
+            <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <StatusBadge status={item.status} />
+              </div>
+              
               {/* Priority */}
               {editingPriority ? (
                 <div className="flex items-center gap-1.5">
@@ -428,7 +448,8 @@ export default function ActionItemDetailPage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-[var(--text-muted)] md:hidden">Priority:</span>
                   <PriorityBadge priority={item.priority} />
                   {canEdit && (
                     <button
@@ -441,371 +462,411 @@ export default function ActionItemDetailPage() {
                   )}
                 </div>
               )}
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
-            <span>Vertical: {item.vertical}</span>
-            {editingDueDate ? (
-              <span className="flex items-center gap-2">
-                <span>Due</span>
-                <input
-                  type="date"
-                  value={dueDateValue}
-                  onChange={(e) => setDueDateValue(e.target.value)}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
-                />
-                <button
-                  type="button"
-                  disabled={busy || !dueDateValue}
-                  className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
-                  onClick={async () => {
-                    if (!dueDateValue) return;
-                    setBusy(true);
-                    try {
-                      await updateActionItem(id, { dueDate: dueDateValue });
-                      await refresh();
-                      setEditingDueDate(false);
-                      setActionSuccess("Due date updated.");
-                    } catch (e: unknown) {
-                      setActionSuccess(e instanceof Error ? e.message : "Update failed");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  <Check size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
-                  onClick={() => setEditingDueDate(false)}
-                >
-                  <X size={14} />
-                </button>
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5">
-                <span>Due {item.dueDate}</span>
-                {canEdit && (
-                  <button
-                    type="button"
-                    className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    onClick={() => {
-                      setDueDateValue(item.dueDate);
-                      setEditingDueDate(true);
-                    }}
-                  >
-                    <Pencil size={13} />
-                  </button>
+
+              {/* Due Date */}
+              <div className="text-sm">
+                {editingDueDate ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-[var(--text-muted)]">Due</span>
+                    <input
+                      type="date"
+                      value={dueDateValue}
+                      onChange={(e) => setDueDateValue(e.target.value)}
+                      className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                    />
+                    <button
+                      type="button"
+                      disabled={busy || !dueDateValue}
+                      className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
+                      onClick={async () => {
+                        if (!dueDateValue) return;
+                        setBusy(true);
+                        try {
+                          await updateActionItem(id, { dueDate: dueDateValue });
+                          await refresh();
+                          setEditingDueDate(false);
+                          setActionSuccess("Due date updated.");
+                        } catch (e: unknown) {
+                          setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
+                      onClick={() => setEditingDueDate(false)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[var(--text-muted)]">Due {item.dueDate}</span>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        onClick={() => {
+                          setDueDateValue(item.dueDate);
+                          setEditingDueDate(true);
+                        }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                  </div>
                 )}
-              </span>
-            )}
-            {item.daysOverdue && item.daysOverdue > 0 && (
-              <span className="text-[var(--alert-critical)]">{item.daysOverdue} days overdue</span>
-            )}
+              </div>
+              {item.daysOverdue && item.daysOverdue > 0 ? (
+                <span className="text-xs font-semibold text-[var(--alert-critical)]">{item.daysOverdue} days overdue</span>
+              ) : null}
+            </div>
           </div>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Assigned officers</p>
-            <div className="mt-3 space-y-4">
-              {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
-                const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
-                const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
-                return (
-                  <div key={`perf-${p.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? p.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">{designation}</p>
+          <hr className="border-[var(--border)]" />
+
+          {/* Officers & Reviewers Grid */}
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)] mb-3">Assigned Officers</p>
+              <div className="space-y-3">
+                {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
+                  const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
+                  const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
+                  return (
+                    <div key={`perf-${p.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{profile?.name ?? p.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">{designation}</p>
+                      </div>
+                      {profile && <div className="shrink-0"><RoleBadge role={profile.role} /></div>}
                     </div>
-                    {profile && <RoleBadge role={profile.role} />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Reviewers</p>
-            <div className="mt-3 space-y-4">
-              {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
-                const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
-                const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
-                return (
-                  <div key={`rev-${r.id}-${idx}`} className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-4 first:border-t-0 first:pt-0">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{profile?.name ?? r.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">{designation}</p>
-                    </div>
-                    {profile && <RoleBadge role={profile.role} />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {needsProgressMeetingUi && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-              Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
-              Required when posting updates or changing status from this page.
-            </p>
-            <select
-              value={progressMeetingId}
-              onChange={(e) => setProgressMeetingId(e.target.value)}
-              className="mt-3 w-full max-w-lg rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-            >
-              <option value="">Select meeting…</option>
-              {meetings.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {formatMeetingLabel(m)}
-                </option>
-              ))}
-            </select>
-            {meetings.length === 0 && (
-              <p className="mt-2 text-xs text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
-            )}
-          </div>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Status Timeline</p>
-            <div className="mt-4">
-              <StatusTimeline updates={item.updates} />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Proof Files</p>
-              <div className="mt-4 space-y-2 text-sm text-[var(--text-muted)]">
-                {item.proofFiles.length === 0 && "No files uploaded yet."}
-                {item.proofFiles.map((file) => (
-                  <div key={file.name} className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2">
-                    <span>{file.name}</span>
-                    <a href={file.link} target="_blank" rel="noreferrer" className="text-xs text-[var(--text-primary)] underline">
-                      Open
-                    </a>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
-            {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
-              <>
-                {(item.status === "OPEN" || item.status === "OVERDUE") && (
-                  <button
-                    className="w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                    disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
-                    onClick={async () => {
-                      setBusy(true);
-                      try {
-                        await updateActionItem(id, {
-                          status: "IN_PROGRESS",
-                          note: "Marked in progress",
-                          meetingId: progressMeetingId.trim(),
-                        });
-                        await refresh();
-                        setActionSuccess("Marked as in progress.");
-                      } catch (e: unknown) {
-                        setActionSuccess(e instanceof Error ? e.message : "Update failed");
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  >
-                    Mark In Progress
-                  </button>
-                )}
-                <button
-                  className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60"
-                  disabled={busy || !progressMeetingId.trim()}
-                  onClick={() => setConfirmClose(true)}
-                >
-                  Submit
-                </button>
-              </>
-            )}
 
-            {canReviewerAct && !isViewer && (
-              <>
-                <button
-                  className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)]"
-                  onClick={() => setConfirmApprove(true)}
-                >
-                  Approve Completion
-                </button>
-                
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Rejection Comment</p>
-                  <textarea
-                    value={rejectComment}
-                    onChange={(event) => setRejectComment(event.target.value)}
-                    rows={3}
-                    className="mt-3 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                    placeholder="Reason required before reject"
-                  />
-                  <button
-                    className="mt-3 w-full rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                    onClick={() => setConfirmReject(true)}
-                    disabled={!rejectComment.trim().length}
-                  >
-                    Reject with Comment
-                  </button>
-                </div>
-              </>
-            )}
-
-            {item.status === "COMPLETED" && !isViewer && (
-              <button
-                type="button"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] transition"
-                onClick={() => setConfirmArchive(true)}
-              >
-                {item.archived ? "Unarchive Action Item" : "Archive Action Item"}
-              </button>
-            )}
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)] mb-3">Reviewers</p>
+              <div className="space-y-3">
+                {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
+                  const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
+                  const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
+                  return (
+                    <div key={`rev-${r.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{profile?.name ?? r.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">{designation}</p>
+                      </div>
+                      {profile && <div className="shrink-0"><RoleBadge role={profile.role} /></div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Updates</p>
-          {canAddManualUpdate && (
-            <div className="mt-4 space-y-3">
-              <textarea
-                value={manualUpdateText}
-                onChange={(event) => setManualUpdateText(event.target.value)}
-                rows={3}
-                disabled={busy}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-                placeholder="Add an update for this action item…"
-              />
-              <button
-                type="button"
-                className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
-                disabled={busy || !manualUpdateText.trim().length || !progressMeetingId.trim()}
-                onClick={async () => {
-                  const note = manualUpdateText.trim();
-                  if (!note || !progressMeetingId.trim()) return;
-                  setBusy(true);
-                  try {
-                    const shouldMarkInProgress = (item.status === "OPEN" || item.status === "OVERDUE") && !hasManualUpdates;
-                    await updateActionItem(id, {
-                      note,
-                      meetingId: progressMeetingId.trim(),
-                      ...(shouldMarkInProgress ? { status: "IN_PROGRESS" } : {}),
-                    });
-                    await refresh();
-                    setManualUpdateText("");
-                    setActionSuccess(shouldMarkInProgress ? "Update posted and marked In Progress." : "Update posted.");
-                  } catch (e: unknown) {
-                    setActionSuccess(e instanceof Error ? e.message : "Could not post update");
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
-                Post update
-              </button>
-            </div>
-          )}
-          <div className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
-            {thread.length === 0 && "No updates yet."}
-            {thread.map((entry) => {
-              if (entry.isSystem) {
-                return (
-                  <div key={entry.id} className="relative pl-6 py-2 border-l border-[var(--border)] ml-3">
-                    <div className="absolute -left-[5px] top-[14px] h-2 w-2 rounded-full bg-[var(--text-muted)] opacity-60" />
-                    
-                    <div className="flex items-center flex-wrap gap-2 text-xs text-[var(--text-muted)]">
-                      <span className="font-semibold">{entry.author}</span>
-                      <span>·</span>
-                      <span>{formatDateTime(entry.timestamp)}</span>
-                      <span>·</span>
-                      <span className="rounded bg-[var(--bg-card)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] border border-[var(--border)]">
-                        {entry.status.replace(/_/g, " ")}
-                      </span>
-                    </div>
-                    
-                    <div className="mt-1 text-sm text-[var(--text-secondary)] leading-relaxed italic">
-                      {entry.note}
-                    </div>
-                  </div>
-                );
-              }
+        {/* Responsive Grid Layout */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+          {/* Main Activity and Updates Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Activity & Updates</h2>
+              </div>
 
-              return (
-                <div key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-                  <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                    <span>{entry.author}</span>
-                    <span>{formatDateTime(entry.timestamp)}</span>
-                  </div>
-                  {editingUpdateId === entry.id ? (
-                    <div className="mt-2 space-y-2">
-                      <textarea
-                        value={editingUpdateNote}
-                        onChange={(e) => setEditingUpdateNote(e.target.value)}
-                        rows={3}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                      />
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={busy || !editingUpdateNote.trim()}
-                          className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
-                          onClick={async () => {
-                            if (!editingUpdateNote.trim() || !entry.id) return;
-                            setBusy(true);
-                            try {
-                              await updateActionItem(id, {
-                                updateId: entry.id,
-                                updateNote: editingUpdateNote.trim(),
-                              });
-                              await refresh();
-                              setEditingUpdateId(null);
-                              setActionSuccess("Update history edited.");
-                            } catch (e: unknown) {
-                              setActionSuccess(e instanceof Error ? e.message : "Edit failed");
-                            } finally {
-                              setBusy(false);
-                            }
-                          }}
+              {/* Composer for manual updates & progress meeting attribution */}
+              {canAddManualUpdate && (
+                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Post a Progress Update</p>
+                  <textarea
+                    value={manualUpdateText}
+                    onChange={(event) => setManualUpdateText(event.target.value)}
+                    rows={3}
+                    disabled={busy}
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
+                    placeholder="Add an update for this action item…"
+                  />
+                  
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    {needsProgressMeetingUi && (
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
+                          Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
+                        </label>
+                        <select
+                          value={progressMeetingId}
+                          onChange={(e) => setProgressMeetingId(e.target.value)}
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm"
                         >
-                          <Check size={12} /> Save
-                        </button>
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
-                          onClick={() => setEditingUpdateId(null)}
-                        >
-                          <X size={12} /> Cancel
-                        </button>
+                          <option value="">Select meeting…</option>
+                          {meetings.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {formatMeetingLabel(m)}
+                            </option>
+                          ))}
+                        </select>
+                        {meetings.length === 0 && (
+                          <p className="mt-1 text-[10px] text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex items-start justify-between gap-2">
-                      <span className="text-sm text-[var(--text-primary)]">{entry.note}</span>
-                      {canEdit && entry.id && (
-                        <button
-                          type="button"
-                          className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                          onClick={() => {
-                            setEditingUpdateId(entry.id!);
-                            setEditingUpdateNote(entry.note ?? "");
-                          }}
-                        >
-                          <Pencil size={13} />
-                        </button>
+                    )}
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50 transition hover:opacity-90 shadow-sm"
+                        disabled={busy || !manualUpdateText.trim().length || (needsProgressMeetingUi && !progressMeetingId.trim())}
+                        onClick={async () => {
+                          const note = manualUpdateText.trim();
+                          if (!note || (needsProgressMeetingUi && !progressMeetingId.trim())) return;
+                          setBusy(true);
+                          try {
+                            const shouldMarkInProgress = (item.status === "OPEN" || item.status === "OVERDUE") && !hasManualUpdates;
+                            await updateActionItem(id, {
+                              note,
+                              meetingId: progressMeetingId.trim(),
+                              ...(shouldMarkInProgress ? { status: "IN_PROGRESS" } : {}),
+                            });
+                            await refresh();
+                            setManualUpdateText("");
+                            setActionSuccess(shouldMarkInProgress ? "Update posted and marked In Progress." : "Update posted.");
+                          } catch (e: unknown) {
+                            setActionSuccess(e instanceof Error ? e.message : "Could not post update");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        Post Update
+                      </button>
+
+                      {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
+                        <>
+                          {(item.status === "OPEN" || item.status === "OVERDUE") && (
+                            <button
+                              type="button"
+                              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-primary)] shadow-sm"
+                              disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
+                              onClick={async () => {
+                                setBusy(true);
+                                try {
+                                  await updateActionItem(id, {
+                                    status: "IN_PROGRESS",
+                                    note: "Marked in progress",
+                                    meetingId: progressMeetingId.trim(),
+                                  });
+                                  await refresh();
+                                  setActionSuccess("Marked as in progress.");
+                                } catch (e: unknown) {
+                                  setActionSuccess(e instanceof Error ? e.message : "Update failed");
+                                } finally {
+                                  setBusy(false);
+                                }
+                              }}
+                            >
+                              Mark In Progress
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60 transition hover:opacity-90 shadow-sm"
+                            disabled={busy || !progressMeetingId.trim()}
+                            onClick={() => setConfirmClose(true)}
+                          >
+                            Submit
+                          </button>
+                        </>
                       )}
                     </div>
-                  )}
-                  <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{entry.status.replace(/_/g, " ")}</div>
+                  </div>
                 </div>
-              );
-            })}
+              )}
+
+              {/* Timeline showing chronological activity updates */}
+              <div className="space-y-4">
+                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Activity Log & History</p>
+                <div className="relative pl-4 border-l border-[var(--border)] ml-2 space-y-6">
+                  {sortedThread.length === 0 && (
+                    <p className="text-sm text-[var(--text-muted)] italic">No activity logged yet.</p>
+                  )}
+                  {sortedThread.map((entry) => {
+                    const dotColor = DOT_COLORS[entry.status as ActionItemStatus] ?? "var(--text-muted)";
+                    
+                    return (
+                      <div key={entry.id} className="relative group">
+                        {/* Bullet marker */}
+                        <div 
+                          className="absolute -left-[21px] top-[4px] h-2.5 w-2.5 rounded-full border bg-[var(--bg-card)] transition group-hover:scale-110 shadow-sm" 
+                          style={{ 
+                            borderColor: dotColor,
+                            backgroundColor: entry.isSystem ? 'transparent' : dotColor 
+                          }}
+                        />
+                        
+                        {/* Timestamp & Status Badge Row */}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--text-muted)]">
+                          <span className="font-semibold text-[var(--text-secondary)]">{entry.author}</span>
+                          <span>•</span>
+                          <span>{formatDateTime(entry.timestamp)}</span>
+                          <span>•</span>
+                          <span className="scale-90 origin-left">
+                            <StatusBadge status={entry.status} />
+                          </span>
+                        </div>
+
+                        {/* Content Block */}
+                        {entry.isSystem ? (
+                          <div className="mt-1 text-sm text-[var(--text-muted)] italic leading-relaxed">
+                            {entry.note}
+                          </div>
+                        ) : (
+                          <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3 shadow-sm hover:shadow transition">
+                            {editingUpdateId === entry.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editingUpdateNote}
+                                  onChange={(e) => setEditingUpdateNote(e.target.value)}
+                                  rows={3}
+                                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-inner"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={busy || !editingUpdateNote.trim()}
+                                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50 shadow-sm"
+                                    onClick={async () => {
+                                      if (!editingUpdateNote.trim() || !entry.id) return;
+                                      setBusy(true);
+                                      try {
+                                        await updateActionItem(id, {
+                                          updateId: entry.id,
+                                          updateNote: editingUpdateNote.trim(),
+                                        });
+                                        await refresh();
+                                        setEditingUpdateId(null);
+                                        setActionSuccess("Update history edited.");
+                                      } catch (e: unknown) {
+                                        setActionSuccess(e instanceof Error ? e.message : "Edit failed");
+                                      } finally {
+                                        setBusy(false);
+                                      }
+                                    }}
+                                  >
+                                    <Check size={12} /> Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                                    onClick={() => setEditingUpdateId(null)}
+                                  >
+                                    <X size={12} /> Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start justify-between gap-4">
+                                <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">{entry.note}</p>
+                                {canEdit && entry.id && (
+                                  <button
+                                    type="button"
+                                    className="shrink-0 rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition"
+                                    onClick={() => {
+                                      setEditingUpdateId(entry.id!);
+                                      setEditingUpdateNote(entry.note ?? "");
+                                    }}
+                                  >
+                                    <Pencil size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="space-y-6">
+            {/* Proof Files Card */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Proof Files</p>
+              <div className="space-y-2">
+                {item.proofFiles.length === 0 ? (
+                  <p className="text-sm text-[var(--text-muted)] italic">No files uploaded yet.</p>
+                ) : (
+                  item.proofFiles.map((file) => (
+                    <div key={file.name} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm shadow-sm hover:shadow transition">
+                      <span className="font-medium text-[var(--text-primary)] truncate max-w-[160px]" title={file.name}>{file.name}</span>
+                      <a 
+                        href={file.link} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="shrink-0 text-xs text-[var(--text-primary)] underline hover:text-[var(--text-secondary)] font-semibold transition"
+                      >
+                        Open
+                      </a>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Reviewer / Admin Actions Card */}
+            {((canReviewerAct && !isViewer) || (item.status === "COMPLETED" && !isViewer)) && (
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
+                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Reviewer & Admin Actions</p>
+                
+                {canReviewerAct && !isViewer && (
+                  <div className="space-y-4">
+                    <button
+                      className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] transition hover:opacity-90 shadow-sm"
+                      onClick={() => setConfirmApprove(true)}
+                    >
+                      Approve Completion
+                    </button>
+                    
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-3 space-y-3 shadow-inner">
+                      <label className="block text-xs font-semibold text-[var(--text-muted)]">Rejection Comment</label>
+                      <textarea
+                        value={rejectComment}
+                        onChange={(event) => setRejectComment(event.target.value)}
+                        rows={3}
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
+                        placeholder="Reason required before reject..."
+                      />
+                      <button
+                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-primary)] shadow-sm"
+                        onClick={() => setConfirmReject(true)}
+                        disabled={!rejectComment.trim().length}
+                      >
+                        Reject with Comment
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {item.status === "COMPLETED" && !isViewer && (
+                  <button
+                    type="button"
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] hover:bg-[var(--bg-card)] transition shadow-sm"
+                    onClick={() => setConfirmArchive(true)}
+                  >
+                    {item.archived ? "Unarchive Action Item" : "Archive Action Item"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
