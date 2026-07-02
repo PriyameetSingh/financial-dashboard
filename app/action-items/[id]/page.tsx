@@ -582,45 +582,46 @@ export default function ActionItemDetailPage() {
 
               {/* Composer for manual updates & progress meeting attribution */}
               {canAddManualUpdate && (
-                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Post a Progress Update</p>
-                  <textarea
-                    value={manualUpdateText}
-                    onChange={(event) => setManualUpdateText(event.target.value)}
-                    rows={3}
-                    disabled={busy}
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
-                    placeholder="Add an update for this action item…"
-                  />
-                  
-                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    {needsProgressMeetingUi && (
-                      <div className="flex-1 min-w-[200px]">
-                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
-                          Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
-                        </label>
-                        <select
-                          value={progressMeetingId}
-                          onChange={(e) => setProgressMeetingId(e.target.value)}
-                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm"
-                        >
-                          <option value="">Select meeting…</option>
-                          {meetings.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {formatMeetingLabel(m)}
-                            </option>
-                          ))}
-                        </select>
-                        {meetings.length === 0 && (
-                          <p className="mt-1 text-[10px] text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
-                        )}
-                      </div>
-                    )}
+                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm">
+                  {/* Part 1: Progress Update Note */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Add Progress Note</p>
+                    <textarea
+                      value={manualUpdateText}
+                      onChange={(event) => setManualUpdateText(event.target.value)}
+                      rows={3}
+                      disabled={busy}
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
+                      placeholder="Add an update for this action item…"
+                    />
                     
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {needsProgressMeetingUi && (
+                        <div className="flex-1 min-w-[200px]">
+                          <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
+                            Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
+                          </label>
+                          <select
+                            value={progressMeetingId}
+                            onChange={(e) => setProgressMeetingId(e.target.value)}
+                            className="w-full max-w-xs rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-sm text-[var(--text-primary)] shadow-sm"
+                          >
+                            <option value="">Select meeting…</option>
+                            {meetings.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {formatMeetingLabel(m)}
+                              </option>
+                            ))}
+                          </select>
+                          {meetings.length === 0 && (
+                            <p className="mt-1 text-[10px] text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
+                          )}
+                        </div>
+                      )}
+                      
                       <button
                         type="button"
-                        className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50 transition hover:opacity-90 shadow-sm"
+                        className="sm:self-end rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50 transition hover:opacity-90 shadow-sm"
                         disabled={busy || !manualUpdateText.trim().length || (needsProgressMeetingUi && !progressMeetingId.trim())}
                         onClick={async () => {
                           const note = manualUpdateText.trim();
@@ -645,13 +646,28 @@ export default function ActionItemDetailPage() {
                       >
                         Post Update
                       </button>
+                    </div>
+                  </div>
 
-                      {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
-                        <>
+                  {/* Part 2: Task Status Actions (Submit for Review / Mark In Progress) */}
+                  {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
+                    <div className="pt-4 border-t border-[var(--border)] space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Status Actions</p>
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--border)]">
+                        <div className="text-xs text-[var(--text-muted)] max-w-md">
+                          {item.status === "IN_PROGRESS" ? (
+                            "Ready to finish this task? Click submit to send it to the reviewer for final approval and completion."
+                          ) : (
+                            "Start working on this task by marking it In Progress, or submit directly if complete."
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2">
                           {(item.status === "OPEN" || item.status === "OVERDUE") && (
                             <button
                               type="button"
-                              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-primary)] shadow-sm"
+                              className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-card)] shadow-sm"
                               disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
                               onClick={async () => {
                                 setBusy(true);
@@ -679,12 +695,12 @@ export default function ActionItemDetailPage() {
                             disabled={busy || !progressMeetingId.trim()}
                             onClick={() => setConfirmClose(true)}
                           >
-                            Submit
+                            Submit for Review & Completion
                           </button>
-                        </>
-                      )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
