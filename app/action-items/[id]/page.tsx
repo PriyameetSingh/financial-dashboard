@@ -796,11 +796,11 @@ export default function ActionItemDetailPage() {
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  {(item.status === "OPEN" || item.status === "OVERDUE") && (
+                  {(item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
                     <button
                       type="button"
                       className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-card)] shadow-sm"
-                      disabled={busy || !progressMeetingId.trim() || hasManualUpdates}
+                      disabled={item.status === "IN_PROGRESS" ? true : (busy || !progressMeetingId.trim() || hasManualUpdates)}
                       onClick={async () => {
                         setBusy(true);
                         try {
@@ -818,7 +818,7 @@ export default function ActionItemDetailPage() {
                         }
                       }}
                     >
-                      Mark In Progress
+                      {item.status === "IN_PROGRESS" ? "In Progress" : "Mark In Progress"}
                     </button>
                   )}
                   
