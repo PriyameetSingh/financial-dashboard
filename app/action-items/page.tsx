@@ -153,7 +153,7 @@ function ActionItemsContent() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
-  
+
 
   const pickAnotherUserId = (exclude: string) => directoryUsers.find((u) => u.id !== exclude)?.id ?? "";
 
@@ -361,7 +361,7 @@ function ActionItemsContent() {
       return due >= now && due <= week;
     }).length;
     return { total, overdue, dueThisWeek, completed };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, now, user, canViewAllItems]);
 
   const verticalOptions = useMemo(
@@ -413,11 +413,10 @@ function ActionItemsContent() {
                   setPageTab("list");
                   setSortBy("meeting");
                 }}
-                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${
-                  pageTab === "list"
+                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${pageTab === "list"
                     ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                     : "border-[var(--border)] text-[var(--text-muted)]"
-                }`}
+                  }`}
               >
                 List
               </button>
@@ -427,11 +426,10 @@ function ActionItemsContent() {
                   setPageTab("tracker");
                   setSortBy("latest_updates");
                 }}
-                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${
-                  pageTab === "tracker"
+                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${pageTab === "tracker"
                     ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                     : "border-[var(--border)] text-[var(--text-muted)]"
-                }`}
+                  }`}
               >
                 Decision tracker
               </button>
@@ -512,65 +510,65 @@ function ActionItemsContent() {
         </div>
 
         {pageTab === "list" && (
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by scheme or title"
-            className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-          />
-          <select
-            value={verticalFilter}
-            onChange={(event) => setVerticalFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-          >
-            {verticalOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "Vertical" : option}
-              </option>
-            ))}
-          </select>
-          <SearchableUserSelector
-            users={directoryUsers}
-            value={assigneeFilter}
-            onChange={(val) => setAssigneeFilter(val)}
-            label=""
-            placeholder="Assigned to"
-            showAllOption={true}
-            allOptionLabel="Assigned to"
-            className="w-[220px]"
-          />
-          <select
-            value={priorityFilter}
-            onChange={(event) => setPriorityFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-          >
-            {priorityOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "Priority" : option}
-              </option>
-            ))}
-          </select>
-          <select
-            value={dueFilter}
-            onChange={(event) => setDueFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-          >
-            <option value="all">Due Date</option>
-            <option value="week">Due this week</option>
-            <option value="month">Due this month</option>
-            <option value="overdue">Overdue</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-          >
-            <option value="meeting">Meeting wise</option>
-            <option value="date">Date wise</option>
-            <option value="latest_updates">Latest updates</option>
-          </select>
-        </div>
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by scheme or title"
+              className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            />
+            <select
+              value={verticalFilter}
+              onChange={(event) => setVerticalFilter(event.target.value)}
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+            >
+              {verticalOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option === "all" ? "Vertical" : option}
+                </option>
+              ))}
+            </select>
+            <SearchableUserSelector
+              users={directoryUsers}
+              value={assigneeFilter}
+              onChange={(val) => setAssigneeFilter(val)}
+              label=""
+              placeholder="Assigned to"
+              showAllOption={true}
+              allOptionLabel="Assigned to"
+              className="w-[220px]"
+            />
+            <select
+              value={priorityFilter}
+              onChange={(event) => setPriorityFilter(event.target.value)}
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+            >
+              {priorityOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option === "all" ? "Priority" : option}
+                </option>
+              ))}
+            </select>
+            <select
+              value={dueFilter}
+              onChange={(event) => setDueFilter(event.target.value)}
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+            >
+              <option value="all">Due Date</option>
+              <option value="week">Due this week</option>
+              <option value="month">Due this month</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            >
+              <option value="meeting">Meeting wise</option>
+              <option value="date">Date wise</option>
+              <option value="latest_updates">Latest updates</option>
+            </select>
+          </div>
         )}
 
         {pageTab === "list" && showStats && (
@@ -611,7 +609,7 @@ function ActionItemsContent() {
                   className={`relative rounded-2xl border p-5 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
                 >
                   {/* <div className={`absolute left-0 top-0 h-full w-1 ${PRIORITY_COLORS[item.priority] ?? "bg-[var(--border)]"}`} /> */}
-                  
+
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -650,13 +648,12 @@ function ActionItemsContent() {
                             return (
                               <div key={step} className="flex items-center">
                                 <span
-                                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none ${
-                                    isCurrent
+                                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none ${isCurrent
                                       ? "border-[var(--alert-warning)] bg-[rgba(255,184,0,0.12)] text-[var(--alert-warning)]"
                                       : isDone
-                                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
-                                      : "border-[var(--border)] text-[var(--text-muted)]"
-                                  }`}
+                                        ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
+                                        : "border-[var(--border)] text-[var(--text-muted)]"
+                                    }`}
                                 >
                                   {step.replace(/_/g, " ")}
                                 </span>
@@ -733,33 +730,33 @@ function ActionItemsContent() {
                       !isViewer &&
                       item.status === "UNDER_REVIEW" &&
                       isDesignatedReviewer(item, user) && (
-                      <>
-                        <button
-                          type="button"
-                          className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setActionError(null);
-                            setConfirmApprove(true);
-                          }}
-                        >
-                          Approve
-                        </button>
-                        <button
-                        type="button"
-                        className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
-                        onClick={() => {
-                          setSelectedItem(item);
-                          setRejectComment("");
-                          setActionError(null);
-                          setConfirmReject(true);
-                        }}
-                      >
-                        Reject
-                      </button>
-                        
-                      </>
-                    )}
+                        <>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                            onClick={() => {
+                              setSelectedItem(item);
+                              setActionError(null);
+                              setConfirmApprove(true);
+                            }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+                            onClick={() => {
+                              setSelectedItem(item);
+                              setRejectComment("");
+                              setActionError(null);
+                              setConfirmReject(true);
+                            }}
+                          >
+                            Reject
+                          </button>
+
+                        </>
+                      )}
                     {canDeleteActionItems && (
                       <button
                         type="button"
@@ -868,7 +865,7 @@ function ActionItemsContent() {
                       className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
                     >
                       View full details
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
                     </Link>
                     {item.status === "COMPLETED" && (
                       <button
@@ -1074,303 +1071,303 @@ function ActionItemsContent() {
         </div>
       )}
       {confirmApprove && selectedItem && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-            Confirm Approval
-          </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+              Confirm Approval
+            </h3>
 
-          <p className="mt-2 text-sm text-[var(--text-muted)]">
-            Are you sure you want to approve &ldquo;{selectedItem.title}&rdquo;?
-          </p>
-
-          {actionError && (
-            <p className="mt-3 text-sm text-[var(--alert-critical)]">
-              {actionError}
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Are you sure you want to approve &ldquo;{selectedItem.title}&rdquo;?
             </p>
-          )}
 
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
-              disabled={actionBusy}
-              onClick={() => {
-                setConfirmApprove(false);
-                setSelectedItem(null);
-              }}
-            >
-              Cancel
-            </button>
+            {actionError && (
+              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+                {actionError}
+              </p>
+            )}
 
-            <button
-              type="button"
-              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              disabled={actionBusy}
-              onClick={async () => {
-                if (!selectedItem) return;
-
-                setActionBusy(true);
-                setActionError(null);
-
-                try {
-                  const updated = await updateActionItem(selectedItem.id, {
-                    status: "COMPLETED",
-                  });
-
-                  setItems((prev) =>
-                    prev.map((row) =>
-                      row.id === updated.id ? updated : row
-                    )
-                  );
-
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                disabled={actionBusy}
+                onClick={() => {
                   setConfirmApprove(false);
                   setSelectedItem(null);
-                } catch (e: unknown) {
-                  setActionError(
-                    e instanceof Error ? e.message : "Approval failed"
-                  );
-                } finally {
-                  setActionBusy(false);
-                }
-              }}
-            >
-              {actionBusy ? "Approving..." : "Approve"}
-            </button>
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={actionBusy}
+                onClick={async () => {
+                  if (!selectedItem) return;
+
+                  setActionBusy(true);
+                  setActionError(null);
+
+                  try {
+                    const updated = await updateActionItem(selectedItem.id, {
+                      status: "COMPLETED",
+                    });
+
+                    setItems((prev) =>
+                      prev.map((row) =>
+                        row.id === updated.id ? updated : row
+                      )
+                    );
+
+                    setConfirmApprove(false);
+                    setSelectedItem(null);
+                  } catch (e: unknown) {
+                    setActionError(
+                      e instanceof Error ? e.message : "Approval failed"
+                    );
+                  } finally {
+                    setActionBusy(false);
+                  }
+                }}
+              >
+                {actionBusy ? "Approving..." : "Approve"}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-    {confirmReject && selectedItem && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-        Reject Action Item
-      </h3>
-
-      <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Please provide rejection remarks for
-        {" "}
-        &ldquo;{selectedItem.title}&rdquo;.
-      </p>
-
-      <textarea
-        value={rejectComment}
-        onChange={(e) => setRejectComment(e.target.value)}
-        rows={4}
-        placeholder="Enter rejection remarks..."
-        className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-red-500"
-      />
-
-      {actionError && (
-        <p className="mt-3 text-sm text-[var(--alert-critical)]">
-          {actionError}
-        </p>
       )}
+      {confirmReject && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+              Reject Action Item
+            </h3>
 
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
-          disabled={actionBusy}
-          onClick={() => {
-            setConfirmReject(false);
-            setSelectedItem(null);
-            setRejectComment("");
-          }}
-        >
-          Cancel
-        </button>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Please provide rejection remarks for
+              {" "}
+              &ldquo;{selectedItem.title}&rdquo;.
+            </p>
 
-        <button
-          type="button"
-          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          disabled={actionBusy || !rejectComment.trim()}
-          onClick={async () => {
-            if (!selectedItem) return;
+            <textarea
+              value={rejectComment}
+              onChange={(e) => setRejectComment(e.target.value)}
+              rows={4}
+              placeholder="Enter rejection remarks..."
+              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-red-500"
+            />
 
-            setActionBusy(true);
-            setActionError(null);
+            {actionError && (
+              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+                {actionError}
+              </p>
+            )}
 
-            try {
-              const updated = await updateActionItem(selectedItem.id, {
-              status: "IN_PROGRESS",
-              rejectionReason: rejectComment.trim(),  // ← was rejectionComment
-            });
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                disabled={actionBusy}
+                onClick={() => {
+                  setConfirmReject(false);
+                  setSelectedItem(null);
+                  setRejectComment("");
+                }}
+              >
+                Cancel
+              </button>
 
-              setItems((prev) =>
-                prev.map((row) =>
-                  row.id === updated.id ? updated : row
-                )
-              );
+              <button
+                type="button"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={actionBusy || !rejectComment.trim()}
+                onClick={async () => {
+                  if (!selectedItem) return;
 
-              setConfirmReject(false);
-              setSelectedItem(null);
-              setRejectComment("");
-            } catch (e: unknown) {
-              setActionError(
-                e instanceof Error ? e.message : "Reject failed"
-              );
-            } finally {
-              setActionBusy(false);
-            }
-          }}
-        >
-          {actionBusy ? "Rejecting..." : "Reject"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                  setActionBusy(true);
+                  setActionError(null);
 
-{confirmDelete && selectedItem && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-        Confirm Delete
-      </h3>
+                  try {
+                    const updated = await updateActionItem(selectedItem.id, {
+                      status: "IN_PROGRESS",
+                      rejectionReason: rejectComment.trim(),  // ← was rejectionComment
+                    });
 
-      <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Are you sure you want to delete &ldquo;{selectedItem.title}&rdquo;? This action cannot be undone.
-      </p>
+                    setItems((prev) =>
+                      prev.map((row) =>
+                        row.id === updated.id ? updated : row
+                      )
+                    );
 
-      {deleteError && (
-        <p className="mt-3 text-sm text-[var(--alert-critical)]">
-          {deleteError}
-        </p>
-      )}
-
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
-          disabled={deleteBusy}
-          onClick={() => {
-            setConfirmDelete(false);
-            setSelectedItem(null);
-          }}
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          disabled={deleteBusy}
-          onClick={async () => {
-            if (!selectedItem) return;
-
-            setDeleteBusy(true);
-            setDeleteError(null);
-
-            try {
-              await deleteActionItem(selectedItem.id);
-
-              setItems((prev) =>
-                prev.filter((row) => row.id !== selectedItem.id)
-              );
-
-              setConfirmDelete(false);
-              setSelectedItem(null);
-            } catch (e: unknown) {
-              setDeleteError(
-                e instanceof Error ? e.message : "Delete failed"
-              );
-            } finally {
-              setDeleteBusy(false);
-            }
-          }}
-        >
-          {deleteBusy ? "Deleting..." : "Delete"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-{confirmArchive && selectedItem && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-        {selectedItem.archived ? "Confirm Unarchive" : "Confirm Archive"}
-      </h3>
-
-      <p className="mt-2 text-sm text-[var(--text-muted)]">
-        {selectedItem.archived
-          ? `Are you sure you want to unarchive "${selectedItem.title}"?`
-          : `Are you sure you want to archive "${selectedItem.title}"?`}
-      </p>
-
-      {actionError && (
-        <p className="mt-3 text-sm text-[var(--alert-critical)]">
-          {actionError}
-        </p>
-      )}
-
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
-          disabled={actionBusy}
-          onClick={() => {
-            setConfirmArchive(false);
-            setSelectedItem(null);
-          }}
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
-          disabled={actionBusy}
-          onClick={async () => {
-            if (!selectedItem) return;
-
-            setActionBusy(true);
-            setActionError(null);
-
-            try {
-              const nextArchived = !selectedItem.archived;
-              const updated = await updateActionItem(selectedItem.id, {
-                archived: nextArchived,
-              });
-
-              if (nextArchived) {
-                setItems((prev) => prev.filter((row) => row.id !== updated.id));
-                setArchivedItems((prev) => {
-                  if (prev.some((row) => row.id === updated.id)) {
-                    return prev.map((row) => row.id === updated.id ? updated : row);
+                    setConfirmReject(false);
+                    setSelectedItem(null);
+                    setRejectComment("");
+                  } catch (e: unknown) {
+                    setActionError(
+                      e instanceof Error ? e.message : "Reject failed"
+                    );
+                  } finally {
+                    setActionBusy(false);
                   }
-                  return [...prev, updated];
-                });
-              } else {
-                setArchivedItems((prev) => prev.filter((row) => row.id !== updated.id));
-                setItems((prev) => {
-                  if (prev.some((row) => row.id === updated.id)) {
-                    return prev.map((row) => row.id === updated.id ? updated : row);
-                  }
-                  return [...prev, updated];
-                });
-              }
+                }}
+              >
+                {actionBusy ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              setConfirmArchive(false);
-              setSelectedItem(null);
-            } catch (e: unknown) {
-              setActionError(
-                e instanceof Error ? e.message : "Archiving failed"
-              );
-            } finally {
-              setActionBusy(false);
-            }
-          }}
-        >
-          {actionBusy ? "Saving..." : (selectedItem.archived ? "Unarchive" : "Archive")}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {confirmDelete && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+              Confirm Delete
+            </h3>
+
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Are you sure you want to delete &ldquo;{selectedItem.title}&rdquo;? This action cannot be undone.
+            </p>
+
+            {deleteError && (
+              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                disabled={deleteBusy}
+                onClick={() => {
+                  setConfirmDelete(false);
+                  setSelectedItem(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={deleteBusy}
+                onClick={async () => {
+                  if (!selectedItem) return;
+
+                  setDeleteBusy(true);
+                  setDeleteError(null);
+
+                  try {
+                    await deleteActionItem(selectedItem.id);
+
+                    setItems((prev) =>
+                      prev.filter((row) => row.id !== selectedItem.id)
+                    );
+
+                    setConfirmDelete(false);
+                    setSelectedItem(null);
+                  } catch (e: unknown) {
+                    setDeleteError(
+                      e instanceof Error ? e.message : "Delete failed"
+                    );
+                  } finally {
+                    setDeleteBusy(false);
+                  }
+                }}
+              >
+                {deleteBusy ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmArchive && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+              {selectedItem.archived ? "Confirm Unarchive" : "Confirm Archive"}
+            </h3>
+
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              {selectedItem.archived
+                ? `Are you sure you want to unarchive "${selectedItem.title}"?`
+                : `Are you sure you want to archive "${selectedItem.title}"?`}
+            </p>
+
+            {actionError && (
+              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+                {actionError}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                disabled={actionBusy}
+                onClick={() => {
+                  setConfirmArchive(false);
+                  setSelectedItem(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                disabled={actionBusy}
+                onClick={async () => {
+                  if (!selectedItem) return;
+
+                  setActionBusy(true);
+                  setActionError(null);
+
+                  try {
+                    const nextArchived = !selectedItem.archived;
+                    const updated = await updateActionItem(selectedItem.id, {
+                      archived: nextArchived,
+                    });
+
+                    if (nextArchived) {
+                      setItems((prev) => prev.filter((row) => row.id !== updated.id));
+                      setArchivedItems((prev) => {
+                        if (prev.some((row) => row.id === updated.id)) {
+                          return prev.map((row) => row.id === updated.id ? updated : row);
+                        }
+                        return [...prev, updated];
+                      });
+                    } else {
+                      setArchivedItems((prev) => prev.filter((row) => row.id !== updated.id));
+                      setItems((prev) => {
+                        if (prev.some((row) => row.id === updated.id)) {
+                          return prev.map((row) => row.id === updated.id ? updated : row);
+                        }
+                        return [...prev, updated];
+                      });
+                    }
+
+                    setConfirmArchive(false);
+                    setSelectedItem(null);
+                  } catch (e: unknown) {
+                    setActionError(
+                      e instanceof Error ? e.message : "Archiving failed"
+                    );
+                  } finally {
+                    setActionBusy(false);
+                  }
+                }}
+              >
+                {actionBusy ? "Saving..." : (selectedItem.archived ? "Unarchive" : "Archive")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </AppShell>
   );

@@ -86,6 +86,18 @@ export default function AdminOverviewPage() {
           )}
           {showSystemSettings && (
             <Link
+              href="/admin/agents"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Agents</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">AI & Rules Monitors</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                Configure automated scheduled runs to analyze progress since last review meeting.
+              </p>
+            </Link>
+          )}
+          {showSystemSettings && (
+            <Link
               href="/admin/system"
               className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
             >

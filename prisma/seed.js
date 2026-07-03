@@ -282,6 +282,22 @@ async function main() {
   }
 
   console.log("Releases seeded successfully!");
+
+  console.log("Seeding default AgentConfig...");
+  const existingConfig = await prisma.agentConfig.findFirst();
+  if (!existingConfig) {
+    await prisma.agentConfig.create({
+      data: {
+        id: "d3b07384-d113-43cf-a5a5-4828f306d860",
+        enabled: true,
+        runDay: "Monday",
+        mode: "BOTH"
+      }
+    });
+    console.log("Default AgentConfig seeded successfully!");
+  } else {
+    console.log("AgentConfig already exists, skipping seeding.");
+  }
 }
 
 main()

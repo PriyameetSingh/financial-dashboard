@@ -625,7 +625,7 @@ function CommandCentreContent({ setActive }: Props) {
           </div>
         )}
 
-        {/* <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <AiAlertsCard />
 
           <div
@@ -685,7 +685,7 @@ function CommandCentreContent({ setActive }: Props) {
               </div>
             ))}
           </div>
-        </div> */}
+        </div>
 
         {!dashLoading && dashboard && (
           <div

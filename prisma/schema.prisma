@@ -903,3 +903,26 @@ model UserSeenRelease {
   @@id([userId, releaseId])
   @@map("user_seen_releases")
 }
+
+model AgentConfig {
+  id        String   @id @default(uuid()) @db.Uuid
+  enabled   Boolean  @default(true)
+  runDay    String   @default("Monday") // Monday, Tuesday, etc.
+  mode      String   @default("BOTH")   // RULE_BASED, LLM_BASED, BOTH
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("agent_configs")
+}
+
+model AgentInsight {
+  id        String   @id @default(uuid()) @db.Uuid
+  runDate   DateTime @default(now())
+  modeUsed  String   // RULE_BASED, LLM_BASED, BOTH
+  status    String   // SUCCESS, FAILED
+  insights  Json     // Array of: { title: string, body: string }
+  errorLog  String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("agent_insights")
+}
