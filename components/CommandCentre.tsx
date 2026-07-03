@@ -28,6 +28,7 @@ import { PendingApprovalSummary } from "@/types";
 import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
 import CommandCentreSparkLine from "@/components/command-centre/CommandCentreSparkLine";
 import SchemeModal from "@/components/schemes/SchemeModal";
+import type { ProgressCard } from "@/lib/agent-runner";
 
 /** Mock rows for “What changed since last meeting” (AI-style summary cards). */
 const MOCK_WHAT_CHANGED_SINCE_LAST_MEETING = [
@@ -100,6 +101,23 @@ function pctTrendFromValue(pct: number): number[] {
 function formatMeetingDate(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(d);
+}
+
+function formatRelativeTime(isoString: string) {
+  try {
+    const runDate = new Date(isoString);
+    const diffMs = Date.now() - runDate.getTime();
+    const diffMin = Math.floor(diffMs / (60 * 1000));
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffMin < 1) return "just now";
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    return `${diffDay}d ago`;
+  } catch {
+    return "";
+  }
 }
 
 /** IFMS “as on” line: `As on 26.12.2025` from `YYYY-MM-DD`. */
@@ -227,6 +245,31 @@ function CommandCentreContent({ setActive }: Props) {
     verticalName: string;
   } | null>(null);
   const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
+  const [agentInsight, setAgentInsight] = useState<any>(null);
+  const [agentInsightLoading, setAgentInsightLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const res = await fetch("/hudd-dashboard/api/v1/dashboard/ai-alerts", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load agent insights");
+        const data = await res.json();
+        if (active) {
+          setAgentInsight(data.latestInsight);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (active) {
+          setAgentInsightLoading(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -586,47 +629,86 @@ function CommandCentreContent({ setActive }: Props) {
                     What changed since last meeting
                   </h3>
                   <p className="mt-1 text-[10px] leading-snug text-[var(--text-muted)]">
-                    Key changes from 1st (FY 2026–27) → 2nd (FY 2026–27) Review Meeting (AI-generated insights)
+                    {agentInsightLoading ? (
+                      "Loading progress reports..."
+                    ) : agentInsight ? (
+                      `Key changes since last review meeting · Last report generated: ${formatRelativeTime(agentInsight.runDate)}`
+                    ) : (
+                      "No progress reports generated yet. Configure the monitor agent in Admin Settings."
+                    )}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {MOCK_WHAT_CHANGED_SINCE_LAST_MEETING.map((item) => {
-                  const positive = item.tone === "positive";
-                  const TrendIcon = positive ? TrendingUp : TrendingDown;
-                  const statusColor = positive ? FP.green : FP.red;
-                  return (
+                {agentInsightLoading ? (
+                  Array.from({ length: 6 }).map((_, idx) => (
                     <div
-                      key={item.id}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-                    >
-                      <div className="mb-2 flex items-start gap-2">
-                        <TrendIcon
-                          className="mt-0.5 h-4 w-4 shrink-0"
+                      key={idx}
+                      className="min-h-[100px] animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
+                    />
+                  ))
+                ) : !agentInsight || !agentInsight.insights || agentInsight.insights.length === 0 ? (
+                  <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-dashed border-[var(--border)] p-8 text-center text-xs text-[var(--text-muted)]">
+                    No active agent monitoring report is available. Contact administrative officers to trigger a progress report run.
+                  </div>
+                ) : (
+                  (agentInsight.insights as ProgressCard[]).map((item) => {
+                    const positive = item.tone === "positive";
+                    const TrendIcon = positive ? TrendingUp : TrendingDown;
+                    const statusColor = positive ? FP.green : FP.red;
+                    const cardContent = (
+                      <>
+                        <div className="mb-2 flex items-start gap-2">
+                          <TrendIcon
+                            className="mt-0.5 h-4 w-4 shrink-0"
+                            style={{ color: statusColor }}
+                            aria-hidden
+                          />
+                          <span className="text-xs font-semibold leading-snug text-[var(--text-primary)]">
+                            {item.title}
+                          </span>
+                        </div>
+                        <p
+                          className="text-xs font-semibold leading-snug"
                           style={{ color: statusColor }}
-                          aria-hidden
-                        />
-                        <span className="text-xs font-semibold leading-snug text-[var(--text-primary)]">
-                          {item.title}
-                        </span>
-                      </div>
-                      <p
-                        className="text-xs font-semibold leading-snug"
-                        style={{ color: statusColor }}
+                        >
+                          {item.status}
+                        </p>
+                        <p className="mt-1.5 text-[10px] leading-snug text-[var(--text-muted)]">
+                          {item.description}
+                        </p>
+                      </>
+                    );
+
+                    if (item.href) {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => router.push(item.href!)}
+                          className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5 text-left transition hover:border-[var(--border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--border-strong)] w-full block"
+                        >
+                          {cardContent}
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
                       >
-                        {item.status}
-                      </p>
-                      <p className="mt-1.5 text-[10px] leading-snug text-[var(--text-muted)]">{item.description}</p>
-                    </div>
-                  );
-                })}
+                        {cardContent}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
         )}
 
         <div className="flex flex-col gap-4">
-          <AiAlertsCard />
 
           <div
             style={{

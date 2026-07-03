@@ -69,38 +69,13 @@ export default function AiAlertsCard({ className = "" }: { className?: string })
       style={{ borderStyle: "solid" }}
     >
       {/* Header */}
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Progress Monitor</span>
-          {insight && (
-            <span className="text-[9px] text-[var(--text-muted)] font-normal italic">
-              ({formatRelativeTime(insight.runDate)})
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {isAdmin && (
-            <Link
-              href="/admin/agents"
-              title="Configure Monitor Agent"
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
-            >
-              <Settings className="h-3.5 w-3.5" />
-            </Link>
-          )}
-          <button
-            onClick={() => void fetchLatestInsight()}
-            disabled={loading}
-            title="Refresh Insights"
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-          </button>
-          <span className="flex items-center gap-1 rounded-full border border-[var(--border)] px-2 py-0.5 text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
-            <Sparkles className="h-3 w-3 text-amber-500" />
-            Active
+      <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-[var(--border)] pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-primary)]">Progress Monitor</span>
+        {insight && (
+          <span className="text-[9.5px] font-medium text-[var(--text-muted)]">
+            Last report generated: {formatRelativeTime(insight.runDate)}
           </span>
-        </div>
+        )}
       </div>
 
       {/* Content */}

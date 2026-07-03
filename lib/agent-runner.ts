@@ -66,9 +66,13 @@ async function getTotalsForSnapshotDate(fyId: string, asOfDate: Date) {
   );
 }
 
-export type AgentAlert = {
+export type ProgressCard = {
+  id: string;
   title: string;
-  body: string;
+  status: string;
+  description: string;
+  tone: "positive" | "negative";
+  href?: string;
 };
 
 export async function runAgentWorkflow(modeOverride?: string): Promise<{ success: boolean; insightId?: string; error?: string }> {
@@ -171,23 +175,23 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
       }
     });
 
-    // 8. Generate insights based on mode
-    let insights: AgentAlert[] = [];
+    // 8. Construct Grid Cards
+    const cards: ProgressCard[] = [];
 
-    if (mode === "RULE_BASED" || mode === "BOTH") {
-      insights = getRuleBasedInsights({
-        baselineDateStr,
-        currentDateStr,
-        deltaIfms,
-        deltaSo,
-        completedActionsCount,
-        overdueActionsCount,
-        kpiApprovedCount,
-        kpiSubmittedCount
-      });
-    }
+    // Card 1: Overdue Actions (Mandatory)
+    cards.push({
+      id: "overdue_actions",
+      title: "Overdue Actions",
+      status: `${overdueActionsCount} new / ${currentOverdueCount} total`,
+      description: `${overdueActionsCount} action items became overdue this week. Click to review.`,
+      tone: overdueActionsCount > 0 ? "negative" : "positive",
+      href: "/action-items?due=overdue"
+    });
 
-    if (mode === "LLM_BASED" || (mode === "BOTH" && insights.length === 0)) {
+    // Cards 2 & 3: AI Insights / Alerts
+    let aiInsights: Array<{ title: string; status: string; description: string; tone: "positive" | "negative" }> = [];
+
+    if (mode === "LLM_BASED" || mode === "BOTH") {
       try {
         const prompt = `
           Analyze this HUDD progress data since the last review meeting held on ${baselineDateStr} (baseline snapshot date: ${baselineDateStr}, current snapshot date: ${currentDateStr}):
@@ -206,13 +210,17 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
           - Approved Submissions: ${kpiApprovedCount} reviewed and approved since last meeting.
           - New Pending Submissions: ${kpiSubmittedCount} submitted and awaiting review since last meeting.
 
-          Generate exactly 2 high-level administrative alerts.
-          Keep titles to 2-3 words. Keep body descriptions strictly under 18 words.
-          Focus on changes since the last meeting (e.g., expenditure growth, action completion rates, KPI clearances).
+          Generate exactly 2 high-level administrative insights/alerts for the HUDD leadership.
+          For each insight, return:
+          - a short title (2-3 words, e.g., "Utilisation pace" or "Cabinet note approvals")
+          - a status string (1-3 words, e.g., "Lagging pro-rata" or "Approved" or "Trailing budget")
+          - a brief description (under 18 words, focusing on risk, pacing, or milestones)
+          - a tone ("positive" if it represents a good milestone/progress, "negative" if it represents a delay, critical lag, or bottleneck)
 
-          Return your response strictly as a JSON array of objects:
+          Return your response strictly as a JSON array of objects in this format:
           [
-            {"title": "Alert Title", "body": "Alert body description text."}
+            {"title": "Pacing Lag", "status": "Trailing target", "description": "IFMS spend lags by 12% in urban transport.", "tone": "negative"},
+            {"title": "Cabinet Approvals", "status": "Completed", "description": "Cabinet notes for metro water cleared.", "tone": "positive"}
           ]
         `;
 
@@ -220,39 +228,136 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
         const jsonStart = rawLLM.indexOf("[");
         const jsonEnd = rawLLM.lastIndexOf("]") + 1;
         if (jsonStart !== -1 && jsonEnd !== -1) {
-          const parsed = JSON.parse(rawLLM.substring(jsonStart, jsonEnd)) as AgentAlert[];
+          const parsed = JSON.parse(rawLLM.substring(jsonStart, jsonEnd));
           if (Array.isArray(parsed) && parsed.length > 0) {
-            if (mode === "BOTH") {
-              // Combine or prioritize LLM insights
-              insights = parsed.slice(0, 2);
-            } else {
-              insights = parsed;
-            }
+            aiInsights = parsed.slice(0, 2);
           }
         }
       } catch (err) {
-        console.error("Local LLM failed, falling back to rule-based:", err);
-        if (mode === "LLM_BASED") {
-          insights = getRuleBasedInsights({
-            baselineDateStr,
-            currentDateStr,
-            deltaIfms,
-            deltaSo,
-            completedActionsCount,
-            overdueActionsCount,
-            kpiApprovedCount,
-            kpiSubmittedCount
-          });
-        }
+        console.error("Local LLM failed, using rules fallback for AI slots:", err);
       }
     }
+
+    // If LLM failed or rules mode was selected, generate deterministic alerts for slots 2 & 3
+    if (aiInsights.length < 2) {
+      aiInsights = [
+        {
+          title: "IFMS Pacing",
+          status: deltaIfms > 0 ? `+₹${deltaIfms.toFixed(2)} Cr` : "No Change",
+          description: deltaIfms > 0
+            ? `IFMS spent increased by ₹${deltaIfms.toFixed(2)} Cr since the last review meeting.`
+            : "IFMS expenditure booking has held steady since the last meeting.",
+          tone: deltaIfms > 0 ? "positive" : "negative"
+        },
+        {
+          title: "SO Expenditure",
+          status: deltaSo > 0 ? `+₹${deltaSo.toFixed(2)} Cr` : "No Change",
+          description: deltaSo > 0
+            ? `SO spent increased by ₹${deltaSo.toFixed(2)} Cr since the last review meeting.`
+            : "SO expenditure booking has held steady since the last meeting.",
+          tone: deltaSo > 0 ? "positive" : "negative"
+        }
+      ];
+    }
+
+    // Add Slots 2 & 3 to Cards list
+    aiInsights.forEach((item, idx) => {
+      cards.push({
+        id: `ai_insight_${idx + 1}`,
+        title: item.title,
+        status: item.status,
+        description: item.description,
+        tone: item.tone
+      });
+    });
+
+    // Slots 4, 5 & 6: Action item completions & KPI progress
+    const completedActions = await prisma.actionItem.findMany({
+      where: {
+        status: "COMPLETED",
+        updatedAt: { gte: baselineDate },
+        archived: false
+      },
+      select: {
+        id: true,
+        title: true,
+        vertical: { select: { name: true } }
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 3
+    });
+
+    completedActions.forEach((act) => {
+      cards.push({
+        id: `completed_act_${act.id}`,
+        title: act.vertical?.name ? `${act.vertical.name} Action` : "Action Item",
+        status: "Action Complied",
+        description: act.title.length > 48 ? `"${act.title.slice(0, 45)}..." was completed.` : `"${act.title}" was completed.`,
+        tone: "positive"
+      });
+    });
+
+    const kpisReviewed = await prisma.kpiMeasurement.findMany({
+      where: {
+        workflowStatus: "reviewed",
+        reviewedAt: { gte: baselineDate }
+      },
+      include: {
+        kpiTarget: {
+          include: {
+            kpiDefinition: {
+              include: {
+                scheme: { select: { name: true } }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { reviewedAt: "desc" },
+      take: 3
+    });
+
+    kpisReviewed.forEach((kpi) => {
+      const schemeName = kpi.kpiTarget.kpiDefinition.scheme.name;
+      cards.push({
+        id: `kpi_rev_${kpi.id}`,
+        title: schemeName.length > 18 ? `${schemeName.slice(0, 15)}...` : schemeName,
+        status: "KPI Approved",
+        description: `KPI target reviewed and approved for ${schemeName}.`,
+        tone: "positive"
+      });
+    });
+
+    // Pad remaining cards if less than 6
+    if (cards.length < 6 && deltaIfms > 0) {
+      cards.push({
+        id: "fill_finance_ifms",
+        title: "IFMS Pacing",
+        status: `+₹${deltaIfms.toFixed(2)} Cr`,
+        description: `IFMS expenditure grew by ₹${deltaIfms.toFixed(2)} Cr since the last meeting.`,
+        tone: "positive"
+      });
+    }
+
+    while (cards.length < 6) {
+      const idx = cards.length;
+      cards.push({
+        id: `fill_default_${idx}`,
+        title: "Scheme progress",
+        status: "On Track",
+        description: "No other major action items or KPI review modifications were recorded this week.",
+        tone: "positive"
+      });
+    }
+
+    const finalCards = cards.slice(0, 6);
 
     // 9. Save Insight to Database
     const insightRow = await prisma.agentInsight.create({
       data: {
         modeUsed: mode,
         status: "SUCCESS",
-        insights: insights as any,
+        insights: finalCards as any,
         runDate: new Date(),
       }
     });
@@ -273,45 +378,4 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
     });
     return { success: false, insightId: failedInsight.id, error: error.message };
   }
-}
-
-function getRuleBasedInsights(data: {
-  baselineDateStr: string;
-  currentDateStr: string;
-  deltaIfms: number;
-  deltaSo: number;
-  completedActionsCount: number;
-  overdueActionsCount: number;
-  kpiApprovedCount: number;
-  kpiSubmittedCount: number;
-}): AgentAlert[] {
-  const list: AgentAlert[] = [];
-
-  // Insight 1: Financial delta
-  if (data.deltaIfms > 0) {
-    list.push({
-      title: "Expenditure growth",
-      body: `IFMS expenditure increased by ₹${data.deltaIfms.toFixed(2)} Cr since the last review meeting (${data.baselineDateStr}).`
-    });
-  } else {
-    list.push({
-      title: "Expenditure pacing",
-      body: `No new IFMS expenditure was registered since the last review meeting (${data.baselineDateStr}).`
-    });
-  }
-
-  // Insight 2: Action progress
-  if (data.completedActionsCount > 0 || data.overdueActionsCount > 0) {
-    list.push({
-      title: "Actions resolved",
-      body: `${data.completedActionsCount} tasks completed; ${data.overdueActionsCount} became overdue since the last review meeting.`
-    });
-  } else {
-    list.push({
-      title: "Action items status",
-      body: `No new tasks were resolved or became overdue since the last review meeting.`
-    });
-  }
-
-  return list.slice(0, 2);
 }
