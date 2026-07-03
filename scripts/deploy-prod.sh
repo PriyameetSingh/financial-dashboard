@@ -46,16 +46,23 @@ log "Remote commit: $REMOTE_COMMIT"
 # fi
 
 if [ "$BEFORE_COMMIT" = "$REMOTE_COMMIT" ]; then
-    log "Local and remote are in sync (developing on this server)"
-    log "Continuing with rebuild anyway..."
-fi
+    log "Local and remote are in sync (developing on this server)."
+    log "Skipping git pull to prevent conflicts, continuing with rebuild..."
+else
+    # Ensure we are on the correct branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        log "ERROR: Cannot pull main branch because current branch is '$CURRENT_BRANCH'. Please switch to 'main' branch."
+        exit 1
+    fi
 
-# Pull latest changes
-log "Pulling latest changes from main branch..."
-git pull origin main || {
-    log "ERROR: Failed to pull from main branch"
-    exit 1
-}
+    # Pull latest changes
+    log "Pulling latest changes from main branch..."
+    git pull origin main || {
+        log "ERROR: Failed to pull from main branch"
+        exit 1
+    }
+fi
 
 AFTER_COMMIT=$(git rev-parse HEAD)
 log "New commit: $AFTER_COMMIT"
