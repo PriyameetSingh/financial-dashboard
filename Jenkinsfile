@@ -62,7 +62,7 @@ EOF
 
     post {
         success {
-            echo "✅ hudd-dashboard deployed -> http://13.203.18.97:8766/"
+            echo "✅ hudd-dashboard deployed -> http://13.203.18.97:8766/hudd-dashboard"
         }
         failure {
             echo "❌ hudd-dashboard deploy failed — check logs above"

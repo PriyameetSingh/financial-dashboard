@@ -247,6 +247,25 @@ function CommandCentreContent({ setActive }: Props) {
   const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
   const [agentInsight, setAgentInsight] = useState<any>(null);
   const [agentInsightLoading, setAgentInsightLoading] = useState<boolean>(true);
+  const [mockApiResult, setMockApiResult] = useState<any>(null);
+  const [mockApiLoading, setMockApiLoading] = useState(false);
+  const [mockApiError, setMockApiError] = useState<string | null>(null);
+
+  const handleTestApiCall = useCallback(async () => {
+    setMockApiLoading(true);
+    setMockApiError(null);
+    setMockApiResult(null);
+    try {
+      const res = await fetch("/hudd-dashboard/api/v1/test");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setMockApiResult(data);
+    } catch (e) {
+      setMockApiError(e instanceof Error ? e.message : "Request failed");
+    } finally {
+      setMockApiLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -355,6 +374,84 @@ function CommandCentreContent({ setActive }: Props) {
 
   return (
     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Test API Button */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: 8,
+          padding: "16px 20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--text-muted)",
+            }}
+          >
+            API Test
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleTestApiCall()}
+            disabled={mockApiLoading}
+            style={{
+              padding: "7px 18px",
+              fontSize: 13,
+              fontWeight: 600,
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: mockApiLoading ? "var(--bg-surface)" : "var(--bg-card)",
+              color: mockApiLoading ? "var(--text-muted)" : "var(--text-primary)",
+              cursor: mockApiLoading ? "not-allowed" : "pointer",
+              transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            {mockApiLoading ? "Calling API…" : "Call Mock API"}
+          </button>
+        </div>
+        {mockApiError && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--alert-critical)",
+              background: "rgba(229, 62, 62, 0.08)",
+              border: "1px solid var(--alert-critical)",
+              borderRadius: 6,
+              padding: "8px 12px",
+            }}
+          >
+            Error: {mockApiError}
+          </div>
+        )}
+        {mockApiResult && (
+          <pre
+            style={{
+              fontSize: 11,
+              lineHeight: 1.6,
+              color: "var(--text-primary)",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              padding: "10px 14px",
+              overflowX: "auto",
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {JSON.stringify(mockApiResult, null, 2)}
+          </pre>
+        )}
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "stretch" }}>
         <div
           style={{
