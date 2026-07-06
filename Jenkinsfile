@@ -2,7 +2,7 @@
 // Jenkins will auto-detect it via the Multibranch Pipeline job created from repos.json.
 //
 // On every push to dev: builds and redeploys the Next.js app on the Dev_Airawat
-// server (13.203.18.97) via pm2 on port 8765.
+// server (13.203.18.97) via pm2 on port 8766.
 // .env / .env.prod.local on the server are preserved (never committed, never reset).
 
 pipeline {
@@ -62,7 +62,7 @@ EOF
 
     post {
         success {
-            echo "✅ hudd-dashboard deployed -> http://13.203.18.97:8765/"
+            echo "✅ hudd-dashboard deployed -> http://13.203.18.97:8766/"
         }
         failure {
             echo "❌ hudd-dashboard deploy failed — check logs above"
