@@ -52,7 +52,6 @@ function log(message) {
 
 function executeDeployment(branch) {
   const scriptMap = {
-    'dev': './scripts/deploy-test.sh',
     'main': './scripts/deploy-prod.sh'
   };
   
@@ -123,7 +122,7 @@ const server = http.createServer((req, res) => {
       log(`Commit: ${payload.head_commit?.message || 'N/A'}`);
       log(`Author: ${payload.head_commit?.author?.name || 'N/A'}`);
       
-      if (branch === 'dev' || branch === 'main') {
+      if (branch === 'main') {
         executeDeployment(branch);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'deployment triggered', branch }));
