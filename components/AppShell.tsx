@@ -25,7 +25,9 @@ export default function AppShell({ children, title }: Props) {
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setIsSidebarCollapsed(true);
+      setTimeout(() => {
+        setIsSidebarCollapsed(true);
+      }, 0);
     }
   }, []);
 
