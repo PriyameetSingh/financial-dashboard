@@ -23,6 +23,12 @@ export default function AppShell({ children, title }: Props) {
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsSidebarCollapsed(true);
+    }
+  }, []);
+
   const isViewer = isReadOnlyWatermarkUser(user);
 
   const nowLabel = useMemo(() => {
@@ -52,6 +58,12 @@ export default function AppShell({ children, title }: Props) {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
       <Sidebar isCollapsed={isSidebarCollapsed} />
+      {!isSidebarCollapsed && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setIsSidebarCollapsed(true)}
+        />
+      )}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
@@ -61,7 +73,12 @@ export default function AppShell({ children, title }: Props) {
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                <span className="hidden md:inline">
+                  {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </span>
+                <span className="inline md:hidden">
+                  {isSidebarCollapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+                </span>
               </button>
               <div className="min-w-0">
                 <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">

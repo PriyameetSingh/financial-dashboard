@@ -512,7 +512,14 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
 
 
   return (
-    <aside className={`${isCollapsed ? "w-20" : "w-64"} h-full bg-(--bg-surface) border-r border-(--sidebar-border) flex flex-col sticky top-0 transition-all duration-300`}>
+    <aside className={`
+      fixed inset-y-0 left-0 z-50 flex flex-col bg-(--bg-surface) border-r border-(--sidebar-border) transition-all duration-300
+      md:sticky md:h-full md:translate-x-0
+      ${isCollapsed
+        ? "w-0 -translate-x-full md:w-20 md:translate-x-0"
+        : "w-64 translate-x-0 md:w-64"
+      }
+    `}>
       <div className={`px-4 py-5 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
         <div className={`flex shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5 transition-all ${isCollapsed ? "size-12" : "size-24"}`}>
           <img

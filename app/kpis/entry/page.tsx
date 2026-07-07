@@ -141,7 +141,9 @@ export default function KPIEntryPage() {
     });
     setExpandedSchemes(expanded);
     if (!selectedId && grouped[0]?.items[0]) {
-      setSelectedId(grouped[0].items[0].id);
+      if (typeof window !== "undefined" && window.innerWidth >= 768) {
+        setSelectedId(grouped[0].items[0].id);
+      }
     }
   }, [grouped, selectedId]);
 
@@ -150,7 +152,11 @@ export default function KPIEntryPage() {
     if (filteredGrouped.length === 0) return;
     const visibleIds = new Set(filteredGrouped.flatMap((g) => g.items.map((i) => i.id)));
     if (selectedId && !visibleIds.has(selectedId)) {
-      setSelectedId(filteredGrouped[0].items[0]?.id ?? null);
+      if (typeof window !== "undefined" && window.innerWidth >= 768) {
+        setSelectedId(filteredGrouped[0].items[0]?.id ?? null);
+      } else {
+        setSelectedId(null);
+      }
     }
   }, [filteredGrouped, selectedId]);
 
@@ -306,7 +312,7 @@ export default function KPIEntryPage() {
     <AppShell title="KPI Entry">
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
         {/* ── Left sidebar ── */}
-        <aside className="flex w-[min(100%,20rem)] shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-card)]">
+        <aside className={`w-full md:w-[20rem] shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-card)] ${selectedId ? "hidden md:flex" : "flex"}`}>
           <div className="border-b border-[var(--border)] px-4 py-3">
             <Link
               href="/kpis"
@@ -402,7 +408,7 @@ export default function KPIEntryPage() {
         </aside>
 
         {/* ── Main detail panel ── */}
-        <main className="min-w-0 flex-1 overflow-y-auto bg-[var(--bg-primary)] px-5 py-6 sm:px-8 sm:py-8">
+        <main className={`min-w-0 flex-1 overflow-y-auto bg-[var(--bg-primary)] px-4 py-5 sm:px-8 sm:py-8 ${selectedId ? "block" : "hidden md:block"}`}>
           {!selectedItem && !loading && (
             <div className="flex h-full min-h-[40vh] items-center justify-center px-4 text-center text-sm text-[var(--text-muted)]">
               Select a KPI from the list to enter or review values.
@@ -431,6 +437,13 @@ export default function KPIEntryPage() {
 
             return (
               <div className="mx-auto max-w-3xl space-y-5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline md:hidden"
+                >
+                  ← Back to KPI List
+                </button>
                 <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-5">
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-muted)]">

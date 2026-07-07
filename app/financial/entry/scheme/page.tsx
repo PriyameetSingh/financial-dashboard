@@ -277,7 +277,11 @@ export default function SchemeEntryPage() {
         setFinancialYearLabel(data.financialYearLabel);
         setMeetings(meetingList);
         if (meetingList.length > 0) setIfmsMeetingId(meetingList[0].id);
-        applyEntry(data.entries[0] ?? null);
+        if (typeof window !== "undefined" && window.innerWidth >= 768) {
+          applyEntry(data.entries[0] ?? null);
+        } else {
+          applyEntry(null);
+        }
       } catch (e: unknown) {
         if (!active) return;
         setLoadError(e instanceof Error ? e.message : "Failed to load financial data");
@@ -615,7 +619,7 @@ export default function SchemeEntryPage() {
     <AppShell title="Financial Data Entry">
       <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-document)]">
         {/* SCHEME SELECTOR SIDEBAR */}
-        <div className="w-72 flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-card)] flex flex-col">
+        <div className={`w-full md:w-72 flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-card)] flex flex-col ${selected ? "hidden md:flex" : "flex"}`}>
           <div className="p-4 border-b border-[var(--border)]">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-muted)]" />
@@ -681,7 +685,7 @@ export default function SchemeEntryPage() {
         </div>
 
         {/* MAIN PANEL */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className={`flex-1 flex flex-col overflow-hidden relative ${selected ? "flex" : "hidden md:flex"}`}>
 
           {/* ALERTS */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
@@ -698,7 +702,14 @@ export default function SchemeEntryPage() {
           {!loading && !loadError && selected && (
             <>
               {/* HEADER */}
-              <div className="px-8 py-6 border-b border-[var(--border)] bg-[var(--bg-document)]">
+              <div className="px-4 py-4 sm:px-8 sm:py-6 border-b border-[var(--border)] bg-[var(--bg-document)]">
+                <button
+                  type="button"
+                  onClick={() => applyEntry(null)}
+                  className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
+                >
+                  ← Back to Schemes List
+                </button>
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
@@ -728,7 +739,7 @@ export default function SchemeEntryPage() {
               </div>
 
               {/* CARDS */}
-              <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+              <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-8 sm:py-6 space-y-6">
 
                 {/* CARD 1: Annual Budget */}
                 <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
@@ -1149,6 +1160,12 @@ export default function SchemeEntryPage() {
                 </div>
               </div>
             </>
+          )}
+
+          {!loading && !loadError && !selected && (
+            <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-sm text-[var(--text-muted)] bg-[var(--bg-document)]">
+              Select a scheme from the list to view or edit financial progress.
+            </div>
           )}
 
           {loading && (
