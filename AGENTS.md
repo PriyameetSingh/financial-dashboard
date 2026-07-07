@@ -15,3 +15,10 @@ Do NOT automatically run the `npm run build` command or any production build scr
 - Every change affecting user-facing behavior MUST come with a corresponding changelog entry.
 - Changelog entries must be written in plain language that a non-technical government officer would easily understand (e.g. describe user/officer workflow impact, not database schema, function names, or internal code structure).
 - Version bumps and marking a release as "current" (active) MUST only happen when explicitly instructed with a specific version number. Never perform these changes automatically.
+
+# Mobile Responsiveness Guidelines
+- All new pages, components, and user workflows MUST be designed to be mobile-friendly and fully functional on narrow screens (< 768px) since nodal officers often work from their phones.
+- **Sidebar Drawer**: The navigation sidebar must auto-collapse on mobile viewports by default. Ensure it slides off-screen (`-translate-x-full`) with a proper overlay backdrop mask that closes the sidebar when clicked.
+- **Master-Detail Layouts**: For entries and detailed workflows, show the list panel first on mobile. Only show the detail panel once an item is selected, and include a clear, prominent "Back to List" navigation control to return to the selection list.
+- **Tables and Data Grids**: Do not use horizontal overflow scrolls for tables if possible; on mobile, transform table rows into readable card-like blocks with explicit small labels for each field.
+- **Header and Footer Controls**: Wrap toolbars and actions using `flex-wrap` and stack them vertically (`flex-col md:flex-row`) with full-width buttons on mobile to avoid squeezing interactive elements.
