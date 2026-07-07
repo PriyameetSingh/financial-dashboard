@@ -50,10 +50,10 @@ pipeline {
                         npm ci
 
                         echo ">> Building and restarting..."
-                        npm run redeploy
+                        npm run redeploy:test
 
                         echo ">> Status:"
-                        pm2 show hudd-dashboard | grep -E "status|uptime|restarts"
+                        pm2 show hudd-dashboard-test | grep -E "status|uptime|restarts"
 EOF
                 '''
             }
