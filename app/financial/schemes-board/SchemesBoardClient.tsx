@@ -429,11 +429,10 @@ export default function SchemesBoardClient() {
                 return (
                   <div
                     key={q.label}
-                    className={`flex flex-col items-center rounded-lg py-2 transition-all ${
-                      isCurrent
-                        ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                        : "bg-white dark:bg-slate-800 border border-[var(--border)] text-slate-900 dark:text-slate-100"
-                    }`}
+                    className={`flex flex-col items-center rounded-lg py-2 transition-all ${isCurrent
+                      ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
+                      : "bg-white dark:bg-slate-800 border border-[var(--border)] text-slate-900 dark:text-slate-100"
+                      }`}
                   >
                     <span className="text-[10px] font-bold uppercase">{q.label}</span>
                     <span className="text-sm font-black">{q.pct}%</span>
@@ -533,11 +532,10 @@ export default function SchemesBoardClient() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
-                  activeTab === tab
-                    ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)]"
-                }`}
+                className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${activeTab === tab
+                  ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)]"
+                  }`}
               >
                 {tab === "board" ? (
                   <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -676,9 +674,8 @@ export default function SchemesBoardClient() {
                                   e.stopPropagation();
                                   toggleExpand(entry.id);
                                 }}
-                                className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${
-                                  expanded ? "rotate-180" : ""
-                                }`}
+                                className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)] transition-transform ${expanded ? "rotate-180" : ""
+                                  }`}
                               >
                                 <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
                                   <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -698,9 +695,8 @@ export default function SchemesBoardClient() {
 
                             <div className="mt-2 flex items-center gap-2">
                               <span
-                                className={`mt-0.5 size-2 shrink-0 rounded-full ${
-                                  kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
-                                }`}
+                                className={`mt-0.5 size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
+                                  }`}
                                 title={
                                   kind === "SS"
                                     ? "State Scheme"
@@ -791,13 +787,12 @@ export default function SchemesBoardClient() {
                                           className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 text-[11px]"
                                         >
                                           <span
-                                            className={`mt-1 size-1.5 shrink-0 rounded-full ${
-                                              kind === "SS"
-                                                ? "bg-sky-400"
-                                                : kind === "CS"
-                                                  ? "bg-purple-400"
-                                                  : "bg-orange-400"
-                                            }`}
+                                            className={`mt-1 size-1.5 shrink-0 rounded-full ${kind === "SS"
+                                              ? "bg-sky-400"
+                                              : kind === "CS"
+                                                ? "bg-purple-400"
+                                                : "bg-orange-400"
+                                              }`}
                                           />
                                           <div className="min-w-0 flex-1">
                                             <p className="font-medium text-[var(--text-primary)]">
@@ -873,11 +868,10 @@ export default function SchemesBoardClient() {
                       <th
                         key={key}
                         scope="col"
-                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--text-primary)] ${
-                          key === "re" || key === "spent" || key === "pct"
-                            ? "text-right"
-                            : ""
-                        }`}
+                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--sidebar-text-primary)] ${key === "re" || key === "spent" || key === "pct"
+                          ? "text-right"
+                          : ""
+                          }`}
                         onClick={() => handleSort(key)}
                       >
                         {label}
@@ -912,9 +906,8 @@ export default function SchemesBoardClient() {
                             <button
                               type="button"
                               onClick={() => toggleExpand(entry.id)}
-                              className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${
-                                expanded ? "rotate-180" : ""
-                              }`}
+                              className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${expanded ? "rotate-180" : ""
+                                }`}
                             >
                               <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -924,9 +917,8 @@ export default function SchemesBoardClient() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`size-2 shrink-0 rounded-full ${
-                                  kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
-                                }`}
+                                className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
+                                  }`}
                                 title={
                                   kind === "SS"
                                     ? "State Scheme"
@@ -1045,13 +1037,12 @@ export default function SchemesBoardClient() {
                                             className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-xs"
                                           >
                                             <span
-                                              className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
-                                                kind === "SS"
-                                                  ? "bg-sky-400"
-                                                  : kind === "CS"
-                                                    ? "bg-purple-400"
-                                                    : "bg-orange-400"
-                                              }`}
+                                              className={`mt-1.5 size-1.5 shrink-0 rounded-full ${kind === "SS"
+                                                ? "bg-sky-400"
+                                                : kind === "CS"
+                                                  ? "bg-purple-400"
+                                                  : "bg-orange-400"
+                                                }`}
                                             />
                                             <div className="min-w-0 flex-1">
                                               <p className="font-semibold text-[var(--text-primary)]">
@@ -1109,11 +1100,11 @@ export default function SchemesBoardClient() {
           scheme={
             schemeModalEntry
               ? {
-                  id: schemeModalEntry.schemeId ?? schemeModalEntry.id,
-                  code: schemeModalEntry.id,
-                  name: schemeModalEntry.scheme,
-                  verticalName: schemeModalEntry.vertical,
-                }
+                id: schemeModalEntry.schemeId ?? schemeModalEntry.id,
+                code: schemeModalEntry.id,
+                name: schemeModalEntry.scheme,
+                verticalName: schemeModalEntry.vertical,
+              }
               : null
           }
         />
