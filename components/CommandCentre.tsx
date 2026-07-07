@@ -375,7 +375,7 @@ function CommandCentreContent({ setActive }: Props) {
   return (
     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Test API Button */}
-      <div
+      {/* <div
         style={{
           background: "var(--bg-card)",
           border: "1px solid var(--border)",
@@ -450,7 +450,7 @@ function CommandCentreContent({ setActive }: Props) {
             {JSON.stringify(mockApiResult, null, 2)}
           </pre>
         )}
-      </div>
+      </div> */}
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "stretch" }}>
         <div
