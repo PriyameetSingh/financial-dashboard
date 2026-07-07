@@ -32,7 +32,7 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    DEPLOY_PATH=/home/ec2-user/hudd-dashboard
+                    DEPLOY_PATH=/home/ec2-user/dev/hudd-dashboard
 
                     echo "Deploying hudd-dashboard (${BRANCH_NAME}) to 13.203.18.97:${DEPLOY_PATH}..."
 
