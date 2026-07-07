@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Bot, Menu, ChevronLeft, ChevronRight, FlaskConical, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
@@ -9,92 +9,6 @@ import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
 import WhatsNewNotification from "@/components/WhatsNewNotification";
-
-type MockApiState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "success"; data: unknown }
-  | { status: "error"; message: string };
-
-function MockApiButton() {
-  const [state, setState] = useState<MockApiState>({ status: "idle" });
-  const [panelOpen, setPanelOpen] = useState(false);
-  const panelRef = useRef<HTMLDivElement | null>(null);
-
-  const callApi = useCallback(async () => {
-    setState({ status: "loading" });
-    setPanelOpen(true);
-    try {
-      const res = await fetch("/hudd-dashboard/api/v1/test");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setState({ status: "success", data });
-    } catch (e) {
-      setState({ status: "error", message: e instanceof Error ? e.message : "Request failed" });
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (panelOpen && panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setPanelOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [panelOpen]);
-
-  return (
-    <div className="relative" ref={panelRef}>
-      <button
-        type="button"
-        onClick={() => void callApi()}
-        disabled={state.status === "loading"}
-        className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:cursor-wait disabled:opacity-60"
-        aria-label="Call mock API"
-      >
-        <FlaskConical size={14} />
-        <span className="hidden xl:inline">
-          {state.status === "loading" ? "Calling…" : "Test API"}
-        </span>
-      </button>
-
-      {panelOpen && state.status !== "idle" && (
-        <div className="absolute right-0 top-full z-40 mt-2 w-96 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
-              Mock API Response
-            </span>
-            <button
-              type="button"
-              onClick={() => setPanelOpen(false)}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              aria-label="Close"
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          <div className="p-3">
-            {state.status === "loading" && (
-              <p className="py-4 text-center text-xs text-[var(--text-muted)]">Fetching…</p>
-            )}
-            {state.status === "error" && (
-              <p className="rounded-lg border border-[var(--alert-critical)] bg-[rgba(229,62,62,0.08)] px-3 py-2 text-xs text-[var(--alert-critical)]">
-                Error: {state.message}
-              </p>
-            )}
-            {state.status === "success" && (
-              <pre className="max-h-80 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3 text-[11px] leading-relaxed text-[var(--text-primary)] whitespace-pre-wrap break-words">
-                {JSON.stringify(state.data, null, 2)}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface Props {
   children: React.ReactNode;
@@ -177,7 +91,6 @@ export default function AppShell({ children, title }: Props) {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
               <TextSizeToolbarControl />
-              <MockApiButton />
               <button
                 className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
                 onClick={() => setChatOpen(true)}
