@@ -19,8 +19,9 @@ type HistoryLog = {
   runDate: string;
   modeUsed: string;
   status: string;
-  insights: Array<{ title: string; body: string }>;
+  insights: Array<{ title: string; body?: string; status?: string; description?: string }>;
   errorLog: string | null;
+  executionLogs: string | null;
 };
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -35,6 +36,8 @@ export default function MeetingWiseProgressAgentPage() {
 
   const [config, setConfig] = useState<Config>({ enabled: true, runDay: "Monday", mode: "BOTH" });
   const [history, setHistory] = useState<HistoryLog[]>([]);
+  const [selectedLog, setSelectedLog] = useState<HistoryLog | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
@@ -193,25 +196,7 @@ export default function MeetingWiseProgressAgentPage() {
                   </select>
                 </div>
 
-                {/* Analysis Mode */}
-                <div className="space-y-1.5">
-                  <label htmlFor="analysis-mode" className="text-sm font-medium text-[var(--text-primary)]">
-                    Analysis Type
-                  </label>
-                  <select
-                    id="analysis-mode"
-                    value={config.mode}
-                    disabled={!config.enabled}
-                    onChange={(e) => setConfig({ ...config, mode: e.target.value })}
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
-                  >
-                    {ANALYSIS_MODES.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+
 
                 {/* Submit button */}
                 <button
@@ -237,13 +222,14 @@ export default function MeetingWiseProgressAgentPage() {
                       <th className="px-4 py-3">Date</th>
                       <th className="px-4 py-3">Mode</th>
                       <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Insights</th>
+                      <th className="px-4 py-3">Insights Summary</th>
+                      <th className="px-4 py-3">Details</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
                     {history.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
+                        <td colSpan={5} className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
                           No history logs found. Run the agent manually to create log entries.
                         </td>
                       </tr>
@@ -275,10 +261,13 @@ export default function MeetingWiseProgressAgentPage() {
                           </td>
                           <td className="px-4 py-3 text-xs text-[var(--text-muted)]">
                             {log.insights && log.insights.length > 0 ? (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 {log.insights.map((ins, i) => (
-                                  <div key={i}>
-                                    <strong className="text-[var(--text-primary)]">{ins.title}:</strong> {ins.body}
+                                  <div key={i} className="text-xs">
+                                    <strong className="text-[var(--text-primary)]">{ins.title}:</strong>{" "}
+                                    <span className="font-semibold text-[var(--text-primary)]">{ins.status}</span>
+                                    {ins.description && <span className="text-[var(--text-muted)]"> — {ins.description}</span>}
+                                    {!ins.description && ins.body && <span className="text-[var(--text-muted)]"> — {ins.body}</span>}
                                   </div>
                                 ))}
                               </div>
@@ -287,6 +276,18 @@ export default function MeetingWiseProgressAgentPage() {
                             ) : (
                               "—"
                             )}
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedLog(log);
+                                setModalOpen(true);
+                              }}
+                              className="font-semibold text-[var(--text-primary)] underline hover:text-[var(--text-muted)]"
+                            >
+                              View Logs
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -349,10 +350,111 @@ export default function MeetingWiseProgressAgentPage() {
                   )}
                 </div>
               )}
+        </div>
+      </div>
+    </div>
+  </div>
+  {modalOpen && selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Execution Details</h3>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Run Date: {new Date(selectedLog.runDate).toLocaleString("en-IN")} · Mode: {selectedLog.modeUsed}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalOpen(false);
+                  setSelectedLog(null);
+                }}
+                className="rounded-lg p-1 text-[var(--text-muted)] hover:bg-[var(--bg-alternate-card)] hover:text-[var(--text-primary)]"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Error log if failed */}
+            {selectedLog.status !== "SUCCESS" && selectedLog.errorLog && (
+              <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/50 p-4 space-y-1">
+                <h4 className="text-xs font-bold text-red-700 dark:text-red-400">Execution Error Stack</h4>
+                <pre className="overflow-x-auto font-mono text-[10px] text-red-600 dark:text-red-300 whitespace-pre-wrap">
+                  {selectedLog.errorLog}
+                </pre>
+              </div>
+            )}
+
+            {/* Execution Steps */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-[var(--text-primary)]">Agent Tools & Execution Steps</h4>
+              {selectedLog.executionLogs ? (() => {
+                try {
+                  const steps = JSON.parse(selectedLog.executionLogs);
+                  if (Array.isArray(steps)) {
+                    return (
+                      <div className="space-y-3">
+                        {steps.map((step: any, idx: number) => {
+                          const isLLM = step.name === "LLM Selection & Refinement";
+                          return (
+                            <div key={idx} className="rounded-xl border border-[var(--border)] bg-[var(--bg-alternate-card)] p-4 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[var(--text-primary)]">
+                                  {idx + 1}. {step.name}
+                                </span>
+                                {step.success !== undefined && (
+                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                                    step.success ? "bg-[var(--alert-success-bg)] text-[var(--alert-success)]" : "bg-red-100 text-red-700"
+                                  }`}>
+                                    {step.success ? "SUCCESS" : "FAILED"}
+                                  </span>
+                                )}
+                              </div>
+                              {step.details && (
+                                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                                  {step.details}
+                                </p>
+                              )}
+                              
+                              {/* If LLM step, show prompt and response */}
+                              {isLLM && (
+                                <div className="grid gap-3 pt-2 md:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">LLM Prompt</span>
+                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 font-mono text-[10px] text-[var(--text-muted)] whitespace-pre-wrap">
+                                      {step.prompt}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">LLM Response</span>
+                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 font-mono text-[10px] text-[var(--text-primary)] whitespace-pre-wrap">
+                                      {step.response}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                } catch {
+                  // Fallback if not valid JSON
+                }
+                return (
+                  <pre className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg-alternate-card)] p-4 font-mono text-[10px] text-[var(--text-muted)] whitespace-pre-wrap">
+                    {selectedLog.executionLogs}
+                  </pre>
+                );
+              })() : (
+                <p className="text-xs text-[var(--text-muted)] italic">No detailed execution steps logged for this run.</p>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </AppShell>
   );
 }
