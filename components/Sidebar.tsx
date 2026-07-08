@@ -389,16 +389,15 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
       setActionItems([]);
       return;
     }
-    void (async () => {
+
+    const loadSidebarData = async () => {
       try {
         const data = await fetchActionItems();
         if (active) setActionItems(data);
       } catch {
         if (active) setActionItems([]);
       }
-    })();
-    if (hasPermission(user, Permission.ENTER_KPI_DATA)) {
-      void (async () => {
+      if (hasPermission(user, Permission.ENTER_KPI_DATA)) {
         try {
           const kpiData = await fetchKPISubmissions();
           if (active) {
@@ -411,13 +410,25 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
             setKpiSubmissions([]);
           }
         }
-      })();
-    } else {
-      setLatestKpiMeeting(null);
-      setKpiSubmissions([]);
-    }
+      } else {
+        if (active) {
+          setLatestKpiMeeting(null);
+          setKpiSubmissions([]);
+        }
+      }
+    };
+
+    void loadSidebarData();
+
+    const handleDataChanged = () => {
+      void loadSidebarData();
+    };
+
+    window.addEventListener("my-tasks-data-changed", handleDataChanged);
+
     return () => {
       active = false;
+      window.removeEventListener("my-tasks-data-changed", handleDataChanged);
     };
   }, [user]);
 

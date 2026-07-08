@@ -96,6 +96,16 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
   useEffect(() => {
     loadData();
+
+    const handleDataChanged = () => {
+      loadData();
+    };
+
+    window.addEventListener("my-tasks-data-changed", handleDataChanged);
+
+    return () => {
+      window.removeEventListener("my-tasks-data-changed", handleDataChanged);
+    };
   }, []);
 
   const selectedMeeting = useMemo(() => {

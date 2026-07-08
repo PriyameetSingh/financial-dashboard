@@ -48,41 +48,47 @@ export default function MyTasksHubPage() {
   useEffect(() => {
     if (!user) return;
     let active = true;
-    void fetchActionItems()
-      .then((data) => {
-        if (active) setActionItems(data);
-      })
-      .catch(() => {
-        if (active) setActionItems([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [user]);
 
-  useEffect(() => {
-    if (!user || !hasPermission(user, Permission.ENTER_KPI_DATA)) {
-      setLatestKpiMeeting(null);
-      setKpiSubmissions([]);
-      return;
-    }
-    let active = true;
-    void (async () => {
+    const loadMyTasksData = async () => {
       try {
-        const kpiData = await fetchKPISubmissions();
-        if (active) {
-          setLatestKpiMeeting(kpiData.latestMeeting);
-          setKpiSubmissions(kpiData.submissions);
-        }
+        const actionItemsData = await fetchActionItems();
+        if (active) setActionItems(actionItemsData);
       } catch {
+        if (active) setActionItems([]);
+      }
+
+      if (hasPermission(user, Permission.ENTER_KPI_DATA)) {
+        try {
+          const kpiData = await fetchKPISubmissions();
+          if (active) {
+            setLatestKpiMeeting(kpiData.latestMeeting);
+            setKpiSubmissions(kpiData.submissions);
+          }
+        } catch {
+          if (active) {
+            setLatestKpiMeeting(null);
+            setKpiSubmissions([]);
+          }
+        }
+      } else {
         if (active) {
           setLatestKpiMeeting(null);
           setKpiSubmissions([]);
         }
       }
-    })();
+    };
+
+    void loadMyTasksData();
+
+    const handleDataChanged = () => {
+      void loadMyTasksData();
+    };
+
+    window.addEventListener("my-tasks-data-changed", handleDataChanged);
+
     return () => {
       active = false;
+      window.removeEventListener("my-tasks-data-changed", handleDataChanged);
     };
   }, [user]);
 

@@ -91,6 +91,9 @@ export async function submitKPIMeasurement(input: {
     body: JSON.stringify(input),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function reviewKpiMeasurement(
@@ -103,6 +106,9 @@ export async function reviewKpiMeasurement(
     body: JSON.stringify(input),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function setKpiTargetDenominator(targetId: string, denominatorValue: number): Promise<void> {
@@ -112,6 +118,9 @@ export async function setKpiTargetDenominator(targetId: string, denominatorValue
     body: JSON.stringify({ denominatorValue }),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function fetchKpiHistory(kpiDefinitionId: string): Promise<KpiHistoryResponse> {
@@ -131,6 +140,9 @@ export async function updateKpiDefinitionAssignments(
     body: JSON.stringify(input),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function createKpiDefinition(input: {
@@ -153,6 +165,9 @@ export async function createKpiDefinition(input: {
     body: JSON.stringify(input),
   });
   await parseResponse<{ definition?: unknown }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function updateKpiDefinition(
@@ -175,4 +190,7 @@ export async function updateKpiDefinition(
     body: JSON.stringify(input),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }

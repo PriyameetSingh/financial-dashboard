@@ -65,6 +65,9 @@ export async function updateActionItem(
     body: JSON.stringify(input),
   });
   const data = await parseResponse<{ item: ActionItem }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
   return data.item;
 }
 
@@ -85,7 +88,11 @@ export async function createActionItem(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  return parseResponse<{ id: string }>(response);
+  const res = await parseResponse<{ id: string }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
+  return res;
 }
 
 export async function addActionItemProof(id: string, input: {
@@ -98,6 +105,9 @@ export async function addActionItemProof(id: string, input: {
     body: JSON.stringify(input),
   });
   await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
 }
 
 export async function deleteActionItem(id: string): Promise<void> {
@@ -107,5 +117,8 @@ export async function deleteActionItem(id: string): Promise<void> {
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(payload?.detail ?? "Failed to delete action item");
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
   }
 }
