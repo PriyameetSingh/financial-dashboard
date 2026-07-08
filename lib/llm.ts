@@ -15,6 +15,7 @@ export async function callLocalLLM(prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model,
+      provider: process.env.LLM_PROVIDER || "airawat",
       messages: [
         {
           role: "system",
