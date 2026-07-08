@@ -291,8 +291,8 @@ export default function CreateActionItemMeetingModal({
 
       <ConfirmModal
         open={showNodalWarning}
-        title="Warning: Nodal Officer Self-Approval"
-        message="Assigning a Nodal Officer as a self-reviewer should technically never happen unless in a very specific case. Only TASU, FA, or Vertical Heads ideally should have self-approval privileges. Are you sure you want to proceed?"
+        title="Warning: Nodal Officer Auto-Review Permissions"
+        message="Are you sure you want a Nodal Officer to have auto review permissions as they usually shouldn't? We cannot disable this in the system."
         confirmLabel="Proceed"
         cancelLabel="Cancel"
         onConfirm={() => setShowNodalWarning(false)}

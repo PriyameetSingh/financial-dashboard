@@ -195,6 +195,10 @@ export default function SchemesBoardClient() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   useEffect(() => {
+    setExpandedIds(new Set());
+  }, [activeTab]);
+
+  useEffect(() => {
     let alive = true;
     (async () => {
       try {
