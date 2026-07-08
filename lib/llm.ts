@@ -11,7 +11,7 @@ export async function callLocalLLM(prompt: string): Promise<string> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(key ? { "Authorization": `Bearer ${key}` } : {}),
+      ...(key ? { "X-API-Key": key } : {}),
     },
     body: JSON.stringify({
       model,
