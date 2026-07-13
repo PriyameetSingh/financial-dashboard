@@ -88,7 +88,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   documentHeaderTextBlock: {
-    flex: 1,
+    width: "100%",
     alignItems: "center",
   },
   documentHeaderSeal: {
