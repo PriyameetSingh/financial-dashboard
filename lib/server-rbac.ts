@@ -59,7 +59,17 @@ async function loadDbUserBySession() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return null;
   try {
-    return await findDbUserByIdentity(sessionUser);
+    const user = await findDbUserByIdentity(sessionUser);
+    if (!user) return null;
+
+    if (user.sessionsInvalidatedAt && sessionUser.iat) {
+      const invalidatedAtSeconds = Math.floor(user.sessionsInvalidatedAt.getTime() / 1000);
+      if (invalidatedAtSeconds > sessionUser.iat) {
+        throw new AuthError(401, "Session invalidated");
+      }
+    }
+
+    return user;
   } catch (e) {
     const mapped = asDatabaseUnavailableError(e);
     if (mapped) throw mapped;

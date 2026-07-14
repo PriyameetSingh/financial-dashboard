@@ -5,6 +5,7 @@ declare module "next-auth" {
     user: {
       id: string;
       role?: string;
+      iat?: number;
     } & DefaultSession["user"];
   }
 }
@@ -14,5 +15,6 @@ declare module "next-auth/jwt" {
     preferred_username?: string;
     role?: string;
     id_token?: string;
+    iat?: number;
   }
 }

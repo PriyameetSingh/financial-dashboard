@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
-import { findKeycloakUserIdByIdentity, setKeycloakUserPassword } from "@/lib/keycloak-admin";
+import { findKeycloakUserIdByIdentity, setKeycloakUserPassword, logoutKeycloakUser } from "@/lib/keycloak-admin";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
@@ -45,6 +45,19 @@ export async function POST(
 
     // Set new password (temporary: true so they are forced to change it on next login)
     await setKeycloakUserPassword(keycloakUserId, password, true);
+
+    // Invalidate Keycloak sessions
+    await logoutKeycloakUser(keycloakUserId);
+
+    // Invalidate local DB sessions by setting sessionsInvalidatedAt timestamp, and reset password lockout counters
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: {
+        sessionsInvalidatedAt: new Date(),
+        passwordChangeFailedAttempts: 0,
+        passwordChangeLockedUntil: null,
+      },
+    });
 
     const auditContext = getAuditRequestContext(request);
     await logAudit(

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
+import { prisma } from "@/lib/prisma";
 
 /** App Router + `fetch()` use the full pathname including `basePath` (e.g. `/hudd-dashboard/api/...`). */
 function isApiOrAssetPath(pathname: string): boolean {
@@ -38,6 +39,39 @@ async function readToken(request: NextRequest) {
   });
 }
 
+async function isTokenInvalidated(token: any): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { code: token.preferred_username as string },
+          { email: token.email as string },
+        ],
+      },
+      select: { sessionsInvalidatedAt: true },
+    });
+    if (dbUser?.sessionsInvalidatedAt && token.iat) {
+      const invalidatedAtSeconds = Math.floor(dbUser.sessionsInvalidatedAt.getTime() / 1000);
+      return invalidatedAtSeconds > token.iat;
+    }
+  } catch (error) {
+    console.error("[proxy] Error checking token invalidation:", error);
+  }
+  return false;
+}
+
+function logoutRedirect(request: NextRequest, pathname?: string) {
+  const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
+  if (pathname && pathname !== "/login") {
+    loginUrl.searchParams.set("redirect", pathname);
+  }
+  const response = NextResponse.redirect(loginUrl);
+  response.cookies.delete("authjs.session-token");
+  response.cookies.delete("__Secure-authjs.session-token");
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -52,6 +86,13 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.has(pathname)) {
     const token = await readToken(request);
     if (token) {
+      if (await isTokenInvalidated(token)) {
+        // Token is invalidated, clear cookies so they don't get redirected to /dashboard
+        const response = NextResponse.next();
+        response.cookies.delete("authjs.session-token");
+        response.cookies.delete("__Secure-authjs.session-token");
+        return response;
+      }
       // `NextURL` / `new URL("/dashboard", …)` without the segment below resolves to the
       // origin root `/dashboard`, not `{basePath}/dashboard`, so users leave the app.
       return NextResponse.redirect(
@@ -66,6 +107,10 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (await isTokenInvalidated(token)) {
+    return logoutRedirect(request, pathname);
   }
 
   return NextResponse.next();

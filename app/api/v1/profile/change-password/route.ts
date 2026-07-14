@@ -6,6 +6,7 @@ import {
   verifyKeycloakUserPassword,
   findKeycloakUserIdByIdentity,
   setKeycloakUserPassword,
+  logoutKeycloakUser,
 } from "@/lib/keycloak-admin";
 
 export const runtime = "nodejs";
@@ -47,6 +48,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "User record not found in database" }, { status: 404 });
     }
 
+    // Check if account is currently locked out for password changes
+    if (dbUser.passwordChangeLockedUntil && new Date() < dbUser.passwordChangeLockedUntil) {
+      return NextResponse.json(
+        { detail: "Too many failed attempts. Password change has been locked for a day. Please contact admin to reset your password if needed." },
+        { status: 403 }
+      );
+    }
+
     // Check password
     const username = dbUser.code;
     if (!username) {
@@ -55,7 +64,41 @@ export async function POST(request: NextRequest) {
 
     const isCurrentPasswordValid = await verifyKeycloakUserPassword(username, currentPassword);
     if (!isCurrentPasswordValid) {
-      return NextResponse.json({ detail: "Incorrect current password" }, { status: 400 });
+      // Increment failed attempts
+      let failedAttempts = dbUser.passwordChangeFailedAttempts + 1;
+
+      // If the last lockout has expired, we treat this as a fresh failure series
+      if (dbUser.passwordChangeLockedUntil && new Date() >= dbUser.passwordChangeLockedUntil) {
+        failedAttempts = 1;
+      }
+
+      const updates: { passwordChangeFailedAttempts: number; passwordChangeLockedUntil?: Date | null } = {
+        passwordChangeFailedAttempts: failedAttempts,
+      };
+
+      if (failedAttempts >= 5) {
+        // Lock for 24 hours (1 day)
+        const lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        updates.passwordChangeLockedUntil = lockedUntil;
+      }
+
+      await prisma.user.update({
+        where: { id: dbUser.id },
+        data: updates,
+      });
+
+      if (failedAttempts >= 5) {
+        return NextResponse.json(
+          { detail: "Too many failed attempts. Password change has been locked for a day. Please contact admin to reset your password if needed." },
+          { status: 403 }
+        );
+      }
+
+      const remaining = 5 - failedAttempts;
+      return NextResponse.json(
+        { detail: `Incorrect current password. ${remaining} attempt(s) remaining before lockout.` },
+        { status: 400 }
+      );
     }
 
     // Get keycloak user id
@@ -66,6 +109,19 @@ export async function POST(request: NextRequest) {
 
     // Set new password
     await setKeycloakUserPassword(keycloakUserId, newPassword, false);
+
+    // Invalidate Keycloak sessions
+    await logoutKeycloakUser(keycloakUserId);
+
+    // Invalidate local DB sessions by setting sessionsInvalidatedAt timestamp, and reset lockout state
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: {
+        sessionsInvalidatedAt: new Date(),
+        passwordChangeFailedAttempts: 0,
+        passwordChangeLockedUntil: null,
+      },
+    });
 
     // Audit log
     const auditContext = getAuditRequestContext(request);

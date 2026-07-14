@@ -455,6 +455,25 @@ export async function deleteKeycloakUserById(userId: string): Promise<void> {
   }
 }
 
+export async function logoutKeycloakUser(userId: string): Promise<void> {
+  const config = getKeycloakConfig();
+  const accessToken = await getAdminAccessToken(config);
+
+  const response = await fetch(
+    `${config.adminBaseUrl}/admin/realms/${encodeURIComponent(config.realm)}/users/${encodeURIComponent(userId)}/logout`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  if (response.status === 404) return;
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Keycloak user logout failed (${response.status}): ${detail || "unknown error"}`);
+  }
+}
+
 export async function setKeycloakUserPassword(userId: string, password: string, temporary: boolean = false): Promise<void> {
   const config = getKeycloakConfig();
   const accessToken = await getAdminAccessToken(config);

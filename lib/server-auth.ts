@@ -5,6 +5,7 @@ type SessionUser = {
   name?: string;
   email?: string;
   role?: string;
+  iat?: number;
 };
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -19,5 +20,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     name: user.name ?? undefined,
     email: user.email ?? undefined,
     role: user.role,
+    iat: user.iat,
   };
 }

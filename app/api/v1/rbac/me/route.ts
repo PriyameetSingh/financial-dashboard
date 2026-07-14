@@ -18,6 +18,7 @@ const rbacMeUserSelect = {
   organisationId: true,
   ulbId: true,
   officerType: true,
+  sessionsInvalidatedAt: true,
   userRoles: {
     include: { role: { select: { code: true } } },
   },
@@ -87,6 +88,13 @@ export async function GET() {
             select: rbacMeUserSelect,
           })
         : null);
+
+    if (dbUser && dbUser.sessionsInvalidatedAt && sessionUser.iat) {
+      const invalidatedAtSeconds = Math.floor(dbUser.sessionsInvalidatedAt.getTime() / 1000);
+      if (invalidatedAtSeconds > sessionUser.iat) {
+        return NextResponse.json({ detail: "Session invalidated" }, { status: 401 });
+      }
+    }
 
     if (!dbUser) {
       console.warn("[rbac/me] DB user not found for session identity", {

@@ -137,6 +137,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role;
       }
 
+      if (typeof token.iat === "number") {
+        session.user.iat = token.iat;
+      }
+
       return session;
     },
     redirect({ url, baseUrl }) {
