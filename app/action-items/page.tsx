@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchActionItems, updateActionItem, deleteActionItem } from "@/src/lib/services/actionItemService";
 import { ActionItem, ActionItemStatus } from "@/types";
@@ -423,7 +422,6 @@ function ActionItemsContent() {
   );
   const priorityOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.priority)))], [items]);
 
-  const showStats = !!user;
   const canReassignActionItems =
     !!user &&
     !isViewer &&
@@ -491,87 +489,88 @@ function ActionItemsContent() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {STATUS_FILTERS.map((entry) => {
-            const count = getFilterCount(entry.id);
-            const isActive = filter === entry.id;
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-row overflow-x-auto md:flex-wrap gap-2 pb-2 md:pb-0 no-scrollbar flex-1 min-w-0">
+            {STATUS_FILTERS.map((entry) => {
+              const count = getFilterCount(entry.id);
+              const isActive = filter === entry.id;
 
-            // Base button classes
-            let btnClasses = "rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-200 flex items-center gap-2 ";
+              // Base button classes
+              let btnClasses = "rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-200 flex items-center gap-2 shrink-0 ";
 
-            if (isActive) {
-              if (entry.id === "overdue") {
-                btnClasses += "border-red-600 bg-red-600 text-white shadow-sm";
+              if (isActive) {
+                if (entry.id === "overdue") {
+                  btnClasses += "border-red-600 bg-red-600 text-white shadow-sm";
+                } else {
+                  btnClasses += "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm";
+                }
               } else {
-                btnClasses += "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm";
+                if (entry.id === "overdue") {
+                  btnClasses += "border-red-200 bg-red-50/80 text-red-700 hover:bg-red-100";
+                } else {
+                  btnClasses += "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)]";
+                }
               }
-            } else {
-              if (entry.id === "overdue") {
-                btnClasses += "border-red-200 bg-red-50/80 text-red-700 hover:bg-red-100";
-              } else {
-                btnClasses += "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)]";
-              }
-            }
 
-            // Badge classes
-            let badgeClasses = "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-bold tracking-normal ";
-            if (isActive) {
-              badgeClasses += "bg-[rgba(255,255,255,0.2)] text-white";
-            } else {
-              if (entry.id === "overdue") {
-                badgeClasses += "bg-red-600 text-white";
-              } else if (entry.id === "due_this_week") {
-                badgeClasses += "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/50";
-              } else if (entry.id === "completed") {
-                badgeClasses += "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50";
+              // Badge classes
+              let badgeClasses = "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-bold tracking-normal ";
+              if (isActive) {
+                badgeClasses += "bg-[rgba(255,255,255,0.2)] text-white";
               } else {
-                badgeClasses += "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+                if (entry.id === "overdue") {
+                  badgeClasses += "bg-red-600 text-white";
+                } else if (entry.id === "due_this_week") {
+                  badgeClasses += "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/50";
+                } else if (entry.id === "completed") {
+                  badgeClasses += "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50";
+                } else {
+                  badgeClasses += "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+                }
               }
-            }
 
-            return (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={() => {
-                  setFilter(entry.id);
-                  setTrackerStatus("all");
-                }}
-                className={btnClasses}
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => {
+                    setFilter(entry.id);
+                    setTrackerStatus("all");
+                  }}
+                  className={btnClasses}
+                >
+                  <span>{entry.label}</span>
+                  {count !== null && (
+                    <span className={badgeClasses}>
+                      {String(count).padStart(2, "0")}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
+            <div className="w-full md:w-auto shrink-0 flex justify-end">
+              <Link
+                href="/action-items/create"
+                className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
               >
-                <span>{entry.label}</span>
-                {count !== null && (
-                  <span className={badgeClasses}>
-                    {String(count).padStart(2, "0")}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                + Create Item
+              </Link>
+            </div>
+          )}
         </div>
 
-        {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
-          <div className="flex justify-start">
-            <Link
-              href="/action-items/create"
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
-            >
-              + Create Item
-            </Link>
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)] w-full">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by scheme or title"
-            className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="col-span-1 sm:col-span-2 md:flex-1 min-w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full"
           />
           <select
             value={verticalFilter}
             onChange={(event) => setVerticalFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
           >
             {verticalOptions.map((option) => (
               <option key={option} value={option}>
@@ -587,12 +586,12 @@ function ActionItemsContent() {
             placeholder="Assigned to"
             showAllOption={true}
             allOptionLabel="Assigned to"
-            className="w-[220px]"
+            className="w-full md:w-[220px]"
           />
           <select
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
           >
             {priorityOptions.map((option) => (
               <option key={option} value={option}>
@@ -603,7 +602,7 @@ function ActionItemsContent() {
           <select
             value={dueFilter}
             onChange={(event) => setDueFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
           >
             <option value="all">Due Date</option>
             <option value="week">Due this week</option>
@@ -616,7 +615,7 @@ function ActionItemsContent() {
               <select
                 value={trackerActivity}
                 onChange={(e) => setTrackerActivity(e.target.value as typeof trackerActivity)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
               >
                 <option value="all">All activity</option>
                 <option value="recent_7">Recent activity (7d)</option>
@@ -633,7 +632,7 @@ function ActionItemsContent() {
                       setFilter("all");
                     }
                   }}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
                 >
                   <option value="all">All statuses</option>
                   {(["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED", "OVERDUE"] as const).map((s) => (
@@ -649,7 +648,7 @@ function ActionItemsContent() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
           >
             <option value="meeting">Meeting wise</option>
             <option value="date">Date wise</option>
