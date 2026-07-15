@@ -105,6 +105,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: `Role not found: ${roleCode}` }, { status: 400 });
     }
 
+    // Validate email uniqueness
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingUserByEmail) {
+      return NextResponse.json(
+        { detail: "Email address already exists." },
+        { status: 400 },
+      );
+    }
+
+    // Validate phone number (code) uniqueness
+    const existingUserByCode = await prisma.user.findUnique({
+      where: { code: username },
+    });
+    if (existingUserByCode) {
+      return NextResponse.json(
+        { detail: "Phone number is already registered." },
+        { status: 400 },
+      );
+    }
+
     const keycloak = await createOrFindKeycloakUser({
       username,
       email,
@@ -114,19 +136,8 @@ export async function POST(request: NextRequest) {
     await assignKeycloakClientRole(keycloak.id, roleCode);
 
     const dbUser = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.upsert({
-        where: { email },
-        update: {
-          name,
-          code: username,
-          department,
-          designationId,
-          organisationId,
-          ulbId,
-          officerType,
-          isActive: true,
-        },
-        create: {
+      const user = await tx.user.create({
+        data: {
           name,
           email,
           code: username,
@@ -140,7 +151,6 @@ export async function POST(request: NextRequest) {
       });
 
       // "Set role" semantics: keep the selected role as the single primary role.
-      await tx.userRole.deleteMany({ where: { userId: user.id } });
       await tx.userRole.create({
         data: {
           userId: user.id,
@@ -149,7 +159,6 @@ export async function POST(request: NextRequest) {
       });
 
       // Handle section associations via UserSection join table
-      await tx.userSection.deleteMany({ where: { userId: user.id } });
       if (sectionIds.length > 0) {
         await tx.userSection.createMany({
           data: sectionIds.map((sectionId) => ({
@@ -161,7 +170,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Handle organisation associations via UserOrganisation join table
-      await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
       if (organisationIds.length > 0) {
         await tx.userOrganisation.createMany({
           data: organisationIds.map((organisationId) => ({

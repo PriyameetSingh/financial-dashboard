@@ -495,7 +495,7 @@ function ActionItemsContent() {
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
               >
-                Tracker Board
+                Action Tracker
               </button>
             </div>
           </div>
