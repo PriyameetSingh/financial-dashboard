@@ -19,13 +19,25 @@ import { useSearchParams } from "next/navigation";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus, item: ActionItem) => boolean }[] = [
-  { id: "all", label: "All", match: () => true },
+  { id: "all", label: "All Actions", match: () => true },
   {
     id: "pending",
-    label: "Pending Action",
+    label: "Pending",
     match: (status) => ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED"].includes(status),
   },
   { id: "review", label: "Under Review", match: (status) => status === "UNDER_REVIEW" },
+  {
+    id: "due_this_week",
+    label: "Due This Week",
+    match: (status, item) => {
+      if (status === "COMPLETED") return false;
+      const due = new Date(item.dueDate);
+      const now = new Date();
+      const week = new Date();
+      week.setDate(now.getDate() + 7);
+      return due >= now && due <= week;
+    },
+  },
   {
     id: "my_tasks",
     label: "My tasks",
@@ -301,12 +313,44 @@ function ActionItemsContent() {
     const isMyTasks = activeFilter.id === "my_tasks";
 
     const results = listItems.filter((item) => {
-      if (!activeFilter.match(item.status, item)) return false;
-
+      const matchesQuery =
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.vertical.toLowerCase().includes(query.toLowerCase()) ||
+        item.schemeId.toLowerCase().includes(query.toLowerCase());
+      const matchesVertical = verticalFilter === "all" || item.vertical === verticalFilter;
+      const matchesAssignee = (() => {
+        if (assigneeFilter === "all") return true;
+        const selectedUser = directoryUsers.find((u) => u.id === assigneeFilter);
+        if (!selectedUser) return false;
+        return isAssignedActionOfficer(item, selectedUser);
+      })();
+      const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter;
       const matchesMyTasksScope =
         !isMyTasks ||
         (!!user && item.status === "UNDER_REVIEW" && isDesignatedReviewer(item, user));
-      if (!matchesMyTasksScope) return false;
+      const matchesDue = (() => {
+        if (dueFilter === "all") return true;
+        const due = new Date(item.dueDate);
+        const nowDateObj = new Date();
+        if (dueFilter === "overdue") return due < nowDateObj;
+        if (dueFilter === "week") {
+          const week = new Date();
+          week.setDate(nowDateObj.getDate() + 7);
+          return due >= nowDateObj && due <= week;
+        }
+        if (dueFilter === "month") {
+          const month = new Date();
+          month.setDate(nowDateObj.getDate() + 30);
+          return due >= nowDateObj && due <= month;
+        }
+        return true;
+      })();
+
+      if (!matchesQuery || !matchesVertical || !matchesAssignee || !matchesPriority || !matchesDue || !matchesMyTasksScope) {
+        return false;
+      }
+
+      if (!activeFilter.match(item.status, item)) return false;
 
       if (trackerStatus !== "all" && item.status !== trackerStatus && filter !== "archived") return false;
       const last = lastActivityMs(item);
@@ -334,7 +378,7 @@ function ActionItemsContent() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, trackerActivity, trackerStatus, sortBy, filter, user]);
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user, directoryUsers, trackerActivity, trackerStatus]);
 
   const now = useMemo(() => new Date(), []);
 
@@ -390,6 +434,14 @@ function ActionItemsContent() {
     !isViewer &&
     hasPermission(user, Permission.UPDATE_ACTION_ITEMS);
 
+  const getFilterCount = (id: string): number | null => {
+    if (id === "all") return stats.total;
+    if (id === "due_this_week") return stats.dueThisWeek;
+    if (id === "completed") return stats.completed;
+    if (id === "overdue") return stats.overdue;
+    return null;
+  };
+
   return (
     <AppShell title="Action Items">
       <div className="relative space-y-6 px-6 py-6">
@@ -399,26 +451,28 @@ function ActionItemsContent() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Priority Actions</p>
             <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Key Decisions from last dashboard Meetings </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               Follow up on critical directives, approvals, and escalations across HUDD schemes.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+          </div>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
               <button
                 type="button"
                 onClick={() => {
                   setPageTab("list");
                   setSortBy("meeting");
                 }}
-                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${pageTab === "list"
-                    ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                    : "border-[var(--border)] text-[var(--text-muted)]"
+                className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "list"
+                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
               >
-                List
+                List View
               </button>
               <button
                 type="button"
@@ -426,28 +480,139 @@ function ActionItemsContent() {
                   setPageTab("tracker");
                   setSortBy("latest_updates");
                 }}
-                className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] transition ${pageTab === "tracker"
-                    ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                    : "border-[var(--border)] text-[var(--text-muted)]"
+                className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "tracker"
+                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
               >
-                Decision tracker
+                Tracker Board
               </button>
             </div>
           </div>
-          {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
-            <Link
-              href="/action-items/create"
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)]"
-            >
-              Create Item
-            </Link>
-          )}
         </div>
 
-        {pageTab === "tracker" && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_FILTERS.map((entry) => {
+            const count = getFilterCount(entry.id);
+            const isActive = filter === entry.id;
+
+            // Base button classes
+            let btnClasses = "rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-200 flex items-center gap-2 ";
+
+            if (isActive) {
+              if (entry.id === "overdue") {
+                btnClasses += "border-red-600 bg-red-600 text-white shadow-sm";
+              } else {
+                btnClasses += "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm";
+              }
+            } else {
+              if (entry.id === "overdue") {
+                btnClasses += "border-red-200 bg-red-50/80 text-red-700 hover:bg-red-100";
+              } else {
+                btnClasses += "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)]";
+              }
+            }
+
+            // Badge classes
+            let badgeClasses = "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-bold tracking-normal ";
+            if (isActive) {
+              badgeClasses += "bg-[rgba(255,255,255,0.2)] text-white";
+            } else {
+              if (entry.id === "overdue") {
+                badgeClasses += "bg-red-600 text-white";
+              } else if (entry.id === "due_this_week") {
+                badgeClasses += "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/50";
+              } else if (entry.id === "completed") {
+                badgeClasses += "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50";
+              } else {
+                badgeClasses += "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+              }
+            }
+
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => {
+                  setFilter(entry.id);
+                  setTrackerStatus("all");
+                }}
+                className={btnClasses}
+              >
+                <span>{entry.label}</span>
+                {count !== null && (
+                  <span className={badgeClasses}>
+                    {String(count).padStart(2, "0")}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
+          <div className="flex justify-start">
+            <Link
+              href="/action-items/create"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
+            >
+              + Create Item
+            </Link>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by scheme or title"
+            className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          />
+          <select
+            value={verticalFilter}
+            onChange={(event) => setVerticalFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          >
+            {verticalOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "Vertical" : option}
+              </option>
+            ))}
+          </select>
+          <SearchableUserSelector
+            users={directoryUsers}
+            value={assigneeFilter}
+            onChange={(val) => setAssigneeFilter(val)}
+            label=""
+            placeholder="Assigned to"
+            showAllOption={true}
+            allOptionLabel="Assigned to"
+            className="w-[220px]"
+          />
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          >
+            {priorityOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "Priority" : option}
+              </option>
+            ))}
+          </select>
+          <select
+            value={dueFilter}
+            onChange={(event) => setDueFilter(event.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          >
+            <option value="all">Due Date</option>
+            <option value="week">Due this week</option>
+            <option value="month">Due this month</option>
+            <option value="overdue">Overdue</option>
+          </select>
+
+          {pageTab === "tracker" && (
+            <>
               <select
                 value={trackerActivity}
                 onChange={(e) => setTrackerActivity(e.target.value as typeof trackerActivity)}
@@ -478,107 +643,19 @@ function ActionItemsContent() {
                   ))}
                 </select>
               )}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-              >
-                <option value="latest_updates">Latest updates</option>
-                <option value="meeting">Meeting wise</option>
-                <option value="date">Date wise</option>
-              </select>
-            </div>
-          </div>
-        )}
+            </>
+          )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          {STATUS_FILTERS.map((entry) => (
-            <button
-              key={entry.id}
-              onClick={() => {
-                setFilter(entry.id);
-                setTrackerStatus("all");
-              }}
-              className={`rounded-full border px-4 py-1 text-[11px] uppercase tracking-[0.3em] transition ${filter === entry.id
-                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                : "border-[var(--border)] text-[var(--text-muted)]"
-                }`}
-            >
-              {entry.label}
-            </button>
-          ))}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          >
+            <option value="meeting">Meeting wise</option>
+            <option value="date">Date wise</option>
+            <option value="latest_updates">Latest updates</option>
+          </select>
         </div>
-
-        {pageTab === "list" && (
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by scheme or title"
-              className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-            />
-            <select
-              value={verticalFilter}
-              onChange={(event) => setVerticalFilter(event.target.value)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-            >
-              {verticalOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option === "all" ? "Vertical" : option}
-                </option>
-              ))}
-            </select>
-            <SearchableUserSelector
-              users={directoryUsers}
-              value={assigneeFilter}
-              onChange={(val) => setAssigneeFilter(val)}
-              label=""
-              placeholder="Assigned to"
-              showAllOption={true}
-              allOptionLabel="Assigned to"
-              className="w-[220px]"
-            />
-            <select
-              value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-            >
-              {priorityOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option === "all" ? "Priority" : option}
-                </option>
-              ))}
-            </select>
-            <select
-              value={dueFilter}
-              onChange={(event) => setDueFilter(event.target.value)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
-            >
-              <option value="all">Due Date</option>
-              <option value="week">Due this week</option>
-              <option value="month">Due this month</option>
-              <option value="overdue">Overdue</option>
-            </select>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
-            >
-              <option value="meeting">Meeting wise</option>
-              <option value="date">Date wise</option>
-              <option value="latest_updates">Latest updates</option>
-            </select>
-          </div>
-        )}
-
-        {pageTab === "list" && showStats && (
-          <div className="flex flex-wrap items-center gap-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] px-5 py-4 text-sm text-[var(--text-muted)]">
-            <span>Total: <strong className="text-[var(--text-primary)]">{stats.total}</strong></span>
-            <span>Overdue: <strong className="text-[var(--alert-critical)]">{stats.overdue}</strong></span>
-            <span>Due This Week: <strong className="text-[var(--text-primary)]">{stats.dueThisWeek}</strong></span>
-            <span>Completed: <strong className="text-[var(--text-primary)]">{stats.completed}</strong></span>
-          </div>
-        )}
 
         {loading && (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
