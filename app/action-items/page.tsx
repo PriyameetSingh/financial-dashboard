@@ -11,11 +11,49 @@ import type { SessionUser } from "@/types";
 import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
-import StatusBadge from "@/src/components/ui/StatusBadge";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
 import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
 import { useSearchParams } from "next/navigation";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
+import CustomSelect from "@/src/components/ui/CustomSelect";
+import StatusStepper from "@/src/components/ui/StatusStepper";
+
+const DUE_FILTER_OPTIONS = [
+  { value: "all", label: "Due Date" },
+  { value: "week", label: "Due this week" },
+  { value: "month", label: "Due this month" },
+  { value: "overdue", label: "Overdue" },
+];
+
+const TRACKER_ACTIVITY_OPTIONS = [
+  { value: "all", label: "All activity" },
+  { value: "recent_7", label: "Recent activity (7d)" },
+  { value: "recent_30", label: "Recent activity (30d)" },
+  { value: "inactive_14", label: "Inactive > 14 days" },
+  { value: "inactive_30", label: "Inactive > 30 days" },
+];
+
+const TRACKER_STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "OPEN", label: "OPEN" },
+  { value: "IN_PROGRESS", label: "IN PROGRESS" },
+  { value: "PROOF_UPLOADED", label: "PROOF UPLOADED" },
+  { value: "UNDER_REVIEW", label: "UNDER REVIEW" },
+  { value: "COMPLETED", label: "COMPLETED" },
+  { value: "OVERDUE", label: "OVERDUE" },
+];
+
+const SORT_BY_OPTIONS = [
+  { value: "meeting", label: "Meeting wise" },
+  { value: "date", label: "Date wise" },
+  { value: "latest_updates", label: "Latest updates" },
+];
+
+const SORT_BY_TOOLTIP =
+  "Sort Options:\n" +
+  "• Meeting wise: Sorts by the date of the meeting where the decision was taken.\n" +
+  "• Date wise: Sorts by the date the action item was created in the system.\n" +
+  "• Latest updates: Sorts by the date of the most recent activity/update (or due date if no updates exist).";
 
 const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemStatus, item: ActionItem) => boolean }[] = [
   { id: "all", label: "All Actions", match: () => true },
@@ -97,7 +135,6 @@ function ActionItemsContent() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState(initialFilterId);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [expandedStatusItemId, setExpandedStatusItemId] = useState<string | null>(null);
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -230,15 +267,7 @@ function ActionItemsContent() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleDocumentClick = () => {
-      setExpandedStatusItemId(null);
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => {
-      document.removeEventListener("click", handleDocumentClick);
-    };
-  }, []);
+  // StatusStepper components handle their own hover/tap expansion and click-outside closing.
 
   /**
    * If the user is an admin (has create/update permissions) or has view-all, they see all items.
@@ -288,6 +317,19 @@ function ActionItemsContent() {
         }
         return true;
       })();
+
+      const matchesTrackerStatus = !(trackerStatus !== "all" && item.status !== trackerStatus && filter !== "archived");
+      const matchesTrackerActivity = (() => {
+        const last = lastActivityMs(item);
+        const age = Date.now() - last;
+        const day = 24 * 60 * 60 * 1000;
+        if (trackerActivity === "recent_7") return age <= 7 * day;
+        if (trackerActivity === "recent_30") return age <= 30 * day;
+        if (trackerActivity === "inactive_14") return age > 14 * day;
+        if (trackerActivity === "inactive_30") return age > 30 * day;
+        return true;
+      })();
+
       return (
         matchesQuery &&
         activeFilter.match(item.status, item) &&
@@ -295,7 +337,9 @@ function ActionItemsContent() {
         matchesAssignee &&
         matchesPriority &&
         matchesDue &&
-        matchesMyTasksScope
+        matchesMyTasksScope &&
+        matchesTrackerStatus &&
+        matchesTrackerActivity
       );
     });
 
@@ -315,7 +359,7 @@ function ActionItemsContent() {
       }
       return a.title.localeCompare(b.title);
     });
-  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user, directoryUsers]);
+  }, [listItems, query, filter, verticalFilter, assigneeFilter, priorityFilter, dueFilter, sortBy, user, directoryUsers, trackerActivity, trackerStatus]);
 
   const trackerFiltered = useMemo(() => {
     const now = Date.now();
@@ -433,6 +477,20 @@ function ActionItemsContent() {
     [items]
   );
   const priorityOptions = useMemo(() => ["all", ...Array.from(new Set(items.map((item) => item.priority)))], [items]);
+
+  const verticalSelectOptions = useMemo(() => {
+    return verticalOptions.map((opt) => ({
+      value: opt,
+      label: opt === "all" ? "Vertical" : opt,
+    }));
+  }, [verticalOptions]);
+
+  const prioritySelectOptions = useMemo(() => {
+    return priorityOptions.map((opt) => ({
+      value: opt,
+      label: opt === "all" ? "Priority" : opt,
+    }));
+  }, [priorityOptions]);
 
   const canReassignActionItems =
     !!user &&
@@ -618,17 +676,11 @@ function ActionItemsContent() {
             placeholder="Search by scheme or title"
             className="hidden md:block md:flex-1 min-w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
           />
-          <select
+          <CustomSelect
             value={verticalFilter}
-            onChange={(event) => setVerticalFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-          >
-            {verticalOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "Vertical" : option}
-              </option>
-            ))}
-          </select>
+            onChange={setVerticalFilter}
+            options={verticalSelectOptions}
+          />
           <SearchableUserSelector
             users={directoryUsers}
             value={assigneeFilter}
@@ -639,72 +691,39 @@ function ActionItemsContent() {
             allOptionLabel="Assigned to"
             className="w-full md:w-[220px]"
           />
-          <select
+          <CustomSelect
             value={priorityFilter}
-            onChange={(event) => setPriorityFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-          >
-            {priorityOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "Priority" : option}
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={setPriorityFilter}
+            options={prioritySelectOptions}
+          />
+          <CustomSelect
             value={dueFilter}
-            onChange={(event) => setDueFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-          >
-            <option value="all">Due Date</option>
-            <option value="week">Due this week</option>
-            <option value="month">Due this month</option>
-            <option value="overdue">Overdue</option>
-          </select>
-
-          {pageTab === "tracker" && (
-            <>
-              <select
-                value={trackerActivity}
-                onChange={(e) => setTrackerActivity(e.target.value as typeof trackerActivity)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-              >
-                <option value="all">All activity</option>
-                <option value="recent_7">Recent activity (7d)</option>
-                <option value="recent_30">Recent activity (30d)</option>
-                <option value="inactive_14">Inactive &gt; 14 days</option>
-                <option value="inactive_30">Inactive &gt; 30 days</option>
-              </select>
-              {filter !== "archived" && (
-                <select
-                  value={trackerStatus}
-                  onChange={(e) => {
-                    setTrackerStatus(e.target.value);
-                    if (e.target.value !== "all") {
-                      setFilter("all");
-                    }
-                  }}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-                >
-                  <option value="all">All statuses</option>
-                  {(["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED", "OVERDUE"] as const).map((s) => (
-                    <option key={s} value={s}>
-                      {s.replace(/_/g, " ")}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </>
+            onChange={setDueFilter}
+            options={DUE_FILTER_OPTIONS}
+          />
+          <CustomSelect
+            value={trackerActivity}
+            onChange={(e) => setTrackerActivity(e as any)}
+            options={TRACKER_ACTIVITY_OPTIONS}
+          />
+          {filter !== "archived" && (
+            <CustomSelect
+              value={trackerStatus}
+              onChange={(e) => {
+                setTrackerStatus(e);
+                if (e !== "all") {
+                  setFilter("all");
+                }
+              }}
+              options={TRACKER_STATUS_OPTIONS}
+            />
           )}
-
-          <select
+          <CustomSelect
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full md:w-auto"
-          >
-            <option value="meeting">Meeting wise</option>
-            <option value="date">Date wise</option>
-            <option value="latest_updates">Latest updates</option>
-          </select>
+            onChange={(e) => setSortBy(e as any)}
+            options={SORT_BY_OPTIONS}
+            tooltipText={SORT_BY_TOOLTIP}
+          />
         </div>
 
         {loading && (
@@ -759,47 +778,7 @@ function ActionItemsContent() {
                       <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <div
-                        className="relative group inline-block"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedStatusItemId(expandedStatusItemId === item.id ? null : item.id);
-                        }}
-                      >
-                        <div className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.15em] text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-all">
-                          <span className={`w-2 h-2 rounded-full ${item.status === "COMPLETED" ? "bg-[var(--alert-success)]" : item.status === "OVERDUE" ? "bg-[var(--alert-critical)]" : "bg-[var(--alert-warning)]"} animate-pulse`} />
-                          <span>{item.status.replace(/_/g, " ")}</span>
-                          <svg className={`w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform duration-200 group-hover:rotate-180 ${expandedStatusItemId === item.id ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-
-                        <div className={`absolute right-0 bottom-full mb-2 flex-row items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-30 transition-all whitespace-nowrap ${expandedStatusItemId === item.id ? "flex" : "hidden group-hover:flex"}`}>
-                          {STATUS_STEPS.map((step, idx) => {
-                            const isDone = idx <= currentIndex;
-                            const isCurrent = idx === currentIndex;
-                            return (
-                              <div key={step} className="flex items-center">
-                                <span
-                                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none ${isCurrent
-                                      ? "border-[var(--alert-warning)] bg-[rgba(255,184,0,0.12)] text-[var(--alert-warning)]"
-                                      : isDone
-                                        ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
-                                        : "border-[var(--border)] text-[var(--text-muted)]"
-                                    }`}
-                                >
-                                  {step.replace(/_/g, " ")}
-                                </span>
-                                {idx < STATUS_STEPS.length - 1 && (
-                                  <svg className={`mx-1.5 w-3.5 h-3.5 ${isDone ? "text-[var(--text-primary)]" : "text-[var(--border)]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                  </svg>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <StatusStepper item={item} />
                       <span className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-secondary)]">{item.schemeId}</span>
                     </div>
                   </div>
@@ -955,7 +934,7 @@ function ActionItemsContent() {
                         {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
                       </p>
                     </div>
-                    <StatusBadge status={item.status} size="md" />
+                    <StatusStepper item={item} />
                   </div>
                   <div className="mt-6">
                     <div className="flex items-center justify-between mb-4">

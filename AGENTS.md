@@ -22,3 +22,7 @@ Do NOT automatically run the `npm run build` command or any production build scr
 - **Master-Detail Layouts**: For entries and detailed workflows, show the list panel first on mobile. Only show the detail panel once an item is selected, and include a clear, prominent "Back to List" navigation control to return to the selection list.
 - **Tables and Data Grids**: Do not use horizontal overflow scrolls for tables if possible; on mobile, transform table rows into readable card-like blocks with explicit small labels for each field.
 - **Header and Footer Controls**: Wrap toolbars and actions using `flex-wrap` and stack them vertically (`flex-col md:flex-row`) with full-width buttons on mobile to avoid squeezing interactive elements.
+
+# UI Component Guidelines
+- **No Browser-Native Interactive Components**: Do NOT use browser-native interactive components (such as standard HTML `<select>` elements, native dropdowns, etc.) for filters, inputs, or control panels. Instead, design or reuse premium custom-styled components (such as `CustomSelect` or `SearchableUserSelector`) that match the dashboard's rich visual design and support custom menus and help tooltips.
+- **Component Separation**: Whenever a new custom component is required, design it as a separate, reusable component file (e.g., inside `src/components/ui/`) rather than creating it inline in page files or parent components.
