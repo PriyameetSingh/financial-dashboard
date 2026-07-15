@@ -6,11 +6,13 @@ type TextSizeToolbarControlProps = {
   compact?: boolean;
   /** Use on pale backgrounds (e.g. login page) instead of dark chrome */
   lightBackground?: boolean;
+  vertical?: boolean;
 };
 
 export default function TextSizeToolbarControl({
   compact = false,
   lightBackground = false,
+  vertical = false,
 }: TextSizeToolbarControlProps) {
   const { fontScale, setFontScale } = useFontScale();
 
@@ -19,11 +21,12 @@ export default function TextSizeToolbarControl({
     : "text-xs font-semibold uppercase tracking-[0.18em] text-(--text-on-dark-subtle)";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={`flex ${vertical ? "flex-col items-stretch" : "items-center"} gap-2`}>
       <span className={labelClass}>Text size</span>
       <div
         className={[
-          "inline-flex items-center rounded-full border p-1",
+          vertical ? "flex w-full" : "inline-flex",
+          "items-center rounded-full border p-1",
           lightBackground
             ? "border-slate-200 bg-white shadow-sm"
             : "border-(--border) bg-(--bg-card)",
@@ -40,8 +43,12 @@ export default function TextSizeToolbarControl({
               aria-pressed={active}
               onClick={() => setFontScale(option.value)}
               className={[
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                compact ? "min-w-[40px]" : "min-w-[74px]",
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors text-center",
+                vertical
+                  ? "flex-1"
+                  : compact
+                    ? "min-w-[40px]"
+                    : "min-w-[74px]",
                 active
                   ? lightBackground
                     ? "bg-slate-800 text-white"

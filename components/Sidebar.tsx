@@ -40,6 +40,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
+import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
 
 type NavItem = {
   label: string;
@@ -645,6 +646,10 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
       </nav>
 
       <div className="space-y-3 border-t border-[var(--sidebar-border)] px-3 py-3">
+        {/* Mobile Font Size control */}
+        <div className="md:hidden px-2 pb-2 border-b border-[var(--sidebar-border)]/30">
+          <TextSizeToolbarControl vertical />
+        </div>
         <div className="relative z-10" ref={userMenuRef}>
           <button
             className={[

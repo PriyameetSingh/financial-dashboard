@@ -21,7 +21,9 @@ export default function AppShell({ children, title }: Props) {
   const [chatOpen, setChatOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const [mobileNotificationMenuOpen, setMobileNotificationMenuOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
+  const mobileNotificationsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -52,10 +54,13 @@ export default function AppShell({ children, title }: Props) {
       if (notificationMenuOpen && notificationsRef.current && !notificationsRef.current.contains(target)) {
         setNotificationMenuOpen(false);
       }
+      if (mobileNotificationMenuOpen && mobileNotificationsRef.current && !mobileNotificationsRef.current.contains(target)) {
+        setMobileNotificationMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [notificationMenuOpen]);
+  }, [notificationMenuOpen, mobileNotificationMenuOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
@@ -69,27 +74,56 @@ export default function AppShell({ children, title }: Props) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-                aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                <span className="hidden md:inline">
-                  {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-                </span>
-                <span className="inline md:hidden">
-                  {isSidebarCollapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
-                </span>
-              </button>
-              <div className="min-w-0">
-                <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
-                  Housing & Urban Development Department
-                </p>
-                {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+            <div className="flex items-center justify-between gap-3 min-w-0 flex-1">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                  aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  <span className="hidden md:inline">
+                    {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                  </span>
+                  <span className="inline md:hidden">
+                    {isSidebarCollapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+                  </span>
+                </button>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
+                    <span className="inline md:hidden">HUDD Odisha</span>
+                    <span className="hidden md:inline">Housing & Urban Development Department</span>
+                  </p>
+                  {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+                </div>
+              </div>
+
+              {/* Mobile Notifications dropdown */}
+              <div className="relative md:hidden shrink-0" ref={mobileNotificationsRef}>
+                <button
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)]"
+                  aria-label="Notifications"
+                  aria-expanded={mobileNotificationMenuOpen}
+                  onClick={() => {
+                    setMobileNotificationMenuOpen((open) => !open);
+                  }}
+                  type="button"
+                >
+                  <Bell size={16} />
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--alert-critical)]" />
+                </button>
+                {mobileNotificationMenuOpen && (
+                  <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Notifications</p>
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--sidebar-text-primary)]">
+                      <li className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
+                        No new notifications.
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
+            <div className="hidden md:flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
               <TextSizeToolbarControl />
               <button
                 className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
@@ -152,6 +186,15 @@ export default function AppShell({ children, title }: Props) {
           </div>
         </div>
       )}
+      {/* Floating chatbot button for mobile */}
+      <button
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] md:hidden cursor-pointer"
+        onClick={() => setChatOpen(true)}
+        type="button"
+        aria-label="Urban Assistant Chatbot"
+      >
+        <Bot size={24} />
+      </button>
       <WhatsNewNotification />
     </div>
   );

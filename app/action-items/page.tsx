@@ -96,6 +96,8 @@ function ActionItemsContent() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState(initialFilterId);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [expandedStatusItemId, setExpandedStatusItemId] = useState<string | null>(null);
   const [verticalFilter, setVerticalFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -225,6 +227,16 @@ function ActionItemsContent() {
     load();
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setExpandedStatusItemId(null);
+    };
+    document.addEventListener("click", handleDocumentClick);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
     };
   }, []);
 
@@ -549,10 +561,10 @@ function ActionItemsContent() {
             })}
           </div>
           {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
-            <div className="w-full md:w-auto shrink-0 flex justify-end">
+            <div className="hidden md:block shrink-0">
               <Link
                 href="/action-items/create"
-                className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
+                className="flex items-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
               >
                 + Create Item
               </Link>
@@ -560,12 +572,51 @@ function ActionItemsContent() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)] w-full">
+        {/* Mobile Create Item button: visible on mobile, hidden on desktop */}
+        {!!user && !isViewer && hasPermission(user, Permission.CREATE_ACTION_ITEMS) && (
+          <div className="block md:hidden w-full">
+            <Link
+              href="/action-items/create"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[rgba(93,129,205,0.2)] bg-[rgba(93,129,205,0.08)] hover:bg-[rgba(93,129,205,0.15)] px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)] transition-all duration-200"
+            >
+              + Create Item
+            </Link>
+          </div>
+        )}
+
+        {/* Search Input and Filter Toggle Row for Mobile */}
+        <div className="flex items-center gap-2 w-full md:hidden animate-fade-in">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by scheme or title"
-            className="col-span-1 sm:col-span-2 md:flex-1 min-w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] w-full"
+            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] min-w-0"
+          />
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all ${
+              showMobileFilters
+                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
+                : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)]"
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Filters Select Container */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)] w-full ${
+          showMobileFilters ? "grid" : "hidden md:flex"
+        }`}>
+          {/* On desktop, search input is part of the selectors block. On mobile, we hide it here since it's already shown above in the toggle row */}
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by scheme or title"
+            className="hidden md:block md:flex-1 min-w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
           />
           <select
             value={verticalFilter}
@@ -708,16 +759,22 @@ function ActionItemsContent() {
                       <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <div className="relative group inline-block">
+                      <div
+                        className="relative group inline-block"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedStatusItemId(expandedStatusItemId === item.id ? null : item.id);
+                        }}
+                      >
                         <div className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.15em] text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-all">
                           <span className={`w-2 h-2 rounded-full ${item.status === "COMPLETED" ? "bg-[var(--alert-success)]" : item.status === "OVERDUE" ? "bg-[var(--alert-critical)]" : "bg-[var(--alert-warning)]"} animate-pulse`} />
                           <span>{item.status.replace(/_/g, " ")}</span>
-                          <svg className="w-3.5 h-3.5 text-[var(--text-secondary)] group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform duration-200 group-hover:rotate-180 ${expandedStatusItemId === item.id ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
 
-                        <div className="absolute right-0 bottom-full mb-2 hidden group-hover:flex flex-row items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-30 transition-all whitespace-nowrap">
+                        <div className={`absolute right-0 bottom-full mb-2 flex-row items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-30 transition-all whitespace-nowrap ${expandedStatusItemId === item.id ? "flex" : "hidden group-hover:flex"}`}>
                           {STATUS_STEPS.map((step, idx) => {
                             const isDone = idx <= currentIndex;
                             const isCurrent = idx === currentIndex;
