@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/server-auth";
 import { getEffectivePermissionCodesFromUserId, toAuthErrorResponse } from "@/lib/server-rbac";
+import { isSessionInvalidated } from "@/lib/session-invalidation";
 import { Permission, UserRole } from "@/types";
 
 export const runtime = "nodejs";
@@ -89,11 +90,8 @@ export async function GET() {
           })
         : null);
 
-    if (dbUser && dbUser.sessionsInvalidatedAt && sessionUser.iat) {
-      const invalidatedAtSeconds = Math.floor(dbUser.sessionsInvalidatedAt.getTime() / 1000);
-      if (invalidatedAtSeconds > sessionUser.iat) {
-        return NextResponse.json({ detail: "Session invalidated" }, { status: 401 });
-      }
+    if (dbUser && isSessionInvalidated(dbUser.sessionsInvalidatedAt, sessionUser.iat)) {
+      return NextResponse.json({ detail: "Session invalidated" }, { status: 401 });
     }
 
     if (!dbUser) {

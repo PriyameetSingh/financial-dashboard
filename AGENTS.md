@@ -26,3 +26,41 @@ Do NOT automatically run the `npm run build` command or any production build scr
 # UI Component Guidelines
 - **No Browser-Native Interactive Components**: Do NOT use browser-native interactive components (such as standard HTML `<select>` elements, native dropdowns, etc.) for filters, inputs, or control panels. Instead, design or reuse premium custom-styled components (such as `CustomSelect` or `SearchableUserSelector`) that match the dashboard's rich visual design and support custom menus and help tooltips.
 - **Component Separation**: Whenever a new custom component is required, design it as a separate, reusable component file (e.g., inside `src/components/ui/`) rather than creating it inline in page files or parent components.
+
+# Bug Fixing Workflow
+Use the `fix-hudd-bugs` skill (`.cursor/skills/fix-hudd-bugs/SKILL.md`) for systematic bug fixing from the Notion bug tracker.
+
+## Bug Status Transitions
+- **Open/Reopen** → **Fix** (agent marks after fixing)
+- **Fix** → **Review Completed** (QA team verifies)
+- **Review Completed** → **Done** (QA team confirms)
+- Never mark bugs directly as "Done" - only mark as "Fix" after implementing the fix
+
+## Workflow Principles
+- **Smart Grouping**: Group bugs by component/page to optimize token usage (fix 3-5 bugs per session)
+- **Type Checking Only**: Run `npx tsc --noEmit` to verify fixes, do NOT run full builds
+- **Approval Required**: Always ask for approval before updating bug status in Notion
+- **Plain Language Changelog**: Describe user/officer workflow impact, not technical implementation
+- **No Auto-Versioning**: Bug fixes do not automatically bump versions or mark releases as "current"
+
+## Filtering Criteria
+When fetching bugs from Notion:
+- Assignee: Current user only
+- Module: HUDD (Bug ID starts with "BUG-HUDD")
+- Status: "Open" OR "Reopen" only
+- Exclude: "Fix", "Review Completed", "Done", "Future Scope"
+
+## Usage
+```bash
+# Fix up to 5 HUDD bugs assigned to you
+/fix-hudd-bugs
+
+# Filter by priority
+/fix-hudd-bugs priority=P0,P1
+
+# Plan only (no changes)
+/fix-hudd-bugs dry-run
+
+# Specific component
+/fix-hudd-bugs component="Create User"
+```

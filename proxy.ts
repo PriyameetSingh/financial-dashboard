@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { prisma } from "@/lib/prisma";
+import { isSessionInvalidated } from "@/lib/session-invalidation";
 
 /** App Router + `fetch()` use the full pathname including `basePath` (e.g. `/hudd-dashboard/api/...`). */
 function isApiOrAssetPath(pathname: string): boolean {
@@ -45,16 +46,13 @@ async function isTokenInvalidated(token: any): Promise<boolean> {
     const dbUser = await prisma.user.findFirst({
       where: {
         OR: [
-          { code: token.preferred_username as string },
-          { email: token.email as string },
+          { code: { equals: token.preferred_username as string, mode: "insensitive" } },
+          { email: { equals: token.email as string, mode: "insensitive" } },
         ],
       },
       select: { sessionsInvalidatedAt: true },
     });
-    if (dbUser?.sessionsInvalidatedAt && token.iat) {
-      const invalidatedAtSeconds = Math.floor(dbUser.sessionsInvalidatedAt.getTime() / 1000);
-      return invalidatedAtSeconds > token.iat;
-    }
+    return isSessionInvalidated(dbUser?.sessionsInvalidatedAt, token.iat as number | undefined);
   } catch (error) {
     console.error("[proxy] Error checking token invalidation:", error);
   }

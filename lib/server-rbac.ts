@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { asDatabaseUnavailableError, toDatabaseErrorResponse } from "@/lib/db-errors";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/server-auth";
+import { isSessionInvalidated } from "@/lib/session-invalidation";
 
 export class AuthError extends Error {
   status: number;
@@ -62,11 +63,8 @@ async function loadDbUserBySession() {
     const user = await findDbUserByIdentity(sessionUser);
     if (!user) return null;
 
-    if (user.sessionsInvalidatedAt && sessionUser.iat) {
-      const invalidatedAtSeconds = Math.floor(user.sessionsInvalidatedAt.getTime() / 1000);
-      if (invalidatedAtSeconds > sessionUser.iat) {
-        throw new AuthError(401, "Session invalidated");
-      }
+    if (isSessionInvalidated(user.sessionsInvalidatedAt, sessionUser.iat)) {
+      throw new AuthError(401, "Session invalidated");
     }
 
     return user;

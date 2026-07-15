@@ -1,5 +1,6 @@
 import { withNextBasePath } from "@/lib/next-base-path";
 import { SessionUser, Permission, UserRole, type OfficerType } from "@/types";
+import { authApiBasePath } from "@/lib/auth-api-path";
 
 export { Permission, UserRole };
 export type { SessionUser };
@@ -77,6 +78,18 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
     if (!res.ok) {
       if (res.status === 401) {
         clearCurrentUser();
+        // The server invalidated this session (e.g. admin reset the user's
+        // password). Destroy the NextAuth JWT cookie by redirecting through the
+        // federated logout endpoint so the user cannot keep using the app with
+        // a stale cookie. Route guards that call this function will also
+        // redirect to /login, but the cookie must be cleared server-side.
+        if (typeof window !== "undefined") {
+          const base = process.env.__NEXT_ROUTER_BASEPATH ?? "";
+          const loginPath = base ? `${base}/login` : "/login";
+          window.location.assign(
+            `${authApiBasePath()}/keycloak/logout?${new URLSearchParams({ callbackUrl: loginPath })}`,
+          );
+        }
         return null;
       }
       return getCurrentUser();
