@@ -138,42 +138,42 @@ const COLUMN_UI: Record<
     range: ">15% behind Q target",
     // Clean header with only top accent border
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-rose-700 dark:text-rose-300",
-    countBg: "bg-rose-600 text-white dark:bg-rose-500",
-    barFill: "bg-rose-500",
-    // Subtle badge with better contrast
-    badgeBg: "bg-rose-100 text-rose-900 dark:bg-rose-900/60 dark:text-rose-100",
+    headerText: "text-red-900 dark:text-red-200",
+    countBg: "bg-red-800 text-white dark:bg-red-700",
+    barFill: "bg-red-600",
+    // High-contrast badge
+    badgeBg: "bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-200",
     badgeText: "", // uses combined with badgeBg
     // Neutral column border, cards get left accent
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-rose-500",
+    accentBorder: "border-l-red-600 dark:border-l-red-500",
   },
   at_risk: {
     title: "AT RISK",
     range: "5-15% behind Q target",
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-amber-700 dark:text-amber-300",
-    countBg: "bg-amber-600 text-white dark:bg-amber-500",
-    barFill: "bg-amber-500",
-    badgeBg: "bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-100",
+    headerText: "text-amber-950 dark:text-amber-200",
+    countBg: "bg-amber-700 text-white dark:bg-amber-600",
+    barFill: "bg-amber-600",
+    badgeBg: "bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-200",
     badgeText: "",
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-amber-500",
+    accentBorder: "border-l-amber-600 dark:border-l-amber-500",
   },
   on_track: {
     title: "ON TRACK",
     range: "Within 5% of Q target",
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-emerald-700 dark:text-emerald-300",
-    countBg: "bg-emerald-600 text-white dark:bg-emerald-500",
-    barFill: "bg-emerald-500",
-    badgeBg: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100",
+    headerText: "text-emerald-900 dark:text-emerald-200",
+    countBg: "bg-emerald-800 text-white dark:bg-emerald-700",
+    barFill: "bg-emerald-600",
+    badgeBg: "bg-emerald-100 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-200",
     badgeText: "",
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-emerald-500",
+    accentBorder: "border-l-emerald-600 dark:border-l-emerald-500",
   },
 };
 
@@ -193,6 +193,11 @@ export default function SchemesBoardClient() {
   const [activeTab, setActiveTab] = useState<ViewTab>("board");
   const [sortKey, setSortKey] = useState<SortKey>("default");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [boardSorts, setBoardSorts] = useState<Record<Bucket, "default" | "asc" | "desc">>({
+    critical: "default",
+    at_risk: "default",
+    on_track: "default",
+  });
 
   useEffect(() => {
     setExpandedIds(new Set());
@@ -249,15 +254,24 @@ export default function SchemesBoardClient() {
       cols[bucketForQuarterlyVariance(qp.variancePct)].push(e);
     }
     for (const k of BUCKET_ORDER) {
-      // Sort by how close they are to their quarterly target (best first)
-      cols[k].sort((a, b) => {
-        const qa = getQuarterlyProgress(a);
-        const qb = getQuarterlyProgress(b);
-        return qb.variancePct - qa.variancePct;
-      });
+      const sortVal = boardSorts[k];
+      if (sortVal === "default") {
+        // Sort by how close they are to their quarterly target (best first)
+        cols[k].sort((a, b) => {
+          const qa = getQuarterlyProgress(a);
+          const qb = getQuarterlyProgress(b);
+          return qb.variancePct - qa.variancePct;
+        });
+      } else {
+        cols[k].sort((a, b) => {
+          const pctA = utilPct(a);
+          const pctB = utilPct(b);
+          return sortVal === "asc" ? pctA - pctB : pctB - pctA;
+        });
+      }
     }
     return cols;
-  }, [filtered]);
+  }, [filtered, boardSorts]);
 
   const totals = useMemo(() => {
     const totalRe = filtered.reduce((s, e) => s + effBudget(e), 0);
@@ -500,7 +514,7 @@ export default function SchemesBoardClient() {
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">At Risk: 5–15% behind target</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-rose-500 shadow-sm" />
+                <span className="size-2.5 rounded-full bg-red-500 shadow-sm" />
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">Critical: &gt;15% behind target</span>
               </div>
             </div>
@@ -677,11 +691,50 @@ export default function SchemesBoardClient() {
                         <span className="font-normal opacity-80">({ui.range})</span>
                       </p>
                     </div>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${ui.countBg}`}
-                    >
-                      {list.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBoardSorts((prev) => {
+                            const current = prev[key];
+                            let next: "default" | "asc" | "desc" = "default";
+                            if (current === "default") next = "desc";
+                            else if (current === "desc") next = "asc";
+                            else next = "default";
+                            return { ...prev, [key]: next };
+                          });
+                        }}
+                        className="flex size-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-all"
+                        title={`Sort by utilization % (currently: ${
+                          boardSorts[key] === "default"
+                            ? "Default Target Variance"
+                            : boardSorts[key] === "desc"
+                            ? "Descending %"
+                            : "Ascending %"
+                        })`}
+                      >
+                        {boardSorts[key] === "default" && (
+                          <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M3 10h18M3 16h18" />
+                          </svg>
+                        )}
+                        {boardSorts[key] === "desc" && (
+                          <svg className="size-4 text-[var(--text-primary)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h14M3 18h10M19 12v6m0 0l-3-3m3 3l3-3" />
+                          </svg>
+                        )}
+                        {boardSorts[key] === "asc" && (
+                          <svg className="size-4 text-[var(--text-primary)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h10M3 12h14M3 18h18M19 18V12m0 0l-3 3m3-3l3 3" />
+                          </svg>
+                        )}
+                      </button>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${ui.countBg}`}
+                      >
+                        {list.length}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
@@ -788,11 +841,11 @@ export default function SchemesBoardClient() {
 
                                 const accentColors = isBehind
                                   ? isOnTrack
-                                    ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
-                                    : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
-                                  : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
+                                    ? { border: "border-l-amber-600 dark:border-l-amber-500", text: "text-amber-950 dark:text-amber-200" }
+                                    : { border: "border-l-red-600 dark:border-l-red-500", text: "text-red-900 dark:text-red-200" }
+                                  : { border: "border-l-emerald-600 dark:border-l-emerald-500", text: "text-emerald-900 dark:text-emerald-200" };
                                 const barColor = isBehind
-                                  ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
+                                  ? isOnTrack ? "bg-amber-500" : "bg-red-500"
                                   : "bg-emerald-500";
                                 const varianceColor = qp.variancePct >= 0
                                   ? "text-emerald-600 dark:text-emerald-400"
@@ -818,7 +871,7 @@ export default function SchemesBoardClient() {
                                     </div>
                                     <div className="mt-0.5 flex items-center justify-between">
                                       <span className="text-[9px] text-[var(--text-muted)]">
-                                        Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
+                                        Q{qp.quarter} allocation: ₹{fmtCr((qp.cumulativeTargetPct / 100) * effBudget(entry))} Cr
                                       </span>
                                       <span className={`text-[9px] font-semibold tabular-nums ${varianceColor}`}>
                                         {qp.variancePct >= 0 ? "+" : ""}
@@ -949,7 +1002,7 @@ export default function SchemesBoardClient() {
 
                     const barFill =
                       bucket === "critical"
-                        ? "bg-rose-500"
+                        ? "bg-red-500"
                         : bucket === "at_risk"
                           ? "bg-amber-500"
                           : "bg-emerald-500";
@@ -1037,11 +1090,11 @@ export default function SchemesBoardClient() {
 
                                     const accentColors = isBehind
                                       ? isOnTrack
-                                        ? { border: "border-l-amber-500", text: "text-amber-700 dark:text-amber-300" }
-                                        : { border: "border-l-rose-500", text: "text-rose-700 dark:text-rose-300" }
-                                      : { border: "border-l-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
+                                        ? { border: "border-l-amber-600 dark:border-l-amber-500", text: "text-amber-950 dark:text-amber-200" }
+                                        : { border: "border-l-red-600 dark:border-l-red-500", text: "text-red-900 dark:text-red-200" }
+                                      : { border: "border-l-emerald-600 dark:border-l-emerald-500", text: "text-emerald-900 dark:text-emerald-200" };
                                     const barColor = isBehind
-                                      ? isOnTrack ? "bg-amber-500" : "bg-rose-500"
+                                      ? isOnTrack ? "bg-amber-500" : "bg-red-500"
                                       : "bg-emerald-500";
                                     const varianceColor = qp.variancePct >= 0
                                       ? "text-emerald-600 dark:text-emerald-400"
@@ -1067,7 +1120,7 @@ export default function SchemesBoardClient() {
                                         </div>
                                         <div className="mt-2 flex items-center justify-between">
                                           <span className="text-xs text-[var(--text-muted)]">
-                                            Q{qp.quarter} allocation: {qp.quarterTargetPct.toFixed(0)}%
+                                            Q{qp.quarter} allocation: ₹{fmtCr((qp.cumulativeTargetPct / 100) * effBudget(entry))} Cr
                                           </span>
                                           <span className={`text-xs font-bold tabular-nums ${varianceColor}`}>
                                             {qp.variancePct >= 0 ? "+" : ""}
