@@ -24,6 +24,8 @@ const PERMISSIONS = [
   { code: "MANAGE_FINANCIAL_YEARS", name: "Manage financial years" },
   { code: "FLAG_KPI_ESCALATION", name: "Flag KPI escalation / bottleneck" },
   { code: "REORDER_SCHEMES", name: "Reorder schemes for all users" },
+  { code: "MANAGE_NOTIFICATION_CONFIG", name: "Manage notification configs" },
+  { code: "SEND_MANUAL_NOTIFICATIONS", name: "Send manual notifications" },
 ];
 
 /** Merged former AS / PS HUDD / similar desk roles — permission set aligned with Nodal Officer. */
@@ -51,6 +53,8 @@ const ROLES = [
       "APPROVE_ACTION_ITEMS",
       "FLAG_KPI_ESCALATION",
       "REORDER_SCHEMES",
+      "MANAGE_NOTIFICATION_CONFIG",
+      "SEND_MANUAL_NOTIFICATIONS",
     ],
   },
   {
@@ -81,6 +85,8 @@ const ROLES = [
       "MANAGE_PERMISSIONS",
       "MANAGE_FINANCIAL_YEARS",
       "REORDER_SCHEMES",
+      "MANAGE_NOTIFICATION_CONFIG",
+      "SEND_MANUAL_NOTIFICATIONS",
     ],
   },
   {

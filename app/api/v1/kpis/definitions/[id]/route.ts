@@ -3,6 +3,8 @@ import { KpiMonitoringLevel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
+import { ActionItemPriority } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -289,6 +291,65 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       },
       { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
     );
+
+    // Trigger KPI Reassignment / Unassignment Notifications
+    const prevPerformerIds = new Set(existing.performers.map((p) => p.userId));
+    const prevReviewerIds = new Set(existing.reviewerUsers.map((r) => r.userId));
+
+    const addedPerformers = performerUserIds.filter((id) => !prevPerformerIds.has(id));
+    const removedPerformers = [...prevPerformerIds].filter((id) => !performerUserIds.includes(id));
+    const addedReviewers = reviewerUserIds.filter((id) => !prevReviewerIds.has(id));
+    const removedReviewers = [...prevReviewerIds].filter((id) => !reviewerUserIds.includes(id));
+
+    const kpiDescription = newDescription ?? existing.description;
+
+    for (const pId of addedPerformers) {
+      await NotificationService.trigger({
+        userId: pId,
+        title: "KPI Assigned",
+        content: `You have been assigned to enter data for KPI: "${kpiDescription}"`,
+        type: "KPI_REASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: id },
+      });
+    }
+
+    for (const pId of removedPerformers) {
+      await NotificationService.trigger({
+        userId: pId,
+        title: "KPI Unassigned",
+        content: `You have been unassigned from KPI: "${kpiDescription}"`,
+        type: "KPI_REASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: id },
+      });
+    }
+
+    for (const rId of addedReviewers) {
+      await NotificationService.trigger({
+        userId: rId,
+        title: "Reviewer Assigned to KPI",
+        content: `You have been assigned as a reviewer for KPI: "${kpiDescription}"`,
+        type: "KPI_REASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: id },
+      });
+    }
+
+    for (const rId of removedReviewers) {
+      await NotificationService.trigger({
+        userId: rId,
+        title: "Reviewer Unassigned from KPI",
+        content: `You have been unassigned as a reviewer for KPI: "${kpiDescription}"`,
+        type: "KPI_REASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: id },
+      });
+    }
 
     const history = await getKpiAssignmentHistory(id);
 

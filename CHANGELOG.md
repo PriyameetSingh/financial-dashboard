@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<!-- New changes go here. Do not manually edit this section - use the bug-fixing workflow -->
+### Added
+- **Notification Center**: Officers now have access to a real-time notification dropdown in the top-right corner of their screen, providing instant updates on newly assigned tasks, KPI data reviews, and custom alerts.
+- **Global Control & Sleep Mode**: Administrators can now toggle the notification service globally or pause alerts during system updates. A quiet-hours schedule can be defined to prevent notifications outside of standard office hours (with critical alerts bypassing sleep mode).
+- **Manual Alert Dispatcher**: Allowed administrators to send manual custom alerts directly to individual officers with relative action links.
+- **Automated Workflow Alerts**: Automatically notify concerned officers whenever a task update is posted, a task assignment changes, or KPI review decisions are resolved.
 
 ### Security
 - When an administrator resets a user's password, the user is now immediately

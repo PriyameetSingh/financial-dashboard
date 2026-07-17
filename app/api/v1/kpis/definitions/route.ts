@@ -14,6 +14,8 @@ import {
   requirePermissionAndDbUser,
   toAuthErrorResponse,
 } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
+import { ActionItemPriority } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -422,6 +424,30 @@ export async function POST(request: NextRequest) {
       },
       { ...auditContext, schemeId, schemeCode: scheme.code },
     );
+
+    // Trigger KPI Assignment Notifications
+    for (const performerId of performerUserIds) {
+      await NotificationService.trigger({
+        userId: performerId,
+        title: "New KPI Assigned",
+        content: `You have been assigned to enter data for KPI: "${created.description}"`,
+        type: "KPI_ASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: created.id },
+      });
+    }
+    for (const reviewerId of reviewerUserIds) {
+      await NotificationService.trigger({
+        userId: reviewerId,
+        title: "Reviewer Assigned to KPI",
+        content: `You have been assigned as a reviewer for KPI: "${created.description}"`,
+        type: "KPI_ASSIGNED",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: created.id },
+      });
+    }
 
     return NextResponse.json(
       {

@@ -4,6 +4,7 @@ import { parseListLimit } from "@/lib/list-query-limit";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
 
 export const runtime = "nodejs";
 
@@ -297,6 +298,19 @@ export async function POST(request: NextRequest) {
         createdById: actor?.id ?? null,
       },
     });
+
+    // Trigger notifications for all assigned performers
+    for (const performerId of performerIds) {
+      await NotificationService.trigger({
+        userId: performerId,
+        title: "New Action Item Assigned",
+        content: `You have been assigned the action item: "${created.title}"`,
+        type: "ACTION_ITEM_ASSIGNED",
+        priority: created.priority,
+        link: `/action-items/${created.id}`,
+        metadata: { actionItemId: created.id },
+      });
+    }
 
     await logAudit(
       actor?.id,

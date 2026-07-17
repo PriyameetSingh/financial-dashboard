@@ -60,6 +60,8 @@ export enum Permission {
   /** Set bottleneck reason and ACS escalation flag on KPI measurements. */
   FLAG_KPI_ESCALATION = "FLAG_KPI_ESCALATION",
   REORDER_SCHEMES = "REORDER_SCHEMES",
+  MANAGE_NOTIFICATION_CONFIG = "MANAGE_NOTIFICATION_CONFIG",
+  SEND_MANUAL_NOTIFICATIONS = "SEND_MANUAL_NOTIFICATIONS",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";

@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
@@ -9,6 +9,7 @@ import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
 import WhatsNewNotification from "@/components/WhatsNewNotification";
+import { NotificationDropdown } from "@/src/components/ui/NotificationDropdown";
 
 interface Props {
   children: React.ReactNode;
@@ -20,11 +21,6 @@ export default function AppShell({ children, title }: Props) {
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
-  const [mobileNotificationMenuOpen, setMobileNotificationMenuOpen] = useState(false);
-  const notificationsRef = useRef<HTMLDivElement | null>(null);
-  const mobileNotificationsRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       setTimeout(() => {
@@ -47,20 +43,6 @@ export default function AppShell({ children, title }: Props) {
       timeZoneName: "short",
     });
   }, []);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (notificationMenuOpen && notificationsRef.current && !notificationsRef.current.contains(target)) {
-        setNotificationMenuOpen(false);
-      }
-      if (mobileNotificationMenuOpen && mobileNotificationsRef.current && !mobileNotificationsRef.current.contains(target)) {
-        setMobileNotificationMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [notificationMenuOpen, mobileNotificationMenuOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
@@ -98,29 +80,8 @@ export default function AppShell({ children, title }: Props) {
               </div>
 
               {/* Mobile Notifications dropdown */}
-              <div className="relative md:hidden shrink-0" ref={mobileNotificationsRef}>
-                <button
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)]"
-                  aria-label="Notifications"
-                  aria-expanded={mobileNotificationMenuOpen}
-                  onClick={() => {
-                    setMobileNotificationMenuOpen((open) => !open);
-                  }}
-                  type="button"
-                >
-                  <Bell size={16} />
-                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--alert-critical)]" />
-                </button>
-                {mobileNotificationMenuOpen && (
-                  <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Notifications</p>
-                    <ul className="mt-3 space-y-2 text-sm text-[var(--sidebar-text-primary)]">
-                      <li className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
-                        No new notifications.
-                      </li>
-                    </ul>
-                  </div>
-                )}
+              <div className="relative md:hidden shrink-0">
+                <NotificationDropdown align="right" />
               </div>
             </div>
             <div className="hidden md:flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
@@ -134,30 +95,7 @@ export default function AppShell({ children, title }: Props) {
                 <span className="hidden xl:inline">Urban Assistant</span>
               </button>
               <span className="hidden text-xs text-[var(--text-muted)] 2xl:inline">{mounted ? nowLabel : ""}</span>
-              <div className="relative" ref={notificationsRef}>
-                <button
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)]"
-                  aria-label="Notifications"
-                  aria-expanded={notificationMenuOpen}
-                  onClick={() => {
-                    setNotificationMenuOpen((open) => !open);
-                  }}
-                  type="button"
-                >
-                  <Bell size={16} />
-                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--alert-critical)]" />
-                </button>
-                {notificationMenuOpen && (
-                  <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Notifications</p>
-                    <ul className="mt-3 space-y-2 text-sm text-[var(--sidebar-text-primary)]">
-                      <li className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
-                        No new notifications.
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <NotificationDropdown align="right" />
             </div>
           </div>
         </header>

@@ -20,7 +20,8 @@ export default function AdminOverviewPage() {
   const showSchemes = user && hasPermission(user, Permission.MANAGE_SCHEMES);
   const showReorder = user && hasPermission(user, Permission.REORDER_SCHEMES);
   const showFinancialYears = user && hasPermission(user, Permission.MANAGE_FINANCIAL_YEARS);
-  const showSystemSettings = showPermissions || showFinancialYears;
+  const showNotifications = user && hasPermission(user, Permission.MANAGE_NOTIFICATION_CONFIG);
+  const showSystemSettings = showPermissions || showFinancialYears || showNotifications;
 
   return (
     <AppShell title="Administration">
@@ -104,6 +105,18 @@ export default function AdminOverviewPage() {
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">System</p>
               <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">System Settings</h3>
               <p className="mt-2 text-sm text-[var(--text-muted)]">Configure role permissions and financial-year controls.</p>
+            </Link>
+          )}
+          {showNotifications && (
+            <Link
+              href="/admin/notifications"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Notifications</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Notification Center</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)] flex-1">
+                Configure global service master toggles, quiet hours, and manually dispatch alerts.
+              </p>
             </Link>
           )}
         </div>

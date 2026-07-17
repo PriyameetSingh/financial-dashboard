@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assertKpiUpdaterForDefinition, userRoleIdsFromDbUser } from "@/lib/kpi-access";
 import { hasPermissionForUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
+import { ActionItemPriority } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -220,6 +222,21 @@ export async function POST(request: NextRequest) {
         workflowStatus: resolvedWorkflowStatus,
       },
     );
+
+    // Trigger KPI Review Request Notification
+    if ((resolvedWorkflowStatus as string) === "submitted") {
+      for (const reviewer of definition.reviewerUsers) {
+        await NotificationService.trigger({
+          userId: reviewer.userId,
+          title: "KPI Data Submitted for Review",
+          content: `New data has been submitted for KPI: "${definition.description}"`,
+          type: "KPI_SUBMITTED",
+          priority: ActionItemPriority.Medium,
+          link: "/kpis",
+          metadata: { kpiDefinitionId: definition.id, measurementId: afterMeasurement?.id },
+        });
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

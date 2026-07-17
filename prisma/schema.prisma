@@ -182,6 +182,10 @@ model User {
   schemeAssignments      SchemeAssignment[]
   seenReleases          UserSeenRelease[]
 
+  notifications         Notification[]
+  notificationPrefs     UserNotificationPreference[]
+  updatedConfigs        SystemNotificationConfig[]
+
   @@map("users")
 }
 
@@ -929,4 +933,85 @@ model AgentInsight {
   createdAt     DateTime @default(now())
 
   @@map("agent_insights")
+}
+
+enum NotificationChannel {
+  IN_APP
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum DispatchStatus {
+  PENDING
+  SENT
+  FAILED
+  QUEUED_FOR_OFFICE_HOURS
+}
+
+model Notification {
+  id          String             @id @default(uuid()) @db.Uuid
+  userId      String             @db.Uuid
+  title       String
+  content     String
+  type        String             // e.g., "MANUAL", "ACTION_ITEM_ASSIGNED", "ACTION_ITEM_REASSIGNED", "ACTION_ITEM_UPDATE", "KPI_ASSIGNED", "KPI_REASSIGNED", "KPI_SUBMITTED"
+  priority    ActionItemPriority // Reuses existing priority enum
+  status      NotificationStatus @default(UNREAD)
+  link        String?            // App routing path, e.g., "/action-items/{id}"
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  metadata    Json?              // Contextual metadata e.g., { actionItemId: "uuid" }
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dispatches  NotificationDispatch[]
+
+  @@index([userId, status, createdAt])
+  @@map("notifications")
+}
+
+model NotificationDispatch {
+  id             String              @id @default(uuid()) @db.Uuid
+  notificationId String              @db.Uuid
+  channel        NotificationChannel
+  status         DispatchStatus      @default(PENDING)
+  errorMessage   String?
+  dispatchedAt   DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, channel])
+  @@map("notification_dispatches")
+}
+
+model UserNotificationPreference {
+  id          String              @id @default(uuid()) @db.Uuid
+  userId      String              @db.Uuid
+  category    String              // e.g. "lapseRisk", "overdueActions", "agentAlerts", "whatsapp"
+  channel     NotificationChannel
+  enabled     Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, channel])
+  @@map("user_notification_preferences")
+}
+
+model SystemNotificationConfig {
+  id          String              @id @default(uuid()) @db.Uuid
+  key         String              @unique // Config keys: e.g. "SYSTEM_NOTIFICATIONS_ENABLED", "SYSTEM_NOTIFICATIONS_DISABLED_UNTIL", "QUIET_HOURS_ENABLED", "QUIET_HOURS_START", "QUIET_HOURS_END", "TRIGGER_*" toggles
+  value       String
+  updatedAt   DateTime            @updatedAt
+  updatedById String?             @db.Uuid
+  updatedBy   User?               @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("system_notification_configs")
 }

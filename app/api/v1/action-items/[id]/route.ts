@@ -3,6 +3,7 @@ import { ActionItemStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { getDbUserBySession, hasPermissionForUser, requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
 
 export const runtime = "nodejs";
 
@@ -264,6 +265,21 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           createdById: actor.id,
         },
       });
+
+      // Trigger notifications for performers
+      for (const performerId of performerIds) {
+        await NotificationService.trigger({
+          userId: performerId,
+          title: body.reviewerDecision === "approve" ? "Action Item Approved" : "Action Item Revision Required",
+          content: body.reviewerDecision === "approve"
+            ? `Your action item "${current.title}" has been approved.`
+            : `Reviewer requested revision: "${body.rejectionReason}" for action item: "${current.title}"`,
+          type: body.reviewerDecision === "approve" ? "ACTION_ITEM_COMPLETED" : "ACTION_ITEM_REJECTED",
+          priority: current.priority,
+          link: `/action-items/${current.id}`,
+          metadata: { actionItemId: current.id },
+        });
+      }
       await logAudit(
         actor.id,
         "action_item.review",
@@ -406,6 +422,57 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         }
       });
+
+      // Calculate reassignments and trigger notifications
+      const addedPerformers = nextPerformerIds.filter(id => !performerIds.has(id));
+      const removedPerformers = [...performerIds].filter(id => !nextPerformerIds.includes(id));
+      const addedReviewers = nextReviewerIds.filter(id => !reviewerIds.has(id));
+      const removedReviewers = [...reviewerIds].filter(id => !nextReviewerIds.includes(id));
+
+      for (const pId of addedPerformers) {
+        await NotificationService.trigger({
+          userId: pId,
+          title: "New Action Item Assigned",
+          content: `You have been assigned the action item: "${current.title}"`,
+          type: "ACTION_ITEM_ASSIGNED",
+          priority: current.priority,
+          link: `/action-items/${current.id}`,
+          metadata: { actionItemId: current.id },
+        });
+      }
+      for (const pId of removedPerformers) {
+        await NotificationService.trigger({
+          userId: pId,
+          title: "Action Item Unassigned",
+          content: `You have been unassigned from the action item: "${current.title}"`,
+          type: "ACTION_ITEM_UNASSIGNED",
+          priority: current.priority,
+          link: `/action-items/${current.id}`,
+          metadata: { actionItemId: current.id },
+        });
+      }
+      for (const rId of addedReviewers) {
+        await NotificationService.trigger({
+          userId: rId,
+          title: "Reviewer Assigned to Action Item",
+          content: `You have been assigned as a reviewer for action item: "${current.title}"`,
+          type: "ACTION_ITEM_ASSIGNED",
+          priority: current.priority,
+          link: `/action-items/${current.id}`,
+          metadata: { actionItemId: current.id },
+        });
+      }
+      for (const rId of removedReviewers) {
+        await NotificationService.trigger({
+          userId: rId,
+          title: "Reviewer Unassigned from Action Item",
+          content: `You have been unassigned as a reviewer for action item: "${current.title}"`,
+          type: "ACTION_ITEM_UNASSIGNED",
+          priority: current.priority,
+          link: `/action-items/${current.id}`,
+          metadata: { actionItemId: current.id },
+        });
+      }
 
       await prisma.actionItemUpdate.create({
         data: {
@@ -589,6 +656,21 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           where: { id },
           data: { status: nextStatus },
         });
+
+        // Trigger notification to reviewers if status is UNDER_REVIEW
+        if (nextStatus === ActionItemStatus.UNDER_REVIEW) {
+          for (const reviewerId of reviewerIds) {
+            await NotificationService.trigger({
+              userId: reviewerId,
+              title: "Action Item Ready for Review",
+              content: `Performer submitted proof for review on: "${current.title}"`,
+              type: "ACTION_ITEM_REVIEW_REQUEST",
+              priority: current.priority,
+              link: `/action-items/${current.id}`,
+              metadata: { actionItemId: current.id },
+            });
+          }
+        }
       }
       if (noteTrimmed.length > 0 && noteMeetingId) {
         await prisma.actionItemUpdate.create({
@@ -601,6 +683,21 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             createdById: actor.id,
           },
         });
+
+        // Broadcast action item updates to all concerned owners (except creator of the update)
+        const recipients = new Set([...performerIds, ...reviewerIds]);
+        recipients.delete(actor.id);
+        for (const recipientId of recipients) {
+          await NotificationService.trigger({
+            userId: recipientId,
+            title: "Action Item Update Posted",
+            content: `Officer ${actor.name} posted an update on: "${current.title}"`,
+            type: "ACTION_ITEM_UPDATE",
+            priority: current.priority,
+            link: `/action-items/${current.id}`,
+            metadata: { actionItemId: current.id, updateNote: noteTrimmed },
+          });
+        }
       }
       await logAudit(
         actor.id,

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assertKpiReviewerForDefinition, userRoleIdsFromDbUser } from "@/lib/kpi-access";
 import { hasPermissionForUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { NotificationService } from "@/lib/services/NotificationService";
+import { ActionItemPriority } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -92,6 +94,21 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
         decision: body.decision,
       },
     );
+
+    // Trigger KPI Review Decision Notification
+    if (measurement.createdById) {
+      await NotificationService.trigger({
+        userId: measurement.createdById,
+        title: body.decision === "approve" ? "KPI Measurement Approved" : "KPI Measurement Rejected",
+        content: body.decision === "approve"
+          ? `Your measurement for KPI "${def.description}" has been approved.`
+          : `Your measurement for KPI "${def.description}" was rejected. Reason: "${body.note}"`,
+        type: "KPI_REVIEW_DECISION",
+        priority: ActionItemPriority.Medium,
+        link: "/kpis",
+        metadata: { kpiDefinitionId: def.id, measurementId: id },
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
