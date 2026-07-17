@@ -249,7 +249,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
                     key={item.id}
                     onClick={() => handleNotificationClick(item)}
                     className={`group relative flex gap-3 rounded-lg border border-[var(--border)] p-3 cursor-pointer transition hover:bg-[var(--bg-card)] ${
-                      item.status === 'UNREAD' ? 'bg-[var(--bg-surface)]' : 'bg-transparent'
+                      item.status === 'UNREAD' ? 'bg-[var(--bg-hover)]' : 'bg-transparent'
                     } ${getPriorityStyle(item.priority)}`}
                   >
                     {/* Icon container */}
