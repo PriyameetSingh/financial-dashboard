@@ -5,9 +5,9 @@ import AppShell from '@/components/AppShell';
 import { Permission } from '@/lib/auth';
 import { useRequireAnyPermission } from '@/src/lib/route-guards';
 import SearchableUserSelector from '@/src/components/ui/SearchableUserSelector';
-import { 
-  Loader2, Save, Send, AlertTriangle, 
-  Play, Pause, Check, Clock, ShieldAlert, Settings 
+import {
+  Loader2, Save, Send, AlertTriangle,
+  Play, Pause, Check, Clock, ShieldAlert, Settings
 } from 'lucide-react';
 import type { SessionUser } from '@/types';
 
@@ -20,7 +20,7 @@ export default function AdminNotificationsPage() {
 
   const [configs, setConfigs] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<SessionUser[]>([]);
-  
+
   // Loading & Action states
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -42,7 +42,7 @@ export default function AdminNotificationsPage() {
   const loadData = async () => {
     try {
       setLoadingConfig(true);
-      
+
       const configRes = await fetch('/api/v1/admin/notification-config');
       if (configRes.ok) {
         const data = await configRes.json();
@@ -117,7 +117,7 @@ export default function AdminNotificationsPage() {
       SYSTEM_NOTIFICATIONS_ENABLED: 'true',
       SYSTEM_NOTIFICATIONS_DISABLED_UNTIL: pauseUntil.toISOString()
     };
-    
+
     try {
       setSavingConfig(true);
       const res = await fetch('/api/v1/admin/notification-config', {
@@ -145,7 +145,7 @@ export default function AdminNotificationsPage() {
       SYSTEM_NOTIFICATIONS_ENABLED: 'true',
       SYSTEM_NOTIFICATIONS_DISABLED_UNTIL: ''
     };
-    
+
     try {
       setSavingConfig(true);
       const res = await fetch('/api/v1/admin/notification-config', {
@@ -188,7 +188,7 @@ export default function AdminNotificationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(manualForm)
       });
-      
+
       if (res.ok) {
         setSendSuccess(true);
         setManualForm({
@@ -220,9 +220,9 @@ export default function AdminNotificationsPage() {
     if (disabledUntilStr) {
       const until = new Date(disabledUntilStr);
       if (!isNaN(until.getTime()) && until > new Date()) {
-        return { 
-          label: `Paused until ${until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 
-          color: 'text-orange-500 bg-orange-500/10 border-orange-500/20' 
+        return {
+          label: `Paused until ${until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          color: 'text-orange-500 bg-orange-500/10 border-orange-500/20'
         };
       }
     }
@@ -249,7 +249,7 @@ export default function AdminNotificationsPage() {
                 Manage global notification toggles, quiet hour schedules, and custom alerts.
               </p>
             </div>
-            
+
             {/* Status indicator */}
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold ${statusInfo.color}`}>
               <span className="h-2 w-2 rounded-full bg-current" />
@@ -258,10 +258,10 @@ export default function AdminNotificationsPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            
+
             {/* Column 1: System Settings */}
             <div className="space-y-6">
-              
+
               {/* Master Control Panel */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
@@ -281,11 +281,10 @@ export default function AdminNotificationsPage() {
                         SYSTEM_NOTIFICATIONS_ENABLED: prev.SYSTEM_NOTIFICATIONS_ENABLED === 'true' ? 'false' : 'true'
                       }));
                     }}
-                    className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition outline-none ${
-                      configs.SYSTEM_NOTIFICATIONS_ENABLED === 'true'
-                        ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
-                        : 'bg-red-500/10 border-red-500/20 text-[var(--alert-critical)]'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition outline-none ${configs.SYSTEM_NOTIFICATIONS_ENABLED === 'true'
+                      ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
+                      : 'bg-red-500/10 border-red-500/20 text-[var(--alert-critical)]'
+                      }`}
                     type="button"
                   >
                     {configs.SYSTEM_NOTIFICATIONS_ENABLED === 'true' ? (
@@ -307,7 +306,7 @@ export default function AdminNotificationsPage() {
                       {configs.SYSTEM_NOTIFICATIONS_DISABLED_UNTIL ? (
                         <button
                           onClick={handleResumeNotifications}
-                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--border)] transition outline-none"
+                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--border)] transition outline-none"
                           type="button"
                         >
                           <Play className="h-3.5 w-3.5 text-green-500" />
@@ -317,21 +316,21 @@ export default function AdminNotificationsPage() {
                         <>
                           <button
                             onClick={() => handlePauseNotifications(1)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
                             type="button"
                           >
                             Pause 1 Hr
                           </button>
                           <button
                             onClick={() => handlePauseNotifications(4)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
                             type="button"
                           >
                             Pause 4 Hrs
                           </button>
                           <button
                             onClick={() => handlePauseNotifications(24)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
                             type="button"
                           >
                             Pause 24 Hrs
@@ -353,7 +352,7 @@ export default function AdminNotificationsPage() {
                   Route non-urgent alerts to storage during quiet hours. High-priority and Critical alerts bypass sleep mode.
                 </p>
 
-                <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]">
+                <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)]">
                   <div>
                     <div className="text-xs font-medium text-[var(--text-primary)]">Enable Sleep Mode</div>
                     <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Enforce sleep hours for channels</div>
@@ -361,13 +360,11 @@ export default function AdminNotificationsPage() {
                   <button
                     type="button"
                     onClick={() => handleToggle('QUIET_HOURS_ENABLED')}
-                    className={`w-10 h-5 rounded-full border-none cursor-pointer relative transition ${
-                      configs.QUIET_HOURS_ENABLED === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
-                    }`}
+                    className={`w-10 h-5 rounded-full border-none cursor-pointer relative transition ${configs.QUIET_HOURS_ENABLED === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
+                      }`}
                   >
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--bg-primary)] transition ${
-                      configs.QUIET_HOURS_ENABLED === 'true' ? 'left-5' : 'left-0.5'
-                    }`} />
+                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--bg-primary)] transition ${configs.QUIET_HOURS_ENABLED === 'true' ? 'left-5' : 'left-0.5'
+                      }`} />
                   </button>
                 </div>
 
@@ -446,7 +443,7 @@ export default function AdminNotificationsPage() {
                     { key: 'TRIGGER_KPI_SUBMITTED', label: 'KPI: Submission', desc: 'When data is submitted' },
                     { key: 'TRIGGER_KPI_REVIEW_DECISION', label: 'KPI: Review Decision', desc: 'When approved/rejected' }
                   ].map(trigger => (
-                    <div key={trigger.key} className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
+                    <div key={trigger.key} className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)]">
                       <div>
                         <div className="text-xs font-medium text-[var(--text-primary)]">{trigger.label}</div>
                         <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{trigger.desc}</div>
@@ -454,13 +451,11 @@ export default function AdminNotificationsPage() {
                       <button
                         type="button"
                         onClick={() => handleToggle(trigger.key)}
-                        className={`w-9 h-4.5 rounded-full border-none cursor-pointer relative transition ${
-                          configs[trigger.key] === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
-                        }`}
+                        className={`w-9 h-4.5 rounded-full border-none cursor-pointer relative transition ${configs[trigger.key] === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
+                          }`}
                       >
-                        <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-[var(--bg-primary)] transition ${
-                          configs[trigger.key] === 'true' ? 'left-4.5' : 'left-0.5'
-                        }`} />
+                        <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-[var(--bg-primary)] transition ${configs[trigger.key] === 'true' ? 'left-4.5' : 'left-0.5'
+                          }`} />
                       </button>
                     </div>
                   ))}
@@ -554,11 +549,10 @@ export default function AdminNotificationsPage() {
                         key={level}
                         type="button"
                         onClick={() => setManualForm(prev => ({ ...prev, priority: level }))}
-                        className={`py-2 text-xs rounded-lg border font-semibold outline-none transition ${
-                          manualForm.priority === level
-                            ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
-                            : 'border-[var(--border)] text-[var(--text-secondary)] bg-[var(--bg-surface)] hover:bg-[var(--border)]'
-                        }`}
+                        className={`py-2 text-xs rounded-lg border font-semibold outline-none transition ${manualForm.priority === level
+                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
+                          : 'border-[var(--border)] text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--border)]'
+                          }`}
                       >
                         {level}
                       </button>
