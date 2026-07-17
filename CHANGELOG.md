@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Manual Alert Dispatcher**: Allowed administrators to send manual custom alerts directly to individual officers with relative action links.
 - **Automated Workflow Alerts**: Automatically notify concerned officers whenever a task update is posted, a task assignment changes, or KPI review decisions are resolved.
 
+### Fixed
+- Fixed scheme re-ordering page to show a warning dialog when users try to navigate away with unsaved changes, preventing accidental loss of work
+
 ### Security
 - When an administrator resets a user's password, the user is now immediately
   logged out from all devices and must sign in again with the new password.

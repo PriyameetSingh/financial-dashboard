@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { Permission } from "@/lib/auth";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { withNextBasePath } from "@/lib/next-base-path";
 import { ArrowUp, ArrowDown, Search, Check, Save } from "lucide-react";
 import type { SchemeOverview } from "@/types";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function SchemesOrderPage() {
   const user = useRequireAnyPermission([Permission.REORDER_SCHEMES], "/dashboard");
+  const router = useRouter();
 
   const [schemes, setSchemes] = useState<SchemeOverview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,9 @@ export default function SchemesOrderPage() {
   const [subschemesSaving, setSubschemesSaving] = useState(false);
   const [schemesSuccess, setSchemesSuccess] = useState(false);
   const [subschemesSuccess, setSubschemesSuccess] = useState(false);
+
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+  const pendingNavigationUrl = useRef<string | null>(null);
 
   // Track initial arrays to check for changes
   const [initialSchemeIds, setInitialSchemeIds] = useState<string[]>([]);
@@ -97,6 +103,66 @@ export default function SchemesOrderPage() {
     if (currentIds.length !== initialIds.length) return true;
     return currentIds.some((id, idx) => id !== initialIds[idx]);
   }, [subschemesMap, initialSubschemesMap, selectedSchemeId]);
+
+  const hasUnsavedChanges = schemesOrderChanged || subschemesOrderChanged;
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      if (!hasUnsavedChanges) return;
+
+      const target = e.target as HTMLElement;
+      const link = target.closest("a");
+
+      if (!link || !link.href) return;
+
+      const url = new URL(link.href);
+      const currentUrl = new URL(window.location.href);
+
+      if (url.pathname === currentUrl.pathname) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      pendingNavigationUrl.current = link.href;
+      setShowNavigationWarning(true);
+    };
+
+    document.addEventListener("click", handleLinkClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleLinkClick, true);
+    };
+  }, [hasUnsavedChanges]);
+
+  const handleConfirmNavigation = () => {
+    setShowNavigationWarning(false);
+    if (pendingNavigationUrl.current) {
+      const url = new URL(pendingNavigationUrl.current);
+      router.push(url.pathname + url.search);
+      pendingNavigationUrl.current = null;
+    }
+  };
+
+  const handleCancelNavigation = () => {
+    setShowNavigationWarning(false);
+    pendingNavigationUrl.current = null;
+  };
 
   const handleMoveScheme = (index: number, direction: "up" | "down") => {
     const nextIndex = direction === "up" ? index - 1 : index + 1;
@@ -420,6 +486,17 @@ export default function SchemesOrderPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showNavigationWarning}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Leaving this page will discard your changes. Are you sure you want to leave?"
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        confirmVariant="danger"
+        onConfirm={handleConfirmNavigation}
+        onCancel={handleCancelNavigation}
+      />
     </AppShell>
   );
 }
