@@ -6,6 +6,7 @@ import {
   Bell, Check, Loader2, FileText, 
   TrendingUp, AlertTriangle, MessageSquare, ShieldAlert, X
 } from 'lucide-react';
+import { withNextBasePath } from "@/lib/next-base-path";
 
 interface Notification {
   id: string;
@@ -51,7 +52,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/v1/notifications');
+      const res = await fetch(withNextBasePath('/api/v1/notifications'));
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications || []);
@@ -98,7 +99,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
   const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`/api/v1/notifications/${id}`, {
+      const res = await fetch(withNextBasePath(`/api/v1/notifications/${id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'READ' }),
@@ -116,7 +117,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
 
   const handleMarkAllRead = async () => {
     try {
-      const res = await fetch('/api/v1/notifications', { method: 'POST' });
+      const res = await fetch(withNextBasePath('/api/v1/notifications'), { method: 'POST' });
       if (res.ok) {
         setNotifications(prev => prev.map(n => ({ ...n, status: 'READ' })));
         setUnreadCount(0);
@@ -132,7 +133,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
     // Mark as read if currently unread
     if (notification.status === 'UNREAD') {
       try {
-        await fetch(`/api/v1/notifications/${notification.id}`, {
+        await fetch(withNextBasePath(`/api/v1/notifications/${notification.id}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'READ' }),

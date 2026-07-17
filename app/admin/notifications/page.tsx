@@ -10,6 +10,8 @@ import {
   Play, Pause, Check, Clock, ShieldAlert, Settings
 } from 'lucide-react';
 import type { SessionUser } from '@/types';
+import { withNextBasePath } from '@/lib/next-base-path';
+import { fetchDirectoryUsers } from '@/src/lib/directory-users';
 
 export default function AdminNotificationsPage() {
   // Route Guard: requires MANAGE_NOTIFICATION_CONFIG
@@ -43,17 +45,14 @@ export default function AdminNotificationsPage() {
     try {
       setLoadingConfig(true);
 
-      const configRes = await fetch('/api/v1/admin/notification-config');
+      const configRes = await fetch(withNextBasePath('/api/v1/admin/notification-config'), { credentials: 'include' });
       if (configRes.ok) {
         const data = await configRes.json();
         setConfigs(data.configs || {});
       }
 
-      const usersRes = await fetch('/api/v1/directory/users');
-      if (usersRes.ok) {
-        const data = await usersRes.json();
-        setUsers(data.users || []);
-      }
+      const roster = await fetchDirectoryUsers();
+      setUsers(roster);
     } catch (e) {
       console.error('Error loading admin notification data:', e);
     } finally {
@@ -91,10 +90,11 @@ export default function AdminNotificationsPage() {
     try {
       setSavingConfig(true);
       setConfigSuccess(false);
-      const res = await fetch('/api/v1/admin/notification-config', {
+      const res = await fetch(withNextBasePath('/api/v1/admin/notification-config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(configs)
+        body: JSON.stringify(configs),
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -120,10 +120,11 @@ export default function AdminNotificationsPage() {
 
     try {
       setSavingConfig(true);
-      const res = await fetch('/api/v1/admin/notification-config', {
+      const res = await fetch(withNextBasePath('/api/v1/admin/notification-config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
+        body: JSON.stringify(updated),
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -148,10 +149,11 @@ export default function AdminNotificationsPage() {
 
     try {
       setSavingConfig(true);
-      const res = await fetch('/api/v1/admin/notification-config', {
+      const res = await fetch(withNextBasePath('/api/v1/admin/notification-config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
+        body: JSON.stringify(updated),
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -183,10 +185,11 @@ export default function AdminNotificationsPage() {
 
     try {
       setSendingManual(true);
-      const res = await fetch('/api/v1/notifications/send-manual', {
+      const res = await fetch(withNextBasePath('/api/v1/notifications/send-manual'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(manualForm)
+        body: JSON.stringify(manualForm),
+        credentials: 'include'
       });
 
       if (res.ok) {
