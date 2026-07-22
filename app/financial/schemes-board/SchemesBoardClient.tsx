@@ -136,10 +136,10 @@ const COLUMN_UI: Record<
   critical: {
     title: "CRITICAL",
     range: ">15% behind Q target",
-    // Colored header with proper contrast
-    headerBg: "bg-red-50 dark:bg-red-950/30",
-    headerText: "text-red-800 dark:text-red-200",
-    countBg: "bg-red-700 text-white dark:bg-red-600",
+    // Clean header with only top accent border
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-red-700 dark:text-red-300",
+    countBg: "bg-red-800 text-white dark:bg-red-700",
     barFill: "bg-red-600",
     // High-contrast badge
     badgeBg: "bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-200",
@@ -152,8 +152,8 @@ const COLUMN_UI: Record<
   at_risk: {
     title: "AT RISK",
     range: "5-15% behind Q target",
-    headerBg: "bg-amber-50 dark:bg-amber-950/30",
-    headerText: "text-amber-800 dark:text-amber-200",
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-amber-700 dark:text-amber-300",
     countBg: "bg-amber-700 text-white dark:bg-amber-600",
     barFill: "bg-amber-600",
     badgeBg: "bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-200",
@@ -165,9 +165,9 @@ const COLUMN_UI: Record<
   on_track: {
     title: "ON TRACK",
     range: "Within 5% of Q target",
-    headerBg: "bg-emerald-50 dark:bg-emerald-950/30",
-    headerText: "text-emerald-800 dark:text-emerald-200",
-    countBg: "bg-emerald-700 text-white dark:bg-emerald-600",
+    headerBg: "bg-[var(--bg-card)]",
+    headerText: "text-emerald-700 dark:text-emerald-300",
+    countBg: "bg-emerald-800 text-white dark:bg-emerald-700",
     barFill: "bg-emerald-600",
     badgeBg: "bg-emerald-100 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-200",
     badgeText: "",
