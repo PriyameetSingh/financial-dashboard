@@ -138,6 +138,9 @@ export type KPIMeasurementProgressStatus = "on_track" | "delayed" | "overdue";
 
 export type KpiEscalationFlag = "on_track" | "needs_coordination" | "needs_acs_decision";
 
+/** User-initiated completion workflow status on a KPI definition. */
+export type KpiCompletionStatus = "pending_review" | "completed" | "rejected";
+
 export interface KPISubmission {
   id: string;
   kpiTargetId?: string | null;
@@ -197,6 +200,18 @@ export interface KPISubmission {
   monitoringLevel?: "CS" | "ACS" | "CM" | null;
   archived?: boolean;
   assignmentHistory?: PerformerAssignmentLog[];
+
+  /** User-initiated completion workflow status (null = never requested). */
+  completionStatus?: KpiCompletionStatus | null;
+  /** Requester's note explaining why the KPI is being marked complete. */
+  completionNote?: string | null;
+  completionRequestedAt?: string | null;
+  completionReviewedAt?: string | null;
+  completionReviewNote?: string | null;
+  /** Server-computed: current user may request completion (ENTER_KPI_DATA + assignment + not already pending/completed). */
+  currentUserCanRequestCompletion?: boolean;
+  /** Server-computed: current user may review a pending completion request (APPROVE_KPI + reviewer assignment). */
+  currentUserCanReviewCompletion?: boolean;
 }
 
 export type FinancialEntryStatus =

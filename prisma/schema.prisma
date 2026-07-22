@@ -82,6 +82,12 @@ enum KpiMonitoringLevel {
   CM
 }
 
+enum KpiCompletionStatus {
+  pending_review
+  completed
+  rejected
+}
+
 enum ActionItemType {
   action_item
   meeting_decision
@@ -163,6 +169,8 @@ model User {
   createdKpiDefinitions KpiDefinition[]        @relation("KpiDefinitionCreatedBy")
   kpiDefinitionPerformers KpiDefinitionPerformer[]
   kpiDefinitionReviewerUsers KpiDefinitionReviewerUser[]
+  requestedKpiCompletions KpiDefinition[]      @relation("KpiDefinitionCompletionRequestedBy")
+  reviewedKpiCompletions  KpiDefinition[]      @relation("KpiDefinitionCompletionReviewedBy")
   createdKpiMeasurements KpiMeasurement[]      @relation("KpiMeasurementCreatedBy")
   reviewedKpiMeasurements KpiMeasurement[]     @relation("KpiMeasurementReviewedBy")
   createdMeetings       DashboardMeeting[]     @relation("MeetingCreatedBy")
@@ -536,9 +544,20 @@ model KpiDefinition {
   updatedAt       DateTime            @updatedAt
   archived        Boolean             @default(false)
 
+  /// User-initiated completion workflow (distinct from admin archiving).
+  completionStatus         KpiCompletionStatus?
+  completionNote           String?
+  completionRequestedAt    DateTime?
+  completionRequestedById   String?   @db.Uuid
+  completionReviewedAt     DateTime?
+  completionReviewedById    String?   @db.Uuid
+  completionReviewNote     String?
+
   scheme     Scheme     @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme  Subscheme? @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
   createdBy  User?      @relation("KpiDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  completionRequestedBy User? @relation("KpiDefinitionCompletionRequestedBy", fields: [completionRequestedById], references: [id], onDelete: SetNull)
+  completionReviewedBy  User? @relation("KpiDefinitionCompletionReviewedBy",  fields: [completionReviewedById],  references: [id], onDelete: SetNull)
 
   performers KpiDefinitionPerformer[]
   reviewerUsers KpiDefinitionReviewerUser[]

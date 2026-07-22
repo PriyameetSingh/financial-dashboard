@@ -194,3 +194,33 @@ export async function updateKpiDefinition(
     window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
   }
 }
+
+export async function requestKpiCompletion(
+  kpiDefinitionId: string,
+  input: { note?: string } = {},
+): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}/complete`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
+}
+
+export async function reviewKpiCompletion(
+  kpiDefinitionId: string,
+  input: { decision: "approve" | "reject"; note?: string },
+): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/kpis/definitions/${kpiDefinitionId}/complete/review`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  await parseResponse<{ ok: boolean }>(response);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("my-tasks-data-changed"));
+  }
+}

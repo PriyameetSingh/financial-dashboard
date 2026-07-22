@@ -5,16 +5,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
-import { fetchKPISubmissions, reviewKpiMeasurement } from "@/src/lib/services/kpiService";
+import { fetchKPISubmissions, reviewKpiMeasurement, requestKpiCompletion, reviewKpiCompletion } from "@/src/lib/services/kpiService";
 import { fetchFinancialBudgets } from "@/src/lib/services/financialService";
-import { KPISubmission, KpiEscalationFlag } from "@/types";
+import { KPISubmission, KpiEscalationFlag, KpiCompletionStatus } from "@/types";
 import type { FinancialEntry } from "@/types";
 import { UserRole, hasPermission, Permission } from "@/lib/auth";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import StatusBadge from "@/src/components/ui/StatusBadge";
 import ViewKpiModal from "@/components/kpis/ViewKpiModal";
 import EditKpiModal from "@/components/kpis/EditKpiModal";
-import { AlertTriangle, Clock, Pencil, Search, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Pencil, Search, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const CHART_KPI_PROGRESS_FILL = "#0d9488";
@@ -171,6 +171,59 @@ function kpiProgressScore(s: KPISubmission): number | null {
   return null;
 }
 
+/**
+ * Whether a KPI's latest progress is below its target (used for the
+ * "Progress < 100%" inline warning when marking complete).
+ * - BINARY: not yet "yes"
+ * - OUTPUT/OUTCOME: numerator below denominator (only when a denominator is set)
+ */
+function isKpiBelowTarget(s: KPISubmission): boolean {
+  if (s.type === "BINARY") return s.yes !== true;
+  const d = s.denominator ?? 0;
+  if (d <= 0) return false;
+  const n = s.numerator ?? 0;
+  return n < d;
+}
+
+const COMPLETION_BADGE_CONFIG: Record<
+  KpiCompletionStatus,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  completed: {
+    label: "Completed",
+    color: "var(--alert-success)",
+    bg: "rgba(0,200,83,0.12)",
+    border: "rgba(0,200,83,0.4)",
+  },
+  pending_review: {
+    label: "Completion Pending",
+    color: "var(--alert-warning)",
+    bg: "rgba(245,158,11,0.12)",
+    border: "rgba(245,158,11,0.4)",
+  },
+  rejected: {
+    label: "Completion Rejected",
+    color: "var(--alert-critical)",
+    bg: "rgba(239,68,68,0.12)",
+    border: "rgba(239,68,68,0.4)",
+  },
+};
+
+function CompletionBadge({ status }: { status: KpiCompletionStatus }) {
+  const cfg = COMPLETION_BADGE_CONFIG[status];
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
+      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+    >
+      {status === "completed" && <CheckCircle2 className="h-2.5 w-2.5" />}
+      {status === "pending_review" && <Clock className="h-2.5 w-2.5" />}
+      {status === "rejected" && <AlertTriangle className="h-2.5 w-2.5" />}
+      {cfg.label}
+    </span>
+  );
+}
+
 function KPIsPageContent() {
   const user = useRequireAuth();
   const searchParams = useSearchParams();
@@ -184,6 +237,7 @@ function KPIsPageContent() {
   const [activeTab, setActiveTab] = useState(initialTabFromUrl ?? "all");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
+  const [completeBusyId, setCompleteBusyId] = useState<string | null>(null);
   const [viewKpi, setViewKpi] = useState<KPISubmission | null>(null);
   const [editKpi, setEditKpi] = useState<KPISubmission | null>(null);
 
@@ -242,6 +296,11 @@ function KPIsPageContent() {
         filter: (item) => item.status === "approved",
       },
       {
+        id: "completed",
+        label: "Completed",
+        filter: (item) => item.completionStatus === "completed",
+      },
+      {
         id: "not_submitted",
         label: "Not Submitted",
         filter: (item) => item.status === "not_submitted" || item.status === "draft",
@@ -286,7 +345,8 @@ function KPIsPageContent() {
     const approved = submissions.filter((item) => item.status === "approved").length;
     const awaiting = submissions.filter((item) => item.status === "not_submitted" || item.status === "draft").length;
     const escalated = submissions.filter((item) => item.escalationFlag === "needs_acs_decision").length;
-    return { total, pending, approved, awaiting, escalated };
+    const completed = submissions.filter((item) => item.completionStatus === "completed").length;
+    return { total, pending, approved, awaiting, escalated, completed };
   }, [submissions]);
 
   const isViewer = user ? isReadOnlyWatermarkUser(user) : false;
@@ -450,14 +510,14 @@ function KPIsPageContent() {
                     { label: "KPIs (this scheme)", value: submissionsForFocus.length },
                     { label: "Pending Review", value: submissionsForFocus.filter((s) => s.status === "submitted_pending").length },
                     { label: "Approved", value: submissionsForFocus.filter((s) => s.status === "approved").length },
-                    { label: "Awaiting Entry", value: submissionsForFocus.filter((s) => s.status === "not_submitted" || s.status === "draft").length },
+                    { label: "Completed", value: submissionsForFocus.filter((s) => s.completionStatus === "completed").length },
                     { label: "ACS Escalations", value: submissionsForFocus.filter((s) => s.escalationFlag === "needs_acs_decision").length, alert: true },
                   ]
                 : [
                     { label: "Total KPIs", value: summary.total },
                     { label: "Pending Review", value: summary.pending },
                     { label: "Approved", value: summary.approved },
-                    { label: "Awaiting Entry", value: summary.awaiting },
+                    { label: "Completed", value: summary.completed },
                     { label: "ACS Escalations", value: summary.escalated, alert: true },
                   ]
               ).map((card) => (
@@ -808,22 +868,115 @@ function KPIsPageContent() {
                           </td>
                           <td className="py-3 pr-6 text-sm text-[var(--text-muted)]">{item.assignedToName?.trim() || "—"}</td>
                           <td className="py-3">
-                            <div className="flex items-center gap-2">
-                              <StatusBadge status={item.status} />
-                              {item.isSelfApproved && (
-                                <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
-                                  Self-Approved
-                                </span>
-                              )}
-                              {canManageSchemes && (
-                                <button
-                                  type="button"
-                                  title="Edit KPI"
-                                  onClick={(e) => { e.stopPropagation(); setEditKpi(item); }}
-                                  className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </button>
+                            <div className="flex flex-col items-start gap-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <StatusBadge status={item.status} />
+                                {item.isSelfApproved && (
+                                  <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                                    Self-Approved
+                                  </span>
+                                )}
+                                {item.completionStatus && (
+                                  <CompletionBadge status={item.completionStatus} />
+                                )}
+                              </div>
+                              {!isViewer && (
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {item.currentUserCanRequestCompletion && (
+                                    <button
+                                      type="button"
+                                      title={isKpiBelowTarget(item) ? "Mark this KPI as complete (progress is below 100%)" : "Mark this KPI as complete"}
+                                      disabled={completeBusyId === item.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCompleteBusyId(item.id);
+                                        setActionMessage(null);
+                                        requestKpiCompletion(item.id, {})
+                                          .then(async () => {
+                                            await refreshData();
+                                            setActionMessage(`Marked ${item.scheme} — ${item.description} as complete.`);
+                                          })
+                                          .catch((err: unknown) => {
+                                            setActionMessage(err instanceof Error ? err.message : "Failed to mark KPI complete");
+                                          })
+                                          .finally(() => setCompleteBusyId(null));
+                                      }}
+                                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)] disabled:opacity-50"
+                                    >
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      {completeBusyId === item.id ? "Working…" : "Mark Complete"}
+                                    </button>
+                                  )}
+                                  {isKpiBelowTarget(item) && item.currentUserCanRequestCompletion && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--alert-warning)]">
+                                      <AlertTriangle className="h-2.5 w-2.5" />
+                                      Progress &lt; 100%
+                                    </span>
+                                  )}
+                                  {item.currentUserCanReviewCompletion && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        title="Approve completion request"
+                                        disabled={completeBusyId === item.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCompleteBusyId(item.id);
+                                          setActionMessage(null);
+                                          reviewKpiCompletion(item.id, { decision: "approve" })
+                                            .then(async () => {
+                                              await refreshData();
+                                              setActionMessage(`Approved completion for ${item.scheme} — ${item.description}.`);
+                                            })
+                                            .catch((err: unknown) => {
+                                              setActionMessage(err instanceof Error ? err.message : "Approval failed");
+                                            })
+                                            .finally(() => setCompleteBusyId(null));
+                                        }}
+                                        className="rounded-lg bg-[var(--text-primary)] px-2 py-1 text-[11px] font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                                      >
+                                        Approve Completion
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Reject completion request (note required)"
+                                        disabled={completeBusyId === item.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const note = typeof window !== "undefined" ? window.prompt("Rejection note (required)") : null;
+                                          if (!note?.trim()) {
+                                            setActionMessage("Rejection cancelled or empty note.");
+                                            return;
+                                          }
+                                          setCompleteBusyId(item.id);
+                                          setActionMessage(null);
+                                          reviewKpiCompletion(item.id, { decision: "reject", note })
+                                            .then(async () => {
+                                              await refreshData();
+                                              setActionMessage(`Rejected completion for ${item.scheme} — ${item.description}.`);
+                                            })
+                                            .catch((err: unknown) => {
+                                              setActionMessage(err instanceof Error ? err.message : "Rejection failed");
+                                            })
+                                            .finally(() => setCompleteBusyId(null));
+                                        }}
+                                        className="rounded-lg border border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.08)] px-2 py-1 text-[11px] font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                                      >
+                                        Reject Completion
+                                      </button>
+                                    </>
+                                  )}
+                                  {canManageSchemes && (
+                                    <button
+                                      type="button"
+                                      title="Edit KPI"
+                                      onClick={(e) => { e.stopPropagation(); setEditKpi(item); }}
+                                      className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>

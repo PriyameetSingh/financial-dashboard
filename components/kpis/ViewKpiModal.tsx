@@ -1,16 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle } from "lucide-react";
-import { KPISubmission } from "@/types";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { KPISubmission, KpiCompletionStatus } from "@/types";
 import ReassignKpiModal from "@/components/kpis/ReassignKpiModal";
-import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement } from "@/src/lib/services/kpiService";
+import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement, requestKpiCompletion, reviewKpiCompletion } from "@/src/lib/services/kpiService";
 
 const ESCALATION_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
   on_track: { label: "On track", color: "var(--alert-success)", bg: "rgba(0,200,83,0.08)", border: "rgba(0,200,83,0.35)" },
   needs_coordination: { label: "Needs coordination", color: "var(--alert-warning)", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.35)" },
   needs_acs_decision: { label: "Needs ACS decision", color: "var(--alert-critical)", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.4)" },
 };
+
+const COMPLETION_LABEL: Record<KpiCompletionStatus, { label: string; color: string; bg: string; border: string }> = {
+  completed: { label: "Completed", color: "var(--alert-success)", bg: "rgba(0,200,83,0.12)", border: "rgba(0,200,83,0.4)" },
+  pending_review: { label: "Completion Pending", color: "var(--alert-warning)", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.4)" },
+  rejected: { label: "Completion Rejected", color: "var(--alert-critical)", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.4)" },
+};
+
+function isKpiBelowTarget(s: KPISubmission): boolean {
+  if (s.type === "BINARY") return s.yes !== true;
+  const d = s.denominator ?? 0;
+  if (d <= 0) return false;
+  const n = s.numerator ?? 0;
+  return n < d;
+}
 
 type Props = {
   open: boolean;
@@ -101,6 +115,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [completeBusy, setCompleteBusy] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [showRejectInput, setShowRejectInput] = useState(false);
@@ -217,6 +232,20 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                   <span>Unit: {kpiMeta?.unit ?? submission.unit}</span>
                 )}
               </span>
+              {submission.completionStatus && (() => {
+                const cfg = COMPLETION_LABEL[submission.completionStatus];
+                return (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+                  >
+                    {submission.completionStatus === "completed" && <CheckCircle2 className="h-2.5 w-2.5" />}
+                    {submission.completionStatus === "pending_review" && <AlertTriangle className="h-2.5 w-2.5" />}
+                    {submission.completionStatus === "rejected" && <AlertTriangle className="h-2.5 w-2.5" />}
+                    {cfg.label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
           <button
@@ -340,6 +369,133 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Completion workflow panel */}
+          {(submission.currentUserCanRequestCompletion || submission.currentUserCanReviewCompletion || submission.completionStatus) && (
+            <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Completion</p>
+
+              {submission.completionStatus && (
+                <div className="mt-2 text-sm text-[var(--text-primary)]">
+                  {(() => {
+                    const cfg = COMPLETION_LABEL[submission.completionStatus];
+                    return (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em]"
+                        style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+                      >
+                        {submission.completionStatus === "completed" && <CheckCircle2 className="h-2.5 w-2.5" />}
+                        {submission.completionStatus !== "completed" && <AlertTriangle className="h-2.5 w-2.5" />}
+                        {cfg.label}
+                      </span>
+                    );
+                  })()}
+                  {submission.completionRequestedAt && (
+                    <p className="mt-2 text-xs text-[var(--text-muted)]">
+                      Requested on {submission.completionRequestedAt.slice(0, 10)}
+                    </p>
+                  )}
+                  {submission.completionNote && (
+                    <p className="mt-1 text-xs italic text-[var(--text-muted)]">&ldquo;{submission.completionNote}&rdquo;</p>
+                  )}
+                  {submission.completionReviewedAt && submission.completionReviewNote && (
+                    <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-xs">
+                      <span className="font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Review note: </span>
+                      <span className="text-[var(--text-primary)]">{submission.completionReviewNote}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {actionMsg && (
+                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-muted)]">
+                  {actionMsg}
+                </div>
+              )}
+
+              {submission.currentUserCanRequestCompletion && isKpiBelowTarget(submission) && (
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.08)] px-3 py-1 text-[11px] font-medium text-[var(--alert-warning)]">
+                  <AlertTriangle className="h-3 w-3" />
+                  Progress is below 100% — you can still mark this KPI complete.
+                </div>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {submission.currentUserCanRequestCompletion && (
+                  <button
+                    type="button"
+                    disabled={completeBusy}
+                    onClick={async () => {
+                      setCompleteBusy(true);
+                      setActionMsg(null);
+                      try {
+                        await requestKpiCompletion(submission.id, {});
+                        setActionMsg("Completion request submitted.");
+                        onReviewed();
+                      } catch (e: unknown) {
+                        setActionMsg(e instanceof Error ? e.message : "Failed to mark complete");
+                      } finally {
+                        setCompleteBusy(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {completeBusy ? "Working…" : "Mark Complete"}
+                  </button>
+                )}
+                {submission.currentUserCanReviewCompletion && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={completeBusy}
+                      onClick={async () => {
+                        setCompleteBusy(true);
+                        setActionMsg(null);
+                        try {
+                          await reviewKpiCompletion(submission.id, { decision: "approve" });
+                          setActionMsg("Completion approved.");
+                          onReviewed();
+                        } catch (e: unknown) {
+                          setActionMsg(e instanceof Error ? e.message : "Approval failed");
+                        } finally {
+                          setCompleteBusy(false);
+                        }
+                      }}
+                      className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                    >
+                      Approve Completion
+                    </button>
+                    <button
+                      type="button"
+                      disabled={completeBusy}
+                      onClick={async () => {
+                        const note = typeof window !== "undefined" ? window.prompt("Rejection note (required)") : null;
+                        if (!note?.trim()) {
+                          setActionMsg("Rejection cancelled or empty note.");
+                          return;
+                        }
+                        setCompleteBusy(true);
+                        setActionMsg(null);
+                        try {
+                          await reviewKpiCompletion(submission.id, { decision: "reject", note });
+                          setActionMsg("Completion rejected.");
+                          onReviewed();
+                        } catch (e: unknown) {
+                          setActionMsg(e instanceof Error ? e.message : "Rejection failed");
+                        } finally {
+                          setCompleteBusy(false);
+                        }
+                      }}
+                      className="rounded-xl border border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.08)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                    >
+                      Reject Completion
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
 

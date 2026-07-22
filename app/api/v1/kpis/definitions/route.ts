@@ -219,6 +219,19 @@ export async function GET(request: NextRequest) {
           currentUserCanReassignOwners: canManageSchemes,
           canFlagEscalation,
           archived: definition.archived,
+          completionStatus: definition.completionStatus ?? null,
+          completionNote: definition.completionNote ?? null,
+          completionRequestedAt: definition.completionRequestedAt?.toISOString() ?? null,
+          completionReviewedAt: definition.completionReviewedAt?.toISOString() ?? null,
+          completionReviewNote: definition.completionReviewNote ?? null,
+          currentUserCanRequestCompletion:
+            canEnterPermission &&
+            userCanEnterKpiMeasurementSync(defPick, actor?.id, roleIds, canManageSchemes, kpiOwner1BySchemeId) &&
+            (definition.completionStatus === null || definition.completionStatus === "rejected"),
+          currentUserCanReviewCompletion:
+            canApprovePermission &&
+            userCanReviewKpiMeasurementSync(defPick, actor?.id, canManageSchemes) &&
+            definition.completionStatus === "pending_review",
         };
       });
 
