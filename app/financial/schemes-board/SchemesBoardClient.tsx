@@ -136,10 +136,10 @@ const COLUMN_UI: Record<
   critical: {
     title: "CRITICAL",
     range: ">15% behind Q target",
-    // Clean header with only top accent border
-    headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-red-900 dark:text-red-200",
-    countBg: "bg-red-800 text-white dark:bg-red-700",
+    // Colored header with proper contrast
+    headerBg: "bg-red-50 dark:bg-red-950/30",
+    headerText: "text-red-800 dark:text-red-200",
+    countBg: "bg-red-700 text-white dark:bg-red-600",
     barFill: "bg-red-600",
     // High-contrast badge
     badgeBg: "bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-200",
@@ -152,8 +152,8 @@ const COLUMN_UI: Record<
   at_risk: {
     title: "AT RISK",
     range: "5-15% behind Q target",
-    headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-amber-950 dark:text-amber-200",
+    headerBg: "bg-amber-50 dark:bg-amber-950/30",
+    headerText: "text-amber-800 dark:text-amber-200",
     countBg: "bg-amber-700 text-white dark:bg-amber-600",
     barFill: "bg-amber-600",
     badgeBg: "bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-200",
@@ -165,9 +165,9 @@ const COLUMN_UI: Record<
   on_track: {
     title: "ON TRACK",
     range: "Within 5% of Q target",
-    headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-emerald-900 dark:text-emerald-200",
-    countBg: "bg-emerald-800 text-white dark:bg-emerald-700",
+    headerBg: "bg-emerald-50 dark:bg-emerald-950/30",
+    headerText: "text-emerald-800 dark:text-emerald-200",
+    countBg: "bg-emerald-700 text-white dark:bg-emerald-600",
     barFill: "bg-emerald-600",
     badgeBg: "bg-emerald-100 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-200",
     badgeText: "",
@@ -178,7 +178,7 @@ const COLUMN_UI: Record<
 };
 
 type ViewTab = "board" | "list";
-type SortKey = "default" | "scheme" | "vertical" | "re" | "spent" | "pct" | "bucket";
+type SortKey = "default" | "scheme" | "vertical" | "re" | "expenditure" | "pct" | "bucket";
 type SortDir = "asc" | "desc";
 
 export default function SchemesBoardClient() {
@@ -275,8 +275,8 @@ export default function SchemesBoardClient() {
 
   const totals = useMemo(() => {
     const totalRe = filtered.reduce((s, e) => s + effBudget(e), 0);
-    const spent = filtered.reduce((s, e) => s + e.ifms, 0);
-    const overallPct = totalRe > 0 ? (spent / totalRe) * 100 : 0;
+    const expenditure = filtered.reduce((s, e) => s + e.ifms, 0);
+    const overallPct = totalRe > 0 ? (expenditure / totalRe) * 100 : 0;
     const verticalCount = new Set(filtered.map((e) => e.vertical)).size;
     let ss = 0;
     let css = 0;
@@ -287,7 +287,7 @@ export default function SchemesBoardClient() {
       else if (kind === "CSS") css++;
       else if (kind === "CS") cs++;
     }
-    return { totalRe, spent, overallPct, verticalCount, ss, css, cs };
+    return { totalRe, expenditure, overallPct, verticalCount, ss, css, cs };
   }, [filtered]);
 
   const isViewer = isReadOnlyWatermarkUser(currentUser);
@@ -315,7 +315,7 @@ export default function SchemesBoardClient() {
         case "re":
           cmp = effBudget(a) - effBudget(b);
           break;
-        case "spent":
+        case "expenditure":
           cmp = a.ifms - b.ifms;
           break;
         case "pct":
@@ -436,7 +436,7 @@ export default function SchemesBoardClient() {
                   Expenditure
                 </span>
                 <span className="text-base font-black tabular-nums text-[var(--text-primary)]">
-                  ₹{fmtCr(totals.spent)} Cr
+                  ₹{fmtCr(totals.expenditure)} Cr
                 </span>
               </div>
             </div>
@@ -704,7 +704,7 @@ export default function SchemesBoardClient() {
                             return { ...prev, [key]: next };
                           });
                         }}
-                        className="flex size-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-all"
+                        className="flex size-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-border)] text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)] transition-all"
                         title={`Sort by utilization % (currently: ${
                           boardSorts[key] === "default"
                             ? "Default Target Variance"
@@ -800,7 +800,7 @@ export default function SchemesBoardClient() {
                             onClick={() => setSchemeModalEntry(entry)}
                           >
                             <p className="mt-2 text-[11px] text-[var(--text-muted)]">
-                              RE ₹{fmtCr(effBudget(entry))} Cr · Spent ₹
+                              RE ₹{fmtCr(effBudget(entry))} Cr · Expenditure ₹
                               {fmtCr(entry.ifms)} Cr
                             </p>
 
@@ -915,7 +915,7 @@ export default function SchemesBoardClient() {
                                             <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--text-secondary)]">
                                               <span>RE ₹{fmtCr(re)} Cr</span>
                                               <span>
-                                                Spent ₹{fmtCr(sub.ifms ?? 0)} Cr
+                                                Expenditure ₹{fmtCr(sub.ifms ?? 0)} Cr
                                               </span>
                                             </div>
                                           </div>
@@ -972,14 +972,14 @@ export default function SchemesBoardClient() {
                         { key: "scheme" as SortKey, label: "Scheme" },
                         { key: "vertical" as SortKey, label: "Vertical" },
                         { key: "re" as SortKey, label: "RE (Cr)" },
-                        { key: "spent" as SortKey, label: "Expenditure (Cr)" },
+                        { key: "expenditure" as SortKey, label: "Expenditure (Cr)" },
                         { key: "pct" as SortKey, label: "Utilisation" },
                       ] as { key: SortKey; label: string }[]
                     ).map(({ key, label }) => (
                       <th
                         key={key}
                         scope="col"
-                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--sidebar-text-primary)] ${key === "re" || key === "spent" || key === "pct"
+                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--sidebar-text-primary)] ${key === "re" || key === "expenditure" || key === "pct"
                           ? "text-right"
                           : ""
                           }`}
@@ -1165,7 +1165,7 @@ export default function SchemesBoardClient() {
                                               <div className="mt-1 flex flex-wrap gap-x-4 text-xs tabular-nums text-[var(--text-secondary)]">
                                                 <span>RE ₹{fmtCr(re)} Cr</span>
                                                 <span>
-                                                  Spent ₹{fmtCr(sub.ifms ?? 0)} Cr
+                                                  Expenditure ₹{fmtCr(sub.ifms ?? 0)} Cr
                                                 </span>
                                               </div>
                                             </div>
