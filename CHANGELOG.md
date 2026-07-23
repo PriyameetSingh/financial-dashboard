@@ -14,7 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Automated Workflow Alerts**: Automatically notify concerned officers whenever a task update is posted, a task assignment changes, or KPI review decisions are resolved.
 - **KPI Completion Workflow**: Officers can now mark a KPI as complete directly from the KPI tracker. For KPIs that have a reviewer, the completion request is sent for the reviewer's approval; for self-approved KPIs the KPI is completed immediately. A visible warning is shown next to the action when a KPI's progress is below 100%, but officers can still confirm completion. Completed KPIs are clearly badged in the list, can be filtered through a new "Completed" tab, and the dashboard summary now shows a completed count.
 
+### Changed
+- Meeting report packs now show the assigned reviewer (vertical head or supervising officer) as the owner for KPIs and action items, instead of the nodal officer who enters updates. When a task has no separate reviewer, the report still shows the officer who performs the work.
+
 ### Fixed
+- Meeting report PDF downloads no longer show overlapping, clipped, or garbled text in finance tables, action items, and KPI sections when rows span multiple lines or pages.
 - Fixed scheme re-ordering page to show a warning dialog when users try to navigate away with unsaved changes, preventing accidental loss of work
 
 ### Security

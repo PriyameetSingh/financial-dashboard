@@ -291,6 +291,43 @@ async function getQuarterlyTargetMetCandidates(fyId: string, baselineDate: Date,
   return candidates;
 }
 
+async function getKpiCompletedCandidates(baselineDate: Date): Promise<ProgressCard[]> {
+  // Only KPIs whose completion was approved (status === "completed").
+  // `completionReviewedAt` is set both on auto-approval and on reviewer approval,
+  // so it is the reliable timestamp for "approved this period".
+  const completedKpis = await prisma.kpiDefinition.findMany({
+    where: {
+      completionStatus: "completed",
+      completionReviewedAt: { gte: baselineDate },
+      archived: false,
+    },
+    include: {
+      scheme: { select: { name: true } },
+    },
+    orderBy: { completionReviewedAt: "desc" },
+    take: 5,
+  });
+
+  return completedKpis.map((kpi) => {
+    const schemeName = kpi.scheme.name;
+    const shortSchemeName = schemeName.length > 18 ? `${schemeName.slice(0, 15)}...` : schemeName;
+    const desc = kpi.description;
+    const shortDesc = desc.length > 40 ? `"${desc.slice(0, 37)}..."` : `"${desc}"`;
+    const reviewNote = kpi.completionReviewNote?.trim();
+
+    return {
+      id: `kpi_completed_${kpi.id}`,
+      title: shortSchemeName,
+      status: "KPI Completed",
+      description: reviewNote
+        ? `${shortDesc} marked complete. ${reviewNote.length > 60 ? `${reviewNote.slice(0, 57)}...` : reviewNote}`
+        : `${shortDesc} marked complete and approved this week.`,
+      tone: "positive" as const,
+      href: "/kpis",
+    };
+  });
+}
+
 async function getKpiSubstantialProgressCandidates(baselineDate: Date, currentDate: Date): Promise<ProgressCard[]> {
   const measurements = await prisma.kpiMeasurement.findMany({
     where: {
@@ -394,6 +431,7 @@ function getCandidatePriority(type?: string): number {
     case "overdue_actions": return 1;
     case "quarterly_target_met": return 2;
     case "kpi_substantial_progress": return 3;
+    case "kpi_completed": return 3;
     case "action_item_completed": return 4;
     case "financial_delta": return 5;
     default: return 6;
@@ -502,6 +540,17 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
     executionSteps.push({
       name: "Query KPI substantial progress",
       details: `Found ${kpiProgressCards.length} KPIs: ${kpiProgressCards.map(c => `${c.title} (${c.status})`).join(", ")}`
+    });
+
+    // Card Type 3b: KPIs marked complete (approved only) since the last review meeting
+    const kpiCompletedCards = await getKpiCompletedCandidates(baselineDate);
+    for (const card of kpiCompletedCards) {
+      allCandidates.push({ ...card, type: "kpi_completed" });
+    }
+
+    executionSteps.push({
+      name: "Query KPIs marked complete",
+      details: `Found ${kpiCompletedCards.length} approved KPI completions: ${kpiCompletedCards.map(c => `${c.title} (${c.status})`).join(", ")}`
     });
 
     // Card Type 4: Completed Action Items (On time / Overdue)
@@ -618,6 +667,7 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
           2. Prioritize cards by impact and importance:
              - Active issues like "Overdue Actions" (critical backlog) must always be included.
              - Significant changes in KPIs (e.g. Substantial Progress, target achieved).
+             - KPIs marked complete and approved this week (these are important milestones — a KPI reaching completion is rare and noteworthy).
              - Schemes meeting or crossing their quarterly targets (these are rare and important milestones!).
              - Completed action items (especially those completed on time or overdue).
              - Financial changes (IFMS or SO deltas) if they show significant progress.

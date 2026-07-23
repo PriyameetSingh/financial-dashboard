@@ -129,7 +129,6 @@ const s = StyleSheet.create({
   // Section headers - clear visual separation
   sectionContainer: {
     marginBottom: 16,
-    breakInside: "avoid",
   },
   sectionHeader: {
     flexDirection: "row",
@@ -203,17 +202,20 @@ const s = StyleSheet.create({
   },
   tableRow: {
     flexDirection: "row",
+    alignItems: "stretch",
     borderBottomWidth: 1,
     borderBottomColor: C.lightGray,
   },
   tableCell: {
     paddingVertical: 7,
     paddingHorizontal: 8,
-    fontSize: 8,
-    color: C.darkGray,
-    lineHeight: 1.35,
     borderRightWidth: 1,
     borderRightColor: C.lightGray,
+  },
+  tableCellText: {
+    fontSize: 8,
+    color: C.darkGray,
+    lineHeight: 1.4,
   },
   tableCellLast: {
     borderRightWidth: 0,
@@ -262,7 +264,6 @@ const s = StyleSheet.create({
   },
   percentLow: {
     color: C.warningRed,
-    backgroundColor: C.warningRedLight,
   },
   percentHigh: {
     color: C.statusComplete,
@@ -393,6 +394,56 @@ function getPercentStatus(pct: number | null): "warning" | "success" | "neutral"
 
 const LOGO_PATH = path.join(process.cwd(), "public", "logo.png");
 
+/** A4 portrait usable width after 32pt horizontal padding on each side. */
+const PAGE_CONTENT_WIDTH = 531;
+
+/** Finance table columns — fit A4 portrait usable width. */
+const FIN_COLS = {
+  planType: 178,
+  budget: 78,
+  soExp: 82,
+  ifmsExp: 82,
+  pct: 68,
+} as const;
+
+/** Key decisions table columns. */
+const DEC_COLS = {
+  details: 248,
+  actionBy: 98,
+  timeline: 78,
+  status: 107,
+} as const;
+
+/** KPI table columns. */
+const KPI_COLS = {
+  num: 16,
+  desc: 108,
+  actionBy: 62,
+  num1: 58,
+  unit1: 50,
+  num2: 68,
+  unit2: 50,
+  remarks: 72,
+} as const;
+
+function TableCell({
+  width,
+  last = false,
+  style,
+  children,
+}: {
+  width: number;
+  last?: boolean;
+  style?: object | object[];
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={[s.tableCell, { width }, last && s.tableCellLast, ...(Array.isArray(style) ? style : style ? [style] : [])]}>
+      {children}
+    </View>
+  );
+}
+
 function SectionHeader({ number, title }: { number: number; title: string }) {
   return (
     <View style={s.sectionHeader}>
@@ -403,14 +454,6 @@ function SectionHeader({ number, title }: { number: number; title: string }) {
 }
 
 /** Finance table columns — fit A4 portrait usable width ~531pt */
-const FIN_COLS = {
-  planType: 175,
-  budget: 78,
-  soExp: 82,
-  ifmsExp: 82,
-  pct: 68,
-};
-
 function FinanceTableHeader({ asOf, fyLabel }: { asOf: string; fyLabel: string }) {
   return (
     <View style={s.tableHeaderRow}>
@@ -445,32 +488,53 @@ function FinanceRow({ row, index }: { row: FinRow; index: number }) {
   const isSuccess = pctStatus === "success";
 
   return (
-    <View style={[
-      s.tableRow,
-      isWarning ? s.tableRowWarning : isSuccess ? s.tableRowAttn : (index % 2 === 0 ? s.tableRowEven : s.tableRowOdd),
-    ]}>
-      <Text style={[s.tableCell, { width: FIN_COLS.planType, fontFamily: isBold ? "Helvetica-Bold" : "Helvetica" }]}>
-        {row.planType}
-      </Text>
-      <Text style={[s.tableCell, { width: FIN_COLS.budget }, s.amountCell]}>
-        {isHeading ? "" : fmtCr(row.budgetEstimateCr)}
-      </Text>
-      <Text style={[s.tableCell, { width: FIN_COLS.soExp }, s.amountCell]}>
-        {isHeading ? "" : fmtCr(row.soExpenditureCr)}
-      </Text>
-      <Text style={[s.tableCell, { width: FIN_COLS.ifmsExp }, s.amountCell, ...(isBold ? [s.bold] : [])]}>
-        {isHeading ? "" : fmtCr(row.ifmsExpenditureCr)}
-      </Text>
-      <Text style={[
-        s.tableCell,
-        s.tableCellLast,
-        { width: FIN_COLS.pct },
-        s.percentCell,
-        ...(isWarning ? [s.percentLow] : []),
-        ...(isSuccess ? [s.percentHigh] : []),
-      ]}>
-        {isHeading ? "" : fmtPct(pctVal)}
-      </Text>
+    <View
+      wrap={false}
+      style={[
+        s.tableRow,
+        isWarning ? s.tableRowWarning : isSuccess ? s.tableRowAttn : (index % 2 === 0 ? s.tableRowEven : s.tableRowOdd),
+      ]}
+    >
+      <TableCell width={FIN_COLS.planType}>
+        <Text
+          wrap
+          orphans={0}
+          widows={0}
+          style={[
+            s.tableCellText,
+            { fontFamily: isBold ? "Helvetica-Bold" : "Helvetica", color: C.black },
+          ]}
+        >
+          {row.planType}
+        </Text>
+      </TableCell>
+      <TableCell width={FIN_COLS.budget}>
+        <Text style={[s.tableCellText, s.amountCell]}>{isHeading ? "" : fmtCr(row.budgetEstimateCr)}</Text>
+      </TableCell>
+      <TableCell width={FIN_COLS.soExp}>
+        <Text style={[s.tableCellText, s.amountCell]}>{isHeading ? "" : fmtCr(row.soExpenditureCr)}</Text>
+      </TableCell>
+      <TableCell width={FIN_COLS.ifmsExp}>
+        <Text style={[s.tableCellText, s.amountCell, ...(isBold ? [s.bold] : [])]}>
+          {isHeading ? "" : fmtCr(row.ifmsExpenditureCr)}
+        </Text>
+      </TableCell>
+      <TableCell
+        width={FIN_COLS.pct}
+        last
+        style={isWarning ? { backgroundColor: C.warningRedLight } : undefined}
+      >
+        <Text
+          style={[
+            s.tableCellText,
+            s.percentCell,
+            ...(isWarning ? [s.percentLow] : []),
+            ...(isSuccess ? [s.percentHigh] : []),
+          ]}
+        >
+          {isHeading ? "" : fmtPct(pctVal)}
+        </Text>
+      </TableCell>
     </View>
   );
 }
@@ -509,7 +573,6 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
 
   // KPI column widths — fit A4 portrait usable width ~531pt
   // num1/num2 must be wide enough to hold "Numerator" (~57pt) and "Denominator" (~66pt) without overflow
-  const KPI_COLS = { num: 16, desc: 110, actionBy: 62, num1: 58, unit1: 50, num2: 68, unit2: 50, remarks: 74 };
 
   return (
     <Document title={`HUDD Meeting Pack — ${data.meeting.meetingDate}`} author="HUDD Dashboard">
@@ -606,10 +669,10 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
           <SectionHeader number={4} title="Key Decisions from Last Dashboard Meetings" />
           <View style={s.tableContainer}>
             <View style={s.tableHeaderRow}>
-              <Text style={[s.tableHeaderCell, { flex: 3 }]}>Decision &amp; Details</Text>
-              <Text style={[s.tableHeaderCell, { flex: 1 }]}>Action by</Text>
-              <Text style={[s.tableHeaderCell, { flex: 1 }]}>Timeline</Text>
-              <Text style={[s.tableHeaderCell, s.tableHeaderCellLast, { flex: 0.8 }]}>Status</Text>
+              <Text style={[s.tableHeaderCell, { width: DEC_COLS.details }]}>Decision &amp; Details</Text>
+              <Text style={[s.tableHeaderCell, { width: DEC_COLS.actionBy }]}>Action by</Text>
+              <Text style={[s.tableHeaderCell, { width: DEC_COLS.timeline }]}>Timeline</Text>
+              <Text style={[s.tableHeaderCell, s.tableHeaderCellLast, { width: DEC_COLS.status }]}>Status</Text>
             </View>
             {data.keyDecisions.length === 0 ? (
               <Text style={[s.emptyState, { marginBottom: 0 }]}>No meeting decisions recorded up to this meeting.</Text>
@@ -617,38 +680,45 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
               data.keyDecisions.map((d) => (
                 <View
                   key={d.id}
+                  wrap={false}
                   style={[
                     s.tableRow,
                     d.statusCarriedForward ? s.tableRowWarning : s.tableRowOdd,
                   ]}
                 >
-                  <View style={[s.tableCell, { flex: 3, paddingVertical: 8 }]}>
-                    <Text style={s.decisionTitle}>{d.title}</Text>
-                    <Text style={s.decisionDescription}>{d.description}</Text>
+                  <TableCell width={DEC_COLS.details}>
+                    <Text wrap orphans={0} widows={0} style={s.decisionTitle}>{d.title}</Text>
+                    <Text wrap orphans={0} widows={0} style={s.decisionDescription}>{d.description}</Text>
                     {d.sourceMeetingDate && (
-                      <Text style={s.decisionNote}>Source: {d.sourceMeetingDate}</Text>
+                      <Text wrap orphans={0} widows={0} style={s.decisionNote}>Source: {d.sourceMeetingDate}</Text>
                     )}
                     {d.latestNote && (
-                      <Text style={s.decisionNote}>Latest: {d.latestNote}</Text>
+                      <Text wrap orphans={0} widows={0} style={s.decisionNote}>Latest: {d.latestNote}</Text>
                     )}
-                  </View>
-                  <Text style={[s.tableCell, { flex: 1, fontSize: 8 }]}>{d.actionBy}</Text>
-                  <Text style={[s.tableCell, { flex: 1, fontSize: 8 }]}>{d.timeline}</Text>
-                  <View style={[s.tableCell, s.tableCellLast, { flex: 0.8, paddingVertical: 8 }]}>
-                    <Text style={[
-                      s.statusBadge,
-                      d.statusLabel.toLowerCase().includes("complete") ? s.statusComplete
-                        : d.statusLabel.toLowerCase().includes("risk") ? s.statusAtRisk
-                        : s.statusPending,
-                    ]}>
-                      {d.statusLabel}
-                    </Text>
+                  </TableCell>
+                  <TableCell width={DEC_COLS.actionBy}>
+                    <Text wrap orphans={0} widows={0} style={s.tableCellText}>{d.actionBy}</Text>
+                  </TableCell>
+                  <TableCell width={DEC_COLS.timeline}>
+                    <Text style={s.tableCellText}>{d.timeline}</Text>
+                  </TableCell>
+                  <TableCell width={DEC_COLS.status} last>
+                    <View
+                      style={[
+                        s.statusBadge,
+                        d.statusLabel.toLowerCase().includes("complete") ? s.statusComplete
+                          : d.statusLabel.toLowerCase().includes("risk") ? s.statusAtRisk
+                          : s.statusPending,
+                      ]}
+                    >
+                      <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold" }}>{d.statusLabel}</Text>
+                    </View>
                     {d.statusCarriedForward && (
                       <Text style={{ fontSize: 6.5, color: C.statusPending, marginTop: 2 }}>
                         Carried from prior meeting
                       </Text>
                     )}
-                  </View>
+                  </TableCell>
                 </View>
               ))
             )}
@@ -677,27 +747,58 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
             ) : (
               kpiGroups.map((group, gi) => (
                 <React.Fragment key={`${group.schemeLabel}-${group.vertical}-${gi}`}>
-                  <View style={[s.tableRow, s.tableRowAttn]}>
-                    <Text style={[s.tableCell, { flex: 1, borderRightWidth: 0, color: C.accentGreen, fontFamily: "Helvetica-Bold", fontSize: 8.5 }]}>
-                      {group.schemeLabel}{group.vertical.trim() ? ` • ${group.vertical.trim()}` : ""}
-                    </Text>
+                  <View wrap={false} style={[s.tableRow, s.tableRowAttn]}>
+                    <TableCell width={PAGE_CONTENT_WIDTH} last>
+                      <Text
+                        style={{
+                          color: C.accentGreen,
+                          fontFamily: "Helvetica-Bold",
+                          fontSize: 8.5,
+                        }}
+                      >
+                        {group.schemeLabel}{group.vertical.trim() ? ` • ${group.vertical.trim()}` : ""}
+                      </Text>
+                    </TableCell>
                   </View>
                   {group.rows.map((k, ri) => (
                     <View
                       key={`${group.schemeLabel}-${group.vertical}-${k.index}`}
+                      wrap={false}
                       style={[s.tableRow, k.warnLowPct ? s.tableRowWarning : (ri % 2 === 0 ? s.tableRowEven : s.tableRowOdd)]}
                     >
-                      <Text style={[s.tableCell, { width: KPI_COLS.num }, s.center, s.kpiNum]}>{ri + 1}</Text>
-                      <Text style={[s.tableCell, { width: KPI_COLS.desc }, s.kpiDesc]}>{k.description}</Text>
-                      <View style={[s.tableCell, { width: KPI_COLS.actionBy }]}>
-                        <Text style={[s.bold, { fontSize: 8 }]}>{k.actionBy}</Text>
-                        <Text style={{ fontSize: 7, marginTop: 2, textTransform: "capitalize", color: C.mediumGray }}>{k.statusLabel}</Text>
-                      </View>
-                      <Text style={[s.tableCell, { width: KPI_COLS.num1 }, s.kpiValue]}>{k.numerator}</Text>
-                      <Text style={[s.tableCell, { width: KPI_COLS.unit1, fontSize: 7.5, color: C.mediumGray }]}>{k.numeratorUnit || "—"}</Text>
-                      <Text style={[s.tableCell, { width: KPI_COLS.num2 }, s.kpiValue]}>{k.denominator}</Text>
-                      <Text style={[s.tableCell, { width: KPI_COLS.unit2, fontSize: 7.5, color: C.mediumGray }]}>{k.denominatorUnit || "—"}</Text>
-                      <Text style={[s.tableCell, s.tableCellLast, { width: KPI_COLS.remarks, fontSize: 7.5 }]}>{k.remarks || "—"}</Text>
+                      <TableCell width={KPI_COLS.num}>
+                        <Text style={[s.tableCellText, s.center, s.kpiNum]}>{ri + 1}</Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.desc}>
+                        <Text wrap orphans={0} widows={0} style={[s.tableCellText, s.kpiDesc]}>{k.description}</Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.actionBy}>
+                        <Text wrap orphans={0} widows={0} style={[s.tableCellText, s.bold]}>{k.actionBy}</Text>
+                        <Text style={{ fontSize: 7, marginTop: 2, textTransform: "capitalize", color: C.mediumGray }}>
+                          {k.statusLabel}
+                        </Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.num1}>
+                        <Text style={[s.tableCellText, s.kpiValue]}>{k.numerator}</Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.unit1}>
+                        <Text wrap orphans={0} widows={0} style={[s.tableCellText, { fontSize: 7.5, color: C.mediumGray }]}>
+                          {k.numeratorUnit || "—"}
+                        </Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.num2}>
+                        <Text style={[s.tableCellText, s.kpiValue]}>{k.denominator}</Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.unit2}>
+                        <Text wrap orphans={0} widows={0} style={[s.tableCellText, { fontSize: 7.5, color: C.mediumGray }]}>
+                          {k.denominatorUnit || "—"}
+                        </Text>
+                      </TableCell>
+                      <TableCell width={KPI_COLS.remarks} last>
+                        <Text wrap orphans={0} widows={0} style={[s.tableCellText, { fontSize: 7.5 }]}>
+                          {k.remarks || "—"}
+                        </Text>
+                      </TableCell>
                     </View>
                   ))}
                 </React.Fragment>

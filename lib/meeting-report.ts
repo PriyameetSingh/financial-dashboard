@@ -115,6 +115,16 @@ function pct(ifms: number, budget: number): number | null {
   return Math.round((ifms / budget) * 10_000) / 100;
 }
 
+/** Reviewer for ACS/VH report packs; falls back to performer when self-approved (no separate reviewer). */
+function meetingReportItemOwner(
+  reviewers: Array<{ user: { name: string } }>,
+  performers: Array<{ user: { name: string } }>,
+): string {
+  const reviewerLabel = reviewers.map((r) => r.user.name).join(", ");
+  if (reviewerLabel.length > 0) return reviewerLabel;
+  return performers.map((p) => p.user.name).join(", ") || "—";
+}
+
 function sponsorshipHeading(st: SponsorshipType): string {
   if (st === "STATE") return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.STATE_SCHEME;
   if (st === "CENTRAL") return FINANCE_YEAR_BUDGET_CATEGORY_LABELS.CENTRALLY_SPONSORED_SCHEME;
@@ -463,6 +473,10 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
         orderBy: { sortOrder: "asc" },
         include: { user: { select: { name: true } } },
       },
+      reviewerUsers: {
+        orderBy: { sortOrder: "asc" },
+        include: { user: { select: { name: true } } },
+      },
       updates: {
         orderBy: { timestamp: "desc" },
         take: 1,
@@ -473,7 +487,6 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
   });
 
   const keyDecisions = decisions.map((d) => {
-    const performers = d.performers.map((p) => p.user.name).join(", ") || "—";
     const latest = d.updates[0] ?? null;
     const statusLabel = latest?.status ?? d.status;
     const latestNote = latest?.note ?? "";
@@ -488,7 +501,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
       title: d.title,
       description: d.description,
       sourceMeetingDate: d.meeting ? isoDate(d.meeting.meetingDate) : null,
-      actionBy: performers,
+      actionBy: meetingReportItemOwner(d.reviewerUsers, d.performers),
       timeline: isoDate(d.dueDate),
       statusLabel,
       latestNote,
@@ -506,6 +519,10 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
         scheme: { select: { name: true, verticalName: true } },
         performers: {
           where: { isActive: true },
+          orderBy: { sortOrder: "asc" },
+          include: { user: { select: { name: true } } },
+        },
+        reviewerUsers: {
           orderBy: { sortOrder: "asc" },
           include: { user: { select: { name: true } } },
         },
@@ -534,8 +551,6 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
     for (const def of definitions) {
       const target = def.targets[0] ?? null;
       const measurement = target?.measurements[0] ?? null;
-      const performers = def.performers.map((p) => p.user.name).join(", ") || "—";
-
       let numerator = "—";
       if (def.kpiType === "BINARY") {
         numerator =
@@ -561,7 +576,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
         description: def.description,
         schemeLabel: def.scheme.name,
         vertical: def.scheme.verticalName,
-        actionBy: performers,
+        actionBy: meetingReportItemOwner(def.reviewerUsers, def.performers),
         statusLabel: measurement?.progressStatus?.replace(/_/g, " ") ?? "—",
         numerator,
         numeratorUnit: def.numeratorUnit ?? "",
