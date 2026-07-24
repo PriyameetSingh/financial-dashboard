@@ -24,6 +24,21 @@ pipeline {
             }
         }
 
+        stage('Test (gate)') {
+            // Runs on the Jenkins agent itself (not the deploy target) against the
+            // freshly checked-out commit. Deploy below only runs if this succeeds —
+            // lint catches obvious code issues, verify-behaviors.mjs is a small
+            // real unit-test suite for core business-logic helpers.
+            steps {
+                sh '''
+                    set -e
+                    npm ci
+                    npm run lint
+                    node scripts/verify-behaviors.mjs
+                '''
+            }
+        }
+
         stage('Deploy') {
             // Explicit branch guard — do not rely solely on repos.json to filter branches.
             when {
