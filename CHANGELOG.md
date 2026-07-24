@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Meeting report packs now show the assigned reviewer (vertical head or supervising officer) as the owner for KPIs and action items, instead of the nodal officer who enters updates. When a task has no separate reviewer, the report still shows the officer who performs the work.
+- **Safer Meeting Deletion**: Officers can no longer delete a meeting that still has active action items tied to it. A clear warning first lists the pending action items and asks the officer to delete or archive them before the meeting can be removed. Once those are cleared, a second caution screen warns that KPI measurements and finance figures recorded during the meeting will remain but will lose their link back to the meeting, and that the meeting's discussion topics and uploaded presentation files will be permanently erased. The officer must tick an acknowledgement box before deletion can proceed. Uploaded presentation files are now also removed from storage when a meeting is deleted, instead of being left behind as orphan files.
 
 ### Fixed
 - Meeting report PDF downloads no longer show overlapping, clipped, or garbled text in finance tables, action items, and KPI sections when rows span multiple lines or pages.

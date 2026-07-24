@@ -11,6 +11,7 @@ import ActiveMeetingOverlay from "./components/ActiveMeetingOverlay";
 import ScheduleMeetingModal from "./components/ScheduleMeetingModal";
 import EditMeetingModal from "./components/EditMeetingModal";
 import ViewMeetingModal from "./components/ViewMeetingModal";
+import DeleteMeetingModal from "./components/DeleteMeetingModal";
 
 function normalizeMeetings(raw: MeetingListItem[]): MeetingListItem[] {
   return raw.map((m) => ({
@@ -30,6 +31,12 @@ export default function MeetingsPage() {
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingListItem | null>(null);
   const [dashboardMeeting, setDashboardMeeting] = useState<MeetingListItem | null>(null);
   const [editingMeeting, setEditingMeeting] = useState<MeetingListItem | null>(null);
+  const [deletingMeeting, setDeletingMeeting] = useState<MeetingListItem | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteBlockers, setDeleteBlockers] = useState<
+    Array<{ id: string; title: string; status: string }> | null
+  >(null);
 
   const [canSchedule, setCanSchedule] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
@@ -83,16 +90,49 @@ export default function MeetingsPage() {
     }
   }, []);
 
-  const handleDeleteMeeting = async (meetingId: string, meetingTitle: string) => {
-    if (!window.confirm(`Are you sure you want to delete the meeting "${meetingTitle}"? This action cannot be undone.`)) {
-      return;
-    }
+  const openDeleteMeeting = (meeting: MeetingListItem) => {
+    setDeletingMeeting(meeting);
+    setDeleteError(null);
+    setDeleteBlockers(null);
+  };
 
+  const closeDeleteMeeting = () => {
+    setDeletingMeeting(null);
+    setDeleteError(null);
+    setDeleteBlockers(null);
+    setDeleteSubmitting(false);
+  };
+
+  const confirmDeleteMeeting = async () => {
+    if (!deletingMeeting) return;
+    const meetingId = deletingMeeting.id;
     try {
+      setDeleteSubmitting(true);
+      setDeleteError(null);
       await deleteMeeting(meetingId);
+      closeDeleteMeeting();
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to delete meeting");
+      const message = e instanceof Error ? e.message : "Failed to delete meeting";
+      // The server refuses deletion when active action items remain. Refresh the
+      // meeting list so the modal reflects the current set of blocking items.
+      if (e instanceof Error && /active action items/i.test(message)) {
+        try {
+          const data = await fetchMeetings();
+          const normalized = normalizeMeetings(data);
+          setMeetings(normalized);
+          const refreshed = normalized.find((m) => m.id === meetingId) ?? null;
+          if (refreshed) {
+            setDeletingMeeting(refreshed);
+            setDeleteBlockers(refreshed.actionItems ?? []);
+          }
+        } catch {
+          // fall through to show the generic error
+        }
+      }
+      setDeleteError(message);
+    } finally {
+      setDeleteSubmitting(false);
     }
   };
 
@@ -179,7 +219,7 @@ export default function MeetingsPage() {
                   isToday 
                   onClick={() => setSelectedMeeting(m)}
                   onEdit={() => setEditingMeeting(m)}
-                  onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
+                  onDelete={() => openDeleteMeeting(m)}
                   canEdit={canSchedule}
                   canDelete={canDelete}
                 />
@@ -202,7 +242,7 @@ export default function MeetingsPage() {
                   meeting={m}
                   onClick={() => setSelectedMeeting(m)}
                   onEdit={() => setEditingMeeting(m)}
-                  onDelete={() => handleDeleteMeeting(m.id, m.title || "Untitled meeting")}
+                  onDelete={() => openDeleteMeeting(m)}
                   canEdit={canSchedule}
                   canDelete={canDelete}
                 />
@@ -246,6 +286,17 @@ export default function MeetingsPage() {
             setEditingMeeting(null);
             load();
           }}
+        />
+      )}
+
+      {deletingMeeting && (
+        <DeleteMeetingModal
+          meeting={deletingMeeting}
+          blockingActionItems={deleteBlockers}
+          onClose={closeDeleteMeeting}
+          onConfirm={confirmDeleteMeeting}
+          deleting={deleteSubmitting}
+          error={deleteError}
         />
       )}
     </AppShell>

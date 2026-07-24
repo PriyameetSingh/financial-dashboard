@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { deleteFile } from "@/lib/local-file-storage";
 
 export const runtime = "nodejs";
 
@@ -132,9 +133,42 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
     const { id } = await ctx.params;
     const auditContext = getAuditRequestContext(request);
 
-    const before = await prisma.dashboardMeeting.findUnique({ where: { id } });
+    const before = await prisma.dashboardMeeting.findUnique({
+      where: { id },
+      include: {
+        actionItems: {
+          where: { archived: false },
+          select: { id: true, title: true, status: true },
+        },
+        materials: { select: { id: true, storagePath: true } },
+      },
+    });
     if (!before) {
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+    }
+
+    if (before.actionItems.length > 0) {
+      return NextResponse.json(
+        {
+          detail:
+            "This meeting still has active action items. Please delete or archive them first before deleting the meeting.",
+          blockingActionItems: before.actionItems,
+        },
+        { status: 409 },
+      );
+    }
+
+    // Clean up material files from local disk before the DB cascade removes the rows.
+    // Failures are logged but do not block the meeting deletion.
+    for (const material of before.materials) {
+      try {
+        await deleteFile(material.storagePath);
+      } catch (err) {
+        console.error(
+          `[meeting.delete] Failed to remove material file ${material.storagePath} for meeting ${id}:`,
+          err,
+        );
+      }
     }
 
     await prisma.dashboardMeeting.delete({ where: { id } });
