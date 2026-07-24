@@ -8,6 +8,7 @@ const PERMISSIONS = [
   { code: "VIEW_ASSIGNED_DATA", name: "View assigned data" },
   { code: "ENTER_FINANCIAL_DATA", name: "Enter financial data" },
   { code: "MANAGE_FINANCIAL_DATA", name: "Manage financial data" },
+  { code: "EDIT_FINANCIAL_ENTRIES", name: "Edit financial entries" },
   { code: "ENTER_KPI_DATA", name: "Enter KPI data" },
   { code: "CREATE_ACTION_ITEMS", name: "Create action items" },
   { code: "UPDATE_ACTION_ITEMS", name: "Update action items" },

@@ -770,7 +770,10 @@ export default function SchemesBoardClient() {
                                 {entry.scheme}
                               </p>
                               <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
-                                {entry.vertical} · {entry.id}
+                                {entry.scheme.trim().toLowerCase() ===
+                                entry.id.trim().toLowerCase()
+                                  ? entry.vertical
+                                  : `${entry.vertical} · ${entry.id}`}
                               </p>
                             </div>
                             <div className="flex shrink-0 flex-col items-end gap-2">
@@ -909,9 +912,12 @@ export default function SchemesBoardClient() {
                                             <p className="font-medium text-[var(--text-primary)]">
                                               {sub.name}
                                             </p>
-                                            <p className="text-[10px] text-[var(--text-muted)]">
-                                              {sub.code}
-                                            </p>
+                                            {sub.name.trim().toLowerCase() !==
+                                              sub.code.trim().toLowerCase() && (
+                                              <p className="text-[10px] text-[var(--text-muted)]">
+                                                {sub.code}
+                                              </p>
+                                            )}
                                             <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--text-secondary)]">
                                               <span>RE ₹{fmtCr(re)} Cr</span>
                                               <span>
@@ -1042,7 +1048,12 @@ export default function SchemesBoardClient() {
                                 <p className="font-medium leading-snug text-[var(--text-primary)]">
                                   {entry.scheme}
                                 </p>
-                                <p className="text-[11px] text-[var(--text-muted)]">{entry.id}</p>
+                                {entry.scheme.trim().toLowerCase() !==
+                                  entry.id.trim().toLowerCase() && (
+                                  <p className="text-[11px] text-[var(--text-muted)]">
+                                    {entry.id}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -1159,9 +1170,12 @@ export default function SchemesBoardClient() {
                                               <p className="font-semibold text-[var(--text-primary)]">
                                                 {sub.name}
                                               </p>
-                                              <p className="text-[10px] text-[var(--text-muted)]">
-                                                {sub.code}
-                                              </p>
+                                              {sub.name.trim().toLowerCase() !==
+                                                sub.code.trim().toLowerCase() && (
+                                                <p className="text-[10px] text-[var(--text-muted)]">
+                                                  {sub.code}
+                                                </p>
+                                              )}
                                               <div className="mt-1 flex flex-wrap gap-x-4 text-xs tabular-nums text-[var(--text-secondary)]">
                                                 <span>RE ₹{fmtCr(re)} Cr</span>
                                                 <span>

@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.6] - 2026-07-24
+
+### Added
+- **Financial Entry Corrections**: Administrators can now grant a new "Edit financial entries" permission to specific officers, who can then correct or remove a wrongly-entered financial expenditure figure (for example, an incorrect IFMS amount added to a sub-scheme) directly from the financial data entry screen's update history. This removes the need for a database change to fix data-entry mistakes; every correction or removal is recorded in the audit trail.
+
+---
+
 ## [0.1.0] - Initial Release
 
 ### Features

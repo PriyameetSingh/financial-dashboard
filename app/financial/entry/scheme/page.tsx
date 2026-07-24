@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { Loader2, Lock, Plus, Search } from "lucide-react";
+import { Fragment, useMemo, useState, useEffect, useCallback } from "react";
+import { Loader2, Lock, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
@@ -11,6 +11,8 @@ import {
   submitFinancialSnapshot,
   patchFinancialBudget,
   createFinanceBudgetSupplement,
+  patchFinancialSnapshot,
+  deleteFinancialSnapshot,
 } from "@/src/lib/services/financialService";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { FinancialEntry } from "@/types";
@@ -142,6 +144,11 @@ export default function SchemeEntryPage() {
     const user = getCurrentUser();
     return hasPermission(user, Permission.MANAGE_FINANCIAL_DATA);
   }, []);
+  // Permission check for correcting/removing wrongly-entered financial entries
+  const canEditFinancialEntries = useMemo(() => {
+    const user = getCurrentUser();
+    return hasPermission(user, Permission.EDIT_FINANCIAL_ENTRIES);
+  }, []);
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [financialYearLabel, setFinancialYearLabel] = useState<string | null>(null);
   const [selected, setSelected] = useState<FinancialEntry | null>(null);
@@ -193,6 +200,13 @@ export default function SchemeEntryPage() {
     onConfirm: () => void;
   } | null>(null);
 
+  // Correction (EDIT_FINANCIAL_ENTRIES) state — edit/delete an existing snapshot row
+  const [editingSnapshotId, setEditingSnapshotId] = useState<string | null>(null);
+  const [editSnapSo, setEditSnapSo] = useState<number | "">("");
+  const [editSnapIfms, setEditSnapIfms] = useState<number | "">("");
+  const [editSnapRemarks, setEditSnapRemarks] = useState("");
+  const [pendingCorrection, setPendingCorrection] = useState<"delete" | "correct" | null>(null);
+
   const triggerAlert = (type: "success" | "draft" | "error", message: string) => {
     setAlertInfo({ type, message });
     if (type !== "error") {
@@ -222,6 +236,7 @@ export default function SchemeEntryPage() {
     setAddingSupplement(false);
     setRevisingBudget(false);
     setIsEditingSO(false);
+    setEditingSnapshotId(null);
 
     if (!entry) return;
 
@@ -246,6 +261,7 @@ export default function SchemeEntryPage() {
     setAddingSupplement(false);
     setRevisingBudget(false);
     setIsEditingSO(false);
+    setEditingSnapshotId(null);
     setAsOfDate(new Date().toISOString().slice(0, 10));
   }, []);
 
@@ -577,6 +593,85 @@ export default function SchemeEntryPage() {
     }
 
     await executeUpdateSO(totalSO);
+  };
+
+  const startEditSnapshot = (row: { id: string; so: number; ifms: number; remarks?: string | null }) => {
+    setEditingSnapshotId(row.id);
+    setEditSnapSo(row.so);
+    setEditSnapIfms(row.ifms);
+    setEditSnapRemarks(row.remarks ?? "");
+    setAlertInfo(null);
+  };
+
+  const cancelEditSnapshot = () => {
+    setEditingSnapshotId(null);
+    setEditSnapSo("");
+    setEditSnapIfms("");
+    setEditSnapRemarks("");
+  };
+
+  const executeCorrectSnapshot = async (id: string) => {
+    if (!selected || !financialYearLabel) return;
+    const soVal = editSnapSo === "" ? 0 : Number(editSnapSo);
+    const ifmsVal = editSnapIfms === "" ? 0 : Number(editSnapIfms);
+    if (Number.isNaN(soVal) || soVal < 0 || Number.isNaN(ifmsVal) || ifmsVal < 0) {
+      triggerAlert("error", "Enter valid non-negative SO and IFMS values.");
+      return;
+    }
+    setIsSubmitting(true);
+    setPendingCorrection("correct");
+    setAlertInfo(null);
+    try {
+      await patchFinancialSnapshot({
+        id,
+        soExpenditureCr: soVal,
+        ifmsExpenditureCr: ifmsVal,
+        remarks: editSnapRemarks,
+      });
+      cancelEditSnapshot();
+      const schemeId = selected.id;
+      const subCode = hasSubschemes ? selectedSubschemeCode : null;
+      const data = await loadEntries();
+      if (data) applyFreshEntries(data, schemeId, subCode);
+      triggerAlert("success", "Entry corrected successfully.");
+    } catch (e: unknown) {
+      triggerAlert("error", e instanceof Error ? e.message : "Failed to correct entry.");
+    } finally {
+      setIsSubmitting(false);
+      setPendingCorrection(null);
+    }
+  };
+
+  const executeDeleteSnapshot = async (id: string) => {
+    if (!selected || !financialYearLabel) return;
+    setIsSubmitting(true);
+    setPendingCorrection("delete");
+    setAlertInfo(null);
+    try {
+      await deleteFinancialSnapshot(id);
+      const schemeId = selected.id;
+      const subCode = hasSubschemes ? selectedSubschemeCode : null;
+      const data = await loadEntries();
+      if (data) applyFreshEntries(data, schemeId, subCode);
+      triggerAlert("success", "Wrong entry removed successfully.");
+    } catch (e: unknown) {
+      triggerAlert("error", e instanceof Error ? e.message : "Failed to remove entry.");
+    } finally {
+      setIsSubmitting(false);
+      setPendingCorrection(null);
+    }
+  };
+
+  const requestDeleteSnapshot = (row: { id: string; asOfDate: string; ifms: number }) => {
+    setConfirmConfig({
+      title: "Remove financial entry",
+      message: `Remove the expenditure snapshot dated ${new Date(row.asOfDate).toLocaleDateString("en-IN")} (IFMS ₹${row.ifms.toFixed(2)} Cr)? This cannot be undone.`,
+      confirmLabel: "Remove",
+      cancelLabel: "Cancel",
+      onConfirm: () => {
+        void executeDeleteSnapshot(row.id);
+      },
+    });
   };
 
   const groupedSchemes = useMemo(() => {
@@ -1075,6 +1170,9 @@ export default function SchemeEntryPage() {
                             <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS (₹ Cr)</th>
                             <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">SO (₹ Cr)</th>
                             <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS Change</th>
+                            {canEditFinancialEntries && (
+                              <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Actions</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -1082,34 +1180,124 @@ export default function SchemeEntryPage() {
                             const prev = arr[idx + 1];
                             const delta = prev !== undefined ? h.ifms - prev.ifms : null;
                             const isLatest = idx === 0;
+                            const isEditing = editingSnapshotId === h.id;
+                            const colCount = canEditFinancialEntries ? 6 : 5;
                             return (
-                              <tr
-                                key={`${h.asOfDate}-${idx}`}
-                                className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[rgba(46,204,113,0.04)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
-                              >
-                                <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
-                                <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
-                                  {new Date(h.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                  {isLatest && (
-                                    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
+                              <Fragment key={`${h.id}-${h.asOfDate}-${idx}`}>
+                                <tr
+                                  className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[rgba(46,204,113,0.04)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
+                                >
+                                  <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
+                                  <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
+                                    {new Date(h.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    {isLatest && (
+                                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
+                                    )}
+                                  </td>
+                                  <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
+                                    {h.ifms.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </td>
+                                  <td className="px-5 py-3 text-right text-[var(--text-secondary)]">
+                                    {h.so.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </td>
+                                  <td className="px-5 py-3 text-right">
+                                    {delta === null ? (
+                                      <span className="text-[var(--text-muted)] text-xs">—</span>
+                                    ) : (
+                                      <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
+                                        {delta > 0 ? '+' : ''}{delta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </span>
+                                    )}
+                                  </td>
+                                  {canEditFinancialEntries && (
+                                    <td className="px-5 py-3 text-right whitespace-nowrap">
+                                      <div className="inline-flex items-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => startEditSnapshot(h)}
+                                          disabled={isSubmitting || isEditing}
+                                          title="Correct entry"
+                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-content-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <Pencil className="h-3.5 w-3.5" aria-hidden />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => requestDeleteSnapshot(h)}
+                                          disabled={isSubmitting || isEditing}
+                                          title="Remove entry"
+                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] text-[#e74c3c] hover:bg-[rgba(231,76,60,0.08)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                        </button>
+                                      </div>
+                                    </td>
                                   )}
-                                </td>
-                                <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
-                                  {h.ifms.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </td>
-                                <td className="px-5 py-3 text-right text-[var(--text-secondary)]">
-                                  {h.so.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </td>
-                                <td className="px-5 py-3 text-right">
-                                  {delta === null ? (
-                                    <span className="text-[var(--text-muted)] text-xs">—</span>
-                                  ) : (
-                                    <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
-                                      {delta > 0 ? '+' : ''}{delta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
+                                </tr>
+                                {isEditing && (
+                                  <tr key={`${h.id}-edit`} className="border-b border-[var(--border)] bg-[var(--bg-document)]">                                    <td colSpan={colCount} className="px-5 py-4">
+                                      <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
+                                        <div className="flex-1 min-w-[8rem]">
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">IFMS (₹ Cr)</label>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            value={editSnapIfms}
+                                            onChange={(e) => setEditSnapIfms(e.target.value ? Number(e.target.value) : "")}
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-[8rem]">
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">SO (₹ Cr)</label>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            value={editSnapSo}
+                                            onChange={(e) => setEditSnapSo(e.target.value ? Number(e.target.value) : "")}
+                                          />
+                                        </div>
+                                        <div className="flex-[2] min-w-[12rem]">
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Remarks</label>
+                                          <input
+                                            type="text"
+                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            value={editSnapRemarks}
+                                            onChange={(e) => setEditSnapRemarks(e.target.value)}
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={cancelEditSnapshot}
+                                            disabled={isSubmitting}
+                                            className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-3 py-1.5"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => void executeCorrectSnapshot(h.id)}
+                                            disabled={isSubmitting}
+                                            className="inline-flex items-center justify-center gap-1.5 min-w-[6rem] bg-[var(--text-primary)] text-[var(--bg-document)] font-semibold text-sm px-4 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
+                                          >
+                                            {pendingCorrection === "correct" ? (
+                                              <>
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" aria-hidden />
+                                                Saving…
+                                              </>
+                                            ) : (
+                                              "Save Correction"
+                                            )}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </Fragment>
                             );
                           })}
                         </tbody>

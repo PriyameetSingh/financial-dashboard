@@ -42,6 +42,8 @@ export enum Permission {
   ENTER_FINANCIAL_DATA = "ENTER_FINANCIAL_DATA",
   /** Bulk spreadsheet-style financial entry (all schemes at once). */
   MANAGE_FINANCIAL_DATA = "MANAGE_FINANCIAL_DATA",
+  /** Correct or remove wrongly-entered financial expenditure snapshots. */
+  EDIT_FINANCIAL_ENTRIES = "EDIT_FINANCIAL_ENTRIES",
   ENTER_KPI_DATA = "ENTER_KPI_DATA",
   CREATE_ACTION_ITEMS = "CREATE_ACTION_ITEMS",
   UPDATE_ACTION_ITEMS = "UPDATE_ACTION_ITEMS",
@@ -266,9 +268,11 @@ export interface FinancialEntry {
     createdByName: string;
   }>;
   history?: Array<{
+    id: string;
     asOfDate: string;
     ifms: number;
     so: number;
+    remarks?: string | null;
   }>;
   subschemes?: Array<{
     id: string;
@@ -292,9 +296,11 @@ export interface FinancialEntry {
       createdByName: string;
     }>;
     history?: Array<{
+      id: string;
       asOfDate: string;
       ifms: number;
       so: number;
+      remarks?: string | null;
     }>;
   }>;
 }

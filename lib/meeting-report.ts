@@ -258,7 +258,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
           sponsorshipType: { not: "NON_FINANCIAL" }
         },
         include: { subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } },
-        orderBy: [{ verticalName: "asc" }, { name: "asc" }],
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
       prisma.financeBudget.findMany({ where: { financialYearId: fy.id } }),
       prisma.financeBudgetSupplement.findMany({ where: { financialYearId: fy.id } }),
@@ -544,7 +544,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
           },
         },
       },
-      orderBy: [{ scheme: { verticalName: "asc" } }, { scheme: { name: "asc" } }, { description: "asc" }],
+      orderBy: [{ scheme: { sortOrder: "asc" } }, { scheme: { name: "asc" } }, { description: "asc" }],
     });
 
     let idx = 1;

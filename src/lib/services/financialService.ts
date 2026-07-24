@@ -48,6 +48,33 @@ export async function submitFinancialSnapshot(input: {
   await parseResponse<{ ok: boolean }>(response);
 }
 
+/** Correct an existing expenditure snapshot (SO / IFMS / remarks) by id. Requires EDIT_FINANCIAL_ENTRIES. */
+export async function patchFinancialSnapshot(input: {
+  id: string;
+  soExpenditureCr?: number;
+  ifmsExpenditureCr?: number;
+  remarks?: string | null;
+}): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/financial/snapshots/${input.id}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      soExpenditureCr: input.soExpenditureCr,
+      ifmsExpenditureCr: input.ifmsExpenditureCr,
+      remarks: input.remarks,
+    }),
+  });
+  await parseResponse<{ ok: boolean }>(response);
+}
+
+/** Remove a wrongly-added expenditure snapshot by id. Requires EDIT_FINANCIAL_ENTRIES. */
+export async function deleteFinancialSnapshot(id: string): Promise<void> {
+  const response = await fetch(withNextBasePath(`/api/v1/financial/snapshots/${id}`), {
+    method: "DELETE",
+  });
+  await parseResponse<{ ok: boolean }>(response);
+}
+
 export async function fetchFinanceSummary(params?: { asOfDate?: string; financialYearLabel?: string }): Promise<{
   financialYearLabel: string | null;
   asOfDate: string | null;

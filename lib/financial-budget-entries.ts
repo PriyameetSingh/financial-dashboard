@@ -239,9 +239,11 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
             .filter((s) => s.subschemeId === sub.id)
             .sort((a, b) => a.asOfDate.getTime() - b.asOfDate.getTime())
             .map((s) => ({
+              id: s.id,
               asOfDate: s.asOfDate.toISOString().slice(0, 10),
               ifms: toNumber(s.ifmsExpenditureCr),
               so: toNumber(s.soExpenditureCr),
+              remarks: s.remarks,
             }))
         };
       });
@@ -389,10 +391,12 @@ function buildEntry(params: {
     createdBy: { name: string } | null;
   }>;
   schemeSnapshots: Array<{
+    id: string;
     subschemeId: string | null;
     asOfDate: Date;
     soExpenditureCr: Prisma.Decimal;
     ifmsExpenditureCr: Prisma.Decimal;
+    remarks: string | null;
   }>;
   latest: {
     asOfDate: Date;
@@ -408,7 +412,7 @@ function buildEntry(params: {
   ifms: number;
   status: ReturnType<typeof deriveFinancialEntryStatus> | "not_started";
   priority: Map<string, number>;
-  subschemeDetails?: Array<{ id: string; code: string; name: string; so: number; ifms: number; annualBudget: number; totalSupplementCr?: number; effectiveBudgetCr?: number; supplements?: Array<{id: string; amountCr: number; reason: string; referenceNo?: string; createdAt: string; createdByName: string;}>; history?: Array<{ asOfDate: string; ifms: number; so: number; }> }>;
+  subschemeDetails?: Array<{ id: string; code: string; name: string; so: number; ifms: number; annualBudget: number; totalSupplementCr?: number; effectiveBudgetCr?: number; supplements?: Array<{id: string; amountCr: number; reason: string; referenceNo?: string; createdAt: string; createdByName: string;}>; history?: Array<{ id: string; asOfDate: string; ifms: number; so: number; remarks?: string | null; }> }>;
 }): FinancialEntry {
   const { scheme, schemeBudgets, schemeSupplements, latest, annualBudget, totalSupplementCr, so, ifms, status } = params;
   const budgetRow = schemeBudgets.find((b) => b.subschemeId === null) ?? schemeBudgets[0];
@@ -457,9 +461,11 @@ function buildEntry(params: {
       .filter((s) => s.subschemeId === null)
       .sort((a, b) => a.asOfDate.getTime() - b.asOfDate.getTime())
       .map((s) => ({
+        id: s.id,
         asOfDate: s.asOfDate.toISOString().slice(0, 10),
         ifms: toNumber(s.ifmsExpenditureCr),
         so: toNumber(s.soExpenditureCr),
+        remarks: s.remarks,
       })),
     so,
     ifms,

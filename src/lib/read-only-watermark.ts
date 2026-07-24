@@ -3,6 +3,7 @@ import { Permission, type SessionUser } from "@/types";
 const EDIT_SIGNALS: Permission[] = [
   Permission.ENTER_FINANCIAL_DATA,
   Permission.MANAGE_FINANCIAL_DATA,
+  Permission.EDIT_FINANCIAL_ENTRIES,
   Permission.ENTER_KPI_DATA,
   Permission.CREATE_ACTION_ITEMS,
   Permission.UPDATE_ACTION_ITEMS,
