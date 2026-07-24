@@ -3,9 +3,7 @@ import { apiClient } from '../../../lib/api-client';
 
 export async function GET() {
   try {
-    // SIMULATED PROD BUG for rollback demo — no test covers this endpoint,
-    // so it slips past the Test (gate) stage untouched. Reverted right after.
-    const data = await Promise.reject(new Error('simulated prod bug'));
+    const data = await apiClient.get('/health');
     return NextResponse.json({ 
       nextjs: 'ok', 
       fastapi: data 
@@ -13,10 +11,11 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { 
-        nextjs: 'broken',
+        nextjs: 'ok', 
+        fastapi: 'unreachable',
         error: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
