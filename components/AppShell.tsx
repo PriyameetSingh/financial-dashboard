@@ -105,7 +105,7 @@ export default function AppShell({ children, title }: Props) {
         </main>
       </div>
       {chatOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6">
           <div className="relative h-full w-full max-w-4xl rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl">
             <button
               className="absolute right-4 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]"
@@ -120,7 +120,7 @@ export default function AppShell({ children, title }: Props) {
       )}
       {/* Floating Urban Assistant button (FAB) */}
       <button
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] cursor-pointer"
+        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] cursor-pointer"
         onClick={() => setChatOpen(true)}
         type="button"
         aria-label="Urban Assistant Chatbot"

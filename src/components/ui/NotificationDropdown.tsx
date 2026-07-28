@@ -212,8 +212,8 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
 
       {/* Popover list */}
       {isOpen && (
-        <div 
-          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-50 mt-2 w-80 sm:w-96 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl overflow-hidden`}
+        <div
+          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-[60] mt-2 w-80 sm:w-96 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl overflow-hidden`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-bottom pb-2 border-b border-[var(--border)]">
