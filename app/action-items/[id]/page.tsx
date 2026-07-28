@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil, Check, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
@@ -94,11 +94,27 @@ function formatDateTime(timestamp: string) {
   });
 }
 
-export default function ActionItemDetailPage() {
+function ActionItemDetailContent() {
   const user = useRequireAuth();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const searchParams = useSearchParams();
+  const fromTab = searchParams.get("from") === "tracker" ? "tracker" : "list";
+
+  const handleBackToList = () => {
+    // Prefer router.back() so the browser restores scroll position and the
+    // list page rehydrates the previously active tab from its URL (?tab=...).
+    // Fall back to a direct navigation when there is no prior history entry
+    // (e.g. the user landed directly on the detail page via a shared link).
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      const target =
+        fromTab === "tracker" ? "/action-items?tab=tracker" : "/action-items";
+      router.push(target);
+    }
+  };
 
   const [item, setItem] = useState<ActionItem | null>(null);
   const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
@@ -270,10 +286,10 @@ export default function ActionItemDetailPage() {
         )}
 
         <button
-          onClick={() => router.back()}
+          onClick={handleBackToList}
           className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
         >
-          <ArrowLeft size={16} /> Back to list
+          <ArrowLeft size={16} /> {fromTab === "tracker" ? "Back to Action Tracker" : "Back to list"}
         </button>
 
         {actionSuccess && (
@@ -985,5 +1001,19 @@ export default function ActionItemDetailPage() {
         }}
       />
     </AppShell>
+  );
+}
+
+export default function ActionItemDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell title="Action Item">
+          <div className="px-6 py-6 text-sm text-[var(--text-muted)]">Loading action item...</div>
+        </AppShell>
+      }
+    >
+      <ActionItemDetailContent />
+    </Suspense>
   );
 }

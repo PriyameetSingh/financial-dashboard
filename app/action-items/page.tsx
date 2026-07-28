@@ -13,7 +13,7 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import SearchableUserSelector from "@/src/components/ui/SearchableUserSelector";
 import PriorityBadge from "@/src/components/ui/PriorityBadge";
 import { isAssignedActionOfficer, isDesignatedReviewer } from "@/src/lib/actionItemAssignment";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import CustomSelect from "@/src/components/ui/CustomSelect";
 import StatusStepper from "@/src/components/ui/StatusStepper";
@@ -123,11 +123,15 @@ function formatDateTime(timestamp: string) {
 function ActionItemsContent() {
   const user = useRequireAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialFilterFromUrl = searchParams.get("filter");
   const initialFilterId =
     initialFilterFromUrl && STATUS_FILTERS.some((entry) => entry.id === initialFilterFromUrl)
       ? initialFilterFromUrl
       : "all";
+  const initialTabFromUrl = searchParams.get("tab");
+  const initialTab: "list" | "tracker" =
+    initialTabFromUrl === "tracker" ? "tracker" : "list";
   const [items, setItems] = useState<ActionItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<ActionItem[]>([]);
   const [directoryUsers, setDirectoryUsers] = useState<SessionUser[]>([]);
@@ -139,7 +143,7 @@ function ActionItemsContent() {
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState("all");
-  const [pageTab, setPageTab] = useState<"list" | "tracker">("list");
+  const [pageTab, setPageTab] = useState<"list" | "tracker">(initialTab);
   const [sortBy, setSortBy] = useState<"meeting" | "date" | "latest_updates">("meeting");
   const [trackerActivity, setTrackerActivity] = useState<
     "all" | "recent_7" | "recent_30" | "inactive_14" | "inactive_30"
@@ -510,6 +514,25 @@ function ActionItemsContent() {
     return null;
   };
 
+  const updateTabInUrl = (tab: "list" | "tracker") => {
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "list") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const queryString = params.toString();
+    const nextUrl = `/action-items${queryString ? `?${queryString}` : ""}`;
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  const detailHref = (itemId: string) => {
+    const params = new URLSearchParams();
+    if (pageTab === "tracker") params.set("from", "tracker");
+    const queryString = params.toString();
+    return `/action-items/${itemId}${queryString ? `?${queryString}` : ""}`;
+  };
+
   return (
     <AppShell title="Action Items">
       <div className="relative space-y-6 px-6 py-6">
@@ -534,6 +557,7 @@ function ActionItemsContent() {
                 onClick={() => {
                   setPageTab("list");
                   setSortBy("meeting");
+                  updateTabInUrl("list");
                 }}
                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "list"
                     ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
@@ -547,6 +571,7 @@ function ActionItemsContent() {
                 onClick={() => {
                   setPageTab("tracker");
                   setSortBy("latest_updates");
+                  updateTabInUrl("tracker");
                 }}
                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "tracker"
                     ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
@@ -804,7 +829,7 @@ function ActionItemsContent() {
 
                   <div className="mt-5 flex flex-wrap items-center gap-2">
                     <Link
-                      href={`/action-items/${item.id}`}
+                      href={detailHref(item.id)}
                       className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
                     >
                       View Details
@@ -973,7 +998,7 @@ function ActionItemsContent() {
                   </div>
                   <div className="mt-6 pt-4 border-t border-[var(--border)]/50 flex items-center justify-between">
                     <Link
-                      href={`/action-items/${item.id}`}
+                      href={detailHref(item.id)}
                       className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
                     >
                       View full details

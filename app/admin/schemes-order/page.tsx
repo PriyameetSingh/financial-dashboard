@@ -106,9 +106,15 @@ export default function SchemesOrderPage() {
 
   const hasUnsavedChanges = schemesOrderChanged || subschemesOrderChanged;
 
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
+
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
+      if (hasUnsavedChangesRef.current) {
         e.preventDefault();
         e.returnValue = "";
         return "";
@@ -120,11 +126,11 @@ export default function SchemesOrderPage() {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [hasUnsavedChanges]);
+  }, []);
 
   useEffect(() => {
     const handleLinkClick = (e: MouseEvent) => {
-      if (!hasUnsavedChanges) return;
+      if (!hasUnsavedChangesRef.current) return;
 
       const target = e.target as HTMLElement;
       const link = target.closest("a");
@@ -148,7 +154,7 @@ export default function SchemesOrderPage() {
     return () => {
       document.removeEventListener("click", handleLinkClick, true);
     };
-  }, [hasUnsavedChanges]);
+  }, []);
 
   const handleConfirmNavigation = () => {
     setShowNavigationWarning(false);
