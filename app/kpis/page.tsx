@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
-import { fetchKPISubmissions, reviewKpiMeasurement, requestKpiCompletion, reviewKpiCompletion } from "@/src/lib/services/kpiService";
+import { fetchKPISubmissions, reviewKpiMeasurement, reviewKpiCompletion } from "@/src/lib/services/kpiService";
 import { fetchFinancialBudgets } from "@/src/lib/services/financialService";
 import { KPISubmission, KpiEscalationFlag, KpiCompletionStatus } from "@/types";
 import type { FinancialEntry } from "@/types";
@@ -169,20 +169,6 @@ function kpiProgressScore(s: KPISubmission): number | null {
   if (d > 0) return Math.min(100, (n / d) * 100);
   if (s.status === "approved") return 100;
   return null;
-}
-
-/**
- * Whether a KPI's latest progress is below its target (used for the
- * "Progress < 100%" inline warning when marking complete).
- * - BINARY: not yet "yes"
- * - OUTPUT/OUTCOME: numerator below denominator (only when a denominator is set)
- */
-function isKpiBelowTarget(s: KPISubmission): boolean {
-  if (s.type === "BINARY") return s.yes !== true;
-  const d = s.denominator ?? 0;
-  if (d <= 0) return false;
-  const n = s.numerator ?? 0;
-  return n < d;
 }
 
 const COMPLETION_BADGE_CONFIG: Record<
@@ -815,7 +801,7 @@ function KPIsPageContent() {
                       {filtered.map((item, index) => (
                         <tr
                           key={item.id}
-                          className={`cursor-pointer border-b border-[var(--border)] text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)] ${
+                          className={`cursor-pointer border-b border-[var(--border)] text-[var(--text-primary)] transition hover:bg-[rgba(93,129,205,0.07)] ${
                             index % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
                           }`}
                           onClick={() => setViewKpi(item)}
@@ -882,37 +868,6 @@ function KPIsPageContent() {
                               </div>
                               {!isViewer && (
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  {item.currentUserCanRequestCompletion && (
-                                    <button
-                                      type="button"
-                                      title={isKpiBelowTarget(item) ? "Mark this KPI as complete (progress is below 100%)" : "Mark this KPI as complete"}
-                                      disabled={completeBusyId === item.id}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCompleteBusyId(item.id);
-                                        setActionMessage(null);
-                                        requestKpiCompletion(item.id, {})
-                                          .then(async () => {
-                                            await refreshData();
-                                            setActionMessage(`Marked ${item.scheme} — ${item.description} as complete.`);
-                                          })
-                                          .catch((err: unknown) => {
-                                            setActionMessage(err instanceof Error ? err.message : "Failed to mark KPI complete");
-                                          })
-                                          .finally(() => setCompleteBusyId(null));
-                                      }}
-                                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)] disabled:opacity-50"
-                                    >
-                                      <CheckCircle2 className="h-3 w-3" />
-                                      {completeBusyId === item.id ? "Working…" : "Mark Complete"}
-                                    </button>
-                                  )}
-                                  {isKpiBelowTarget(item) && item.currentUserCanRequestCompletion && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--alert-warning)]">
-                                      <AlertTriangle className="h-2.5 w-2.5" />
-                                      Progress &lt; 100%
-                                    </span>
-                                  )}
                                   {item.currentUserCanReviewCompletion && (
                                     <>
                                       <button
@@ -971,7 +926,7 @@ function KPIsPageContent() {
                                       type="button"
                                       title="Edit KPI"
                                       onClick={(e) => { e.stopPropagation(); setEditKpi(item); }}
-                                      className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                                      className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[rgba(93,129,205,0.07)] hover:text-[var(--text-primary)]"
                                     >
                                       <Pencil className="h-3.5 w-3.5" />
                                     </button>

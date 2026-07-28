@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { KPISubmission, KpiCompletionStatus } from "@/types";
 import ReassignKpiModal from "@/components/kpis/ReassignKpiModal";
 import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement, requestKpiCompletion, reviewKpiCompletion } from "@/src/lib/services/kpiService";
+import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const ESCALATION_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
   on_track: { label: "On track", color: "var(--alert-success)", bg: "rgba(0,200,83,0.08)", border: "rgba(0,200,83,0.35)" },
@@ -121,6 +122,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
   const [showRejectInput, setShowRejectInput] = useState(false);
   const rejectRef = useRef<HTMLTextAreaElement>(null);
   const [reassignOpen, setReassignOpen] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!open || !submission) return;
@@ -195,6 +197,28 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
       setActionMsg(e instanceof Error ? e.message : "Rejection failed");
     } finally {
       setReviewBusy(false);
+    }
+  };
+
+  const handleMarkComplete = async () => {
+    setCompleteBusy(true);
+    setActionMsg(null);
+    try {
+      await requestKpiCompletion(submission.id, {});
+      setActionMsg("Completion request submitted.");
+      onReviewed();
+    } catch (e: unknown) {
+      setActionMsg(e instanceof Error ? e.message : "Failed to mark complete");
+    } finally {
+      setCompleteBusy(false);
+    }
+  };
+
+  const onRequestComplete = () => {
+    if (isKpiBelowTarget(submission)) {
+      setShowCompleteConfirm(true);
+    } else {
+      handleMarkComplete();
     }
   };
 
@@ -374,11 +398,11 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
 
           {/* Completion workflow panel */}
           {(submission.currentUserCanRequestCompletion || submission.currentUserCanReviewCompletion || submission.completionStatus) && (
-            <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+            <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Completion</p>
 
               {submission.completionStatus && (
-                <div className="mt-2 text-sm text-[var(--text-primary)]">
+                <div className="mt-3 text-sm text-[var(--text-primary)]">
                   {(() => {
                     const cfg = COMPLETION_LABEL[submission.completionStatus];
                     return (
@@ -401,7 +425,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     <p className="mt-1 text-xs italic text-[var(--text-muted)]">&ldquo;{submission.completionNote}&rdquo;</p>
                   )}
                   {submission.completionReviewedAt && submission.completionReviewNote && (
-                    <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-xs">
+                    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-xs">
                       <span className="font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Review note: </span>
                       <span className="text-[var(--text-primary)]">{submission.completionReviewNote}</span>
                     </div>
@@ -410,36 +434,17 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
               )}
 
               {actionMsg && (
-                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-muted)]">
+                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-muted)]">
                   {actionMsg}
                 </div>
               )}
 
-              {submission.currentUserCanRequestCompletion && isKpiBelowTarget(submission) && (
-                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.08)] px-3 py-1 text-[11px] font-medium text-[var(--alert-warning)]">
-                  <AlertTriangle className="h-3 w-3" />
-                  Progress is below 100% — you can still mark this KPI complete.
-                </div>
-              )}
-
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {submission.currentUserCanRequestCompletion && (
                   <button
                     type="button"
                     disabled={completeBusy}
-                    onClick={async () => {
-                      setCompleteBusy(true);
-                      setActionMsg(null);
-                      try {
-                        await requestKpiCompletion(submission.id, {});
-                        setActionMsg("Completion request submitted.");
-                        onReviewed();
-                      } catch (e: unknown) {
-                        setActionMsg(e instanceof Error ? e.message : "Failed to mark complete");
-                      } finally {
-                        setCompleteBusy(false);
-                      }
-                    }}
+                    onClick={onRequestComplete}
                     className="inline-flex items-center gap-1 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -612,6 +617,19 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
         onSaved={() => {
           onReviewed();
         }}
+      />
+
+      <ConfirmModal
+        open={showCompleteConfirm}
+        title="Mark KPI as complete?"
+        message="Progress is below 100% — you can still mark this KPI complete. Please confirm you want to proceed."
+        confirmLabel="Mark Complete"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          setShowCompleteConfirm(false);
+          handleMarkComplete();
+        }}
+        onCancel={() => setShowCompleteConfirm(false)}
       />
     </div>
   );
