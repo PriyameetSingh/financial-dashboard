@@ -532,8 +532,8 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
         : "w-64 translate-x-0 md:w-64"
       }
     `}>
-      <div className={`px-4 py-5 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
-        <div className={`flex shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5 transition-all ${isCollapsed ? "size-12" : "size-24"}`}>
+      <div className={`px-4 py-3 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
+        <div className={`flex shrink-0 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm ring-1 ring-black/5 transition-all ${isCollapsed ? "size-10" : "size-14"}`}>
           <img
             src={withNextBasePath(HUDD_LOGO_PUBLIC_PATH)}
             alt="HUDD Logo"
@@ -646,10 +646,6 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
       </nav>
 
       <div className="space-y-3 border-t border-[var(--sidebar-border)] px-3 py-3">
-        {/* Mobile Font Size control */}
-        <div className="md:hidden px-2 pb-2 border-b border-[var(--sidebar-border)]/30">
-          <TextSizeToolbarControl vertical />
-        </div>
         <div className="relative z-10" ref={userMenuRef}>
           <button
             className={[
@@ -680,6 +676,10 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                 <p className="text-xs text-[var(--text-muted)]">{user?.email ?? "Email unavailable"}</p>
                 <p className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">{roleLabel ?? "Member"}</p>
                 <p className="text-xs text-[var(--text-muted)]">{user?.department ?? "Housing & Urban Development Department"}</p>
+              </div>
+              <div className="pt-3 pb-3 border-b border-[var(--border)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] mb-2">Preferences</p>
+                <TextSizeToolbarControl vertical />
               </div>
               <div className="pt-3">
                 <LogoutButton />

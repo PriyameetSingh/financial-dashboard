@@ -198,7 +198,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
       {/* Bell trigger button */}
       <button
         onClick={toggleDropdown}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] outline-none"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--sidebar-text-primary)] outline-none"
         aria-label="Notifications"
         type="button"
       >

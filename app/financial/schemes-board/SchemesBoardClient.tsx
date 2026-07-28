@@ -292,6 +292,10 @@ export default function SchemesBoardClient() {
 
   const isViewer = isReadOnlyWatermarkUser(currentUser);
 
+  const allExpanded =
+    filtered.length > 0 &&
+    filtered.every((e) => expandedIds.has(e.id));
+
   const fmtCr = (n: number) =>
     n >= 100 ? n.toFixed(0) : n.toFixed(1);
 
@@ -640,23 +644,18 @@ export default function SchemesBoardClient() {
 
               <button
                 type="button"
-                onClick={expandAll}
+                onClick={allExpanded ? collapseAll : expandAll}
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all shadow-sm active:scale-95"
+                title={allExpanded ? "Collapse all scheme cards" : "Expand all scheme cards"}
               >
                 <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                  {allExpanded ? (
+                    <path d="M3 8h10" strokeLinecap="round" />
+                  ) : (
+                    <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                  )}
                 </svg>
-                Expand All
-              </button>
-              <button
-                type="button"
-                onClick={collapseAll}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all shadow-sm active:scale-95"
-              >
-                <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 8h10" strokeLinecap="round" />
-                </svg>
-                Collapse All
+                {allExpanded ? "Collapse All" : "Expand All"}
               </button>
             </div>
           )}
@@ -971,7 +970,7 @@ export default function SchemesBoardClient() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)] text-xs uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)] text-xs uppercase tracking-[0.06em] text-[var(--sidebar-text-primary)]">
                     <th scope="col" className="w-10 px-4 py-3" />
                     {(
                       [

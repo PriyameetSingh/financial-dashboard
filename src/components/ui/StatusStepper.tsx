@@ -93,7 +93,7 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
       {isOpen && (
         <div
           className={clsx(
-            "absolute right-0 bottom-full mb-2 flex flex-wrap md:flex-nowrap items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-30 transition-all w-max max-w-[85vw] sm:max-w-[400px] md:max-w-none"
+            "absolute right-0 bottom-full mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-50 transition-all w-max max-w-[85vw] sm:max-w-[400px]"
           )}
         >
           {STATUS_STEPS.map((step, idx) => {

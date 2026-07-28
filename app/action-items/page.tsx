@@ -781,7 +781,7 @@ function ActionItemsContent() {
                 >
                   {/* <div className={`absolute left-0 top-0 h-full w-1 ${PRIORITY_COLORS[item.priority] ?? "bg-[var(--border)]"}`} /> */}
 
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-nowrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <PriorityBadge priority={item.priority} size="md" />
@@ -945,8 +945,8 @@ function ActionItemsContent() {
                   key={item.id}
                   className={`rounded-2xl border p-6 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
-                    <div className="space-y-1">
+                  <div className="flex flex-nowrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
                         {item.isSelfApproved && (
@@ -959,7 +959,7 @@ function ActionItemsContent() {
                         {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
                       </p>
                     </div>
-                    <StatusStepper item={item} />
+                    <StatusStepper item={item} className="shrink-0" />
                   </div>
                   <div className="mt-6">
                     <div className="flex items-center justify-between mb-4">

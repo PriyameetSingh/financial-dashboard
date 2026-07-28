@@ -4,7 +4,6 @@ import { Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
-import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
@@ -20,14 +19,18 @@ export default function AppShell({ children, title }: Props) {
   const { mounted } = useTheme();
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setTimeout(() => {
-        setIsSidebarCollapsed(true);
-      }, 0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("hudd-sidebar-collapsed");
+    if (stored !== null) {
+      return stored === "true";
     }
-  }, []);
+    return window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("hudd-sidebar-collapsed", String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
 
   const isViewer = isReadOnlyWatermarkUser(user);
 
@@ -60,7 +63,7 @@ export default function AppShell({ children, title }: Props) {
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--sidebar-text-primary)]"
                   aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
                   <span className="hidden md:inline">
@@ -85,15 +88,6 @@ export default function AppShell({ children, title }: Props) {
               </div>
             </div>
             <div className="hidden md:flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
-              <TextSizeToolbarControl />
-              <button
-                className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
-                onClick={() => setChatOpen(true)}
-                type="button"
-              >
-                <Bot size={14} />
-                <span className="hidden xl:inline">Urban Assistant</span>
-              </button>
               <span className="hidden text-xs text-[var(--text-muted)] 2xl:inline">{mounted ? nowLabel : ""}</span>
               <NotificationDropdown align="right" />
             </div>
@@ -107,7 +101,7 @@ export default function AppShell({ children, title }: Props) {
               </div>
             </div>
           )}
-          <div className="relative z-20">{children}</div>
+          <div className="relative z-50">{children}</div>
         </main>
       </div>
       {chatOpen && (
@@ -124,9 +118,9 @@ export default function AppShell({ children, title }: Props) {
           </div>
         </div>
       )}
-      {/* Floating chatbot button for mobile */}
+      {/* Floating Urban Assistant button (FAB) */}
       <button
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] md:hidden cursor-pointer"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] cursor-pointer"
         onClick={() => setChatOpen(true)}
         type="button"
         aria-label="Urban Assistant Chatbot"

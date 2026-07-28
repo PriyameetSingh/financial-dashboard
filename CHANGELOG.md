@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Meeting report PDF downloads no longer show overlapping, clipped, or garbled text in finance tables, action items, and KPI sections when rows span multiple lines or pages.
 - Fixed scheme re-ordering page to properly show a warning dialog when users try to navigate away with unsaved changes, preventing accidental loss of reordering work
+- The navigation panel now remembers whether you collapsed or expanded it when you move between pages. Previously, if you collapsed the sidebar and then opened another page, the sidebar would automatically expand again, forcing you to collapse it repeatedly on every page
 
 ### Security
 - When an administrator resets a user's password, the user is now immediately
