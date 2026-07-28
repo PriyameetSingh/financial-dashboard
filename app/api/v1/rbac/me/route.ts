@@ -74,7 +74,7 @@ export async function GET() {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ user: null });
+      return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
     }
 
     const dbUserByCode = await prisma.user.findFirst({

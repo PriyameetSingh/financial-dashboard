@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logged out from all devices and must sign in again with the new password.
   Previously, the user could continue using the application with their old
   session until it naturally expired.
+- Fixed session validation to properly log out users when browser cookies and site data are cleared, ensuring unauthorized access is prevented immediately
 
 ---
 
