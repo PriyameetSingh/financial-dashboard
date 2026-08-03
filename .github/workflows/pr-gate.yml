@@ -7,6 +7,28 @@ on:
 jobs:
   gate:
     runs-on: ubuntu-latest
+    env:
+      # Fake CI-only values — never real secrets, never used to actually
+      # connect to anything. They only exist so `next build`'s static
+      # analysis of routes like /api/auth/[...nextauth] doesn't throw on
+      # missing env vars. Jenkins has the REAL .env on the server already.
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci"
+      NEXT_PUBLIC_SUPABASE_URL: "https://ci.supabase.co"
+      SUPABASE_SERVICE_ROLE_KEY: "ci-fake-key"
+      FASTAPI_INTERNAL_URL: "http://localhost:8000"
+      AUTH_SECRET: "ci-fake-secret-not-real-00000000000000000000"
+      AUTH_URL: "http://localhost:8765/hudd-dashboard/api/auth"
+      AUTH_TRUST_HOST: "true"
+      WEBHOOK_SECRET: "ci-fake-webhook-secret"
+      KEYCLOAK_ISSUER: "http://localhost:8080/realms/ci"
+      KEYCLOAK_CLIENT_ID: "ci-fake-client-id"
+      KEYCLOAK_ROLE_CLIENT_ID: "ci-fake-client-id"
+      KEYCLOAK_CLIENT_SECRET: "ci-fake-client-secret"
+      KEYCLOAK_ADMIN_CLIENT_ID: "ci-fake-admin-client-id"
+      KEYCLOAK_ADMIN_CLIENT_SECRET: "ci-fake-admin-client-secret"
+      KEYCLOAK_REALM: "ci"
+      KEYCLOAK_POST_LOGOUT_REDIRECT_URI: "http://localhost:8765/login"
     steps:
       - uses: actions/checkout@v4
 
@@ -17,8 +39,8 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run lint || true        # non-blocking (pre-existing errors, same as Jenkins)
+      - run: npm run lint || true
 
-      - run: node scripts/verify-behaviors.mjs   # THE GATE — fails → PR blocked
+      - run: node scripts/verify-behaviors.mjs
 
-      - run: npm run build               # catches TypeScript/compile errors
+      - run: npm run build
