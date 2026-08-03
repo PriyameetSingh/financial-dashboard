@@ -40,8 +40,15 @@ async function readToken(request: NextRequest) {
   });
 }
 
-async function isTokenInvalidated(token: any): Promise<boolean> {
-  if (!token) return false;
+/**
+ * Resolves why a valid NextAuth token should not be honoured:
+ * - `invalidated`: password was reset (admin/self-service) after the session was issued
+ * - `account_not_registered`: the SSO identity has no matching row in the `users` table
+ *
+ * Returns `null` when the token is fine and the request should proceed.
+ */
+async function getSessionBlockReason(token: any): Promise<"invalidated" | "account_not_registered" | null> {
+  if (!token) return null;
   try {
     const dbUser = await prisma.user.findFirst({
       where: {
@@ -52,17 +59,24 @@ async function isTokenInvalidated(token: any): Promise<boolean> {
       },
       select: { sessionsInvalidatedAt: true },
     });
-    return isSessionInvalidated(dbUser?.sessionsInvalidatedAt, token.iat as number | undefined);
+    if (!dbUser) return "account_not_registered";
+    if (isSessionInvalidated(dbUser.sessionsInvalidatedAt, token.iat as number | undefined)) {
+      return "invalidated";
+    }
+    return null;
   } catch (error) {
     console.error("[proxy] Error checking token invalidation:", error);
   }
-  return false;
+  return null;
 }
 
-function logoutRedirect(request: NextRequest, pathname?: string) {
+function logoutRedirect(request: NextRequest, pathname?: string, errorCode?: string) {
   const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
   if (pathname && pathname !== "/login") {
     loginUrl.searchParams.set("redirect", pathname);
+  }
+  if (errorCode) {
+    loginUrl.searchParams.set("error", errorCode);
   }
   const response = NextResponse.redirect(loginUrl);
   response.cookies.delete("authjs.session-token");
@@ -84,8 +98,11 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.has(pathname)) {
     const token = await readToken(request);
     if (token) {
-      if (await isTokenInvalidated(token)) {
-        // Token is invalidated, clear cookies so they don't get redirected to /dashboard
+      const blockReason = await getSessionBlockReason(token);
+      if (blockReason) {
+        // Session is no longer valid (reset password, or SSO identity has no
+        // dashboard account). Clear the cookies so /login can render instead
+        // of bouncing back to /dashboard.
         const response = NextResponse.next();
         response.cookies.delete("authjs.session-token");
         response.cookies.delete("__Secure-authjs.session-token");
@@ -107,8 +124,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (await isTokenInvalidated(token)) {
-    return logoutRedirect(request, pathname);
+  const blockReason = await getSessionBlockReason(token);
+  if (blockReason) {
+    return logoutRedirect(request, pathname, blockReason);
   }
 
   return NextResponse.next();

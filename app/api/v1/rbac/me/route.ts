@@ -99,29 +99,14 @@ export async function GET() {
         sessionUserId: sessionUser.id,
         sessionEmail: sessionUser.email ?? null,
       });
-      return NextResponse.json({
-        user: {
-          id: sessionUser.id,
-          dbId: null as string | null,
-          name: sessionUser.name ?? "",
-          email: sessionUser.email ?? "",
-          role: parseUserRole(sessionUser.role, {
-            source: "session",
-            userId: sessionUser.id,
-          }),
-          department: "",
-          designationId: null as string | null,
-          designationName: null as string | null,
-          organisationId: null as string | null,
-          organisationName: null as string | null,
-          ulbId: null as string | null,
-          ulbName: null as string | null,
-          sections: [] as { id: string; name: string }[],
-          officerType: null as string | null,
-          assignedSchemes: [] as string[],
-          permissions: [] as Permission[],
+      return NextResponse.json(
+        {
+          detail:
+            "Your single sign-on account is not registered in this dashboard. Please contact your departmental IT administrator to have your account provisioned.",
+          code: "ACCOUNT_NOT_REGISTERED",
         },
-      });
+        { status: 401 },
+      );
     }
 
     const sessionRoleFallback =

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import GovLoginBranding from "@/components/GovLoginBranding";
 import LoginGrid from "@/components/LoginGrid";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
+import { AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -10,7 +11,26 @@ export const metadata: Metadata = {
     "Official access portal for the Housing & Urban Development Department, Government of Odisha — authenticated entry only.",
 };
 
-export default async function Page() {
+const LOGIN_ERROR_MESSAGES: Record<string, { title: string; body: string }> = {
+  account_not_registered: {
+    title: "Your account is not registered in this dashboard",
+    body: "Your single sign-on identity was verified, but it is not linked to a dashboard account. Please contact your departmental IT administrator to have your account provisioned.",
+  },
+  invalidated: {
+    title: "Your session is no longer valid",
+    body: "Your session was ended (for example, because your password was reset). Please sign in again.",
+  },
+  session_invalidated: {
+    title: "Your session is no longer valid",
+    body: "Your session was ended (for example, because your password was reset). Please sign in again.",
+  },
+};
+
+type SearchParams = Promise<{ error?: string }>;
+
+export default async function Page({ searchParams }: { searchParams: SearchParams }) {
+  const { error } = await searchParams;
+  const errorInfo = error ? LOGIN_ERROR_MESSAGES[error] ?? null : null;
   const currentRelease = await prisma.release.findFirst({
     where: { isCurrent: true },
     select: { version: true },
@@ -52,6 +72,19 @@ export default async function Page() {
                     restricted to authorised officers and staff of the Housing &amp; Urban Development Department.
                   </p>
                 </header>
+
+                {errorInfo && (
+                  <div
+                    role="alert"
+                    className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900"
+                  >
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden />
+                    <div className="space-y-1">
+                      <p className="font-semibold">{errorInfo.title}</p>
+                      <p>{errorInfo.body}</p>
+                    </div>
+                  </div>
+                )}
 
                 <LoginGrid />
 

@@ -62,8 +62,9 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
     clearCurrentUser();
     const base = process.env.__NEXT_ROUTER_BASEPATH ?? "";
     const loginPath = base ? `${base}/login` : "/login";
+    const callbackUrl = `${loginPath}?error=session_invalidated`;
     window.location.assign(
-      `${authApiBasePath()}/keycloak/logout?${new URLSearchParams({ callbackUrl: loginPath })}`,
+      `${authApiBasePath()}/keycloak/logout?${new URLSearchParams({ callbackUrl })}`,
     );
   };
 

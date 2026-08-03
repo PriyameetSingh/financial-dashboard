@@ -25,8 +25,27 @@ function normalizedBaseUrl(request: NextRequest): string {
 
 function resolvePostLogoutRedirectUri(request: NextRequest): string {
   const configured = process.env.KEYCLOAK_POST_LOGOUT_REDIRECT_URI?.trim();
-  if (configured) return configured;
+  // Preserve an `error` code (e.g. account_not_registered, session_invalidated)
+  // supplied via the callbackUrl so the login page can show the right message
+  // even when a fixed post-logout redirect URI is configured.
   const callbackParam = request.nextUrl.searchParams.get("callbackUrl") ?? "/login";
+  const errorCallback = (() => {
+    try {
+      return new URL(callbackParam, "http://_").searchParams.get("error");
+    } catch {
+      return null;
+    }
+  })();
+  if (configured) {
+    if (!errorCallback) return configured;
+    try {
+      const parsed = new URL(configured);
+      parsed.searchParams.set("error", errorCallback);
+      return parsed.toString();
+    } catch {
+      return configured;
+    }
+  }
   const callbackPath = callbackParam.startsWith("/") ? callbackParam : "/login";
   return new URL(withNextBasePath(callbackPath), normalizedBaseUrl(request)).toString();
 }
