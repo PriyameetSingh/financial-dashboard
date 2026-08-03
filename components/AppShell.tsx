@@ -19,18 +19,41 @@ export default function AppShell({ children, title }: Props) {
   const { mounted } = useTheme();
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("hudd-sidebar-collapsed");
-    if (stored !== null) {
-      return stored === "true";
-    }
-    return window.innerWidth < 768;
-  });
+  // SSR default: collapsed. Prevents a flash of the expanded sidebar overlapping
+  // content on mobile before hydration. Desktop expands after mount if needed.
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [sidebarHydrated, setSidebarHydrated] = useState(false);
 
+  // On mount, decide the correct initial state for the current viewport.
   useEffect(() => {
-    localStorage.setItem("hudd-sidebar-collapsed", String(isSidebarCollapsed));
-  }, [isSidebarCollapsed]);
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+    // Mobile: the sidebar is a drawer and must always start closed,
+      // regardless of any preference persisted from a desktop session.
+      setIsSidebarCollapsed(true);
+    } else {
+      const stored = localStorage.getItem("hudd-sidebar-collapsed");
+      setIsSidebarCollapsed(stored !== null ? stored === "true" : false);
+    }
+    setSidebarHydrated(true);
+  }, []);
+
+  // Persist the preference on desktop only — mobile is always a drawer.
+  useEffect(() => {
+    if (!sidebarHydrated) return;
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      localStorage.setItem("hudd-sidebar-collapsed", String(isSidebarCollapsed));
+    }
+  }, [isSidebarCollapsed, sidebarHydrated]);
+
+  // Auto-close the drawer when the viewport shrinks to mobile.
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth < 768) setIsSidebarCollapsed(true);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const isViewer = isReadOnlyWatermarkUser(user);
 
@@ -101,7 +124,7 @@ export default function AppShell({ children, title }: Props) {
               </div>
             </div>
           )}
-          <div className="relative z-50">{children}</div>
+          <div className="relative z-20">{children}</div>
         </main>
       </div>
       {chatOpen && (

@@ -151,8 +151,8 @@ const items: NavItem[] = [
         roles: [UserRole.TASU,],
       },
       {
-        label: "System settings",
-        href: "/admin/system",
+        label: "Masters data",
+        href: "/admin/masters",
         icon: Settings,
         roles: [UserRole.TASU],
       }
