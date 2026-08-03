@@ -69,6 +69,10 @@ export default function AdminRolesPage() {
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [permissionCatalog, setPermissionCatalog] = useState<PermissionRow[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditTotalPages, setAuditTotalPages] = useState(1);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [auditLoading, setAuditLoading] = useState(false);
   const [alert, setAlert] = useState("");
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [editingRoleCode, setEditingRoleCode] = useState<string | null>(null);
@@ -77,11 +81,36 @@ export default function AdminRolesPage() {
   const [selectedRoleCode, setSelectedRoleCode] = useState<string | null>(null);
   const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
 
+  const AUDIT_PAGE_SIZE = 10;
+
+  const refreshAudit = useCallback(async (page: number) => {
+    setAuditLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(AUDIT_PAGE_SIZE),
+      });
+      const auditRes = await fetch(withNextBasePath(`/api/v1/rbac/audit?${params.toString()}`));
+      if (!auditRes.ok) return;
+      const data = (await auditRes.json()) as {
+        entries: AuditEntry[];
+        page: number;
+        totalPages: number;
+        total: number;
+      };
+      setAuditEntries(data.entries);
+      setAuditPage(data.page);
+      setAuditTotalPages(data.totalPages);
+      setAuditTotal(data.total);
+    } finally {
+      setAuditLoading(false);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
-    const [rolesRes, permsRes, auditRes] = await Promise.all([
+    const [rolesRes, permsRes] = await Promise.all([
       fetch(withNextBasePath("/api/v1/rbac/roles")),
       fetch(withNextBasePath("/api/v1/rbac/permissions")),
-      fetch(withNextBasePath("/api/v1/rbac/audit")),
     ]);
     if (!rolesRes.ok) throw new Error("Failed to load roles");
     if (!permsRes.ok) throw new Error("Failed to load permissions");
@@ -89,10 +118,6 @@ export default function AdminRolesPage() {
     const permsData = (await permsRes.json()) as { permissions: PermissionRow[] };
     setRoles(rolesData.roles);
     setPermissionCatalog(permsData.permissions);
-    if (auditRes.ok) {
-      const auditData = (await auditRes.json()) as { entries: AuditEntry[] };
-      setAuditEntries(auditData.entries);
-    }
   }, []);
 
   useEffect(() => {
@@ -111,6 +136,12 @@ export default function AdminRolesPage() {
       active = false;
     };
   }, [user, refresh]);
+
+  // Load / reload audit entries whenever the page changes (also fires on mount).
+  useEffect(() => {
+    if (!user) return;
+    void refreshAudit(auditPage);
+  }, [auditPage, user, refreshAudit]);
 
   useEffect(() => {
     if (selectedRoleCode === null && roles.length > 0) {
@@ -132,20 +163,6 @@ export default function AdminRolesPage() {
     [roles, selectedRoleCode],
   );
 
-  const stats = useMemo(() => {
-    const totalRoles = roles.length;
-    const totalPerms = permissionCatalog.length || 1;
-    const grantedCount = roles.reduce(
-      (sum, r) => sum + (rolePermissionSet.get(r.code)?.size ?? 0),
-      0,
-    );
-    const avg = totalRoles === 0 ? 0 : Math.round((grantedCount / (totalRoles * totalPerms)) * 100);
-    const lockoutAlerts = roles.filter(
-      (r) => !rolePermissionSet.get(r.code)?.has(Permission.MANAGE_PERMISSIONS),
-    ).length;
-    return { totalRoles, avg, lockoutAlerts };
-  }, [roles, permissionCatalog.length, rolePermissionSet]);
-
   const togglePermission = useCallback(
     async (roleCode: string, permissionCode: string, currentlyGranted: boolean) => {
       const key = `${roleCode}:${permissionCode}`;
@@ -165,7 +182,7 @@ export default function AdminRolesPage() {
           setAlert(data?.detail ?? "Unable to update role permission.");
           return;
         }
-        await refresh();
+        await Promise.all([refresh(), refreshAudit(auditPage)]);
       } catch {
         setAlert("Unable to update role permission.");
       } finally {
@@ -176,7 +193,7 @@ export default function AdminRolesPage() {
         });
       }
     },
-    [refresh],
+    [refresh, refreshAudit, auditPage],
   );
 
   const handleSaveRole = useCallback(async (originalCode: string) => {
@@ -232,22 +249,6 @@ export default function AdminRolesPage() {
             <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
           </div>
         )}
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">Total Roles</p>
-            <p className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">{stats.totalRoles}</p>
-          </div>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">Avg. Permissions Granted</p>
-            <p className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">{stats.avg}%</p>
-          </div>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">Security Alerts</p>
-            <p className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">{stats.lockoutAlerts}</p>
-            <p className="text-xs text-[var(--text-muted)]">roles without permission management</p>
-          </div>
-        </div>
 
         {roles.length === 0 && !alert && (
           <p className="text-sm text-[var(--text-muted)]">No roles returned from the server.</p>
@@ -411,7 +412,7 @@ export default function AdminRolesPage() {
                     );
                     if (groupPermissions.length === 0) return null;
                     return (
-                      <div key={group.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
+                      <div key={group.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
                         <div className="mb-3 flex items-start gap-3">
                           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)]">
                             <Icon className="h-4 w-4" />
@@ -455,7 +456,11 @@ export default function AdminRolesPage() {
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">Role Update History</h2>
-            <p className="text-xs text-[var(--text-muted)]">Recent permission changes across all roles</p>
+            <p className="text-xs text-[var(--text-muted)]">
+              {auditTotal === 0
+                ? "Recent permission changes across all roles"
+                : `Showing ${auditEntries.length} of ${auditTotal} ${auditTotal === 1 ? "entry" : "entries"}`}
+            </p>
           </div>
 
           {auditEntries.length === 0 ? (
@@ -504,7 +509,7 @@ export default function AdminRolesPage() {
                 {auditEntries.map((entry) => {
                   const perm = permissionCatalog.find((c) => c.code === entry.permissionCode);
                   return (
-                    <li key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-3">
+                    <li key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <span className="inline-flex items-center rounded-full border border-[var(--accent-success)] bg-[rgba(34,197,94,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-success)]">
                           Verified
@@ -532,6 +537,32 @@ export default function AdminRolesPage() {
                 })}
               </ul>
             </>
+          )}
+
+          {auditTotalPages > 1 && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
+              <p className="text-xs text-[var(--text-muted)]">
+                Page {auditPage} of {auditTotalPages}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={auditPage <= 1 || auditLoading}
+                  onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                  className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ← Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={auditPage >= auditTotalPages || auditLoading}
+                  onClick={() => setAuditPage((p) => Math.min(auditTotalPages, p + 1))}
+                  className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
           )}
         </section>
       </div>

@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, toAuthErrorResponse } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
+
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 50;
 
 type AuditEntry = {
   id: string;
@@ -31,18 +34,30 @@ function asObject(value: unknown): Record<string, unknown> | null {
   return null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requirePermission("MANAGE_PERMISSIONS");
 
-    const rows = await prisma.auditLog.findMany({
-      where: { actionType: "rbac.role.permission" },
-      include: {
-        actorUser: { select: { name: true, email: true } },
-      },
-      orderBy: { occurredAt: "desc" },
-      take: 50,
-    });
+    const { searchParams } = new URL(request.url);
+    const pageRaw = Number.parseInt(searchParams.get("page") ?? "1", 10);
+    const pageSizeRaw = Number.parseInt(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE), 10);
+    const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+    const pageSize = Number.isFinite(pageSizeRaw) && pageSizeRaw >= 1 ? Math.min(pageSizeRaw, MAX_PAGE_SIZE) : DEFAULT_PAGE_SIZE;
+
+    const where = { actionType: "rbac.role.permission" };
+
+    const [rows, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        include: {
+          actorUser: { select: { name: true, email: true } },
+        },
+        orderBy: { occurredAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
 
     const entries: AuditEntry[] = rows.map((row) => {
       const after = asObject(row.after) as RolePermissionAfter;
@@ -61,7 +76,13 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ entries });
+    return NextResponse.json({
+      entries,
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
