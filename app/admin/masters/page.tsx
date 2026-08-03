@@ -24,7 +24,7 @@ const TABS: Array<{ id: EntityTab; label: string; description: string }> = [
   { id: "designations", label: "Designations", description: "Manage professional designations of officers in the department." },
 ];
 
-export default function AdminSystemSettingsPage() {
+export default function AdminMastersDataPage() {
   const user = useRequireAnyPermission(
     [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_FINANCIAL_YEARS],
     "/dashboard",
@@ -175,13 +175,13 @@ export default function AdminSystemSettingsPage() {
   if (!user) return null;
 
   return (
-    <AppShell title="System Settings">
+    <AppShell title="Masters Data">
       <div className="space-y-6 px-6 py-6 max-w-6xl mx-auto">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--border)] pb-5">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mt-1">System Settings</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mt-1">Masters Data</h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               Configure master directories used across workflows, user metadata, and profiles.
             </p>

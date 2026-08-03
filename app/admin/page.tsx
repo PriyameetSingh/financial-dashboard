@@ -21,7 +21,7 @@ export default function AdminOverviewPage() {
   const showReorder = user && hasPermission(user, Permission.REORDER_SCHEMES);
   const showFinancialYears = user && hasPermission(user, Permission.MANAGE_FINANCIAL_YEARS);
   const showNotifications = user && hasPermission(user, Permission.MANAGE_NOTIFICATION_CONFIG);
-  const showSystemSettings = showPermissions || showFinancialYears || showNotifications;
+  const showMastersData = showPermissions || showFinancialYears || showNotifications;
 
   return (
     <AppShell title="Administration">
@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
               <p className="mt-2 text-sm text-[var(--text-muted)]">Add or edit financial year rows used across finance and KPIs.</p>
             </Link>
           )}
-          {showSystemSettings && (
+          {showMastersData && (
             <Link
               href="/admin/agents"
               className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
@@ -97,14 +97,14 @@ export default function AdminOverviewPage() {
               </p>
             </Link>
           )}
-          {showSystemSettings && (
+          {showMastersData && (
             <Link
-              href="/admin/system"
+              href="/admin/masters"
               className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">System</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">System Settings</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Configure role permissions and financial-year controls.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Masters</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Masters Data</h3>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Manage reference directories like organisations, verticals, sections, ULBs and designations.</p>
             </Link>
           )}
           {showNotifications && (
