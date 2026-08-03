@@ -784,45 +784,72 @@ function ActionItemsContent() {
                   <div className="flex flex-nowrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <PriorityBadge priority={item.priority} size="md" />
-                        <span className="inline-flex max-w-full items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--accent-text)]">
-                          {item.vertical}
-                        </span>
-                        {item.isSelfApproved && (
-                          <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--alert-success)]">
-                            Self-Approved
+                        <PriorityBadge
+                          priority={item.priority}
+                          size="md"
+                          title="Priority: How urgent this action item is (Critical, High, Medium, or Low)."
+                        />
+                        {item.vertical?.trim() && (
+                          <span
+                            title="Vertical: The HUDD scheme or department area this action item belongs to."
+                            className="inline-flex max-w-full items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--accent-text)]"
+                          >
+                            {item.vertical}
                           </span>
                         )}
                         {overdue && (
-                          <span className="inline-flex items-center rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide text-[var(--alert-critical)]">
+                          <span
+                            title="Overdue: The due date has passed and the item is still not completed."
+                            className="inline-flex items-center rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide text-[var(--alert-critical)]"
+                          >
                             {daysOv} {daysOv === 1 ? "day" : "days"} overdue
                           </span>
                         )}
                       </div>
                       <h3 className="mt-3 text-lg font-semibold leading-snug text-[var(--text-primary)]">{item.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
+                      {item.description?.trim() && item.description.trim() !== item.title.trim() && (
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
+                      )}
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <StatusStepper item={item} />
-                      <span className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-secondary)]">{item.schemeId}</span>
+                      <span
+                        title="Scheme ID: The identifier of the HUDD scheme this action item is tracked under."
+                        className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-secondary)]"
+                      >
+                        {item.schemeId}
+                      </span>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal text-[var(--text-secondary)]">
-                    <span>Assigned to {item.assignedTo} on {item.createdAt.slice(0, 10)}</span>
+                    <span title="Assignee: The officer responsible for completing this action item, and the date it was assigned.">
+                      Assigned to {item.assignedTo} on {item.createdAt.slice(0, 10)}
+                    </span>
                     {item.meetingDate && (
                       <>
                         <span>·</span>
-                        <span>Meeting: {item.meetingTitle ? `${item.meetingTitle} (${item.meetingDate})` : item.meetingDate}</span>
+                        <span title="Meeting: The dashboard review meeting where this action item was decided.">
+                          Meeting: {item.meetingTitle ? `${item.meetingTitle} (${item.meetingDate})` : item.meetingDate}
+                        </span>
                       </>
                     )}
                     <span>·</span>
-                    <span>Reviewer {item.reviewer}</span>
-                    <span>·</span>
-                    <span className={overdue ? "font-semibold text-[var(--alert-critical)]" : ""}>
-                      Due {item.dueDate}
+                    <span
+                      title={
+                        item.isSelfApproved
+                          ? "Self-approved: The owner will approve their own submission; no separate reviewer is required."
+                          : "Reviewer: The officer who reviews and approves the proof submitted by the assignee."
+                      }
+                    >
+                      {item.isSelfApproved ? "Self-approved by owner (no separate reviewer)" : `Reviewer ${item.reviewer}`}
                     </span>
                     <span>·</span>
-                    <span>{item.vertical}</span>
+                    <span
+                      title="Due date: The deadline by which this action item must be completed."
+                      className={overdue ? "font-semibold text-[var(--alert-critical)]" : ""}
+                    >
+                      Due {item.dueDate}
+                    </span>
                   </div>
 
 
@@ -830,6 +857,7 @@ function ActionItemsContent() {
                   <div className="mt-5 flex flex-wrap items-center gap-2">
                     <Link
                       href={detailHref(item.id)}
+                      title="View Details: Open the full action item page with updates, proof, and history."
                       className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
                     >
                       View Details
@@ -837,6 +865,7 @@ function ActionItemsContent() {
                     {item.status === "COMPLETED" && (
                       <button
                         type="button"
+                        title={item.archived ? "Unarchive: Move this completed item back into the active list." : "Archive: Move this completed item out of the active list without deleting it."}
                         className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
                         onClick={() => {
                           setSelectedItem(item);
@@ -856,6 +885,7 @@ function ActionItemsContent() {
                     {canReassignActionItems && (
                       <button
                         type="button"
+                        title="Reassign: Change the performer(s) and reviewer(s) responsible for this action item."
                         className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
                         onClick={() => openReassignModal(item)}
                       >
@@ -870,6 +900,7 @@ function ActionItemsContent() {
                         <>
                           <button
                             type="button"
+                            title="Approve: Accept the submitted proof and mark this action item as completed."
                             className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
                             onClick={() => {
                               setSelectedItem(item);
@@ -881,6 +912,7 @@ function ActionItemsContent() {
                           </button>
                           <button
                             type="button"
+                            title="Reject: Send the item back to the assignee for rework, with mandatory remarks."
                             className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
                             onClick={() => {
                               setSelectedItem(item);
@@ -897,6 +929,7 @@ function ActionItemsContent() {
                     {canDeleteActionItems && (
                       <button
                         type="button"
+                        title="Delete: Permanently remove this action item. This cannot be undone."
                         className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
                         onClick={() => {
                           setSelectedItem(item);
@@ -949,13 +982,11 @@ function ActionItemsContent() {
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
-                        {item.isSelfApproved && (
-                          <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
-                            Self-Approved
-                          </span>
-                        )}
                       </div>
-                      <p className="text-sm font-medium text-[var(--text-muted)]">
+                      <p
+                        title="Item summary: The vertical (scheme area), scheme ID, and due date for this action item."
+                        className="text-sm font-medium text-[var(--text-muted)]"
+                      >
                         {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
                       </p>
                     </div>
@@ -999,6 +1030,7 @@ function ActionItemsContent() {
                   <div className="mt-6 pt-4 border-t border-[var(--border)]/50 flex items-center justify-between">
                     <Link
                       href={detailHref(item.id)}
+                      title="View full details: Open the complete action item page with all updates and proof."
                       className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
                     >
                       View full details
@@ -1007,6 +1039,7 @@ function ActionItemsContent() {
                     {item.status === "COMPLETED" && (
                       <button
                         type="button"
+                        title={item.archived ? "Unarchive: Move this completed item back into the active list." : "Archive: Move this completed item out of the active list without deleting it."}
                         className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] transition"
                         onClick={() => {
                           setSelectedItem(item);

@@ -39,13 +39,15 @@ interface PriorityBadgeProps {
   priority: ActionItemPriority;
   size?: BadgeSize;
   className?: string;
+  title?: string;
 }
 
-export default function PriorityBadge({ priority, size = "sm", className }: PriorityBadgeProps) {
+export default function PriorityBadge({ priority, size = "sm", className, title }: PriorityBadgeProps) {
   const config = PRIORITY_CONFIG[priority];
   const tone = TONE_STYLES[config.tone];
   return (
     <span
+      title={title}
       className={clsx(
         "inline-flex items-center rounded-full border uppercase tracking-[0.3em] font-semibold",
         SIZE_CLASSES[size],
