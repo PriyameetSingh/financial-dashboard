@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
 import { authApiBasePath } from "@/lib/auth-api-path";
+import { withNextBasePath } from "@/lib/next-base-path";
 import { UserRole } from "@/types";
 
 type KeycloakProfile = {
@@ -78,6 +79,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: requiredEnv("KEYCLOAK_CLIENT_SECRET"),
     }),
   ],
+  pages: {
+    // Custom error page so OAuth/IdP failures (e.g. Keycloak returning an error
+    // during the callback) show a friendly "try again" screen instead of the
+    // raw Auth.js error page. Must be the full public path (incl. Next.js
+    // basePath) because Auth.js builds the redirect as `${pages.error}?error=`.
+    error: withNextBasePath("/auth/error"),
+  },
   callbacks: {
     jwt({ token, profile, account }) {
       const keycloakProfile = (profile ?? {}) as KeycloakProfile;

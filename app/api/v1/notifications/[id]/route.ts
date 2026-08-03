@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getDbUserBySession } from "@/lib/server-rbac";
+import { getDbUserBySession, toAuthErrorResponse } from "@/lib/server-rbac";
 import { NotificationStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -48,6 +48,10 @@ export async function PATCH(
 
     return NextResponse.json({ notification: updated });
   } catch (error) {
+    const mapped = toAuthErrorResponse(error);
+    if (mapped) {
+      return NextResponse.json({ detail: mapped.detail }, { status: mapped.status });
+    }
     console.error("[Notifications API] Error updating notification:", error);
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }

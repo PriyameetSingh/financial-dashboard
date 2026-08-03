@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getDbUserBySession } from "@/lib/server-rbac";
+import { getDbUserBySession, toAuthErrorResponse } from "@/lib/server-rbac";
 import { NotificationStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ notifications });
   } catch (error) {
+    const mapped = toAuthErrorResponse(error);
+    if (mapped) {
+      return NextResponse.json({ detail: mapped.detail }, { status: mapped.status });
+    }
     console.error("[Notifications API] Error fetching notifications:", error);
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }
@@ -44,6 +48,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const mapped = toAuthErrorResponse(error);
+    if (mapped) {
+      return NextResponse.json({ detail: mapped.detail }, { status: mapped.status });
+    }
     console.error("[Notifications API] Error marking notifications as read:", error);
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }

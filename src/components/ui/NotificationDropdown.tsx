@@ -7,6 +7,8 @@ import {
   TrendingUp, AlertTriangle, MessageSquare, ShieldAlert, X
 } from 'lucide-react';
 import { withNextBasePath } from "@/lib/next-base-path";
+import { authApiBasePath } from "@/lib/auth-api-path";
+import { clearCurrentUser } from "@/lib/auth";
 
 interface Notification {
   id: string;
@@ -46,13 +48,36 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
   const [unreadCount, setUnreadCount] = useState(0);
   
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const signingOutRef = useRef(false);
   const router = useRouter();
+
+  const redirectToLogout = () => {
+    if (signingOutRef.current || typeof window === 'undefined') return;
+    signingOutRef.current = true;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    clearCurrentUser();
+    const base = process.env.__NEXT_ROUTER_BASEPATH ?? "";
+    const loginPath = base ? `${base}/login` : "/login";
+    window.location.assign(
+      `${authApiBasePath()}/keycloak/logout?${new URLSearchParams({ callbackUrl: loginPath })}`,
+    );
+  };
 
   // Fetch notifications from the API
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       const res = await fetch(withNextBasePath('/api/v1/notifications'));
+      if (res.status === 401) {
+        // Session invalidated server-side (e.g. admin reset password). Stop
+        // polling and force federated sign-out so the stale cookie is cleared.
+        redirectToLogout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications || []);
@@ -69,8 +94,10 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
   // Poll for new notifications count every 30 seconds
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    intervalRef.current = setInterval(fetchNotifications, 30000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
   // Handle click outside to close dropdown
