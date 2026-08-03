@@ -65,4 +65,4 @@ When fetching bugs from Notion:
 /fix-hudd-bugs component="Create User"
 ```
 
-# there exists a claude skill for hudd as well
+# there exists a claude skill for hudd
