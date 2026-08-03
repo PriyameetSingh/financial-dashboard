@@ -20,7 +20,7 @@ test("deriveFinancialEntryStatus: draft stays draft", () => {
     asOfDate: new Date("2026-04-01"),
     referenceDate: new Date("2026-04-07"),
   });
-  assert.equal(s, "THIS IS DELIBERATELY FALSE");
+  assert.equal(s, "draft");
 });
 
 test("deriveFinancialEntryStatus: submitted recent is submitted_this_week", () => {
