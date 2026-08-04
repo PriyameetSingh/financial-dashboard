@@ -22,6 +22,7 @@ export default function MeetingReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [xlsxLoading, setXlsxLoading] = useState(false);
   const logoSrc = withNextBasePath(HUDD_LOGO_PUBLIC_PATH);
 
   const [monitoringLevel, setMonitoringLevel] = useState("ALL");
@@ -91,6 +92,41 @@ export default function MeetingReportPage() {
     }
   }
 
+  async function handleDownloadXlsx() {
+    if (!data) return;
+    setXlsxLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        download: "1",
+        ...(monitoringLevel !== "ALL" && { monitoringLevel }),
+        ...(priority !== "ALL" && { priority }),
+        ...(status !== "ALL" && { status }),
+      });
+      const urlWithParams = withNextBasePath(
+        `/api/v1/reports/meeting/${encodeURIComponent(meetingId)}/xlsx?${queryParams.toString()}`
+      );
+      const res = await fetch(urlWithParams);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { detail?: string }).detail ?? `Server error ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `HUDD-meeting-report-${data.meeting.meetingDate}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      window.alert(e instanceof Error ? e.message : "Could not generate Excel file.");
+    } finally {
+      setXlsxLoading(false);
+    }
+  }
+
   return (
     <AppShell title="Meeting report">
       <div className="print:px-4 print:py-4">
@@ -127,6 +163,14 @@ export default function MeetingReportPage() {
               onClick={() => void handleDownloadPdf()}
             >
               {pdfLoading ? "Preparing PDF…" : "Download PDF"}
+            </button>
+            <button
+              type="button"
+              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+              disabled={!data || xlsxLoading}
+              onClick={() => void handleDownloadXlsx()}
+            >
+              {xlsxLoading ? "Preparing Excel…" : "Download Excel"}
             </button>
           </div>
         </div>
