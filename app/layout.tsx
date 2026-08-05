@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import AuthSessionProvider from "@/components/AuthSessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { FontScaleProvider } from "@/components/FontScaleProvider";
-import { DataProvider } from "@/context/DataContext";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css";
 
@@ -18,10 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthSessionProvider>
           <ThemeProvider>
             <FontScaleProvider>
-              <DataProvider>
-                {children}
-                <SpeedInsights />
-              </DataProvider>
+              {children}
+              <SpeedInsights />
             </FontScaleProvider>
           </ThemeProvider>
         </AuthSessionProvider>

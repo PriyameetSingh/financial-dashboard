@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - **Permissions shortcut**: The unused "Permissions" shortcut in the Administration area (which only redirected to the user directory) has been removed. Permission management now lives entirely on the Roles screen.
+- **Unused upload-service scaffolding**: Removed a set of half-built code that was never reachable from any screen — the FastAPI upload proxy routes (`/api/v1/uploads/*`), the matching proxy client, an unused draft-data context, and six orphan dashboard components that no page imported. None of this affected any officer workflow; the actual file-upload features (action-item proof upload and meeting material upload) work directly through the dashboard's own database and are unchanged. The public health-check endpoint no longer reports the status of the external upload service, since that service is not part of this application.
 
 ### Fixed
 - Meeting report PDF downloads no longer show overlapping, clipped, or garbled text in finance tables, action items, and KPI sections when rows span multiple lines or pages.
@@ -38,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Previously, the user could continue using the application with their old
   session until it naturally expired.
 - Fixed session validation to properly log out users when browser cookies and site data are cleared, ensuring unauthorized access is prevented immediately
-- Evidence upload and approval actions (uploading proof, viewing the uploads list, approving an upload, and triggering upload processing) now require a signed-in officer with the appropriate permission. Previously these actions were reachable without any sign-in, so anyone with the dashboard URL could call them. Approving and processing an upload now require an officer who can approve action items; viewing the uploads list requires an officer who can view scheme data.
+- Four dashboard API actions that proxied to an external upload service (uploading a file, listing uploads, approving an upload, and triggering upload processing) were live without any sign-in check, so anyone with the dashboard URL could call them directly. No screen in the dashboard used these actions — they were half-built scaffolding — but the endpoints were still reachable over the network. They have been removed entirely rather than guarded, so there is no longer anything to authorise. The file-upload features the dashboard actually uses (action-item proof upload and meeting material upload) were never affected and continue to work through the dashboard's own database.
 - The list of financial years used to populate on-screen selectors now requires a signed-in officer. Previously it was reachable without any sign-in.
 - Removed a leftover test page that returned made-up dashboard statistics and was reachable without sign-in.
 - Added a server-side sign-in check at the entry point for all dashboard API actions, so a newly added API action that forgets to require a permission is no longer reachable without sign-in. A continuous-integration check now also fails the build if any dashboard API action is added without an authorization check, so the gap is caught before release rather than discovered later.
