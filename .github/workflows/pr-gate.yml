@@ -41,6 +41,8 @@ jobs:
 
       - run: npm run lint || true
 
+      - run: node scripts/check-api-guards.mjs
+
       - run: node scripts/verify-behaviors.mjs
 
       - run: npm run build
