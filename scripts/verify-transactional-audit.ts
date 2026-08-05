@@ -208,7 +208,7 @@ test("Test 5 (Keycloak): compensating delete runs on transaction failure when ke
 
 test("Test 5b (Keycloak): no compensating delete when keycloak.created=false (pre-existing user)", async () => {
   let compensated = false;
-  const deleteKeycloakUserById = async () => {
+  const deleteKeycloakUserById = async (_id: string) => {
     compensated = true;
   };
   const fakeTransaction = async (cb: (tx: unknown) => Promise<unknown>) => {
