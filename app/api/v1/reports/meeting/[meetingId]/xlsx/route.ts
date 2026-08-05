@@ -4,7 +4,8 @@ import {
   renderMeetingReportXlsxBuffer,
   MEETING_REPORT_XLSX_MIME,
 } from "@/lib/meeting-report-xlsx-server";
-import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 import { filterMeetingReportPayload } from "@/lib/meeting-report-filter";
 
 export const runtime = "nodejs";
@@ -26,7 +27,8 @@ export async function GET(
   ctx: { params: Promise<{ meetingId: string }> },
 ) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const { meetingId } = await ctx.params;
     const trimmed = meetingId?.trim();
@@ -34,7 +36,7 @@ export async function GET(
       return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
     }
 
-    const payload = await buildMeetingReport(trimmed);
+    const payload = await buildMeetingReport(trimmed, scope);
     if (!payload) {
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }

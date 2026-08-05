@@ -103,18 +103,19 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         }
       }
 
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.update",
+        "dashboard_meeting",
+        id,
+        { title: before.title, notes: before.notes, topics: before.topics.map((t) => t.topic) },
+        { title: m.title, notes: m.notes, topics: body.topics ?? null },
+        { ...auditContext, meetingId: id },
+      );
+
       return m;
     });
-
-    await logAudit(
-      actor?.id,
-      "meeting.update",
-      "dashboard_meeting",
-      id,
-      { title: before.title, notes: before.notes, topics: before.topics.map((t) => t.topic) },
-      { title: meeting.title, notes: meeting.notes, topics: body.topics ?? null },
-      { ...auditContext, meetingId: id },
-    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -171,9 +172,11 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       }
     }
 
-    await prisma.dashboardMeeting.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.dashboardMeeting.delete({ where: { id } });
 
-    await logAudit(actor?.id, "meeting.delete", "dashboard_meeting", id, { id }, null, { ...auditContext, meetingId: id });
+      await logAudit(tx, actor?.id, "meeting.delete", "dashboard_meeting", id, { id }, null, { ...auditContext, meetingId: id });
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

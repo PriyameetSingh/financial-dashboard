@@ -14,6 +14,15 @@ import {
   FINANCE_YEAR_SCHEME_BUDGET_CATEGORIES,
 } from "@/lib/finance-year-budget-allocation";
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
+import type { DataScope } from "@/lib/data-scope";
+import {
+  actionItemWhere,
+  financeBudgetSupplementWhere,
+  financeBudgetWhere,
+  financeSnapshotWhere,
+  kpiDefinitionWhere,
+  schemeWhere,
+} from "@/lib/data-access/scope-where";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -149,10 +158,14 @@ async function resolveFinancialYear(meeting: {
 }
 
 /** Latest snapshot per scheme/subscheme among meetings on or before the cutoff date. */
-async function snapshotsUpToMeetingDate(financialYearId: string, cutoffMeetingDate: Date) {
+async function snapshotsUpToMeetingDate(
+  financialYearId: string,
+  cutoffMeetingDate: Date,
+  scope: DataScope,
+) {
   const rows = await prisma.financeExpenditureSnapshot.findMany({
     where: {
-      financialYearId,
+      ...financeSnapshotWhere(scope, financialYearId),
       workflowStatus: FinancialWorkflowStatus.submitted,
       meetingId: { not: null },
       meeting: { meetingDate: { lte: cutoffMeetingDate } },
@@ -184,7 +197,10 @@ async function snapshotsUpToMeetingDate(financialYearId: string, cutoffMeetingDa
   return picked;
 }
 
-export async function buildMeetingReport(meetingId: string): Promise<MeetingReportPayload | null> {
+export async function buildMeetingReport(
+  meetingId: string,
+  scope: DataScope,
+): Promise<MeetingReportPayload | null> {
   const meetingRow = await prisma.dashboardMeeting.findUnique({
     where: { id: meetingId },
     include: {
@@ -241,7 +257,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
   let financeProgress: MeetingReportFinanceRow[] = [];
 
   if (fy) {
-    const pickedSnaps = await snapshotsUpToMeetingDate(fy.id, cutoff);
+    const pickedSnaps = await snapshotsUpToMeetingDate(fy.id, cutoff, scope);
     const pickedList = [...pickedSnaps.values()];
     if (pickedList.length > 0) {
       const maxAsOf = pickedList.reduce((acc, r) => (r.asOfDate > acc ? r.asOfDate : acc), pickedList[0]!.asOfDate);
@@ -253,15 +269,16 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
     const [schemes, budgets, supplements] = await Promise.all([
       prisma.scheme.findMany({
-        where: { 
+        where: {
+          ...schemeWhere(scope),
           archived: false,
           sponsorshipType: { not: "NON_FINANCIAL" }
         },
         include: { subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
-      prisma.financeBudget.findMany({ where: { financialYearId: fy.id } }),
-      prisma.financeBudgetSupplement.findMany({ where: { financialYearId: fy.id } }),
+      prisma.financeBudget.findMany({ where: financeBudgetWhere(scope, fy.id) }),
+      prisma.financeBudgetSupplement.findMany({ where: financeBudgetSupplementWhere(scope, fy.id) }),
     ]);
 
     const budgetsByScheme = new Map<string, typeof budgets>();
@@ -465,7 +482,7 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
   /** All action items regardless of type or creation date. */
   const decisions = await prisma.actionItem.findMany({
-    where: { archived: false },
+    where: { ...actionItemWhere(scope), archived: false },
     include: {
       meeting: { select: { meetingDate: true } },
       performers: {
@@ -514,7 +531,11 @@ export async function buildMeetingReport(meetingId: string): Promise<MeetingRepo
 
   if (fy) {
     const definitions = await prisma.kpiDefinition.findMany({
-      where: { archived: false, scheme: { archived: false } },
+      where: {
+        ...kpiDefinitionWhere(scope),
+        archived: false,
+        scheme: { archived: false },
+      },
       include: {
         scheme: { select: { name: true, verticalName: true } },
         performers: {

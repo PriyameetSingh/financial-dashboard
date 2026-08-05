@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         }
       }
 
-      return tx.scheme.findUniqueOrThrow({
+      const after = await tx.scheme.findUniqueOrThrow({
         where: { id },
         include: {
           subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
@@ -132,17 +132,20 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           },
         },
       });
-    });
 
-    await logAudit(
-      actor?.id,
-      "scheme.update",
-      "scheme",
-      id,
-      mapSchemeView(before),
-      mapSchemeView(after),
-      { ...auditContext, schemeId: id },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "scheme.update",
+        "scheme",
+        id,
+        mapSchemeView(before),
+        mapSchemeView(after),
+        { ...auditContext, schemeId: id },
+      );
+
+      return after;
+    });
 
     return NextResponse.json({ scheme: mapSchemeView(after) });
   } catch (error: unknown) {
@@ -184,17 +187,18 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
           sortOrder: { decrement: 1 },
         },
       });
-    });
 
-    await logAudit(
-      actor?.id,
-      "scheme.delete",
-      "scheme",
-      id,
-      mapSchemeView(before),
-      null,
-      { ...auditContext, schemeId: id },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "scheme.delete",
+        "scheme",
+        id,
+        mapSchemeView(before),
+        null,
+        { ...auditContext, schemeId: id },
+      );
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

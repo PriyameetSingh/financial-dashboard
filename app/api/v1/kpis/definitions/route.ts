@@ -14,6 +14,8 @@ import {
   requirePermissionAndDbUser,
   toAuthErrorResponse,
 } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
+import { kpiDefinitionWhere } from "@/lib/data-access/scope-where";
 import { NotificationService } from "@/lib/services/NotificationService";
 import { ActionItemPriority } from "@prisma/client";
 
@@ -41,6 +43,7 @@ function mapWorkflowStatus(workflowStatus?: string | null): "not_submitted" | "d
 export async function GET(request: NextRequest) {
   try {
     const actor = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(actor);
 
     const { searchParams } = new URL(request.url);
     const archivedParam = searchParams.get("archived");
@@ -55,6 +58,7 @@ export async function GET(request: NextRequest) {
 
     const definitions = await prisma.kpiDefinition.findMany({
       where: {
+        ...kpiDefinitionWhere(scope),
         archived: archivedFilter,
         scheme: { archived: false },
       },
@@ -377,66 +381,71 @@ export async function POST(request: NextRequest) {
 
     const monitoringLevel = parseMonitoringLevel(body.monitoringLevel);
 
-    const created = await prisma.kpiDefinition.create({
-      data: {
-        schemeId,
-        subschemeId,
-        category,
-        description,
-        kpiType,
-        numeratorUnit: body.numeratorUnit?.trim() || null,
-        denominatorUnit: body.denominatorUnit?.trim() || null,
-        monitoringLevel: monitoringLevel ?? undefined,
-        createdById: actor?.id ?? null,
-        performers: {
-          create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.kpiDefinition.create({
+        data: {
+          schemeId,
+          subschemeId,
+          category,
+          description,
+          kpiType,
+          numeratorUnit: body.numeratorUnit?.trim() || null,
+          denominatorUnit: body.denominatorUnit?.trim() || null,
+          monitoringLevel: monitoringLevel ?? undefined,
+          createdById: actor?.id ?? null,
+          performers: {
+            create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+          },
+          ...(reviewerUserIds.length > 0
+            ? {
+                reviewerUsers: {
+                  create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+                },
+              }
+            : {}),
         },
-        ...(reviewerUserIds.length > 0
-          ? {
-              reviewerUsers: {
-                create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
-              },
-            }
-          : {}),
-      },
-    });
+      });
 
-    const initialDenominator =
-      body.denominatorValue !== null && body.denominatorValue !== undefined && !isNaN(Number(body.denominatorValue))
-        ? Number(body.denominatorValue)
-        : null;
+      const initialDenominator =
+        body.denominatorValue !== null && body.denominatorValue !== undefined && !isNaN(Number(body.denominatorValue))
+          ? Number(body.denominatorValue)
+          : null;
 
-    if (fy) {
-      await prisma.kpiTarget.upsert({
-        where: {
-          kpiDefinitionId_financialYearId: {
+      if (fy) {
+        await tx.kpiTarget.upsert({
+          where: {
+            kpiDefinitionId_financialYearId: {
+              kpiDefinitionId: created.id,
+              financialYearId: fy.id,
+            },
+          },
+          create: {
             kpiDefinitionId: created.id,
             financialYearId: fy.id,
+            denominatorValue: initialDenominator,
           },
-        },
-        create: {
-          kpiDefinitionId: created.id,
-          financialYearId: fy.id,
-          denominatorValue: initialDenominator,
-        },
-        update: {},
-      });
-    }
+          update: {},
+        });
+      }
 
-    await logAudit(
-      actor?.id,
-      "kpi_definition.create",
-      "kpi_definition",
-      created.id,
-      null,
-      {
-        id: created.id,
-        schemeId: created.schemeId,
-        description: created.description,
-        kpiType: created.kpiType,
-      },
-      { ...auditContext, schemeId, schemeCode: scheme.code },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "kpi_definition.create",
+        "kpi_definition",
+        created.id,
+        null,
+        {
+          id: created.id,
+          schemeId: created.schemeId,
+          description: created.description,
+          kpiType: created.kpiType,
+        },
+        { ...auditContext, schemeId, schemeCode: scheme.code },
+      );
+
+      return created;
+    });
 
     // Trigger KPI Assignment Notifications
     for (const performerId of performerUserIds) {

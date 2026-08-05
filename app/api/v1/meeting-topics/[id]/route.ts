@@ -22,20 +22,25 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ detail: "Topic not found" }, { status: 404 });
     }
 
-    const updated = await prisma.meetingTopic.update({
-      where: { id },
-      data: { topic: body.topic?.trim() ?? before.topic },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.meetingTopic.update({
+        where: { id },
+        data: { topic: body.topic?.trim() ?? before.topic },
+      });
 
-    await logAudit(
-      actor?.id,
-      "meeting.topic.update",
-      "meeting_topic",
-      id,
-      { topic: before.topic },
-      { topic: updated.topic },
-      { ...auditContext, meetingId: before.meetingId },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.topic.update",
+        "meeting_topic",
+        id,
+        { topic: before.topic },
+        { topic: updated.topic },
+        { ...auditContext, meetingId: before.meetingId },
+      );
+
+      return updated;
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -59,11 +64,13 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "Topic not found" }, { status: 404 });
     }
 
-    await prisma.meetingTopic.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.meetingTopic.delete({ where: { id } });
 
-    await logAudit(actor?.id, "meeting.topic.delete", "meeting_topic", id, { topic: before.topic }, null, {
-      ...auditContext,
-      meetingId: before.meetingId,
+      await logAudit(tx, actor?.id, "meeting.topic.delete", "meeting_topic", id, { topic: before.topic }, null, {
+        ...auditContext,
+        meetingId: before.meetingId,
+      });
     });
 
     return NextResponse.json({ ok: true });

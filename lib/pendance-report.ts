@@ -5,6 +5,12 @@ import {
   KPIWorkflowStatus,
   SponsorshipType,
 } from "@prisma/client";
+import type { DataScope } from "@/lib/data-scope";
+import { isFullScope } from "@/lib/data-scope";
+import {
+  schemeWhere,
+  userWhere,
+} from "@/lib/data-access/scope-where";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -101,7 +107,10 @@ function getWeekDateRange(meetingDate: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-export async function buildPendanceReport(meetingId: string): Promise<PendanceReportPayload | null> {
+export async function buildPendanceReport(
+  meetingId: string,
+  scope: DataScope,
+): Promise<PendanceReportPayload | null> {
   const meetingRow = await prisma.dashboardMeeting.findUnique({
     where: { id: meetingId },
   });
@@ -113,9 +122,9 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
   const meetingDate = meetingRow.meetingDate;
   const { start: weekStart, end: weekEnd } = getWeekDateRange(meetingDate);
 
-  // Get all active users with their schemes and tasks
+  // Get all active users with their schemes and tasks (scoped to caller's user directory)
   const users = await prisma.user.findMany({
-    where: { isActive: true },
+    where: { ...userWhere(scope), isActive: true },
     include: {
       kpiDefinitionPerformers: {
         where: { isActive: true },
@@ -222,10 +231,16 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
     }
   }
 
-  // Get financial data updates for the week
+  // Get financial data updates for the week (scoped to caller's schemes)
+  const snapshotScopeWhere = isFullScope(scope)
+    ? {}
+    : scope.schemeIds.length === 0
+      ? { schemeId: { in: [] } }
+      : { schemeId: { in: scope.schemeIds } };
   const financialUpdates = await prisma.financeExpenditureSnapshot.findMany({
     where: {
-      financialYearId: fy?.id,
+      ...(fy ? { financialYearId: fy.id } : {}),
+      ...snapshotScopeWhere,
       workflowStatus: FinancialWorkflowStatus.submitted,
       createdAt: {
         gte: weekStart,
@@ -259,9 +274,10 @@ export async function buildPendanceReport(meetingId: string): Promise<PendanceRe
     ],
   });
 
-  // Get all schemes to show which ones had no updates
+  // Get all schemes to show which ones had no updates (scoped to caller's schemes)
   const allSchemes = await prisma.scheme.findMany({
-    where: { 
+    where: {
+      ...schemeWhere(scope),
       archived: false,
       sponsorshipType: { not: SponsorshipType.NON_FINANCIAL }
     },

@@ -7,6 +7,8 @@ import {
   FINANCE_YEAR_BUDGET_CATEGORY_ORDER,
 } from "@/lib/finance-year-budget-allocation";
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
+import type { DataScope } from "@/lib/data-scope";
+import { actionItemWhere, kpiDefinitionWhere } from "@/lib/data-access/scope-where";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -92,11 +94,12 @@ async function answerFinancial(fyLabel?: string | null): Promise<string> {
     .join("\n");
 }
 
-async function answerKpi(): Promise<string> {
+async function answerKpi(scope: DataScope): Promise<string> {
   const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
   if (!fy) return "No financial year configured — KPI targets are unavailable.";
   const definitions = await prisma.kpiDefinition.findMany({
     where: {
+      ...kpiDefinitionWhere(scope),
       archived: false,
       scheme: { archived: false },
     },
@@ -137,9 +140,9 @@ async function answerAgenda(ctx: AssistantMeetingContext): Promise<string> {
   return ["**Agenda**", "", ...lines].join("\n");
 }
 
-async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<string> {
+async function answerMeetingActions(ctx: AssistantMeetingContext, scope: DataScope): Promise<string> {
   const items = await prisma.actionItem.findMany({
-    where: { meetingId: ctx.meetingId, archived: false },
+    where: { ...actionItemWhere(scope), meetingId: ctx.meetingId, archived: false },
     orderBy: { dueDate: "asc" },
     take: 25,
     include: {
@@ -158,9 +161,9 @@ async function answerMeetingActions(ctx: AssistantMeetingContext): Promise<strin
   return ["**Action items for this meeting**", "", ...lines].join("\n");
 }
 
-async function answerOverdue(): Promise<string> {
+async function answerOverdue(scope: DataScope): Promise<string> {
   const items = await prisma.actionItem.findMany({
-    where: { status: "OVERDUE", archived: false },
+    where: { ...actionItemWhere(scope), status: "OVERDUE", archived: false },
     orderBy: { dueDate: "asc" },
     take: 12,
     include: {
@@ -179,8 +182,8 @@ async function answerOverdue(): Promise<string> {
   return ["**Overdue action items** (sample up to 12)", "", ...lines].join("\n");
 }
 
-async function answerOverview(): Promise<string> {
-  const d = await getCommandCentreDashboard();
+async function answerOverview(scope: DataScope): Promise<string> {
+  const d = await getCommandCentreDashboard(null, scope);
   const top = d.topSchemes.slice(0, 5);
   const bottom = d.bottomSchemes.slice(0, 5);
   const trendLast = d.ifmsTrend.length ? d.ifmsTrend[d.ifmsTrend.length - 1] : null;
@@ -209,8 +212,18 @@ async function answerOverview(): Promise<string> {
 
 /**
  * Data-backed assistant for HUDD NEXUS (meeting mode and global).
+ *
+ * `scope` is resolved by the route handler from the authenticated session and
+ * passed in. The assistant never reads the session and never constructs Prisma
+ * `where` clauses against raw models — it calls scoped functions with a scope
+ * object it did not choose. This is the contract the planned conversational
+ * LLM assistant will inherit.
  */
-export async function answerAssistantQuery(query: string, meetingContext: AssistantMeetingContext | null): Promise<string> {
+export async function answerAssistantQuery(
+  query: string,
+  meetingContext: AssistantMeetingContext | null,
+  scope: DataScope,
+): Promise<string> {
   const q = query.trim().toLowerCase();
   const inMeeting = meetingContext != null;
 
@@ -225,11 +238,11 @@ export async function answerAssistantQuery(query: string, meetingContext: Assist
   }
 
   if (q.includes("overdue")) {
-    return answerOverdue();
+    return answerOverdue(scope);
   }
 
   if (inMeeting && q.includes("action")) {
-    return answerMeetingActions(meetingContext);
+    return answerMeetingActions(meetingContext, scope);
   }
 
   if (q.includes("financial") || q.includes("budget") || q.includes("ifms") || q.includes("expenditure") || q.includes("so expenditure")) {
@@ -237,7 +250,7 @@ export async function answerAssistantQuery(query: string, meetingContext: Assist
   }
 
   if (q.includes("kpi")) {
-    return answerKpi();
+    return answerKpi(scope);
   }
 
   if (
@@ -251,11 +264,11 @@ export async function answerAssistantQuery(query: string, meetingContext: Assist
     q.includes("lapse") ||
     q.includes("critical")
   ) {
-    return answerOverview();
+    return answerOverview(scope);
   }
 
   if (!inMeeting && q.includes("action")) {
-    return answerOverdue();
+    return answerOverdue(scope);
   }
 
   return [

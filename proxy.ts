@@ -6,10 +6,30 @@ import { prisma } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
 
 /** App Router + `fetch()` use the full pathname including `basePath` (e.g. `/hudd-dashboard/api/...`). */
-function isApiOrAssetPath(pathname: string): boolean {
+function isStaticAssetPath(pathname: string): boolean {
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return true;
+  return false;
+}
+
+function isApiPath(pathname: string): boolean {
   if (pathname.startsWith("/api")) return true;
   if (NEXTJS_BASE_PATH && pathname.startsWith(`${NEXTJS_BASE_PATH}/api`)) return true;
+  return false;
+}
+
+/**
+ * `/api/v1/**` is the authenticated API surface. Middleware verifies a valid
+ * session token exists here (defence-in-depth) so a forgotten handler guard
+ * does not equal a publicly reachable endpoint. This is AUTHENTICATION ONLY —
+ * it does not check any permission and cannot replace per-route `require*`
+ * guards, which remain the authoritative authorization layer.
+ *
+ * `/api/health` and `/api/auth/**` are NOT under `/api/v1` and stay open by
+ * construction (liveness probe and NextAuth callbacks).
+ */
+function isV1ApiPath(pathname: string): boolean {
+  if (pathname.startsWith("/api/v1")) return true;
+  if (NEXTJS_BASE_PATH && pathname.startsWith(`${NEXTJS_BASE_PATH}/api/v1`)) return true;
   return false;
 }
 
@@ -88,10 +108,26 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
-    isApiOrAssetPath(pathname) ||
+    isStaticAssetPath(pathname) ||
     pathname.startsWith("/images") ||
     PUBLIC_STATIC_EXT.test(pathname)
   ) {
+    return NextResponse.next();
+  }
+
+  // API surface. `/api/v1/**` requires a verified session token; everything
+  // else under `/api` (health, NextAuth callbacks) stays open.
+  if (isApiPath(pathname)) {
+    if (isV1ApiPath(pathname)) {
+      // `getToken` verifies the JWT signature with AUTH_SECRET. A missing or
+      // incorrectly signed token resolves to `null` → 401. This is a cheap,
+      // in-process check (no DB) — session-invalidation (password reset) is
+      // enforced by handler guards via `getDbUserBySession`, not here.
+      const token = await readToken(request);
+      if (!token) {
+        return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+      }
+    }
     return NextResponse.next();
   }
 

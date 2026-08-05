@@ -30,17 +30,18 @@ export async function PUT(request: NextRequest) {
           data: { sortOrder: i },
         });
       }
-    });
 
-    await logAudit(
-      actor?.id,
-      "scheme.reorder",
-      "scheme",
-      null,
-      null,
-      { schemeIds },
-      auditContext,
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "scheme.reorder",
+        "scheme",
+        null,
+        null,
+        { schemeIds },
+        auditContext,
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {

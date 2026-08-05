@@ -26,23 +26,28 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     }
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.meetingTopic.create({
-      data: {
-        meetingId,
-        topic,
-        createdById: actor?.id ?? null,
-      },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.meetingTopic.create({
+        data: {
+          meetingId,
+          topic,
+          createdById: actor?.id ?? null,
+        },
+      });
 
-    await logAudit(
-      actor?.id,
-      "meeting.topic.create",
-      "meeting_topic",
-      created.id,
-      null,
-      { id: created.id, topic: created.topic },
-      { ...auditContext, meetingId },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.topic.create",
+        "meeting_topic",
+        created.id,
+        null,
+        { id: created.id, topic: created.topic },
+        { ...auditContext, meetingId },
+      );
+
+      return created;
+    });
 
     return NextResponse.json({ topic: { id: created.id, topic: created.topic } }, { status: 201 });
   } catch (error) {

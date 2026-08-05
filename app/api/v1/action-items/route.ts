@@ -3,7 +3,9 @@ import { ActionItemPriority, ActionItemStatus, ActionItemType, Prisma } from "@p
 import { parseListLimit } from "@/lib/list-query-limit";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
-import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
+import { actionItemWhere } from "@/lib/data-access/scope-where";
 import { NotificationService } from "@/lib/services/NotificationService";
 
 export const runtime = "nodejs";
@@ -109,7 +111,8 @@ const actionInclude = {
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const take = parseListLimit(new URL(request.url).searchParams);
 
@@ -122,7 +125,7 @@ export async function GET(request: NextRequest) {
     const archivedParam = new URL(request.url).searchParams.get("archived") === "true";
 
     const items = await prisma.actionItem.findMany({
-      where: { archived: archivedParam },
+      where: { ...actionItemWhere(scope), archived: archivedParam },
       include: actionInclude,
       orderBy: [{ dueDate: "asc" }, { title: "asc" }],
       take,
@@ -267,36 +270,51 @@ export async function POST(request: NextRequest) {
       verticalId = v?.id ?? null;
     }
 
-    const created = await prisma.actionItem.create({
-      data: {
-        meetingId: body.meetingId ?? null,
-        schemeId: scheme?.id ?? null,
-        subschemeId,
-        verticalId,
-        itemType: body.itemType ?? ActionItemType.action_item,
-        title: body.title.trim(),
-        description: body.description.trim(),
-        priority: body.priority,
-        dueDate,
-        status: ActionItemStatus.OPEN,
-        createdById: actor?.id ?? null,
-        performers: {
-          create: performerIds.map((userId, i) => ({ userId, sortOrder: i })),
+    const created = await prisma.$transaction(async (tx) => {
+      const actionItem = await tx.actionItem.create({
+        data: {
+          meetingId: body.meetingId ?? null,
+          schemeId: scheme?.id ?? null,
+          subschemeId,
+          verticalId,
+          itemType: body.itemType ?? ActionItemType.action_item,
+          title: body.title.trim(),
+          description: body.description.trim(),
+          priority: body.priority,
+          dueDate,
+          status: ActionItemStatus.OPEN,
+          createdById: actor?.id ?? null,
+          performers: {
+            create: performerIds.map((userId, i) => ({ userId, sortOrder: i })),
+          },
+          reviewerUsers: {
+            create: reviewerIds.map((userId, i) => ({ userId, sortOrder: i })),
+          },
         },
-        reviewerUsers: {
-          create: reviewerIds.map((userId, i) => ({ userId, sortOrder: i })),
-        },
-      },
-    });
+      });
 
-    await prisma.actionItemUpdate.create({
-      data: {
-        actionItemId: created.id,
-        timestamp: new Date(),
-        status: ActionItemStatus.OPEN,
-        note: "Action item created",
-        createdById: actor?.id ?? null,
-      },
+      await tx.actionItemUpdate.create({
+        data: {
+          actionItemId: actionItem.id,
+          timestamp: new Date(),
+          status: ActionItemStatus.OPEN,
+          note: "Action item created",
+          createdById: actor?.id ?? null,
+        },
+      });
+
+      await logAudit(
+        tx,
+        actor?.id,
+        "action_item.create",
+        "action_item",
+        actionItem.id,
+        null,
+        { id: actionItem.id, title: actionItem.title, schemeId: scheme?.id ?? null, meetingId: body.meetingId ?? null },
+        { ...auditContext, meetingId: body.meetingId ?? null, schemeId: scheme?.id ?? null },
+      );
+
+      return actionItem;
     });
 
     // Trigger notifications for all assigned performers
@@ -311,16 +329,6 @@ export async function POST(request: NextRequest) {
         metadata: { actionItemId: created.id },
       });
     }
-
-    await logAudit(
-      actor?.id,
-      "action_item.create",
-      "action_item",
-      created.id,
-      null,
-      { id: created.id, title: created.title, schemeId: scheme?.id ?? null, meetingId: body.meetingId ?? null },
-      { ...auditContext, meetingId: body.meetingId ?? null, schemeId: scheme?.id ?? null },
-    );
 
     return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (error) {

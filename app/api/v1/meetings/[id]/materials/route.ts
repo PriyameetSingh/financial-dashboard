@@ -105,28 +105,33 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
 
     const sortOrder = await prisma.meetingMaterial.count({ where: { meetingId } });
 
-    const created = await prisma.meetingMaterial.create({
-      data: {
-        meetingId,
-        storagePath: objectKey,
-        fileName: safeName,
-        mimeType: file.type || null,
-        sizeBytes: file.size,
-        sortOrder,
-        uploadedById: actor?.id ?? null,
-      },
-      select: { id: true, fileName: true, mimeType: true, sizeBytes: true },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const material = await tx.meetingMaterial.create({
+        data: {
+          meetingId,
+          storagePath: objectKey,
+          fileName: safeName,
+          mimeType: file.type || null,
+          sizeBytes: file.size,
+          sortOrder,
+          uploadedById: actor?.id ?? null,
+        },
+        select: { id: true, fileName: true, mimeType: true, sizeBytes: true },
+      });
 
-    await logAudit(
-      actor?.id,
-      "meeting.material.upload",
-      "meeting_material",
-      created.id,
-      null,
-      { id: created.id, fileName: created.fileName },
-      { ...auditContext, meetingId },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.material.upload",
+        "meeting_material",
+        material.id,
+        null,
+        { id: material.id, fileName: material.fileName },
+        { ...auditContext, meetingId },
+      );
+
+      return material;
+    });
 
     return NextResponse.json({ material: created }, { status: 201 });
   } catch (error) {

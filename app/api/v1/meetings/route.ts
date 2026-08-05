@@ -68,40 +68,45 @@ export async function POST(request: NextRequest) {
     const meetingDate = new Date(`${body.meetingDate}T00:00:00.000Z`);
     const auditContext = getAuditRequestContext(request);
 
-    const meeting = await prisma.dashboardMeeting.create({
-      data: {
-        meetingDate,
-        title: body.title ?? null,
-        notes: body.notes ?? null,
-        financialYearId: body.financialYearId ?? null,
-        createdById: actor?.id ?? null,
-        topics: body.topics?.length
-          ? {
-              create: body.topics.map((t) => ({
-                topic: t.topic,
-                createdById: actor?.id ?? null,
-              })),
-            }
-          : undefined,
-      },
-    });
-
-    if (body.actionItemIds?.length) {
-      await prisma.actionItem.updateMany({
-        where: { id: { in: body.actionItemIds } },
-        data: { meetingId: meeting.id },
+    const meeting = await prisma.$transaction(async (tx) => {
+      const meeting = await tx.dashboardMeeting.create({
+        data: {
+          meetingDate,
+          title: body.title ?? null,
+          notes: body.notes ?? null,
+          financialYearId: body.financialYearId ?? null,
+          createdById: actor?.id ?? null,
+          topics: body.topics?.length
+            ? {
+                create: body.topics.map((t) => ({
+                  topic: t.topic,
+                  createdById: actor?.id ?? null,
+                })),
+              }
+            : undefined,
+        },
       });
-    }
 
-    await logAudit(
-      actor?.id,
-      "meeting.create",
-      "dashboard_meeting",
-      meeting.id,
-      null,
-      { id: meeting.id, meetingDate: meeting.meetingDate.toISOString() },
-      { ...auditContext, meetingId: meeting.id },
-    );
+      if (body.actionItemIds?.length) {
+        await tx.actionItem.updateMany({
+          where: { id: { in: body.actionItemIds } },
+          data: { meetingId: meeting.id },
+        });
+      }
+
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.create",
+        "dashboard_meeting",
+        meeting.id,
+        null,
+        { id: meeting.id, meetingDate: meeting.meetingDate.toISOString() },
+        { ...auditContext, meetingId: meeting.id },
+      );
+
+      return meeting;
+    });
 
     return NextResponse.json({ id: meeting.id }, { status: 201 });
   } catch (error) {

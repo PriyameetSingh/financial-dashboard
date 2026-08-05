@@ -151,31 +151,34 @@ export async function PUT(request: NextRequest) {
       include: { categoryLines: true },
     });
 
-    await logAudit(
-      actor?.id,
-      "financial.fy_budget_allocation.update",
-      "finance_year_budget_allocations",
-      afterAlloc.id,
-      {
-        totalBudgetCr: beforeAlloc.totalBudgetCr.toString(),
-        lines: beforeAlloc.categoryLines.map((l) => ({
-          category: l.category,
-          budgetEstimateCr: l.budgetEstimateCr.toString(),
-          soExpenditureCr: l.soExpenditureCr.toString(),
-          ifmsExpenditureCr: l.ifmsExpenditureCr.toString(),
-        })),
-      },
-      {
-        totalBudgetCr: afterAlloc.totalBudgetCr.toString(),
-        lines: afterAlloc.categoryLines.map((l) => ({
-          category: l.category,
-          budgetEstimateCr: l.budgetEstimateCr.toString(),
-          soExpenditureCr: l.soExpenditureCr.toString(),
-          ifmsExpenditureCr: l.ifmsExpenditureCr.toString(),
-        })),
-      },
-      { ...auditContext, financialYearId: fy.id },
-    );
+    await prisma.$transaction(async (tx) => {
+      await logAudit(
+        tx,
+        actor?.id,
+        "financial.fy_budget_allocation.update",
+        "finance_year_budget_allocations",
+        afterAlloc.id,
+        {
+          totalBudgetCr: beforeAlloc.totalBudgetCr.toString(),
+          lines: beforeAlloc.categoryLines.map((l) => ({
+            category: l.category,
+            budgetEstimateCr: l.budgetEstimateCr.toString(),
+            soExpenditureCr: l.soExpenditureCr.toString(),
+            ifmsExpenditureCr: l.ifmsExpenditureCr.toString(),
+          })),
+        },
+        {
+          totalBudgetCr: afterAlloc.totalBudgetCr.toString(),
+          lines: afterAlloc.categoryLines.map((l) => ({
+            category: l.category,
+            budgetEstimateCr: l.budgetEstimateCr.toString(),
+            soExpenditureCr: l.soExpenditureCr.toString(),
+            ifmsExpenditureCr: l.ifmsExpenditureCr.toString(),
+          })),
+        },
+        { ...auditContext, financialYearId: fy.id },
+      );
+    });
 
     revalidateFinancialCaches();
 

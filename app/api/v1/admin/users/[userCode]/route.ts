@@ -190,6 +190,33 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
       ? body.organisationIds.filter((id) => typeof id === "string" && id.trim())
       : previousOrganisationIds;
 
+    const nextName = prismaData.name ?? user.name;
+    const nextEmail = prismaData.email ?? user.email;
+
+    const nextProfile = {
+      name: nextName,
+      email: nextEmail,
+      department: prismaData.department !== undefined ? prismaData.department : user.department,
+      designationId: prismaData.designationId !== undefined ? prismaData.designationId : user.designationId,
+      organisationId: prismaData.organisationId !== undefined ? prismaData.organisationId : user.organisationId,
+      organisationIds: nextOrganisationIds,
+      ulbId: prismaData.ulbId !== undefined ? prismaData.ulbId : user.ulbId,
+      sectionIds: nextSectionIds,
+      officerType: prismaData.officerType !== undefined ? prismaData.officerType : user.officerType,
+    };
+    const sectionIdsChanged = JSON.stringify([...previousSectionIds].sort()) !== JSON.stringify([...nextSectionIds].sort());
+    const organisationIdsChanged = JSON.stringify([...previousOrganisationIds].sort()) !== JSON.stringify([...nextOrganisationIds].sort());
+    const profileChanged =
+      prevProfile.name !== nextProfile.name ||
+      prevProfile.email !== nextProfile.email ||
+      prevProfile.department !== nextProfile.department ||
+      prevProfile.designationId !== nextProfile.designationId ||
+      prevProfile.organisationId !== nextProfile.organisationId ||
+      organisationIdsChanged ||
+      prevProfile.ulbId !== nextProfile.ulbId ||
+      sectionIdsChanged ||
+      prevProfile.officerType !== nextProfile.officerType;
+
     await prisma.$transaction(async (tx) => {
       if (Object.keys(prismaData).length > 0) {
         await tx.user.update({
@@ -223,37 +250,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
           });
         }
       }
-    });
 
-    const nextName = prismaData.name ?? user.name;
-    const nextEmail = prismaData.email ?? user.email;
-
-    if (hasProfileFields) {
-      const nextProfile = {
-        name: nextName,
-        email: nextEmail,
-        department: prismaData.department !== undefined ? prismaData.department : user.department,
-        designationId: prismaData.designationId !== undefined ? prismaData.designationId : user.designationId,
-        organisationId: prismaData.organisationId !== undefined ? prismaData.organisationId : user.organisationId,
-        organisationIds: nextOrganisationIds,
-        ulbId: prismaData.ulbId !== undefined ? prismaData.ulbId : user.ulbId,
-        sectionIds: nextSectionIds,
-        officerType: prismaData.officerType !== undefined ? prismaData.officerType : user.officerType,
-      };
-      const sectionIdsChanged = JSON.stringify([...previousSectionIds].sort()) !== JSON.stringify([...nextSectionIds].sort());
-      const organisationIdsChanged = JSON.stringify([...previousOrganisationIds].sort()) !== JSON.stringify([...nextOrganisationIds].sort());
-      const profileChanged =
-        prevProfile.name !== nextProfile.name ||
-        prevProfile.email !== nextProfile.email ||
-        prevProfile.department !== nextProfile.department ||
-        prevProfile.designationId !== nextProfile.designationId ||
-        prevProfile.organisationId !== nextProfile.organisationId ||
-        organisationIdsChanged ||
-        prevProfile.ulbId !== nextProfile.ulbId ||
-        sectionIdsChanged ||
-        prevProfile.officerType !== nextProfile.officerType;
-      if (profileChanged) {
+      if (hasProfileFields && profileChanged) {
         await logAudit(
+          tx,
           actor?.id,
           "rbac.user.profile.update",
           "user",
@@ -263,7 +263,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
           { ...auditContext, targetUserCode: user.code ?? userCode },
         );
       }
-    }
+    });
 
     const keycloakUserIdForProfile = await findKeycloakUserIdByIdentity({ username: user.code, email: user.email });
     if (keycloakUserIdForProfile && (prismaData.name !== undefined || prismaData.email !== undefined)) {
@@ -279,28 +279,30 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
         return NextResponse.json({ detail: `Role not found: ${body.roleCode}` }, { status: 400 });
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.userRole.deleteMany({ where: { userId: user.id } });
-        await tx.userRole.create({ data: { userId: user.id, roleId: role.id } });
-      });
-
       const keycloakUserIdForRole = await findKeycloakUserIdByIdentity({
         username: user.code,
         email: nextEmail,
       });
+
+      await prisma.$transaction(async (tx) => {
+        await tx.userRole.deleteMany({ where: { userId: user.id } });
+        await tx.userRole.create({ data: { userId: user.id, roleId: role.id } });
+
+        await logAudit(
+          tx,
+          actor?.id,
+          "rbac.user.role.update",
+          "user",
+          user.id,
+          { roleCodes: previousRoleCodes },
+          { roleCodes: [body.roleCode], keycloakUserId: keycloakUserIdForRole ?? null },
+          { ...auditContext, targetUserCode: user.code ?? userCode },
+        );
+      });
+
       if (keycloakUserIdForRole) {
         await replaceKeycloakClientRole(keycloakUserIdForRole, body.roleCode);
       }
-
-      await logAudit(
-        actor?.id,
-        "rbac.user.role.update",
-        "user",
-        user.id,
-        { roleCodes: previousRoleCodes },
-        { roleCodes: [body.roleCode], keycloakUserId: keycloakUserIdForRole ?? null },
-        { ...auditContext, targetUserCode: user.code ?? userCode },
-      );
 
       return NextResponse.json({
         ok: true,
@@ -340,10 +342,13 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ user
       return NextResponse.json({ detail: "You cannot delete your own account." }, { status: 400 });
     }
 
+    // DB-first for DELETE: tombstone the user (and write the audit row) in a single
+    // transaction FIRST, then attempt the Keycloak delete as a best-effort cleanup.
+    // Compensating re-create of a deleted Keycloak user is impossible without the
+    // user's plaintext password, so we cannot use the "Keycloak-first + compensate"
+    // pattern here. Residual: if the Keycloak delete fails, an orphan IdP user
+    // remains — but it is DB-gated (DB isActive=false), so it cannot be used to log in.
     const keycloakUserId = await findKeycloakUserIdByIdentity({ username: user.code, email: user.email });
-    if (keycloakUserId) {
-      await deleteKeycloakUserById(keycloakUserId);
-    }
 
     await prisma.$transaction(async (tx) => {
       await tx.userRole.deleteMany({ where: { userId: user.id } });
@@ -365,19 +370,35 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ user
           officerType: null,
         },
       });
+
+      await logAudit(
+        tx,
+        actor?.id,
+        "rbac.user.delete",
+        "user",
+        user.id,
+        { code: user.code, email: user.email, name: user.name },
+        { keycloakUserId: keycloakUserId ?? null, isActive: false },
+        { ...auditContext, targetUserCode: user.code ?? userCode },
+      );
     });
 
-    await logAudit(
-      actor?.id,
-      "rbac.user.delete",
-      "user",
-      user.id,
-      { code: user.code, email: user.email, name: user.name },
-      { keycloakUserId: keycloakUserId ?? null, isActive: false },
-      { ...auditContext, targetUserCode: user.code ?? userCode },
-    );
+    let keycloakSynced = false;
+    if (keycloakUserId) {
+      try {
+        await deleteKeycloakUserById(keycloakUserId);
+        keycloakSynced = true;
+      } catch (keycloakError) {
+        // DB user is tombstoned but Keycloak user lingers — surface loudly, never swallow.
+        console.error(
+          `[admin.users.delete] DB user ${user.id} tombstoned but Keycloak delete failed for ${keycloakUserId}; orphan IdP user remains (DB-gated, cannot log in). Error:`,
+          keycloakError,
+        );
+        keycloakSynced = false;
+      }
+    }
 
-    return NextResponse.json({ ok: true, keycloakSynced: Boolean(keycloakUserId) });
+    return NextResponse.json({ ok: true, keycloakSynced });
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
