@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Previously, the user could continue using the application with their old
   session until it naturally expired.
 - Fixed session validation to properly log out users when browser cookies and site data are cleared, ensuring unauthorized access is prevented immediately
+- Evidence upload and approval actions (uploading proof, viewing the uploads list, approving an upload, and triggering upload processing) now require a signed-in officer with the appropriate permission. Previously these actions were reachable without any sign-in, so anyone with the dashboard URL could call them. Approving and processing an upload now require an officer who can approve action items; viewing the uploads list requires an officer who can view scheme data.
+- The list of financial years used to populate on-screen selectors now requires a signed-in officer. Previously it was reachable without any sign-in.
+- Removed a leftover test page that returned made-up dashboard statistics and was reachable without sign-in.
 
 ---
 
