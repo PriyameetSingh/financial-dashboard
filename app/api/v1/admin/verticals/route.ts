@@ -40,20 +40,25 @@ export async function POST(request: NextRequest) {
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.vertical.create({
-      data: { code, name },
-      select: { id: true, code: true, name: true },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.vertical.create({
+        data: { code, name },
+        select: { id: true, code: true, name: true },
+      });
 
-    await logAudit(
-      actor?.id ?? null,
-      "CREATE",
-      "Vertical",
-      created.id,
-      null,
-      { code: created.code, name: created.name },
-      auditContext
-    );
+      await logAudit(
+        tx,
+        actor?.id ?? null,
+        "CREATE",
+        "Vertical",
+        created.id,
+        null,
+        { code: created.code, name: created.name },
+        auditContext
+      );
+
+      return created;
+    });
 
     return NextResponse.json(created);
   } catch (error: unknown) {

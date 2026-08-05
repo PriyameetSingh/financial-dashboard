@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { mapSchemeView } from "@/lib/scheme-api";
-import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
+import { financeBudgetWhere, financeSnapshotWhere, schemeWhere, userWhere } from "@/lib/data-access/scope-where";
 import { UserRole } from "@/types";
 
 export const runtime = "nodejs";
@@ -16,11 +18,11 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
-async function getReferenceData() {
+async function getReferenceData(scope: Parameters<typeof userWhere>[0]) {
   const [roles, usersRaw] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
     prisma.user.findMany({
-      where: { isActive: true },
+      where: { ...userWhere(scope), isActive: true },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -133,8 +135,10 @@ function rollupExpenditure(
 }
 
 export async function GET(request: NextRequest) {
+  let scope: Awaited<ReturnType<typeof resolveDataScope>>;
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    scope = await resolveDataScope(user);
   } catch (error) {
     const auth = toAuthErrorResponse(error);
     if (auth) {
@@ -147,7 +151,9 @@ export async function GET(request: NextRequest) {
   const archivedParam = searchParams.get("archived");
   const archivedFilter = archivedParam === "true" ? true : archivedParam === "false" ? false : undefined;
 
-  const whereClause = archivedFilter !== undefined ? { archived: archivedFilter } : {};
+  const whereClause = archivedFilter !== undefined
+    ? { ...schemeWhere(scope), archived: archivedFilter }
+    : schemeWhere(scope);
 
   const fy = await prisma.financialYear.findFirst({
     orderBy: { endDate: "desc" },
@@ -196,16 +202,16 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
-    getReferenceData(),
+    getReferenceData(scope),
     fy
       ? prisma.financeBudget.findMany({
-          where: { financialYearId: fy.id },
+          where: financeBudgetWhere(scope, fy.id),
           select: { schemeId: true, subschemeId: true, budgetEstimateCr: true },
         })
       : Promise.resolve([]),
     fy
       ? prisma.financeExpenditureSnapshot.findMany({
-          where: { financialYearId: fy.id },
+          where: financeSnapshotWhere(scope, fy.id),
           orderBy: { asOfDate: "desc" },
           select: {
             schemeId: true,

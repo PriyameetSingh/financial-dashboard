@@ -60,21 +60,25 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     const auditContext = getAuditRequestContext(request);
 
-    const updated = await prisma.financialYear.update({
-      where: { id },
-      data: {
-        label: nextLabel,
-        startDate: start,
-        endDate: end,
-      },
-      select: { id: true, label: true, startDate: true, endDate: true },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.financialYear.update({
+        where: { id },
+        data: {
+          label: nextLabel,
+          startDate: start,
+          endDate: end,
+        },
+        select: { id: true, label: true, startDate: true, endDate: true },
+      });
 
-    await logAudit(actor?.id ?? null, "UPDATE", "FinancialYear", updated.id, before, {
-      label: updated.label,
-      startDate: updated.startDate.toISOString().slice(0, 10),
-      endDate: updated.endDate.toISOString().slice(0, 10),
-    }, auditContext);
+      await logAudit(tx, actor?.id ?? null, "UPDATE", "FinancialYear", updated.id, before, {
+        label: updated.label,
+        startDate: updated.startDate.toISOString().slice(0, 10),
+        endDate: updated.endDate.toISOString().slice(0, 10),
+      }, auditContext);
+
+      return updated;
+    });
 
     revalidateFinancialCaches();
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { OfficerType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
-import { assignKeycloakClientRole, createOrFindKeycloakUser, KeycloakClientRoleNotFoundError } from "@/lib/keycloak-admin";
+import { assignKeycloakClientRole, createOrFindKeycloakUser, deleteKeycloakUserById, KeycloakClientRoleNotFoundError } from "@/lib/keycloak-admin";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { UserRole } from "@/types";
 
@@ -135,77 +135,118 @@ export async function POST(request: NextRequest) {
     });
     await assignKeycloakClientRole(keycloak.id, roleCode);
 
-    const dbUser = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          name,
-          email,
-          code: username,
-          department,
-          designationId,
-          organisationId,
-          ulbId,
-          officerType,
-          isActive: true,
-        },
-      });
-
-      // "Set role" semantics: keep the selected role as the single primary role.
-      await tx.userRole.create({
-        data: {
-          userId: user.id,
-          roleId: role.id,
-        },
-      });
-
-      // Handle section associations via UserSection join table
-      if (sectionIds.length > 0) {
-        await tx.userSection.createMany({
-          data: sectionIds.map((sectionId) => ({
-            userId: user.id,
-            sectionId,
-          })),
-          skipDuplicates: true,
-        });
-      }
-
-      // Handle organisation associations via UserOrganisation join table
-      if (organisationIds.length > 0) {
-        await tx.userOrganisation.createMany({
-          data: organisationIds.map((organisationId) => ({
-            userId: user.id,
+    // Keycloak user is created BEFORE the Prisma transaction. A DB failure here
+    // would orphan a Keycloak user with no DB record. We cannot make this atomic
+    // across two systems with a single DB transaction, so on transaction failure
+    // we run a COMPENSATING action: if we created a fresh Keycloak user, delete it.
+    // (If `keycloak.created === false`, the user pre-existed and we only added a
+    // client-role mapping we cannot safely revert without knowing prior roles —
+    // see residual failure modes in the fix summary.)
+    let dbUser;
+    try {
+      dbUser = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            name,
+            email,
+            code: username,
+            department,
+            designationId,
             organisationId,
-          })),
-          skipDuplicates: true,
+            ulbId,
+            officerType,
+            isActive: true,
+          },
         });
+
+        // "Set role" semantics: keep the selected role as the single primary role.
+        await tx.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: role.id,
+          },
+        });
+
+        // Handle section associations via UserSection join table
+        if (sectionIds.length > 0) {
+          await tx.userSection.createMany({
+            data: sectionIds.map((sectionId) => ({
+              userId: user.id,
+              sectionId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        // Handle organisation associations via UserOrganisation join table
+        if (organisationIds.length > 0) {
+          await tx.userOrganisation.createMany({
+            data: organisationIds.map((organisationId) => ({
+              userId: user.id,
+              organisationId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        await logAudit(
+          tx,
+          actor?.id,
+          "rbac.user.create",
+          "user",
+          user.id,
+          null,
+          {
+            code: user.code,
+            email: user.email,
+            roleCode,
+            designationId: user.designationId,
+            organisationId: user.organisationId,
+            organisationIds,
+            ulbId: user.ulbId,
+            sectionIds,
+            officerType: user.officerType,
+          },
+          {
+            ...auditContext,
+            keycloakUserId: keycloak.id,
+            keycloakCreated: keycloak.created,
+          },
+        );
+
+        return user;
+      });
+    } catch (txError) {
+      if (keycloak.created) {
+        try {
+          await deleteKeycloakUserById(keycloak.id);
+          console.error(
+            `[admin.users.create] DB transaction failed; compensating Keycloak user ${keycloak.id} deleted. Original error:`,
+            txError,
+          );
+        } catch (compensationError) {
+          // Compensation itself failed — surface loudly, never swallow.
+          console.error(
+            `[admin.users.create] COMPENSATION FAILED: could not delete orphan Keycloak user ${keycloak.id}. Manual cleanup required. Original error:`,
+            txError,
+            "Compensation error:",
+            compensationError,
+          );
+          return NextResponse.json(
+            {
+              detail: `User creation failed and Keycloak compensation also failed: orphan Keycloak user ${keycloak.id} requires manual cleanup.`,
+            },
+            { status: 500 },
+          );
+        }
+      } else {
+        console.error(
+          `[admin.users.create] DB transaction failed for pre-existing Keycloak user ${keycloak.id}; client-role assignment could not be reverted automatically. Original error:`,
+          txError,
+        );
       }
-
-      return user;
-    });
-
-    await logAudit(
-      actor?.id,
-      "rbac.user.create",
-      "user",
-      dbUser.id,
-      null,
-      {
-        code: dbUser.code,
-        email: dbUser.email,
-        roleCode,
-        designationId: dbUser.designationId,
-        organisationId: dbUser.organisationId,
-        organisationIds,
-        ulbId: dbUser.ulbId,
-        sectionIds,
-        officerType: dbUser.officerType,
-      },
-      {
-        ...auditContext,
-        keycloakUserId: keycloak.id,
-        keycloakCreated: keycloak.created,
-      },
-    );
+      throw txError;
+    }
 
     return NextResponse.json(
       {

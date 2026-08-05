@@ -49,11 +49,21 @@ if [ "$BEFORE_COMMIT" = "$REMOTE_COMMIT" ]; then
     log "Local and remote are in sync (developing on this server)."
     log "Skipping git pull to prevent conflicts, continuing with rebuild..."
 else
-    # Ensure we are on the correct branch
+    # Refuse to proceed with uncommitted changes to avoid losing work
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        log "ERROR: Uncommitted changes in working tree. Commit or stash them before deploying."
+        git status --short
+        exit 1
+    fi
+
+    # Switch to the target branch if currently on another branch
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     if [ "$CURRENT_BRANCH" != "main" ]; then
-        log "ERROR: Cannot pull main branch because current branch is '$CURRENT_BRANCH'. Please switch to 'main' branch."
-        exit 1
+        log "Currently on branch '$CURRENT_BRANCH', switching to 'main'..."
+        git checkout main || {
+            log "ERROR: Failed to checkout main branch"
+            exit 1
+        }
     fi
 
     # Pull latest changes

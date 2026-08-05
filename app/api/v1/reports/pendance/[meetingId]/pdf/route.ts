@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildPendanceReport } from "@/lib/pendance-report";
 import { renderPendanceReportPdfBuffer } from "@/lib/pendance-report-pdf-server";
-import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,8 @@ export async function GET(
   ctx: { params: Promise<{ meetingId: string }> },
 ) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const { meetingId } = await ctx.params;
     const trimmed = meetingId?.trim();
@@ -29,7 +31,7 @@ export async function GET(
       return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
     }
 
-    const payload = await buildPendanceReport(trimmed);
+    const payload = await buildPendanceReport(trimmed, scope);
     if (!payload) {
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }

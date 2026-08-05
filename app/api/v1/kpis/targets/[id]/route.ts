@@ -54,20 +54,25 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const auditContext = getAuditRequestContext(request);
     const before = { denominatorValue: target.denominatorValue?.toString() ?? null };
 
-    const updated = await prisma.kpiTarget.update({
-      where: { id },
-      data: { denominatorValue: body.denominatorValue },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.kpiTarget.update({
+        where: { id },
+        data: { denominatorValue: body.denominatorValue },
+      });
 
-    await logAudit(
-      actor.id,
-      "kpi.target.denominator",
-      "kpi_target",
-      id,
-      before,
-      { denominatorValue: updated.denominatorValue?.toString() ?? null },
-      { ...auditContext, kpiDefinitionId: target.kpiDefinitionId, schemeId: target.kpiDefinition.schemeId, override: canOverride },
-    );
+      await logAudit(
+        tx,
+        actor.id,
+        "kpi.target.denominator",
+        "kpi_target",
+        id,
+        before,
+        { denominatorValue: updated.denominatorValue?.toString() ?? null },
+        { ...auditContext, kpiDefinitionId: target.kpiDefinitionId, schemeId: target.kpiDefinition.schemeId, override: canOverride },
+      );
+
+      return updated;
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

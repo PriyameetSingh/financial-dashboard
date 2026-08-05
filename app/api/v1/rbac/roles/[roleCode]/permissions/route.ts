@@ -23,27 +23,30 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ roleCo
     const perm = await prisma.permission.findUnique({ where: { code: body.permissionCode } });
     if (!perm) return NextResponse.json({ detail: "Permission not found" }, { status: 404 });
 
-    if (body.granted) {
-      await prisma.rolePermission.upsert({
-        where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
-        update: {},
-        create: { roleId: role.id, permissionId: perm.id },
-      });
-    } else {
-      await prisma.rolePermission
-        .delete({ where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } } })
-        .catch(() => null);
-    }
+    await prisma.$transaction(async (tx) => {
+      if (body.granted) {
+        await tx.rolePermission.upsert({
+          where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
+          update: {},
+          create: { roleId: role.id, permissionId: perm.id },
+        });
+      } else {
+        await tx.rolePermission
+          .delete({ where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } } })
+          .catch(() => null);
+      }
 
-    await logAudit(
-      actor?.id,
-      "rbac.role.permission",
-      "role_permission",
-      role.id,
-      null,
-      { roleCode, permissionCode: body.permissionCode, granted: body.granted },
-      { ...auditContext, roleCode },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "rbac.role.permission",
+        "role_permission",
+        role.id,
+        null,
+        { roleCode, permissionCode: body.permissionCode, granted: body.granted },
+        { ...auditContext, roleCode },
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

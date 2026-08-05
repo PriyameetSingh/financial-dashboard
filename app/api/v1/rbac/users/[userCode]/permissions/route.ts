@@ -24,34 +24,43 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ userCo
     if (!perm) return NextResponse.json({ detail: "Permission not found" }, { status: 404 });
 
     if (body.effect === "unset") {
-      await prisma.userPermissionOverride.delete({ where: { userId_permissionId: { userId: user.id, permissionId: perm.id } } }).catch(() => null);
-      await logAudit(
-        actor?.id,
-        "rbac.permission.unset",
-        "user_permission_override",
-        user.id,
-        { permissionCode: body.permissionCode },
-        null,
-        { ...auditContext, targetUserCode: userCode },
-      );
+      await prisma.$transaction(async (tx) => {
+        await tx.userPermissionOverride
+          .delete({ where: { userId_permissionId: { userId: user.id, permissionId: perm.id } } })
+          .catch(() => null);
+        await logAudit(
+          tx,
+          actor?.id,
+          "rbac.permission.unset",
+          "user_permission_override",
+          user.id,
+          { permissionCode: body.permissionCode },
+          null,
+          { ...auditContext, targetUserCode: userCode },
+        );
+      });
       return NextResponse.json({ ok: true });
     }
 
-    await prisma.userPermissionOverride.upsert({
-      where: { userId_permissionId: { userId: user.id, permissionId: perm.id } },
-      update: { effect: body.effect, createdById: actor?.id ?? null },
-      create: { userId: user.id, permissionId: perm.id, effect: body.effect, createdById: actor?.id ?? null },
-    });
+    const effect = body.effect;
+    await prisma.$transaction(async (tx) => {
+      await tx.userPermissionOverride.upsert({
+        where: { userId_permissionId: { userId: user.id, permissionId: perm.id } },
+        update: { effect, createdById: actor?.id ?? null },
+        create: { userId: user.id, permissionId: perm.id, effect, createdById: actor?.id ?? null },
+      });
 
-    await logAudit(
-      actor?.id,
-      "rbac.permission.override",
-      "user_permission_override",
-      user.id,
-      null,
-      { permissionCode: body.permissionCode, effect: body.effect },
-      { ...auditContext, targetUserCode: userCode },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "rbac.permission.override",
+        "user_permission_override",
+        user.id,
+        null,
+        { permissionCode: body.permissionCode, effect },
+        { ...auditContext, targetUserCode: userCode },
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

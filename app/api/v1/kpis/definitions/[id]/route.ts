@@ -244,7 +244,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         }
       }
-      return tx.kpiDefinition.findUniqueOrThrow({
+      const updated = await tx.kpiDefinition.findUniqueOrThrow({
         where: { id },
         include: {
           performers: {
@@ -271,26 +271,29 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             : false,
         },
       });
-    });
 
-    await logAudit(
-      actor?.id,
-      "kpi_definition.update",
-      "kpi_definition",
-      id,
-      before,
-      {
-        performerUserIds,
-        reviewerUserIds,
-        description: newDescription ?? null,
-        monitoringLevel: newMonitoringLevel ?? null,
-        denominatorValue: newDenominatorValue ?? null,
-        archived: body.archived !== undefined ? body.archived : null,
-        numeratorUnit: newNumeratorUnit !== undefined ? newNumeratorUnit : null,
-        denominatorUnit: newDenominatorUnit !== undefined ? newDenominatorUnit : null,
-      },
-      { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "kpi_definition.update",
+        "kpi_definition",
+        id,
+        before,
+        {
+          performerUserIds,
+          reviewerUserIds,
+          description: newDescription ?? null,
+          monitoringLevel: newMonitoringLevel ?? null,
+          denominatorValue: newDenominatorValue ?? null,
+          archived: body.archived !== undefined ? body.archived : null,
+          numeratorUnit: newNumeratorUnit !== undefined ? newNumeratorUnit : null,
+          denominatorUnit: newDenominatorUnit !== undefined ? newDenominatorUnit : null,
+        },
+        { ...auditContext, schemeId: existing.schemeId, schemeCode: existing.scheme.code },
+      );
+
+      return updated;
+    });
 
     // Trigger KPI Reassignment / Unassignment Notifications
     const prevPerformerIds = new Set(existing.performers.map((p) => p.userId));

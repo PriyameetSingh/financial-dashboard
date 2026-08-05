@@ -92,67 +92,70 @@ export async function POST(request: NextRequest) {
         }
       : null;
 
-    if (existing) {
-      await prisma.financeExpenditureSnapshot.update({
-        where: { id: existing.id },
-        data: {
-          meetingId: meeting.id,
-          soExpenditureCr: body.soExpenditureCr,
-          ifmsExpenditureCr: body.ifmsExpenditureCr,
-          remarks: body.remarks,
-          workflowStatus,
-          createdById: createdBy?.id ?? null,
-        },
-      });
-    } else {
-      await prisma.financeExpenditureSnapshot.create({
-        data: {
+    await prisma.$transaction(async (tx) => {
+      if (existing) {
+        await tx.financeExpenditureSnapshot.update({
+          where: { id: existing.id },
+          data: {
+            meetingId: meeting.id,
+            soExpenditureCr: body.soExpenditureCr,
+            ifmsExpenditureCr: body.ifmsExpenditureCr,
+            remarks: body.remarks,
+            workflowStatus,
+            createdById: createdBy?.id ?? null,
+          },
+        });
+      } else {
+        await tx.financeExpenditureSnapshot.create({
+          data: {
+            schemeId: scheme.id,
+            subschemeId,
+            financialYearId: fy.id,
+            meetingId: meeting.id,
+            asOfDate,
+            soExpenditureCr: body.soExpenditureCr,
+            ifmsExpenditureCr: body.ifmsExpenditureCr,
+            remarks: body.remarks,
+            workflowStatus,
+            createdById: createdBy?.id ?? null,
+          },
+        });
+      }
+
+      const afterRow = await tx.financeExpenditureSnapshot.findFirst({
+        where: {
           schemeId: scheme.id,
           subschemeId,
           financialYearId: fy.id,
-          meetingId: meeting.id,
           asOfDate,
-          soExpenditureCr: body.soExpenditureCr,
-          ifmsExpenditureCr: body.ifmsExpenditureCr,
-          remarks: body.remarks,
-          workflowStatus,
-          createdById: createdBy?.id ?? null,
         },
       });
-    }
 
-    const afterRow = await prisma.financeExpenditureSnapshot.findFirst({
-      where: {
-        schemeId: scheme.id,
-        subschemeId,
-        financialYearId: fy.id,
-        asOfDate,
-      },
+      await logAudit(
+        tx,
+        createdBy?.id,
+        existing ? "financial.snapshot.update" : "financial.snapshot.create",
+        "finance_expenditure_snapshot",
+        afterRow?.id,
+        before,
+        afterRow
+          ? {
+              id: afterRow.id,
+              soExpenditureCr: afterRow.soExpenditureCr.toString(),
+              ifmsExpenditureCr: afterRow.ifmsExpenditureCr.toString(),
+              workflowStatus: afterRow.workflowStatus,
+            }
+          : null,
+        {
+          ...auditContext,
+          meetingId: meeting.id,
+          schemeId: scheme.id,
+          subschemeId,
+          financialYearId: fy.id,
+          workflowTransition: workflowStatus,
+        },
+      );
     });
-
-    await logAudit(
-      createdBy?.id,
-      existing ? "financial.snapshot.update" : "financial.snapshot.create",
-      "finance_expenditure_snapshot",
-      afterRow?.id,
-      before,
-      afterRow
-        ? {
-            id: afterRow.id,
-            soExpenditureCr: afterRow.soExpenditureCr.toString(),
-            ifmsExpenditureCr: afterRow.ifmsExpenditureCr.toString(),
-            workflowStatus: afterRow.workflowStatus,
-          }
-        : null,
-      {
-        ...auditContext,
-        meetingId: meeting.id,
-        schemeId: scheme.id,
-        subschemeId,
-        financialYearId: fy.id,
-        workflowTransition: workflowStatus,
-      },
-    );
 
     await syncSchemeFyCategoryLines(fy.id, createdBy?.id ?? null);
     revalidateFinancialCaches();

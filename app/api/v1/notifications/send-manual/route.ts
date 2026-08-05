@@ -68,21 +68,24 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Log audit event
-    await logAudit(
-      actor.id,
-      "notification.manual_send",
-      "notification",
-      notification.id,
-      null,
-      {
-        recipientUserId,
-        recipientName: recipient.name,
-        recipientCode: recipient.code,
-        title,
-        priority,
-      },
-      auditContext
-    );
+    await prisma.$transaction(async (tx) => {
+      await logAudit(
+        tx,
+        actor.id,
+        "notification.manual_send",
+        "notification",
+        notification.id,
+        null,
+        {
+          recipientUserId,
+          recipientName: recipient.name,
+          recipientCode: recipient.code,
+          title,
+          priority,
+        },
+        auditContext
+      );
+    });
 
     return NextResponse.json({ ok: true, notificationId: notification.id }, { status: 201 });
   } catch (error) {

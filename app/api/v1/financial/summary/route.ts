@@ -8,7 +8,8 @@ import {
 } from "@/lib/finance-year-budget-allocation";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
-import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 
 export const runtime = "nodejs";
@@ -38,7 +39,8 @@ function toNumber(value: unknown): number {
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const { searchParams } = new URL(request.url);
     const asOfDateParam = searchParams.get("asOfDate");
@@ -126,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     const allocation = await syncSchemeFyCategoryLines(fy.id, null);
     const lineByCategory = new Map(allocation.categoryLines.map((l) => [l.category, l]));
-    const bucketExp = await aggregateSnapshotTotalsBySchemeBucket(fy.id, asOfDate);
+    const bucketExp = await aggregateSnapshotTotalsBySchemeBucket(fy.id, asOfDate, scope);
 
     const rows = FINANCE_YEAR_BUDGET_CATEGORY_ORDER.map((category) => {
       const line = lineByCategory.get(category);
@@ -222,55 +224,58 @@ export async function POST(request: NextRequest) {
           });
     const beforeByHeadCode = new Map(beforeRows.map((h) => [h.headCode, h]));
 
-    for (const row of body.rows ?? []) {
-      const before = beforeByHeadCode.get(row.headCode) ?? null;
+    await prisma.$transaction(async (tx) => {
+      for (const row of body.rows ?? []) {
+        const before = beforeByHeadCode.get(row.headCode) ?? null;
 
-      const saved = await prisma.financeSummaryHead.upsert({
-        where: {
-          financialYearId_headCode_asOfDate: {
+        const saved = await tx.financeSummaryHead.upsert({
+          where: {
+            financialYearId_headCode_asOfDate: {
+              financialYearId: fy.id,
+              headCode: row.headCode,
+              asOfDate,
+            },
+          },
+          create: {
             financialYearId: fy.id,
             headCode: row.headCode,
             asOfDate,
+            budgetEstimateCr: row.budgetEstimateCr,
+            soExpenditureCr: row.soExpenditureCr,
+            ifmsExpenditureCr: row.ifmsExpenditureCr,
+            createdById: actor?.id ?? null,
           },
-        },
-        create: {
-          financialYearId: fy.id,
-          headCode: row.headCode,
-          asOfDate,
-          budgetEstimateCr: row.budgetEstimateCr,
-          soExpenditureCr: row.soExpenditureCr,
-          ifmsExpenditureCr: row.ifmsExpenditureCr,
-          createdById: actor?.id ?? null,
-        },
-        update: {
-          budgetEstimateCr: row.budgetEstimateCr,
-          soExpenditureCr: row.soExpenditureCr,
-          ifmsExpenditureCr: row.ifmsExpenditureCr,
-          createdById: actor?.id ?? null,
-        },
-      });
+          update: {
+            budgetEstimateCr: row.budgetEstimateCr,
+            soExpenditureCr: row.soExpenditureCr,
+            ifmsExpenditureCr: row.ifmsExpenditureCr,
+            createdById: actor?.id ?? null,
+          },
+        });
 
-      await logAudit(
-        actor?.id,
-        before ? "financial.summary.update" : "financial.summary.create",
-        "finance_summary_head",
-        saved.id,
-        before
-          ? {
-              budgetEstimateCr: before.budgetEstimateCr.toString(),
-              soExpenditureCr: before.soExpenditureCr.toString(),
-              ifmsExpenditureCr: before.ifmsExpenditureCr.toString(),
-            }
-          : null,
-        {
-          headCode: saved.headCode,
-          budgetEstimateCr: saved.budgetEstimateCr.toString(),
-          soExpenditureCr: saved.soExpenditureCr.toString(),
-          ifmsExpenditureCr: saved.ifmsExpenditureCr.toString(),
-        },
-        { ...auditContext, financialYearId: fy.id, asOfDate: asOfDate.toISOString().slice(0, 10) },
-      );
-    }
+        await logAudit(
+          tx,
+          actor?.id,
+          before ? "financial.summary.update" : "financial.summary.create",
+          "finance_summary_head",
+          saved.id,
+          before
+            ? {
+                budgetEstimateCr: before.budgetEstimateCr.toString(),
+                soExpenditureCr: before.soExpenditureCr.toString(),
+                ifmsExpenditureCr: before.ifmsExpenditureCr.toString(),
+              }
+            : null,
+          {
+            headCode: saved.headCode,
+            budgetEstimateCr: saved.budgetEstimateCr.toString(),
+            soExpenditureCr: saved.soExpenditureCr.toString(),
+            ifmsExpenditureCr: saved.ifmsExpenditureCr.toString(),
+          },
+          { ...auditContext, financialYearId: fy.id, asOfDate: asOfDate.toISOString().slice(0, 10) },
+        );
+      }
+    });
 
     revalidateFinancialCaches();
     return NextResponse.json({ ok: true });

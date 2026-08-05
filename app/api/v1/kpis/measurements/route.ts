@@ -158,70 +158,108 @@ export async function POST(request: NextRequest) {
         ? body.bottleneckReason.trim()
         : null;
 
-    if (existingMeasurement) {
-      await prisma.kpiMeasurement.update({
-        where: { id: existingMeasurement.id },
-        data: {
-          meetingId: meeting.id,
-          numeratorValue: body.numeratorValue ?? null,
-          yesValue: body.yesValue ?? null,
-          workflowStatus: resolvedWorkflowStatus,
-          progressStatus: "on_track",
-          remarks: body.remarks,
-          bottleneckReason: resolvedBottleneckReason,
-          escalationFlag: resolvedEscalationFlag,
-          createdById: actor.id,
-          ...reviewFields,
-        },
-      });
-    } else {
-      await prisma.kpiMeasurement.create({
-        data: {
-          kpiTargetId: target.id,
-          meetingId: meeting.id,
-          measuredAt,
-          numeratorValue: body.numeratorValue ?? null,
-          yesValue: body.yesValue ?? null,
-          workflowStatus: resolvedWorkflowStatus,
-          progressStatus: "on_track",
-          remarks: body.remarks,
-          bottleneckReason: resolvedBottleneckReason,
-          escalationFlag: resolvedEscalationFlag,
-          createdById: actor.id,
-          ...reviewFields,
-        },
-      });
-    }
+    const afterMeasurement = existingMeasurement
+      ? await prisma.$transaction(async (tx) => {
+          await tx.kpiMeasurement.update({
+            where: { id: existingMeasurement.id },
+            data: {
+              meetingId: meeting.id,
+              numeratorValue: body.numeratorValue ?? null,
+              yesValue: body.yesValue ?? null,
+              workflowStatus: resolvedWorkflowStatus,
+              progressStatus: "on_track",
+              remarks: body.remarks,
+              bottleneckReason: resolvedBottleneckReason,
+              escalationFlag: resolvedEscalationFlag,
+              createdById: actor.id,
+              ...reviewFields,
+            },
+          });
 
-    const afterMeasurement = await prisma.kpiMeasurement.findFirst({
-      where: { kpiTargetId: target.id, measuredAt },
-    });
+          const afterMeasurement = await tx.kpiMeasurement.findFirst({
+            where: { kpiTargetId: target.id, measuredAt },
+          });
 
-    await logAudit(
-      actor.id,
-      existingMeasurement ? "kpi.measurement.update" : "kpi.measurement.create",
-      "kpi_measurement",
-      afterMeasurement?.id,
-      beforeMeasurement
-        ? {
-            numeratorValue: beforeMeasurement.numeratorValue?.toString() ?? null,
-            workflowStatus: beforeMeasurement.workflowStatus,
-          }
-        : null,
-      afterMeasurement
-        ? {
-            numeratorValue: afterMeasurement.numeratorValue?.toString() ?? null,
-            workflowStatus: afterMeasurement.workflowStatus,
-          }
-        : null,
-      {
-        ...auditContext,
-        meetingId: meeting.id,
-        kpiDefinitionId: definition.id,
-        schemeId: definition.schemeId,
-        workflowStatus: resolvedWorkflowStatus,
-      },
-    );
+          await logAudit(
+            tx,
+            actor.id,
+            "kpi.measurement.update",
+            "kpi_measurement",
+            afterMeasurement?.id,
+            beforeMeasurement
+              ? {
+                  numeratorValue: beforeMeasurement.numeratorValue?.toString() ?? null,
+                  workflowStatus: beforeMeasurement.workflowStatus,
+                }
+              : null,
+            afterMeasurement
+              ? {
+                  numeratorValue: afterMeasurement.numeratorValue?.toString() ?? null,
+                  workflowStatus: afterMeasurement.workflowStatus,
+                }
+              : null,
+            {
+              ...auditContext,
+              meetingId: meeting.id,
+              kpiDefinitionId: definition.id,
+              schemeId: definition.schemeId,
+              workflowStatus: resolvedWorkflowStatus,
+            },
+          );
+
+          return afterMeasurement;
+        })
+      : await prisma.$transaction(async (tx) => {
+          await tx.kpiMeasurement.create({
+            data: {
+              kpiTargetId: target.id,
+              meetingId: meeting.id,
+              measuredAt,
+              numeratorValue: body.numeratorValue ?? null,
+              yesValue: body.yesValue ?? null,
+              workflowStatus: resolvedWorkflowStatus,
+              progressStatus: "on_track",
+              remarks: body.remarks,
+              bottleneckReason: resolvedBottleneckReason,
+              escalationFlag: resolvedEscalationFlag,
+              createdById: actor.id,
+              ...reviewFields,
+            },
+          });
+
+          const afterMeasurement = await tx.kpiMeasurement.findFirst({
+            where: { kpiTargetId: target.id, measuredAt },
+          });
+
+          await logAudit(
+            tx,
+            actor.id,
+            "kpi.measurement.create",
+            "kpi_measurement",
+            afterMeasurement?.id,
+            beforeMeasurement
+              ? {
+                  numeratorValue: beforeMeasurement.numeratorValue?.toString() ?? null,
+                  workflowStatus: beforeMeasurement.workflowStatus,
+                }
+              : null,
+            afterMeasurement
+              ? {
+                  numeratorValue: afterMeasurement.numeratorValue?.toString() ?? null,
+                  workflowStatus: afterMeasurement.workflowStatus,
+                }
+              : null,
+            {
+              ...auditContext,
+              meetingId: meeting.id,
+              kpiDefinitionId: definition.id,
+              schemeId: definition.schemeId,
+              workflowStatus: resolvedWorkflowStatus,
+            },
+          );
+
+          return afterMeasurement;
+        });
 
     // Trigger KPI Review Request Notification
     if ((resolvedWorkflowStatus as string) === "submitted") {

@@ -24,58 +24,61 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     }
     const auditContext = getAuditRequestContext(request);
 
-  const existingFile = await prisma.file.findFirst({
-    where: {
-      name: body.name,
-      url: body.url,
-    },
-    select: { id: true },
-  });
+  await prisma.$transaction(async (tx) => {
+    const existingFile = await tx.file.findFirst({
+      where: {
+        name: body.name,
+        url: body.url,
+      },
+      select: { id: true },
+    });
 
-  const file = existingFile
-    ? await prisma.file.update({
-        where: { id: existingFile.id },
-        data: { uploadedById: actor?.id ?? null },
-      })
-    : await prisma.file.create({
-        data: {
-          name: body.name,
-          url: body.url,
-          uploadedById: actor?.id ?? null,
+    const file = existingFile
+      ? await tx.file.update({
+          where: { id: existingFile.id },
+          data: { uploadedById: actor?.id ?? null },
+        })
+      : await tx.file.create({
+          data: {
+            name: body.name,
+            url: body.url,
+            uploadedById: actor?.id ?? null,
+          },
+        });
+
+    await tx.actionItemProof.upsert({
+      where: {
+        actionItemId_fileId: {
+          actionItemId: actionItem.id,
+          fileId: file.id,
         },
-      });
-
-  await prisma.actionItemProof.upsert({
-    where: {
-      actionItemId_fileId: {
+      },
+      update: {
+        uploadedById: actor?.id ?? null,
+      },
+      create: {
         actionItemId: actionItem.id,
         fileId: file.id,
+        uploadedById: actor?.id ?? null,
       },
-    },
-    update: {
-      uploadedById: actor?.id ?? null,
-    },
-    create: {
-      actionItemId: actionItem.id,
-      fileId: file.id,
-      uploadedById: actor?.id ?? null,
-    },
-  });
+    });
 
-  await prisma.actionItem.update({
-    where: { id: actionItem.id },
-    data: { status: ActionItemStatus.PROOF_UPLOADED },
-  });
+    await tx.actionItem.update({
+      where: { id: actionItem.id },
+      data: { status: ActionItemStatus.PROOF_UPLOADED },
+    });
 
-  await logAudit(
-    actor?.id,
-    "action_item.proof.upload",
-    "action_item_proof",
-    actionItem.id,
-    null,
-    { fileId: file.id, name: file.name },
-    { ...auditContext, actionItemId: actionItem.id, meetingId: actionItem.meetingId, schemeId: actionItem.schemeId },
-  );
+    await logAudit(
+      tx,
+      actor?.id,
+      "action_item.proof.upload",
+      "action_item_proof",
+      actionItem.id,
+      null,
+      { fileId: file.id, name: file.name },
+      { ...auditContext, actionItemId: actionItem.id, meetingId: actionItem.meetingId, schemeId: actionItem.schemeId },
+    );
+  });
 
   return NextResponse.json({ ok: true });
   } catch (error) {

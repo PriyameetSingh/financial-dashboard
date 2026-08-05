@@ -36,20 +36,25 @@ export async function POST(request: NextRequest) {
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.ulb.create({
-      data: { name },
-      select: { id: true, name: true },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.ulb.create({
+        data: { name },
+        select: { id: true, name: true },
+      });
 
-    await logAudit(
-      actor?.id ?? null,
-      "CREATE",
-      "Ulb",
-      created.id,
-      null,
-      { name: created.name },
-      auditContext
-    );
+      await logAudit(
+        tx,
+        actor?.id ?? null,
+        "CREATE",
+        "Ulb",
+        created.id,
+        null,
+        { name: created.name },
+        auditContext
+      );
+
+      return created;
+    });
 
     return NextResponse.json(created);
   } catch (error: unknown) {

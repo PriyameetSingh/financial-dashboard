@@ -41,24 +41,25 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiTarget.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiDefinition.delete({ where: { id } });
-    });
 
-    await logAudit(
-      actor?.id,
-      "kpi_definition.delete",
-      "kpi_definition",
-      id,
-      {
-        description: before.description,
-        category: before.category,
-        kpiType: before.kpiType,
-        monitoringLevel: before.monitoringLevel,
-        schemeId: before.schemeId,
-        subschemeId: before.subschemeId,
-      },
-      null,
-      { ...auditContext, schemeId: before.schemeId, schemeCode: before.scheme.code },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "kpi_definition.delete",
+        "kpi_definition",
+        id,
+        {
+          description: before.description,
+          category: before.category,
+          kpiType: before.kpiType,
+          monitoringLevel: before.monitoringLevel,
+          schemeId: before.schemeId,
+          subschemeId: before.subschemeId,
+        },
+        null,
+        { ...auditContext, schemeId: before.schemeId, schemeCode: before.scheme.code },
+      );
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

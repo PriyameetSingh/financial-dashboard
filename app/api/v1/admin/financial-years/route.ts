@@ -64,22 +64,26 @@ export async function POST(request: NextRequest) {
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.financialYear.create({
-      data: {
-        label,
-        startDate: start,
-        endDate: end,
-      },
-      select: { id: true, label: true, startDate: true, endDate: true },
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.financialYear.create({
+        data: {
+          label,
+          startDate: start,
+          endDate: end,
+        },
+        select: { id: true, label: true, startDate: true, endDate: true },
+      });
+
+      await logAudit(tx, actor?.id ?? null, "CREATE", "FinancialYear", created.id, null, {
+        label: created.label,
+        startDate: created.startDate.toISOString().slice(0, 10),
+        endDate: created.endDate.toISOString().slice(0, 10),
+      }, auditContext);
+
+      return created;
     });
 
     await ensureFyBudgetAllocationWithLines(created.id, actor?.id ?? null);
-
-    await logAudit(actor?.id ?? null, "CREATE", "FinancialYear", created.id, null, {
-      label: created.label,
-      startDate: created.startDate.toISOString().slice(0, 10),
-      endDate: created.endDate.toISOString().slice(0, 10),
-    }, auditContext);
 
     revalidateFinancialCaches();
 

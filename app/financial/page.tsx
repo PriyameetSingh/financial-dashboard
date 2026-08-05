@@ -6,13 +6,15 @@ import {
   getFinanceSummaryBreakdownForOverview,
 } from "@/lib/financial-budget-entries";
 import { AuthError, requireAnyPermissionAndDbUser } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 import FinancialOverviewClient from "./FinancialOverviewClient";
 
 export default async function FinancialOverviewPage() {
   try {
     const rbacUser = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(rbacUser);
 
-    const budgetData = await getFinancialBudgetEntriesOverview(rbacUser);
+    const budgetData = await getFinancialBudgetEntriesOverview(rbacUser, scope);
 
     const summary =
       budgetData.financialYearId && budgetData.financialYearLabel

@@ -4,6 +4,8 @@ import { toNumber } from "@/lib/financial-budget-entries";
 import { getFinancialBudgetEntriesOverview, getFinanceSummaryBreakdownForOverview } from "@/lib/financial-budget-entries";
 import { sponsorshipToSchemeBudgetCategory } from "@/lib/scheme-fy-bucket-metrics";
 import type { DbUserWithRbac } from "@/lib/server-rbac";
+import type { DataScope } from "@/lib/data-scope";
+import { actionItemWhere, financeSnapshotWhere } from "@/lib/data-access/scope-where";
 import type { FinancialEntry } from "@/types";
 
 export type CommandCentreSchemeSummary = {
@@ -134,7 +136,8 @@ export type CommandCentreDashboardOptions = {
 };
 
 export async function getCommandCentreDashboard(
-  actor?: DbUserWithRbac | null,
+  actor: DbUserWithRbac | null,
+  scope: DataScope,
   options?: CommandCentreDashboardOptions,
 ): Promise<CommandCentreDashboard> {
   const [fyRow, verticalRows] = await Promise.all([
@@ -146,9 +149,9 @@ export async function getCommandCentreDashboard(
 
   const [{ entries, financialYearLabel, financialYearId }, overdueItems, trendRows, lastMeetingRow, latestSnapshot, overdueCount] =
     await Promise.all([
-      getFinancialBudgetEntriesOverview(actor),
+      getFinancialBudgetEntriesOverview(actor, scope),
       prisma.actionItem.findMany({
-        where: { status: "OVERDUE", archived: false },
+        where: { ...actionItemWhere(scope), status: "OVERDUE", archived: false },
         orderBy: { dueDate: "asc" },
         take: 5,
         include: {
@@ -162,7 +165,7 @@ export async function getCommandCentreDashboard(
       fyRow
         ? prisma.financeExpenditureSnapshot.groupBy({
             by: ["asOfDate"],
-            where: { financialYearId: fyRow.id },
+            where: financeSnapshotWhere(scope, fyRow.id),
             _sum: { ifmsExpenditureCr: true },
             orderBy: { asOfDate: "asc" },
           })
@@ -170,12 +173,12 @@ export async function getCommandCentreDashboard(
       loadDashboardMeetingRowForCommandCentre(options?.meetingId),
       fyRow
         ? prisma.financeExpenditureSnapshot.findFirst({
-            where: { financialYearId: fyRow.id },
+            where: financeSnapshotWhere(scope, fyRow.id),
             orderBy: { asOfDate: "desc" },
             select: { asOfDate: true },
           })
         : Promise.resolve(null),
-      prisma.actionItem.count({ where: { status: "OVERDUE", archived: false } }),
+      prisma.actionItem.count({ where: { ...actionItemWhere(scope), status: "OVERDUE", archived: false } }),
     ]);
 
   const fy = fyRow;

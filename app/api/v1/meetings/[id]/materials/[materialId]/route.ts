@@ -25,19 +25,22 @@ export async function DELETE(
     // Delete the file from local storage
     await deleteFile(row.storagePath);
 
-    await prisma.meetingMaterial.delete({ where: { id: materialId } });
-
     const auditContext = getAuditRequestContext(_request);
 
-    await logAudit(
-      actor?.id,
-      "meeting.material.delete",
-      "meeting_material",
-      materialId,
-      { id: materialId, storagePath: row.storagePath },
-      null,
-      { ...auditContext, meetingId },
-    );
+    await prisma.$transaction(async (tx) => {
+      await tx.meetingMaterial.delete({ where: { id: materialId } });
+
+      await logAudit(
+        tx,
+        actor?.id,
+        "meeting.material.delete",
+        "meeting_material",
+        materialId,
+        { id: materialId, storagePath: row.storagePath },
+        null,
+        { ...auditContext, meetingId },
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

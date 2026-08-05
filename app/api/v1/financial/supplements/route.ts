@@ -67,27 +67,32 @@ export async function POST(request: NextRequest) {
 
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.financeBudgetSupplement.create({
-      data: {
-        schemeId: scheme.id,
-        subschemeId,
-        financialYearId: fy.id,
-        amountCr: body.amountCr,
-        reason: body.reason,
-        referenceNo: body.referenceNo,
-        createdById: actor?.id ?? null,
-      },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.financeBudgetSupplement.create({
+        data: {
+          schemeId: scheme.id,
+          subschemeId,
+          financialYearId: fy.id,
+          amountCr: body.amountCr,
+          reason: body.reason,
+          referenceNo: body.referenceNo,
+          createdById: actor?.id ?? null,
+        },
+      });
 
-    await logAudit(
-      actor?.id,
-      "financial.budget.supplement",
-      "finance_budget_supplements",
-      created.id,
-      null,
-      { amountCr: String(body.amountCr), reason: body.reason, referenceNo: body.referenceNo ?? null },
-      { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "financial.budget.supplement",
+        "finance_budget_supplements",
+        created.id,
+        null,
+        { amountCr: String(body.amountCr), reason: body.reason, referenceNo: body.referenceNo ?? null },
+        { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
+      );
+
+      return created;
+    });
 
     await syncSchemeFyCategoryLines(fy.id, actor?.id ?? null);
     revalidateFinancialCaches();

@@ -36,24 +36,29 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     }
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.subscheme.create({
-      data: {
-        schemeId: id,
-        code,
-        name,
-        createdById: actor?.id ?? null,
-      },
-    });
+    const created = await prisma.$transaction(async (tx) => {
+      const created = await tx.subscheme.create({
+        data: {
+          schemeId: id,
+          code,
+          name,
+          createdById: actor?.id ?? null,
+        },
+      });
 
-    await logAudit(
-      actor?.id,
-      "subscheme.create",
-      "subscheme",
-      created.id,
-      null,
-      { id: created.id, schemeId: created.schemeId, code: created.code, name: created.name },
-      { ...auditContext, schemeId: id, schemeCode: scheme.code },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "subscheme.create",
+        "subscheme",
+        created.id,
+        null,
+        { id: created.id, schemeId: created.schemeId, code: created.code, name: created.name },
+        { ...auditContext, schemeId: id, schemeCode: scheme.code },
+      );
+
+      return created;
+    });
 
     return NextResponse.json({
       subscheme: {

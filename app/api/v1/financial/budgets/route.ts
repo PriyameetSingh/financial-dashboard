@@ -5,6 +5,7 @@ import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { getFinancialBudgetEntriesOverview } from "@/lib/financial-budget-entries";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 
 export const runtime = "nodejs";
@@ -56,52 +57,57 @@ export async function PATCH(request: NextRequest) {
       where: { schemeId: scheme.id, subschemeId, financialYearId: fy.id },
     });
 
-    if (existing) {
-      if (existing.locked) {
-        return NextResponse.json({ detail: "Budget is locked for this financial year." }, { status: 400 });
-      }
-      await prisma.financeBudgetRevision.create({
-        data: {
-          financeBudgetId: existing.id,
-          oldBudgetEstimateCr: existing.budgetEstimateCr,
-          newBudgetEstimateCr: body.newBudgetCr,
-          reason: body.reason,
-          createdById: actor?.id ?? null,
-        },
-      });
-      await prisma.financeBudget.update({
-        where: { id: existing.id },
-        data: { budgetEstimateCr: body.newBudgetCr, createdById: actor?.id ?? null },
-      });
-      await logAudit(
-        actor?.id,
-        "financial.budget.revise",
-        "finance_budgets",
-        existing.id,
-        { budgetEstimateCr: existing.budgetEstimateCr.toString() },
-        { budgetEstimateCr: String(body.newBudgetCr), reason: body.reason },
-        { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
-      );
-    } else {
-      const created = await prisma.financeBudget.create({
-        data: {
-          schemeId: scheme.id,
-          subschemeId,
-          financialYearId: fy.id,
-          budgetEstimateCr: body.newBudgetCr,
-          createdById: actor?.id ?? null,
-        },
-      });
-      await logAudit(
-        actor?.id,
-        "financial.budget.create",
-        "finance_budgets",
-        created.id,
-        null,
-        { budgetEstimateCr: String(body.newBudgetCr) },
-        { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
-      );
+    if (existing?.locked) {
+      return NextResponse.json({ detail: "Budget is locked for this financial year." }, { status: 400 });
     }
+
+    await prisma.$transaction(async (tx) => {
+      if (existing) {
+        await tx.financeBudgetRevision.create({
+          data: {
+            financeBudgetId: existing.id,
+            oldBudgetEstimateCr: existing.budgetEstimateCr,
+            newBudgetEstimateCr: body.newBudgetCr,
+            reason: body.reason,
+            createdById: actor?.id ?? null,
+          },
+        });
+        await tx.financeBudget.update({
+          where: { id: existing.id },
+          data: { budgetEstimateCr: body.newBudgetCr, createdById: actor?.id ?? null },
+        });
+        await logAudit(
+          tx,
+          actor?.id,
+          "financial.budget.revise",
+          "finance_budgets",
+          existing.id,
+          { budgetEstimateCr: existing.budgetEstimateCr.toString() },
+          { budgetEstimateCr: String(body.newBudgetCr), reason: body.reason },
+          { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
+        );
+      } else {
+        const created = await tx.financeBudget.create({
+          data: {
+            schemeId: scheme.id,
+            subschemeId,
+            financialYearId: fy.id,
+            budgetEstimateCr: body.newBudgetCr,
+            createdById: actor?.id ?? null,
+          },
+        });
+        await logAudit(
+          tx,
+          actor?.id,
+          "financial.budget.create",
+          "finance_budgets",
+          created.id,
+          null,
+          { budgetEstimateCr: String(body.newBudgetCr) },
+          { ...auditContext, schemeId: scheme.id, subschemeId, financialYearId: fy.id },
+        );
+      }
+    });
 
     await syncSchemeFyCategoryLines(fy.id, actor?.id ?? null);
     revalidateFinancialCaches();
@@ -119,8 +125,9 @@ export async function PATCH(request: NextRequest) {
 export async function GET() {
   try {
     const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
-    const result = await getFinancialBudgetEntriesOverview(user);
+    const result = await getFinancialBudgetEntriesOverview(user, scope);
     return NextResponse.json(result);
   } catch (error) {
     const auth = toAuthErrorResponse(error);

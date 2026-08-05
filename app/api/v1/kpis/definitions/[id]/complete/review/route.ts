@@ -76,35 +76,40 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       completionReviewedById: definition.completionReviewedById,
     };
 
-    const updated = await prisma.kpiDefinition.update({
-      where: { id },
-      data: {
-        completionStatus: nextStatus,
-        completionReviewedAt: now,
-        completionReviewedById: actor.id,
-        completionReviewNote: note,
-      },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.kpiDefinition.update({
+        where: { id },
+        data: {
+          completionStatus: nextStatus,
+          completionReviewedAt: now,
+          completionReviewedById: actor.id,
+          completionReviewNote: note,
+        },
+      });
 
-    await logAudit(
-      actor.id,
-      "kpi_definition.review_completion",
-      "kpi_definition",
-      id,
-      before,
-      {
-        completionStatus: updated.completionStatus,
-        decision: body.decision,
-        note,
-      },
-      {
-        ...auditContext,
-        schemeId: definition.schemeId,
-        schemeCode: definition.scheme.code,
-        kpiDefinitionId: id,
-        decision: body.decision,
-      },
-    );
+      await logAudit(
+        tx,
+        actor.id,
+        "kpi_definition.review_completion",
+        "kpi_definition",
+        id,
+        before,
+        {
+          completionStatus: updated.completionStatus,
+          decision: body.decision,
+          note,
+        },
+        {
+          ...auditContext,
+          schemeId: definition.schemeId,
+          schemeCode: definition.scheme.code,
+          kpiDefinitionId: id,
+          decision: body.decision,
+        },
+      );
+
+      return updated;
+    });
 
     // Notify the requester of the decision.
     if (definition.completionRequestedById) {
