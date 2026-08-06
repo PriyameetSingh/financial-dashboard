@@ -3,6 +3,8 @@ import {
   FINANCE_YEAR_SCHEME_BUDGET_CATEGORIES,
 } from "@/lib/finance-year-budget-allocation";
 import { sponsorshipToSchemeBudgetCategory } from "@/lib/scheme-fy-bucket-metrics";
+import type { DataScope } from "@/lib/data-scope";
+import { financeSnapshotWhere } from "@/lib/data-access/scope-where";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -22,6 +24,7 @@ function toNumber(value: unknown): number {
 export async function aggregateSnapshotTotalsBySchemeBucket(
   financialYearId: string,
   asOfDate: Date,
+  scope: DataScope,
 ): Promise<
   Record<
     (typeof FINANCE_YEAR_SCHEME_BUDGET_CATEGORIES)[number],
@@ -29,7 +32,7 @@ export async function aggregateSnapshotTotalsBySchemeBucket(
   >
 > {
   const snaps = await prisma.financeExpenditureSnapshot.findMany({
-    where: { financialYearId, asOfDate },
+    where: { ...financeSnapshotWhere(scope, financialYearId), asOfDate },
     select: {
       schemeId: true,
       soExpenditureCr: true,

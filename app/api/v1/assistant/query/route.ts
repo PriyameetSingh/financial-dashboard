@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerAssistantQuery } from "@/lib/assistant-query";
 import type { AssistantMeetingContext } from "@/lib/assistant-types";
-import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,8 @@ type Body = {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const body = (await request.json()) as Body;
     const query = typeof body.query === "string" ? body.query.trim() : "";
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const answer = await answerAssistantQuery(query, ctx);
+    const answer = await answerAssistantQuery(query, ctx, scope);
     return NextResponse.json({ answer });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

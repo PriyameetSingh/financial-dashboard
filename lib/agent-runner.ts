@@ -3,6 +3,10 @@ import { callLocalLLM } from "@/lib/llm";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
 import { FINANCE_YEAR_BUDGET_CATEGORY_ORDER } from "@/lib/finance-year-budget-allocation";
+import type { DataScope } from "@/lib/data-scope";
+
+/** Agent runs are admin-only (MANAGE_PERMISSIONS) and produce system-wide insights. */
+const AGENT_FULL_SCOPE: DataScope = { kind: "full" };
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -36,7 +40,7 @@ async function getTotalsForSnapshotDate(fyId: string, asOfDate: Date) {
 
   const allocation = await syncSchemeFyCategoryLines(fyId, null);
   const lineByCategory = new Map(allocation.categoryLines.map((l) => [l.category, l]));
-  const bucketExp = await aggregateSnapshotTotalsBySchemeBucket(fyId, asOfDate);
+  const bucketExp = await aggregateSnapshotTotalsBySchemeBucket(fyId, asOfDate, AGENT_FULL_SCOPE);
 
   const rows = FINANCE_YEAR_BUDGET_CATEGORY_ORDER.map((category) => {
     const line = lineByCategory.get(category);

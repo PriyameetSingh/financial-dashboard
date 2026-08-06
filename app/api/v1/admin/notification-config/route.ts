@@ -68,39 +68,42 @@ export async function POST(request: NextRequest) {
     const afterMap: Record<string, string> = {};
 
     // Upsert configs in database
-    for (const [key, rawValue] of Object.entries(body)) {
-      // Validate configuration keys
-      if (!Object.keys(DEFAULT_CONFIGS).includes(key)) {
-        continue; // skip invalid or unknown config keys
+    await prisma.$transaction(async (tx) => {
+      for (const [key, rawValue] of Object.entries(body)) {
+        // Validate configuration keys
+        if (!Object.keys(DEFAULT_CONFIGS).includes(key)) {
+          continue; // skip invalid or unknown config keys
+        }
+
+        const value = rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
+        afterMap[key] = value;
+
+        await tx.systemNotificationConfig.upsert({
+          where: { key },
+          create: {
+            key,
+            value,
+            updatedById: actor.id,
+          },
+          update: {
+            value,
+            updatedById: actor.id,
+          },
+        });
       }
 
-      const value = rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
-      afterMap[key] = value;
-
-      await prisma.systemNotificationConfig.upsert({
-        where: { key },
-        create: {
-          key,
-          value,
-          updatedById: actor.id,
-        },
-        update: {
-          value,
-          updatedById: actor.id,
-        },
-      });
-    }
-
-    // Log administrative audit event
-    await logAudit(
-      actor.id,
-      "notification.config_update",
-      "system_notification_configs",
-      actor.id, // system configuration updates don't have a single row target ID, reference updating actor
-      beforeMap,
-      afterMap,
-      auditContext
-    );
+      // Log administrative audit event
+      await logAudit(
+        tx,
+        actor.id,
+        "notification.config_update",
+        "system_notification_configs",
+        actor.id, // system configuration updates don't have a single row target ID, reference updating actor
+        beforeMap,
+        afterMap,
+        auditContext
+      );
+    });
 
     return NextResponse.json({ ok: true, configs: afterMap });
   } catch (error) {

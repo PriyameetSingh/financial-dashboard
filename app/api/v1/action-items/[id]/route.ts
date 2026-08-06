@@ -209,31 +209,34 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         return NextResponse.json({ detail: "Forbidden" }, { status: 403 });
       }
 
-      await prisma.actionItem.update({
-        where: { id },
-        data: { archived: body.archived },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.actionItem.update({
+          where: { id },
+          data: { archived: body.archived },
+        });
 
-      await prisma.actionItemUpdate.create({
-        data: {
-          actionItemId: id,
-          meetingId: current.meetingId,
-          timestamp: new Date(),
-          status: current.status,
-          note: body.archived ? "Action item archived" : "Action item unarchived",
-          createdById: actor.id,
-        },
-      });
+        await tx.actionItemUpdate.create({
+          data: {
+            actionItemId: id,
+            meetingId: current.meetingId,
+            timestamp: new Date(),
+            status: current.status,
+            note: body.archived ? "Action item archived" : "Action item unarchived",
+            createdById: actor.id,
+          },
+        });
 
-      await logAudit(
-        actor.id,
-        "action_item.archive",
-        "action_item",
-        id,
-        { archived: current.archived },
-        { archived: body.archived },
-        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-      );
+        await logAudit(
+          tx,
+          actor.id,
+          "action_item.archive",
+          "action_item",
+          id,
+          { archived: current.archived },
+          { archived: body.archived },
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
+      });
 
       const item = await getActionItemById(id);
       const history = await getAssignmentHistory(id);
@@ -248,22 +251,35 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         return NextResponse.json({ detail: "Rejection reason is required" }, { status: 400 });
       }
       const nextStatus = body.reviewerDecision === "approve" ? ActionItemStatus.COMPLETED : ActionItemStatus.IN_PROGRESS;
-      await prisma.actionItem.update({
-        where: { id },
-        data: { status: nextStatus },
-      });
-      await prisma.actionItemUpdate.create({
-        data: {
-          actionItemId: id,
-          meetingId: body.meetingId?.trim() ?? current.meetingId,
-          timestamp: new Date(),
-          status: nextStatus,
-          note:
-            body.reviewerDecision === "approve"
-              ? "Reviewer approved completion"
-              : `Reviewer rejected: ${body.rejectionReason}`,
-          createdById: actor.id,
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.actionItem.update({
+          where: { id },
+          data: { status: nextStatus },
+        });
+        await tx.actionItemUpdate.create({
+          data: {
+            actionItemId: id,
+            meetingId: body.meetingId?.trim() ?? current.meetingId,
+            timestamp: new Date(),
+            status: nextStatus,
+            note:
+              body.reviewerDecision === "approve"
+                ? "Reviewer approved completion"
+                : `Reviewer rejected: ${body.rejectionReason}`,
+            createdById: actor.id,
+          },
+        });
+
+        await logAudit(
+          tx,
+          actor.id,
+          "action_item.review",
+          "action_item",
+          id,
+          { status: beforeStatus },
+          { status: nextStatus, decision: body.reviewerDecision },
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
       });
 
       // Trigger notifications for performers
@@ -280,15 +296,6 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           metadata: { actionItemId: current.id },
         });
       }
-      await logAudit(
-        actor.id,
-        "action_item.review",
-        "action_item",
-        id,
-        { status: beforeStatus },
-        { status: nextStatus, decision: body.reviewerDecision },
-        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-      );
       const item = await getActionItemById(id);
       const history = await getAssignmentHistory(id);
       return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
@@ -474,25 +481,28 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         });
       }
 
-      await prisma.actionItemUpdate.create({
-        data: {
-          actionItemId: id,
-          meetingId: current.meetingId,
-          timestamp: new Date(),
-          status: current.status,
-          note: `Reassigned: performers ${prevAssignName} → ${performersFound.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${isSelfApproved ? "Self-Approved" : (reviewersFound.map((u) => u.name).join(", ") || "—")}`,
-          createdById: actor.id,
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.actionItemUpdate.create({
+          data: {
+            actionItemId: id,
+            meetingId: current.meetingId,
+            timestamp: new Date(),
+            status: current.status,
+            note: `Reassigned: performers ${prevAssignName} → ${performersFound.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${isSelfApproved ? "Self-Approved" : (reviewersFound.map((u) => u.name).join(", ") || "—")}`,
+            createdById: actor.id,
+          },
+        });
+        await logAudit(
+          tx,
+          actor.id,
+          "action_item.update",
+          "action_item",
+          id,
+          { performerIds: [...performerIds], reviewerIds: [...reviewerIds] },
+          { performerIds: nextPerformerIds, reviewerIds: nextReviewerIds },
+          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+        );
       });
-      await logAudit(
-        actor.id,
-        "action_item.update",
-        "action_item",
-        id,
-        { performerIds: [...performerIds], reviewerIds: [...reviewerIds] },
-        { performerIds: nextPerformerIds, reviewerIds: nextReviewerIds },
-        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-      );
       const item = await getActionItemById(id);
       const history = await getAssignmentHistory(id);
       return NextResponse.json({ item: item ? mapActionItem(item, history) : null });
@@ -526,25 +536,28 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         fieldData.priority = body.priority;
       }
       if (Object.keys(fieldData).length > 0) {
-        await prisma.actionItem.update({ where: { id }, data: fieldData });
-        const beforeFields: Record<string, string | null> = Object.fromEntries(
-          Object.keys(fieldData).map((k) => {
-            const v = (current as Record<string, unknown>)[k];
-            return [k, v != null ? String(v) : null];
-          }),
-        );
-        const afterFields: Record<string, string> = Object.fromEntries(
-          Object.entries(fieldData).map(([k, v]) => [k, String(v)]),
-        );
-        await logAudit(
-          actor.id,
-          "action_item.update",
-          "action_item",
-          id,
-          beforeFields,
-          afterFields,
-          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-        );
+        await prisma.$transaction(async (tx) => {
+          await tx.actionItem.update({ where: { id }, data: fieldData });
+          const beforeFields: Record<string, string | null> = Object.fromEntries(
+            Object.keys(fieldData).map((k) => {
+              const v = (current as Record<string, unknown>)[k];
+              return [k, v != null ? String(v) : null];
+            }),
+          );
+          const afterFields: Record<string, string> = Object.fromEntries(
+            Object.entries(fieldData).map(([k, v]) => [k, String(v)]),
+          );
+          await logAudit(
+            tx,
+            actor.id,
+            "action_item.update",
+            "action_item",
+            id,
+            beforeFields,
+            afterFields,
+            { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+          );
+        });
       }
 
       if (body.dueDate) {
@@ -552,16 +565,19 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         if (isNaN(parsed.getTime())) {
           return NextResponse.json({ detail: "Invalid dueDate" }, { status: 400 });
         }
-        await prisma.actionItem.update({ where: { id }, data: { dueDate: parsed } });
-        await logAudit(
-          actor.id,
-          "action_item.update",
-          "action_item",
-          id,
-          { dueDate: toIsoDate(current.dueDate) },
-          { dueDate: body.dueDate },
-          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-        );
+        await prisma.$transaction(async (tx) => {
+          await tx.actionItem.update({ where: { id }, data: { dueDate: parsed } });
+          await logAudit(
+            tx,
+            actor.id,
+            "action_item.update",
+            "action_item",
+            id,
+            { dueDate: toIsoDate(current.dueDate) },
+            { dueDate: body.dueDate },
+            { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+          );
+        });
       }
 
       if (body.updateId) {
@@ -573,19 +589,22 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         if (!existing || existing.actionItemId !== id) {
           return NextResponse.json({ detail: "Update not found" }, { status: 404 });
         }
-        await prisma.actionItemUpdate.update({
-          where: { id: body.updateId },
-          data: { note: noteTrimmed },
+        await prisma.$transaction(async (tx) => {
+          await tx.actionItemUpdate.update({
+            where: { id: body.updateId },
+            data: { note: noteTrimmed },
+          });
+          await logAudit(
+            tx,
+            actor.id,
+            "action_item.update_edit",
+            "action_item_update",
+            body.updateId,
+            { note: existing.note },
+            { note: noteTrimmed },
+            { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+          );
         });
-        await logAudit(
-          actor.id,
-          "action_item.update_edit",
-          "action_item_update",
-          body.updateId,
-          { note: existing.note },
-          { note: noteTrimmed },
-          { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-        );
       }
 
       const item = await getActionItemById(id);
@@ -651,43 +670,68 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         }
         noteMeetingId = meeting.id;
       }
-      if (nextStatus && nextStatus !== current.status) {
-        await prisma.actionItem.update({
-          where: { id },
-          data: { status: nextStatus },
-        });
+      const underReviewNotify = nextStatus && nextStatus !== current.status && nextStatus === ActionItemStatus.UNDER_REVIEW;
+      let noteRecipients: Set<string> | null = null;
+      await prisma.$transaction(async (tx) => {
+        if (nextStatus && nextStatus !== current.status) {
+          await tx.actionItem.update({
+            where: { id },
+            data: { status: nextStatus },
+          });
+        }
+        if (noteTrimmed.length > 0 && noteMeetingId) {
+          await tx.actionItemUpdate.create({
+            data: {
+              actionItemId: id,
+              meetingId: noteMeetingId,
+              timestamp: new Date(),
+              status: nextStatus ?? current.status,
+              note: noteTrimmed,
+              createdById: actor.id,
+            },
+          });
+        }
 
-        // Trigger notification to reviewers if status is UNDER_REVIEW
-        if (nextStatus === ActionItemStatus.UNDER_REVIEW) {
-          for (const reviewerId of reviewerIds) {
-            await NotificationService.trigger({
-              userId: reviewerId,
-              title: "Action Item Ready for Review",
-              content: `Performer submitted proof for review on: "${current.title}"`,
-              type: "ACTION_ITEM_REVIEW_REQUEST",
-              priority: current.priority,
-              link: `/action-items/${current.id}`,
-              metadata: { actionItemId: current.id },
-            });
-          }
+        await logAudit(
+          tx,
+          actor.id,
+          "action_item.update",
+          "action_item",
+          id,
+          { status: beforeStatus },
+          { status: nextStatus ?? current.status },
+          {
+            ...auditContext,
+            meetingId: noteMeetingId ?? current.meetingId,
+            schemeId: current.schemeId,
+          },
+        );
+      });
+
+      // Compute recipients for the post-transaction notification broadcast.
+      // Done outside the transaction (pure data, no DB) so TS control-flow sees the assignment.
+      if (noteTrimmed.length > 0 && noteMeetingId) {
+        noteRecipients = new Set([...performerIds, ...reviewerIds]);
+        noteRecipients.delete(actor.id);
+      }
+
+      // Trigger notification to reviewers if status is UNDER_REVIEW
+      if (underReviewNotify) {
+        for (const reviewerId of reviewerIds) {
+          await NotificationService.trigger({
+            userId: reviewerId,
+            title: "Action Item Ready for Review",
+            content: `Performer submitted proof for review on: "${current.title}"`,
+            type: "ACTION_ITEM_REVIEW_REQUEST",
+            priority: current.priority,
+            link: `/action-items/${current.id}`,
+            metadata: { actionItemId: current.id },
+          });
         }
       }
-      if (noteTrimmed.length > 0 && noteMeetingId) {
-        await prisma.actionItemUpdate.create({
-          data: {
-            actionItemId: id,
-            meetingId: noteMeetingId,
-            timestamp: new Date(),
-            status: nextStatus ?? current.status,
-            note: noteTrimmed,
-            createdById: actor.id,
-          },
-        });
-
-        // Broadcast action item updates to all concerned owners (except creator of the update)
-        const recipients = new Set([...performerIds, ...reviewerIds]);
-        recipients.delete(actor.id);
-        for (const recipientId of recipients) {
+      // Broadcast action item updates to all concerned owners (except creator of the update)
+      if (noteRecipients) {
+        for (const recipientId of noteRecipients) {
           await NotificationService.trigger({
             userId: recipientId,
             title: "Action Item Update Posted",
@@ -699,19 +743,6 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         }
       }
-      await logAudit(
-        actor.id,
-        "action_item.update",
-        "action_item",
-        id,
-        { status: beforeStatus },
-        { status: nextStatus ?? current.status },
-        {
-          ...auditContext,
-          meetingId: noteMeetingId ?? current.meetingId,
-          schemeId: current.schemeId,
-        },
-      );
     }
 
     const item = await getActionItemById(id);
@@ -757,17 +788,18 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
       await tx.actionItemProof.deleteMany({ where: { actionItemId: id } });
       await tx.actionItem.delete({ where: { id } });
-    });
 
-    await logAudit(
-      actor.id,
-      "action_item.delete",
-      "action_item",
-      id,
-      { title: current.title, status: current.status },
-      null,
-      { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
-    );
+      await logAudit(
+        tx,
+        actor.id,
+        "action_item.delete",
+        "action_item",
+        id,
+        { title: current.title, status: current.status },
+        null,
+        { ...auditContext, meetingId: current.meetingId, schemeId: current.schemeId },
+      );
+    });
 
     return NextResponse.json({ success: true, message: "Action item deleted successfully" });
   } catch (error) {

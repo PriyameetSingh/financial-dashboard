@@ -170,17 +170,23 @@ async function loadEffectivePermissionCodes(): Promise<Set<string>> {
   try {
     const rowByCode = await prisma.user.findFirst({
       where: { code: { equals: sessionUser.id, mode: "insensitive" } },
-      select: { id: true },
+      select: { id: true, sessionsInvalidatedAt: true },
     });
     const row =
       rowByCode ??
       (sessionUser.email
         ? await prisma.user.findFirst({
             where: { email: { equals: sessionUser.email, mode: "insensitive" } },
-            select: { id: true },
+            select: { id: true, sessionsInvalidatedAt: true },
           })
         : null);
     if (!row) return new Set();
+    // Enforce session invalidation on the lightweight path too (previously only
+    // getDbUserBySession checked this, so requirePermission/requireAnyPermission
+    // kept honouring a token after a password reset until it expired).
+    if (isSessionInvalidated(row.sessionsInvalidatedAt, sessionUser.iat)) {
+      throw new AuthError(401, "Session invalidated");
+    }
     return await getEffectivePermissionCodesFromUserId(row.id, sessionUser.role);
   } catch (e) {
     const mapped = asDatabaseUnavailableError(e);

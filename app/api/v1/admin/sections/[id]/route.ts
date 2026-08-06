@@ -27,21 +27,26 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
     const auditContext = getAuditRequestContext(request);
 
-    const updated = await prisma.section.update({
-      where: { id },
-      data: { name },
-      select: { id: true, name: true },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.section.update({
+        where: { id },
+        data: { name },
+        select: { id: true, name: true },
+      });
 
-    await logAudit(
-      actor?.id ?? null,
-      "UPDATE",
-      "Section",
-      updated.id,
-      { name: existing.name },
-      { name: updated.name },
-      auditContext
-    );
+      await logAudit(
+        tx,
+        actor?.id ?? null,
+        "UPDATE",
+        "Section",
+        updated.id,
+        { name: existing.name },
+        { name: updated.name },
+        auditContext
+      );
+
+      return updated;
+    });
 
     return NextResponse.json(updated);
   } catch (error: unknown) {

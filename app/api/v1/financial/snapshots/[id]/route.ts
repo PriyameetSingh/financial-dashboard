@@ -59,23 +59,26 @@ export async function DELETE(
     const auditContext = getAuditRequestContext(request);
     const before = snapshotSummary(existing);
 
-    await prisma.financeExpenditureSnapshot.delete({ where: { id: existing.id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.financeExpenditureSnapshot.delete({ where: { id: existing.id } });
 
-    await logAudit(
-      actor?.id,
-      "financial.snapshot.delete",
-      "finance_expenditure_snapshot",
-      existing.id,
-      before,
-      null,
-      {
-        ...auditContext,
-        schemeId: existing.schemeId,
-        subschemeId: existing.subschemeId,
-        financialYearId: existing.financialYearId,
-        asOfDate: existing.asOfDate.toISOString().slice(0, 10),
-      },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "financial.snapshot.delete",
+        "finance_expenditure_snapshot",
+        existing.id,
+        before,
+        null,
+        {
+          ...auditContext,
+          schemeId: existing.schemeId,
+          subschemeId: existing.subschemeId,
+          financialYearId: existing.financialYearId,
+          asOfDate: existing.asOfDate.toISOString().slice(0, 10),
+        },
+      );
+    });
 
     await syncSchemeFyCategoryLines(existing.financialYearId, actor?.id ?? null);
     revalidateFinancialCaches();
@@ -150,33 +153,38 @@ export async function PATCH(
     if (hasIfms) data.ifmsExpenditureCr = Number(body.ifmsExpenditureCr);
     if (body.remarks !== undefined) data.remarks = body.remarks?.trim() ? body.remarks.trim() : null;
 
-    const updated = await prisma.financeExpenditureSnapshot.update({
-      where: { id: existing.id },
-      data,
-      select: {
-        id: true,
-        soExpenditureCr: true,
-        ifmsExpenditureCr: true,
-        remarks: true,
-        workflowStatus: true,
-      },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.financeExpenditureSnapshot.update({
+        where: { id: existing.id },
+        data,
+        select: {
+          id: true,
+          soExpenditureCr: true,
+          ifmsExpenditureCr: true,
+          remarks: true,
+          workflowStatus: true,
+        },
+      });
 
-    await logAudit(
-      actor?.id,
-      "financial.snapshot.correct",
-      "finance_expenditure_snapshot",
-      existing.id,
-      before,
-      snapshotSummary(updated),
-      {
-        ...auditContext,
-        schemeId: existing.schemeId,
-        subschemeId: existing.subschemeId,
-        financialYearId: existing.financialYearId,
-        asOfDate: existing.asOfDate.toISOString().slice(0, 10),
-      },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "financial.snapshot.correct",
+        "finance_expenditure_snapshot",
+        existing.id,
+        before,
+        snapshotSummary(updated),
+        {
+          ...auditContext,
+          schemeId: existing.schemeId,
+          subschemeId: existing.subschemeId,
+          financialYearId: existing.financialYearId,
+          asOfDate: existing.asOfDate.toISOString().slice(0, 10),
+        },
+      );
+
+      return updated;
+    });
 
     await syncSchemeFyCategoryLines(existing.financialYearId, actor?.id ?? null);
     revalidateFinancialCaches();

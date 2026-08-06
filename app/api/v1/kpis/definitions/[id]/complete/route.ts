@@ -72,43 +72,48 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       completionNote: definition.completionNote,
     };
 
-    const updated = await prisma.kpiDefinition.update({
-      where: { id },
-      data: {
-        completionStatus: nextStatus,
-        completionNote: note,
-        completionRequestedAt: now,
-        completionRequestedById: actor.id,
-        ...(nextStatus === KpiCompletionStatus.completed
-          ? {
-              completionReviewedAt: now,
-              completionReviewedById: actor.id,
-              completionReviewNote: null,
-            }
-          : {}),
-      },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.kpiDefinition.update({
+        where: { id },
+        data: {
+          completionStatus: nextStatus,
+          completionNote: note,
+          completionRequestedAt: now,
+          completionRequestedById: actor.id,
+          ...(nextStatus === KpiCompletionStatus.completed
+            ? {
+                completionReviewedAt: now,
+                completionReviewedById: actor.id,
+                completionReviewNote: null,
+              }
+            : {}),
+        },
+      });
 
-    await logAudit(
-      actor.id,
-      nextStatus === KpiCompletionStatus.completed
-        ? "kpi_definition.complete_auto"
-        : "kpi_definition.request_completion",
-      "kpi_definition",
-      id,
-      before,
-      {
-        completionStatus: updated.completionStatus,
-        completionNote: note,
-      },
-      {
-        ...auditContext,
-        schemeId: definition.schemeId,
-        schemeCode: definition.scheme.code,
-        kpiDefinitionId: id,
-        autoApproved: nextStatus === KpiCompletionStatus.completed,
-      },
-    );
+      await logAudit(
+        tx,
+        actor.id,
+        nextStatus === KpiCompletionStatus.completed
+          ? "kpi_definition.complete_auto"
+          : "kpi_definition.request_completion",
+        "kpi_definition",
+        id,
+        before,
+        {
+          completionStatus: updated.completionStatus,
+          completionNote: note,
+        },
+        {
+          ...auditContext,
+          schemeId: definition.schemeId,
+          schemeCode: definition.scheme.code,
+          kpiDefinitionId: id,
+          autoApproved: nextStatus === KpiCompletionStatus.completed,
+        },
+      );
+
+      return updated;
+    });
 
     // Notify reviewers when a completion request needs their review.
     if (nextStatus === KpiCompletionStatus.pending_review) {

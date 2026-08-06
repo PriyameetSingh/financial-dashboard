@@ -31,24 +31,29 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ detail: "Subscheme not found" }, { status: 404 });
     }
 
-    const updated = await prisma.subscheme.update({
-      where: { id },
-      data: {
-        code: body.code?.trim().toUpperCase(),
-        name: body.name?.trim(),
-        sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : undefined,
-      },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.subscheme.update({
+        where: { id },
+        data: {
+          code: body.code?.trim().toUpperCase(),
+          name: body.name?.trim(),
+          sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : undefined,
+        },
+      });
 
-    await logAudit(
-      actor?.id,
-      "subscheme.update",
-      "subscheme",
-      id,
-      { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name, sortOrder: before.sortOrder },
-      { id: updated.id, schemeId: updated.schemeId, code: updated.code, name: updated.name, sortOrder: updated.sortOrder },
-      { ...auditContext, schemeId: updated.schemeId },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "subscheme.update",
+        "subscheme",
+        id,
+        { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name, sortOrder: before.sortOrder },
+        { id: updated.id, schemeId: updated.schemeId, code: updated.code, name: updated.name, sortOrder: updated.sortOrder },
+        { ...auditContext, schemeId: updated.schemeId },
+      );
+
+      return updated;
+    });
 
     return NextResponse.json({
       subscheme: {
@@ -82,17 +87,20 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "Subscheme not found" }, { status: 404 });
     }
 
-    await prisma.subscheme.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.subscheme.delete({ where: { id } });
 
-    await logAudit(
-      actor?.id,
-      "subscheme.delete",
-      "subscheme",
-      id,
-      { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name },
-      null,
-      { ...auditContext, schemeId: before.schemeId },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "subscheme.delete",
+        "subscheme",
+        id,
+        { id: before.id, schemeId: before.schemeId, code: before.code, name: before.name },
+        null,
+        { ...auditContext, schemeId: before.schemeId },
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

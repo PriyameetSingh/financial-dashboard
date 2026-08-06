@@ -9,8 +9,14 @@ import { deriveFinancialEntryStatus } from "@/lib/financial-status";
 import { getDashboardPrioritySchemeIds } from "@/lib/scheme-dashboard-priority";
 import { sponsorshipToSchemeBudgetCategory } from "@/lib/scheme-fy-bucket-metrics";
 import type { DbUserWithRbac } from "@/lib/server-rbac";
-import { getDbUserBySession } from "@/lib/server-rbac";
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
+import type { DataScope } from "@/lib/data-scope";
+import {
+  financeBudgetWhere,
+  financeSnapshotWhere,
+  financeBudgetSupplementWhere,
+  schemeWhere,
+} from "@/lib/data-access/scope-where";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
 
 export function toNumber(value: unknown): number {
@@ -104,12 +110,15 @@ export async function getFinanceSummaryBreakdownForOverview(
   };
 }
 
-export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac | null): Promise<{
+export async function getFinancialBudgetEntriesOverview(
+  actor: DbUserWithRbac | null,
+  scope: DataScope,
+): Promise<{
   entries: FinancialEntry[];
   financialYearLabel: string | null;
   financialYearId: string | null;
 }> {
-  const resolved = actor !== undefined ? actor : await getDbUserBySession();
+  const resolved = actor;
   const roleIds = resolved?.userRoles?.map((ur: { roleId: string }) => ur.roleId) ?? [];
 
   const [priority, fy] = await Promise.all([
@@ -125,7 +134,8 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
 
   const [schemes, budgets, snapshots, supplements] = await Promise.all([
     prisma.scheme.findMany({
-      where: { 
+      where: {
+        ...schemeWhere(scope),
         archived: false,
         sponsorshipType: { not: "NON_FINANCIAL" }
       },
@@ -135,7 +145,7 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.financeBudget.findMany({
-      where: { financialYearId: fy.id },
+      where: financeBudgetWhere(scope, fy.id),
       include: {
         scheme: { select: { id: true, code: true, name: true, verticalName: true, sponsorshipType: true, subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } } },
         createdBy: { select: { name: true } },
@@ -148,12 +158,12 @@ export async function getFinancialBudgetEntriesOverview(actor?: DbUserWithRbac |
       },
     }),
     prisma.financeExpenditureSnapshot.findMany({
-      where: { financialYearId: fy.id },
+      where: financeSnapshotWhere(scope, fy.id),
       orderBy: { asOfDate: "desc" },
       include: { createdBy: { select: { name: true } } },
     }),
     prisma.financeBudgetSupplement.findMany({
-      where: { financialYearId: fy.id },
+      where: financeBudgetSupplementWhere(scope, fy.id),
       include: { createdBy: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
     }),

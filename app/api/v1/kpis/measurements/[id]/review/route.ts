@@ -70,30 +70,33 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     const now = new Date();
     const nextStatus = body.decision === "approve" ? "reviewed" : "rejected";
 
-    await prisma.kpiMeasurement.update({
-      where: { id },
-      data: {
-        workflowStatus: nextStatus,
-        reviewedById: actor.id,
-        reviewedAt: now,
-        reviewNote: body.note ?? null,
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.kpiMeasurement.update({
+        where: { id },
+        data: {
+          workflowStatus: nextStatus,
+          reviewedById: actor.id,
+          reviewedAt: now,
+          reviewNote: body.note ?? null,
+        },
+      });
 
-    await logAudit(
-      actor.id,
-      "kpi.measurement.review",
-      "kpi_measurement",
-      id,
-      before,
-      { workflowStatus: nextStatus, note: body.note ?? null },
-      {
-        ...auditContext,
-        schemeId: def.schemeId,
-        kpiDefinitionId: measurement.kpiTarget.kpiDefinitionId,
-        decision: body.decision,
-      },
-    );
+      await logAudit(
+        tx,
+        actor.id,
+        "kpi.measurement.review",
+        "kpi_measurement",
+        id,
+        before,
+        { workflowStatus: nextStatus, note: body.note ?? null },
+        {
+          ...auditContext,
+          schemeId: def.schemeId,
+          kpiDefinitionId: measurement.kpiTarget.kpiDefinitionId,
+          decision: body.decision,
+        },
+      );
+    });
 
     // Trigger KPI Review Decision Notification
     if (measurement.createdById) {

@@ -50,25 +50,28 @@ export async function POST(
     await logoutKeycloakUser(keycloakUserId);
 
     // Invalidate local DB sessions by setting sessionsInvalidatedAt timestamp, and reset password lockout counters
-    await prisma.user.update({
-      where: { id: targetUser.id },
-      data: {
-        sessionsInvalidatedAt: new Date(),
-        passwordChangeFailedAttempts: 0,
-        passwordChangeLockedUntil: null,
-      },
-    });
-
     const auditContext = getAuditRequestContext(request);
-    await logAudit(
-      actor?.id,
-      "rbac.user.password.reset",
-      "user",
-      targetUser.id,
-      null,
-      { temporary: true },
-      { ...auditContext, targetUserCode: userCode }
-    );
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: targetUser.id },
+        data: {
+          sessionsInvalidatedAt: new Date(),
+          passwordChangeFailedAttempts: 0,
+          passwordChangeLockedUntil: null,
+        },
+      });
+
+      await logAudit(
+        tx,
+        actor?.id,
+        "rbac.user.password.reset",
+        "user",
+        targetUser.id,
+        null,
+        { temporary: true },
+        { ...auditContext, targetUserCode: userCode }
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

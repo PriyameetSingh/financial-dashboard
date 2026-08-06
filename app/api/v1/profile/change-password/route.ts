@@ -125,15 +125,27 @@ export async function POST(request: NextRequest) {
 
     // Audit log
     const auditContext = getAuditRequestContext(request);
-    await logAudit(
-      dbUser.id,
-      "rbac.user.password.change",
-      "user",
-      dbUser.id,
-      null,
-      { temporary: false },
-      { ...auditContext, targetUserCode: dbUser.code }
-    );
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: dbUser.id },
+        data: {
+          sessionsInvalidatedAt: new Date(),
+          passwordChangeFailedAttempts: 0,
+          passwordChangeLockedUntil: null,
+        },
+      });
+
+      await logAudit(
+        tx,
+        dbUser.id,
+        "rbac.user.password.change",
+        "user",
+        dbUser.id,
+        null,
+        { temporary: false },
+        { ...auditContext, targetUserCode: dbUser.code }
+      );
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

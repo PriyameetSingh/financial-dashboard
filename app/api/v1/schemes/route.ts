@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { isValidAssignment, mapSchemeView, parseSponsorshipType } from "@/lib/scheme-api";
-import { requireAnyPermission, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { requireAnyPermissionAndDbUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { resolveDataScope } from "@/lib/data-scope";
+import { schemeWhere, userWhere } from "@/lib/data-access/scope-where";
 
 export const runtime = "nodejs";
 
@@ -31,23 +33,26 @@ type Body = {
   assignments?: AssignmentInput[];
 };
 
-async function getReferenceData() {
+async function getReferenceData(scope: Parameters<typeof userWhere>[0]) {
   const [roles, users] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
-    prisma.user.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, email: true } }),
+    prisma.user.findMany({ where: { ...userWhere(scope), isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, email: true } }),
   ]);
   return { roles, users };
 }
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAnyPermission("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+    const scope = await resolveDataScope(user);
 
     const { searchParams } = new URL(request.url);
     const archivedParam = searchParams.get("archived");
     const archivedFilter = archivedParam === "true" ? true : archivedParam === "false" ? false : undefined;
 
-    const whereClause = archivedFilter !== undefined ? { archived: archivedFilter } : {};
+    const whereClause = archivedFilter !== undefined
+      ? { ...schemeWhere(scope), archived: archivedFilter }
+      : schemeWhere(scope);
 
     const [schemes, reference] = await Promise.all([
       prisma.scheme.findMany({
@@ -64,7 +69,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
-      getReferenceData(),
+      getReferenceData(scope),
     ]);
 
     return NextResponse.json({
@@ -135,7 +140,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return tx.scheme.findUniqueOrThrow({
+      const created = await tx.scheme.findUniqueOrThrow({
         where: { id: scheme.id },
         include: {
           subschemes: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
@@ -148,17 +153,20 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-    });
 
-    await logAudit(
-      actor?.id,
-      "scheme.create",
-      "scheme",
-      created.id,
-      null,
-      mapSchemeView(created),
-      { ...auditContext, schemeId: created.id },
-    );
+      await logAudit(
+        tx,
+        actor?.id,
+        "scheme.create",
+        "scheme",
+        created.id,
+        null,
+        mapSchemeView(created),
+        { ...auditContext, schemeId: created.id },
+      );
+
+      return created;
+    });
 
     return NextResponse.json({ scheme: mapSchemeView(created) }, { status: 201 });
   } catch (error: unknown) {
