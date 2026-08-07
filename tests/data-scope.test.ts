@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import {
   resolveDataScopeForUser,
+  resolveFinanceDataScope,
   EMPTY_SCOPE,
   isFullScope,
   type DataScope,
@@ -66,6 +67,29 @@ describe("resolveDataScope", () => {
   });
 });
 
+describe("resolveFinanceDataScope", () => {
+  it("a VIEW_ASSIGNED_DATA + ENTER_FINANCIAL_DATA user with zero SchemeAssignment rows gets restricted (empty) generic scope but full finance scope", async () => {
+    const financeDbUser = await loadDbUserWithRbac(seed.financeUser.id);
+    const genericScope = await resolveDataScopeForUser(financeDbUser);
+    expect(genericScope).toEqual(EMPTY_SCOPE);
+
+    const financeScope = await resolveFinanceDataScope(financeDbUser);
+    expect(isFullScope(financeScope)).toBe(true);
+  });
+
+  it("VIEW_ALL_DATA still resolves to full finance scope", async () => {
+    const fullDbUser = await loadDbUserWithRbac(seed.fullUser.id);
+    const financeScope = await resolveFinanceDataScope(fullDbUser);
+    expect(isFullScope(financeScope)).toBe(true);
+  });
+
+  it("a plain VIEW_ASSIGNED_DATA user (no financial permission) keeps the standard scheme-assignment-restricted finance scope", async () => {
+    const restrictedDbUser = await loadDbUserWithRbac(seed.restrictedUser.id);
+    const financeScope = await resolveFinanceDataScope(restrictedDbUser);
+    expect(financeScope).toEqual(restrictedScope);
+  });
+});
+
 describe("scope-where fragments", () => {
   it("full scope: schemeWhere returns {} (no narrowing)", () => {
     expect(schemeWhere(fullScope)).toEqual({});
@@ -79,13 +103,25 @@ describe("scope-where fragments", () => {
     expect(schemeWhere(EMPTY_SCOPE)).toEqual({ id: { in: [] } });
   });
 
-  it("kpiDefinitionWhere narrows via schemeId for restricted scope", () => {
-    expect(kpiDefinitionWhere(restrictedScope)).toEqual({ schemeId: { in: [seed.schemeA.id] } });
+  it("kpiDefinitionWhere narrows via schemeId OR direct performer/reviewer for restricted scope", () => {
+    expect(kpiDefinitionWhere(restrictedScope)).toEqual({
+      OR: [
+        { schemeId: { in: [seed.schemeA.id] } },
+        { performers: { some: { userId: { in: [seed.restrictedUser.id] }, isActive: true } } },
+        { reviewerUsers: { some: { userId: { in: [seed.restrictedUser.id] } } } },
+      ],
+    });
     expect(kpiDefinitionWhere(EMPTY_SCOPE)).toEqual({ schemeId: { in: [] } });
   });
 
-  it("actionItemWhere narrows via schemeId for restricted scope", () => {
-    expect(actionItemWhere(restrictedScope)).toEqual({ schemeId: { in: [seed.schemeA.id] } });
+  it("actionItemWhere narrows via schemeId OR direct performer/reviewer for restricted scope", () => {
+    expect(actionItemWhere(restrictedScope)).toEqual({
+      OR: [
+        { schemeId: { in: [seed.schemeA.id] } },
+        { performers: { some: { userId: { in: [seed.restrictedUser.id] }, isActive: true } } },
+        { reviewerUsers: { some: { userId: { in: [seed.restrictedUser.id] } } } },
+      ],
+    });
     expect(actionItemWhere(EMPTY_SCOPE)).toEqual({ schemeId: { in: [] } });
   });
 
@@ -123,18 +159,22 @@ describe("scoped entity reads (positive / negative)", () => {
     expect(none).toEqual([]);
   });
 
-  it("kpiDefinition reads: full sees both, restricted sees only A", async () => {
+  it("kpiDefinition reads: full sees all three, restricted sees A (scheme-assigned) and C (direct performer, no scheme assignment), not B", async () => {
     const full = await prisma.kpiDefinition.findMany({ where: kpiDefinitionWhere(fullScope), select: { id: true } });
     const rest = await prisma.kpiDefinition.findMany({ where: kpiDefinitionWhere(restrictedScope), select: { id: true } });
-    expect(full.map((d) => d.id)).toEqual(expect.arrayContaining([seed.kpiDefA.id, seed.kpiDefB.id]));
-    expect(rest.map((d) => d.id)).toEqual([seed.kpiDefA.id]);
+    expect(full.map((d) => d.id)).toEqual(
+      expect.arrayContaining([seed.kpiDefA.id, seed.kpiDefB.id, seed.kpiDefC.id]),
+    );
+    expect(rest.map((d) => d.id).sort()).toEqual([seed.kpiDefA.id, seed.kpiDefC.id].sort());
   });
 
-  it("actionItem reads: full sees both, restricted sees only A", async () => {
+  it("actionItem reads: full sees all three, restricted sees A (scheme-assigned) and C (direct performer, no scheme assignment), not B", async () => {
     const full = await prisma.actionItem.findMany({ where: actionItemWhere(fullScope), select: { id: true } });
     const rest = await prisma.actionItem.findMany({ where: actionItemWhere(restrictedScope), select: { id: true } });
-    expect(full.map((a) => a.id)).toEqual(expect.arrayContaining([seed.actionItemA.id, seed.actionItemB.id]));
-    expect(rest.map((a) => a.id)).toEqual([seed.actionItemA.id]);
+    expect(full.map((a) => a.id)).toEqual(
+      expect.arrayContaining([seed.actionItemA.id, seed.actionItemB.id, seed.actionItemC.id]),
+    );
+    expect(rest.map((a) => a.id).sort()).toEqual([seed.actionItemA.id, seed.actionItemC.id].sort());
   });
 
   it("financeBudget reads: full sees both, restricted sees only A", async () => {
