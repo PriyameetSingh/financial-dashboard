@@ -68,10 +68,15 @@ describe("resolveDataScope", () => {
 });
 
 describe("resolveFinanceDataScope", () => {
-  it("a VIEW_ASSIGNED_DATA + ENTER_FINANCIAL_DATA user with zero SchemeAssignment rows gets restricted (empty) generic scope but full finance scope", async () => {
+  it("a VIEW_ASSIGNED_DATA + ENTER_FINANCIAL_DATA user with zero SchemeAssignment rows gets restricted generic scope (own id only, for direct performer/reviewer fallback) but full finance scope", async () => {
     const financeDbUser = await loadDbUserWithRbac(seed.financeUser.id);
     const genericScope = await resolveDataScopeForUser(financeDbUser);
-    expect(genericScope).toEqual(EMPTY_SCOPE);
+    expect(genericScope).toEqual({
+      kind: "restricted",
+      schemeIds: [],
+      subschemeIds: [],
+      userIds: [seed.financeUser.id],
+    });
 
     const financeScope = await resolveFinanceDataScope(financeDbUser);
     expect(isFullScope(financeScope)).toBe(true);
