@@ -70,38 +70,81 @@ export function financeSnapshotWhere(
   return { ...base, schemeId: { in: scope.schemeIds } };
 }
 
-/** KPI definitions the caller may see (via scheme). */
+/**
+ * Definition-level performer/reviewer OR-fragment, shared by KPI and action-item
+ * where-builders. A restricted user must see items they are directly assigned to
+ * (performer or reviewer) even when no `SchemeAssignment` row exists for the
+ * scheme — scheme-level assignment and per-item assignment are two independent
+ * ways to gain visibility, not a two-step requirement.
+ */
+function assignedDirectlyFragments<TWhere extends object>(
+  scope: Extract<DataScope, { kind: "restricted" }>,
+  build: (userIdIn: string[]) => TWhere[],
+): TWhere[] {
+  if (scope.userIds.length === 0) return [];
+  return build(scope.userIds);
+}
+
+/** KPI definitions the caller may see: via scheme assignment, or as a direct performer/reviewer. */
 export function kpiDefinitionWhere(scope: DataScope): Prisma.KpiDefinitionWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) return { schemeId: { in: [] } };
-  return { schemeId: { in: scope.schemeIds } };
+  const or: Prisma.KpiDefinitionWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...assignedDirectlyFragments<Prisma.KpiDefinitionWhereInput>(scope, (userIds) => [
+      { performers: { some: { userId: { in: userIds }, isActive: true } } },
+      { reviewerUsers: { some: { userId: { in: userIds } } } },
+    ]),
+  );
+  if (or.length === 0) return { schemeId: { in: [] } };
+  return { OR: or };
 }
 
-/** KPI targets the caller may see (via KPI definition's scheme). */
+/** KPI targets the caller may see (via KPI definition's scheme, or as a direct performer/reviewer on the definition). */
 export function kpiTargetWhere(scope: DataScope): Prisma.KpiTargetWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) {
-    return { kpiDefinition: { schemeId: { in: [] } } };
-  }
-  return { kpiDefinition: { schemeId: { in: scope.schemeIds } } };
+  const or: Prisma.KpiTargetWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ kpiDefinition: { schemeId: { in: scope.schemeIds } } });
+  or.push(
+    ...assignedDirectlyFragments<Prisma.KpiTargetWhereInput>(scope, (userIds) => [
+      { kpiDefinition: { performers: { some: { userId: { in: userIds }, isActive: true } } } },
+      { kpiDefinition: { reviewerUsers: { some: { userId: { in: userIds } } } } },
+    ]),
+  );
+  if (or.length === 0) return { kpiDefinition: { schemeId: { in: [] } } };
+  return { OR: or };
 }
 
-/** KPI measurements the caller may see (via target → definition → scheme). */
+/** KPI measurements the caller may see (via target → definition → scheme, or as a direct performer/reviewer on the definition). */
 export function kpiMeasurementWhere(scope: DataScope): Prisma.KpiMeasurementWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) {
-    return { kpiTarget: { kpiDefinition: { schemeId: { in: [] } } } };
-  }
-  return { kpiTarget: { kpiDefinition: { schemeId: { in: scope.schemeIds } } } };
+  const or: Prisma.KpiMeasurementWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ kpiTarget: { kpiDefinition: { schemeId: { in: scope.schemeIds } } } });
+  or.push(
+    ...assignedDirectlyFragments<Prisma.KpiMeasurementWhereInput>(scope, (userIds) => [
+      { kpiTarget: { kpiDefinition: { performers: { some: { userId: { in: userIds }, isActive: true } } } } },
+      { kpiTarget: { kpiDefinition: { reviewerUsers: { some: { userId: { in: userIds } } } } } },
+    ]),
+  );
+  if (or.length === 0) return { kpiTarget: { kpiDefinition: { schemeId: { in: [] } } } };
+  return { OR: or };
 }
 
-/** Action items the caller may see. Action items may have `schemeId = null`
- * (meeting-level items); those are excluded for restricted users because there
- * is no scheme to anchor the scope on. */
+/** Action items the caller may see: via scheme assignment, or as a direct performer/reviewer.
+ * Action items may have `schemeId = null` (meeting-level items); those are only
+ * reachable for restricted users through the direct performer/reviewer path. */
 export function actionItemWhere(scope: DataScope): Prisma.ActionItemWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) return { schemeId: { in: [] } };
-  return { schemeId: { in: scope.schemeIds } };
+  const or: Prisma.ActionItemWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...assignedDirectlyFragments<Prisma.ActionItemWhereInput>(scope, (userIds) => [
+      { performers: { some: { userId: { in: userIds }, isActive: true } } },
+      { reviewerUsers: { some: { userId: { in: userIds } } } },
+    ]),
+  );
+  if (or.length === 0) return { schemeId: { in: [] } };
+  return { OR: or };
 }
 
 /** User-directory scoping only — does NOT scope scheme data. */
