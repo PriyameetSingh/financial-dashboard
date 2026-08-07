@@ -106,7 +106,16 @@ export async function resolveDataScopeForUser(
     throw e;
   }
 
-  if (rows.length === 0) return EMPTY_SCOPE;
+  // No SchemeAssignment rows does NOT mean "deny everything" — it means this
+  // caller's *scheme-level* scope is empty. `userIds` must still carry the
+  // caller's own id so the direct performer/reviewer fallback in
+  // `lib/data-access/scope-where.ts` (items assigned to them without any
+  // SchemeAssignment row) still works. Returning the shared `EMPTY_SCOPE`
+  // constant here — as this used to — silently drops `userIds` too and was the
+  // root cause of "assigned data" nodal officers seeing nothing.
+  if (rows.length === 0) {
+    return { kind: "restricted", schemeIds: [], subschemeIds: [], userIds: [user.id] };
+  }
 
   const schemeIds = new Set<string>();
   const subschemeIds = new Set<string>();
