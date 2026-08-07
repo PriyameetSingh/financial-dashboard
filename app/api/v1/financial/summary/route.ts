@@ -9,7 +9,7 @@ import {
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
-import { resolveDataScope } from "@/lib/data-scope";
+import { resolveFinanceDataScope } from "@/lib/data-scope";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 
 export const runtime = "nodejs";
@@ -40,7 +40,7 @@ function toNumber(value: unknown): number {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
-    const scope = await resolveDataScope(user);
+    const scope = await resolveFinanceDataScope(user);
 
     const { searchParams } = new URL(request.url);
     const asOfDateParam = searchParams.get("asOfDate");

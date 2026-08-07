@@ -53,9 +53,16 @@ export function isFullScope(scope: DataScope): scope is { kind: "full" } {
  * `VIEW_ALL_DATA` in effective permissions → `full`. Otherwise `restricted` to the
  * schemes/subschemes linked to the caller via `SchemeAssignment` (any
  * `assignmentKind`), matched by `userId` OR by one of the caller's `roleId`s.
+ *
+ * `fullAccessPermissions` (optional) names additional permission codes that also
+ * grant `full` scope, on top of `VIEW_ALL_DATA` — e.g. financial-data entry is
+ * intentionally scheme-unrestricted for anyone holding `ENTER_FINANCIAL_DATA` /
+ * `MANAGE_FINANCIAL_DATA`, independent of the (separate, narrower) KPI/action-item
+ * "assigned data" scoping. See {@link resolveFinanceDataScope}.
  */
 export async function resolveDataScopeForUser(
   user: DbUserWithRbac | null,
+  options?: { fullAccessPermissions?: string[] },
 ): Promise<DataScope> {
   if (!user) return EMPTY_SCOPE;
 
@@ -78,6 +85,7 @@ export async function resolveDataScopeForUser(
 
   if (effective.size === 0) return EMPTY_SCOPE;
   if (effective.has("VIEW_ALL_DATA")) return { kind: "full" };
+  if (options?.fullAccessPermissions?.some((code) => effective.has(code))) return { kind: "full" };
   if (!effective.has("VIEW_ASSIGNED_DATA")) return EMPTY_SCOPE;
 
   const roleIds = user.userRoles.map((ur) => ur.roleId);
@@ -120,3 +128,17 @@ export async function resolveDataScopeForUser(
  * scope once (deduped in RSC and route handlers), mirroring `getDbUserBySession`.
  */
 export const resolveDataScope = cache(resolveDataScopeForUser);
+
+/** Permissions that imply "all schemes" for financial data, regardless of SchemeAssignment. */
+const FINANCE_FULL_ACCESS_PERMISSIONS = ["ENTER_FINANCIAL_DATA", "MANAGE_FINANCIAL_DATA"];
+
+/**
+ * Finance-specific scope resolver: anyone who can enter or manage financial data
+ * sees every scheme's financial data by design (finance entry is not gated by
+ * per-scheme assignment the way KPI/action-item "assigned data" is). Falls back to
+ * the standard scheme-assignment-based restriction for users who only hold
+ * `VIEW_ASSIGNED_DATA` with no financial-entry permission.
+ */
+export const resolveFinanceDataScope = cache((user: DbUserWithRbac | null) =>
+  resolveDataScopeForUser(user, { fullAccessPermissions: FINANCE_FULL_ACCESS_PERMISSIONS }),
+);

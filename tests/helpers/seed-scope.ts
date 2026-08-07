@@ -15,10 +15,13 @@ import {
 /**
  * Deterministic test seed for the data-scoping layer tests.
  *
- * Creates two roles (full-access vs assigned-data), two users, two schemes,
+ * Creates two roles (full-access vs assigned-data), two users, three schemes,
  * one meeting, finance budget + snapshot, KPI definition + target + measurement,
- * and an action item — for BOTH schemes. The restricted user is assigned to
- * schemeA only (via a dashboard_owner SchemeAssignment). schemeB is unassigned.
+ * and an action item — for schemes A, B, and C. The restricted user is assigned
+ * to schemeA only (via a dashboard_owner SchemeAssignment). schemeB is
+ * unassigned. schemeC has NO SchemeAssignment for the restricted user at all —
+ * they are only a direct performer on schemeC's KPI/action item, covering the
+ * "assigned via performer, not via SchemeAssignment" visibility path.
  *
  * All rows use a `TESTSCOPE_` prefix on unique fields so they can be cleaned up
  * deterministically and never collide with real seed data.
@@ -34,14 +37,18 @@ const MEETING_DATE = new Date("2025-05-15T00:00:00.000Z");
 export type ScopeSeed = {
   fullUser: { id: string; email: string; name: string };
   restrictedUser: { id: string; email: string; name: string };
+  financeUser: { id: string; email: string; name: string };
   schemeA: { id: string; code: string; name: string };
   schemeB: { id: string; code: string; name: string };
+  schemeC: { id: string; code: string; name: string };
   meeting: { id: string };
   financialYear: { id: string; label: string };
   kpiDefA: { id: string };
   kpiDefB: { id: string };
+  kpiDefC: { id: string };
   actionItemA: { id: string; title: string };
   actionItemB: { id: string; title: string };
+  actionItemC: { id: string; title: string };
 };
 
 /** Delete every row created by this seed (idempotent). */
@@ -90,8 +97,10 @@ export async function seedScope(): Promise<ScopeSeed> {
   // test-scoped roles. Cleanup does NOT delete these real permissions (only test roles/users).
   const permAll = await ensurePermission("VIEW_ALL_DATA", "View all data");
   const permAssigned = await ensurePermission("VIEW_ASSIGNED_DATA", "View assigned data");
+  const permEnterFinancial = await ensurePermission("ENTER_FINANCIAL_DATA", "Enter financial data");
   const roleFull = await ensureRole(`${PREFIX}ACS`, "Test ACS");
   const roleAssigned = await ensureRole(`${PREFIX}NODAL`, "Test Nodal");
+  const roleFinance = await ensureRole(`${PREFIX}FINANCE`, "Test Finance Nodal");
 
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleFull.id, permissionId: permAll.id } },
@@ -102,6 +111,18 @@ export async function seedScope(): Promise<ScopeSeed> {
     where: { roleId_permissionId: { roleId: roleAssigned.id, permissionId: permAssigned.id } },
     update: {},
     create: { roleId: roleAssigned.id, permissionId: permAssigned.id },
+  });
+  // Finance role: VIEW_ASSIGNED_DATA (restricted for KPI/action items) + ENTER_FINANCIAL_DATA
+  // (full scope for finance reads, via resolveFinanceDataScope) — no SchemeAssignment rows at all.
+  await prisma.rolePermission.upsert({
+    where: { roleId_permissionId: { roleId: roleFinance.id, permissionId: permAssigned.id } },
+    update: {},
+    create: { roleId: roleFinance.id, permissionId: permAssigned.id },
+  });
+  await prisma.rolePermission.upsert({
+    where: { roleId_permissionId: { roleId: roleFinance.id, permissionId: permEnterFinancial.id } },
+    update: {},
+    create: { roleId: roleFinance.id, permissionId: permEnterFinancial.id },
   });
 
   const fullUser = await prisma.user.create({
@@ -120,6 +141,15 @@ export async function seedScope(): Promise<ScopeSeed> {
       code: `${PREFIX}RESTRICTED`,
       isActive: true,
       userRoles: { create: [{ roleId: roleAssigned.id }] },
+    },
+  });
+  const financeUser = await prisma.user.create({
+    data: {
+      email: `${PREFIX}finance@hudd.test`,
+      name: `${PREFIX} Finance Nodal`,
+      code: `${PREFIX}FINANCE`,
+      isActive: true,
+      userRoles: { create: [{ roleId: roleFinance.id }] },
     },
   });
 
@@ -141,6 +171,14 @@ export async function seedScope(): Promise<ScopeSeed> {
     data: {
       code: `${PREFIX}SCH_B`,
       name: `${PREFIX} Scheme Beta`,
+      verticalName: "Test Vertical",
+      sponsorshipType: SponsorshipType.STATE,
+    },
+  });
+  const schemeC = await prisma.scheme.create({
+    data: {
+      code: `${PREFIX}SCH_C`,
+      name: `${PREFIX} Scheme Gamma`,
       verticalName: "Test Vertical",
       sponsorshipType: SponsorshipType.STATE,
     },
@@ -207,7 +245,18 @@ export async function seedScope(): Promise<ScopeSeed> {
       performers: { create: [{ userId: fullUser.id, sortOrder: 0 }] },
     },
   });
-  for (const def of [kpiDefA, kpiDefB]) {
+  // No SchemeAssignment exists for schemeC — restrictedUser sees this only via
+  // the direct performer relation, never via scheme-level assignment.
+  const kpiDefC = await prisma.kpiDefinition.create({
+    data: {
+      schemeId: schemeC.id,
+      category: KPICategory.STATE,
+      description: `${PREFIX} KPI Gamma`,
+      kpiType: KPIType.OUTPUT,
+      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
+    },
+  });
+  for (const def of [kpiDefA, kpiDefB, kpiDefC]) {
     const target = await prisma.kpiTarget.create({
       data: { kpiDefinitionId: def.id, financialYearId: financialYear.id, denominatorValue: 100 },
     });
@@ -251,18 +300,38 @@ export async function seedScope(): Promise<ScopeSeed> {
       performers: { create: [{ userId: fullUser.id, sortOrder: 0 }] },
     },
   });
+  // No SchemeAssignment exists for schemeC — restrictedUser sees this only via
+  // the direct performer relation, never via scheme-level assignment.
+  const actionItemC = await prisma.actionItem.create({
+    data: {
+      meetingId: meeting.id,
+      schemeId: schemeC.id,
+      itemType: ActionItemType.action_item,
+      title: `${PREFIX} Action Gamma`,
+      description: `${PREFIX} action for scheme C`,
+      priority: ActionItemPriority.Medium,
+      dueDate: meetingDate,
+      status: ActionItemStatus.OPEN,
+      createdById: fullUser.id,
+      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
+    },
+  });
 
   return {
     fullUser: { id: fullUser.id, email: fullUser.email, name: fullUser.name },
     restrictedUser: { id: restrictedUser.id, email: restrictedUser.email, name: restrictedUser.name },
+    financeUser: { id: financeUser.id, email: financeUser.email, name: financeUser.name },
     schemeA: { id: schemeA.id, code: schemeA.code, name: schemeA.name },
     schemeB: { id: schemeB.id, code: schemeB.code, name: schemeB.name },
+    schemeC: { id: schemeC.id, code: schemeC.code, name: schemeC.name },
     meeting: { id: meeting.id },
     financialYear: { id: financialYear.id, label: financialYear.label },
     kpiDefA: { id: kpiDefA.id },
     kpiDefB: { id: kpiDefB.id },
+    kpiDefC: { id: kpiDefC.id },
     actionItemA: { id: actionItemA.id, title: actionItemA.title },
     actionItemB: { id: actionItemB.id, title: actionItemB.title },
+    actionItemC: { id: actionItemC.id, title: actionItemC.title },
   };
 }
 

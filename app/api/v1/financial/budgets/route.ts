@@ -5,7 +5,7 @@ import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { getFinancialBudgetEntriesOverview } from "@/lib/financial-budget-entries";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
-import { resolveDataScope } from "@/lib/data-scope";
+import { resolveFinanceDataScope } from "@/lib/data-scope";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 
 export const runtime = "nodejs";
@@ -125,7 +125,7 @@ export async function PATCH(request: NextRequest) {
 export async function GET() {
   try {
     const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
-    const scope = await resolveDataScope(user);
+    const scope = await resolveFinanceDataScope(user);
 
     const result = await getFinancialBudgetEntriesOverview(user, scope);
     return NextResponse.json(result);
