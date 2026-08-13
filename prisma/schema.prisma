@@ -8,6 +8,34 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ─── Phase 2 multi-tenancy ───────────────────────────────────────────────────
+//
+// Every tenant-owned model carries:
+//
+//   tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+//
+// READ THIS BEFORE CHANGING THAT DEFAULT.
+//
+// The default is a TYPE-LEVEL AFFORDANCE ONLY — it is not, and must not become,
+// a way for rows to acquire a tenant. Its entire purpose is to make `tenantId`
+// optional in Prisma's generated create inputs, so the tenant is stamped in ONE
+// place (the client extension in lib/prisma.ts) instead of being hand-written
+// into ~40 route payloads. The `app.tenant_id` GUC is never set by this
+// application, so `current_setting(..., true)` returns NULL and the NOT NULL
+// column constraint rejects any write that reaches the database without a
+// tenant stamped by the chokepoint. That loud failure is the point.
+//
+// CONSEQUENCE IF THAT CHANGES: the moment anything sets `app.tenant_id` on a
+// connection — most plausibly a future Postgres Row-Level Security rollout,
+// which conventionally sets exactly this kind of session variable — the default
+// stops evaluating to NULL and silently stamps whatever that connection's GUC
+// says. A write that bypasses the chokepoint would then succeed quietly and
+// land in whichever tenant the pooled connection last had set, instead of
+// failing. If RLS (or anything else that sets a session variable) is
+// introduced, DROP these column defaults in the same migration and make the
+// chokepoint the only writer, or bind the GUC per transaction and treat it as
+// the authoritative tenant source. Do not leave both mechanisms half-live.
+
 /// Scheme sponsorship; maps to FinanceYearBudgetCategory for scheme buckets:
 /// STATE → STATE_SCHEME, CENTRAL → CENTRALLY_SPONSORED_SCHEME, CENTRAL_SECTOR → CENTRAL_SECTOR_SCHEME
 /// NON_FINANCIAL → no financial bucket (KPI-only schemes)

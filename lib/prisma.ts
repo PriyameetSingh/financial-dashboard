@@ -198,7 +198,17 @@ async function prepareCreateData(model: string, data: unknown, tenantId: string)
   return { ...record, [TENANT_ID_FIELD]: tenantId };
 }
 
-/** Stamp the tenant inside one relation's nested-write payload. */
+/**
+ * Stamp the tenant inside one relation's nested-write payload, and verify every
+ * row the payload CONNECTS to belongs to the same tenant.
+ *
+ * `connect` / `connectOrCreate.connect` / `set` attach an EXISTING row by a
+ * unique selector, so nothing is stamped — without an ownership check they
+ * would be a way to graft another tenant's row onto this tenant's object. Like
+ * the scalar-FK check, this rejects only on positive evidence (the row exists
+ * and belongs to someone else); an invisible row is left to the FK constraint,
+ * so create-parent-then-connect inside one transaction still works.
+ */
 async function prepareNestedWrite(
   targetModel: string,
   nested: Record<string, unknown>,
@@ -218,13 +228,35 @@ async function prepareNestedWrite(
       if (!entry || typeof entry !== "object") return entry;
       const e = { ...(entry as Record<string, unknown>) };
       if (e.create !== undefined) e.create = await prepareCreateData(targetModel, e.create, tenantId);
+      if (e.where !== undefined) await assertConnectTargetInTenant(targetModel, e.where, tenantId);
       return e;
     };
     out.connectOrCreate = Array.isArray(out.connectOrCreate)
       ? await Promise.all(out.connectOrCreate.map(one))
       : await one(out.connectOrCreate);
   }
+  for (const key of ["connect", "set", "disconnect", "delete"] as const) {
+    if (out[key] === undefined) continue;
+    const entries = Array.isArray(out[key]) ? (out[key] as unknown[]) : [out[key]];
+    for (const entry of entries) {
+      if (!entry || typeof entry !== "object") continue;
+      await assertConnectTargetInTenant(targetModel, entry, tenantId);
+    }
+  }
   return out;
+}
+
+/** Reject attaching/detaching a row that demonstrably belongs to another tenant. */
+async function assertConnectTargetInTenant(
+  targetModel: string,
+  selector: unknown,
+  tenantId: string,
+): Promise<void> {
+  if (!TENANT_SCOPED_MODELS.has(targetModel)) return;
+  const owner = await ownerTenantIdOf(targetModel, selector).catch(() => undefined);
+  if (owner !== undefined && owner !== null && owner !== tenantId) {
+    throw notFound(targetModel, "connect");
+  }
 }
 
 const READ_MANY_OPS = new Set([
@@ -283,6 +315,21 @@ function buildScopedClient() {
             if (data && typeof data === "object") {
               if (TENANT_ID_FIELD in data) delete data[TENANT_ID_FIELD];
               await assertParentsInTenant(model, data, tenantId);
+              // Relation writes on update (connect / set / nested create) get
+              // the same treatment as on create.
+              const relations = RELATION_TARGETS.get(model);
+              if (relations) {
+                for (const [field, targetModel] of relations) {
+                  if (!TENANT_SCOPED_MODELS.has(targetModel)) continue;
+                  const nested = data[field];
+                  if (!nested || typeof nested !== "object") continue;
+                  data[field] = await prepareNestedWrite(
+                    targetModel,
+                    nested as Record<string, unknown>,
+                    tenantId,
+                  );
+                }
+              }
             }
           }
           return query(a as typeof args);

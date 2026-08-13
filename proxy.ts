@@ -6,6 +6,11 @@ import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
 import { TENANT_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
+import {
+  isTenantSessionRejected,
+  tenantSessionErrorCode,
+  verifyTenantSession,
+} from "@/lib/tenant-session";
 
 /**
  * Phase 2 tenancy: build the forwarded request headers. Any client-supplied
@@ -156,6 +161,13 @@ export async function proxy(request: NextRequest) {
       if (!token) {
         return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
       }
+      // Phase 2: a valid signature is not enough — the token must belong to the
+      // tenant this host resolves to. Otherwise a session minted for tenant A
+      // and replayed against tenant B's host would be silently scoped into B.
+      const verdict = verifyTenantSession(token.tenantId, await tenantId());
+      if (isTenantSessionRejected(verdict)) {
+        return NextResponse.json({ detail: tenantSessionErrorCode(verdict) }, { status: 401 });
+      }
     }
     return forward();
   }
@@ -189,7 +201,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const blockReason = await getSessionBlockReason(token, await tenantId());
+  const resolvedTenantId = await tenantId();
+  const verdict = verifyTenantSession(token.tenantId, resolvedTenantId);
+  if (isTenantSessionRejected(verdict)) {
+    // Cookies are cleared by logoutRedirect, so the replayed session cannot be
+    // reused against this host.
+    return logoutRedirect(request, pathname, tenantSessionErrorCode(verdict));
+  }
+
+  const blockReason = await getSessionBlockReason(token, resolvedTenantId);
   if (blockReason) {
     return logoutRedirect(request, pathname, blockReason);
   }

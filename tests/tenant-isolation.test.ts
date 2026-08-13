@@ -231,6 +231,31 @@ describe("Write probes (both directions)", () => {
     expect(after?.sortOrder).not.toBe(marker);
   });
 
+  bothDirections("a relation connect to the other tenant's row is rejected", async (self, other) => {
+    await withTenantContext(self.tenantId, async () => {
+      // `connect` attaches an EXISTING row by unique selector — nothing is
+      // stamped, so without an ownership check this would graft the other
+      // tenant's user onto this tenant's KPI definition.
+      await expect(
+        prisma.kpiDefinition.update({
+          where: { id: self.seed.kpiDefA.id },
+          data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } },
+        }),
+      ).rejects.toThrow();
+
+      await expect(
+        prisma.kpiDefinition.update({
+          where: { id: self.seed.kpiDefA.id },
+          data: { scheme: { connect: { id: other.seed.schemeA.id } } },
+        }),
+      ).rejects.toThrow();
+    });
+    // The KPI definition still points at its own tenant's scheme.
+    const after = await prismaUnscoped.kpiDefinition.findUnique({ where: { id: self.seed.kpiDefA.id } });
+    expect(after?.schemeId).toBe(self.seed.schemeA.id);
+    expect(after?.tenantId).toBe(self.tenantId);
+  });
+
   bothDirections("a write referencing the other tenant's parent row is rejected", async (self, other) => {
     await withTenantContext(self.tenantId, async () => {
       await expect(

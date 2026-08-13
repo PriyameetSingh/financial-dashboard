@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { getTenantContextSafe } from "@/lib/tenant-context";
+import { isTenantSessionRejected, verifyTenantSession } from "@/lib/tenant-session";
 
 type SessionUser = {
   id: string;
@@ -14,10 +15,18 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   // coverage), so resolving the tenant context first primes the
   // request-scoped config holder for all 81 /api/v1 handlers. Deduped per
   // request via React cache inside getTenantContext.
-  await getTenantContextSafe();
+  const { tenantId } = await getTenantContextSafe();
   const session = await auth();
   const user = session?.user;
   if (!user?.id) {
+    return null;
+  }
+
+  // Defence in depth behind the middleware check (lib/tenant-session.ts): a
+  // session bound to another tenant is treated as no session at all, so guards
+  // 401 instead of authorising a caller inside a tenant they never signed in
+  // to. Never re-scope such a session — that is the silent-cross-tenant path.
+  if (isTenantSessionRejected(verifyTenantSession(user.tenantId, tenantId))) {
     return null;
   }
 

@@ -627,7 +627,33 @@ recorded here so the design doc matches the code.
    payloads, which Rule 5 exists to prevent. The chokepoint always supplies the
    value explicitly; the default is a type-level affordance, not a data path.
 
-3. **By-unique lookups on the 11 newly-composite fields became `findFirst`.**
+   **Standing hazard, recorded deliberately (and repeated as a comment at the
+   top of `prisma/schema.prisma`):** this default is safe *only while nothing
+   sets `app.tenant_id`*. If a future change sets that session variable — a
+   Postgres **Row-Level Security** rollout is the obvious candidate, since RLS
+   conventionally binds exactly this kind of GUC — the default stops evaluating
+   to NULL and becomes a **silent-stamp path**: a write that bypasses the
+   chokepoint would then succeed quietly, taking whatever tenant the pooled
+   connection last had set, instead of failing loudly. Anyone introducing RLS
+   (or any other session-variable binding) must, in the same migration, either
+   drop these column defaults and leave the chokepoint as the only writer, or
+   bind the GUC per transaction and promote it to the authoritative tenant
+   source. The two mechanisms must never be half-live together.
+
+3. **Session-layer tenant binding (`lib/tenant-session.ts`).** The JWT carries a
+   `tenantId` claim stamped at sign-in, and both the middleware and the server
+   guard funnel (`getSessionUser`) compare it against the tenant resolved from
+   the Host. A mismatch is rejected (401 / forced re-login with cookies
+   cleared) — never re-scoped into the host's tenant, which is the silent
+   cross-tenant path. Tokens with no claim (pre-Phase-2) and hosts that resolve
+   to no tenant are also rejected. This is the one path the query chokepoint
+   cannot see: without it, a replayed session is a fully authenticated
+   principal and the chokepoint would faithfully scope it into the wrong
+   tenant. Asserted end-to-end against the real `proxy()` in
+   `tests/tenant-session-isolation.test.ts` (10 assertions, both directions,
+   including a spoofed tenant header).
+
+4. **By-unique lookups on the 11 newly-composite fields became `findFirst`.**
    `findUnique({ where: { code } })` no longer compiles once `code` is unique
    per tenant. 27 such call sites became `findFirst`, which the chokepoint
    scopes — semantics are unchanged (the field is still unique *within* the
@@ -636,14 +662,14 @@ recorded here so the design doc matches the code.
    the composite key from the current scope so a call site cannot pass the
    wrong tenant.
 
-4. **Seeds and scripts became explicitly tenant-addressed.** TS seeds enter an
+5. **Seeds and scripts became explicitly tenant-addressed.** TS seeds enter an
    explicit scope (`enterTenantScope`, default Odisha, `SEED_TENANT_ID`
    override) and write through the same chokepoint; the JS seeds
    (`prisma/seed.js`, `prisma/seed_roles_core.cjs`) stamp `TENANT_ID` directly.
    `scripts/check-tenant-chokepoint.mjs` fails the build if `prismaUnscoped` or
    raw SQL appears outside the recorded allowlist.
 
-5. **Physical storage namespacing landed here, not at Gate B/E.** New meeting
+6. **Physical storage namespacing landed here, not at Gate B/E.** New meeting
    material uploads are written to `{tenantId}/{meetingId}/{uuid}-{name}`.
    Reads are unchanged (they resolve whatever relative `storagePath` the row
    holds), so existing Odisha files keep working at their legacy paths.
