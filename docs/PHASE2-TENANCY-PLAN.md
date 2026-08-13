@@ -728,3 +728,41 @@ dropped any stream whose compressed bytes contained the literal `endstream`
 inflates from each stream offset with `Z_SYNC_FLUSH` and is shared by both PDF
 suites. It normalises whitespace, so it attests to text content and order, not
 to exact inter-run spacing.
+
+
+---
+
+## 15. Deploying Phase 2 to an existing environment
+
+Phase 2 ships **three migrations across two gates**, so any environment that
+has not tracked the branch gate-by-gate must apply them all before anything
+else Phase 2 related will work (a demo seed, or the app itself, will otherwise
+fail with `column …tenantId does not exist`). Order matters and the sequence is
+additive and idempotent throughout:
+
+```bash
+npm ci && npx prisma generate
+
+# 1. test database first (project policy)
+npm run prisma:migrate:test
+
+# 2. development database — DATABASE_URL lives in .env.local, so pass it
+node --env-file=.env.local node_modules/.bin/prisma migrate deploy
+
+# 3. verify: expect 0 NULL tenantIds and 0 cross-tenant FK references
+node --env-file=.env.local scripts/check-tenant-integrity.mjs
+
+# 4. optional: the fictional demo tenant (never run this against production)
+node --env-file=.env.local prisma/seed_demo_tenant.js
+```
+
+What step 2 applies, in order:
+
+| Migration | Effect |
+|---|---|
+| `phase2_tenancy_additive` | adds `tenants` + `tenant_config_entries`, and a NULLABLE `tenantId` + index + FK on all 46 tenant-scoped tables |
+| `phase2_odisha_backfill` | creates the Odisha tenant at the well-known id, backfills every existing row to it, writes Odisha's config rows |
+| `phase2_tenancy_enforce` | `tenantId` → `NOT NULL` ×46, and the 11 single-column uniques → composite `[tenantId, …]` |
+
+No existing row is dropped or rewritten, and re-running is safe. Production
+follows the same `migrate deploy` step at deploy time.

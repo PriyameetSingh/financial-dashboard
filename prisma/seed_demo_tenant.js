@@ -90,6 +90,40 @@ const OFFICERS = [
   { code: `${PREFIX}NODAL2`, name: "Tomas Beaumont", email: "tomas.beaumont@rivertown.example", role: "NODAL_OFFICER" },
 ];
 
+/**
+ * Fail early and legibly when the Phase 2 migrations have not been applied to
+ * this database. Without it the first delete fails with a raw Prisma P2022
+ * ("column kpi_measurements.tenantId does not exist"), which looks like a bug
+ * in the seed rather than a missing migration step.
+ */
+async function assertTenancyMigrationsApplied() {
+  const [{ ready }] = await prisma.$queryRaw`
+    SELECT (
+      EXISTS (SELECT 1 FROM information_schema.tables  WHERE table_name = 'tenants')
+      AND EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'kpi_measurements' AND column_name = 'tenantId')
+    ) AS ready`;
+  if (ready) return;
+  console.error(
+    [
+      "",
+      "✗  This database does not have the Phase 2 tenancy migrations applied.",
+      "",
+      "   Apply them first (test database before development, per the project policy):",
+      "",
+      "     npm run prisma:migrate:test",
+      "     node --env-file=.env.local node_modules/.bin/prisma migrate deploy",
+      "     node --env-file=.env.local scripts/check-tenant-integrity.mjs",
+      "",
+      "   Then re-run this seed. The migrations are additive and idempotent: they add",
+      "   the tenants tables, backfill every existing row to the Odisha tenant, and",
+      "   only then enforce NOT NULL.",
+      "",
+    ].join("\n"),
+  );
+  process.exit(1);
+}
+
 async function reset() {
   // Children first; every row is addressed by the demo tenant id, so this can
   // never touch another tenant's data.
@@ -121,6 +155,8 @@ async function reset() {
 }
 
 async function main() {
+  await assertTenancyMigrationsApplied();
+
   if (process.argv.includes("--reset")) {
     await reset();
     return;
