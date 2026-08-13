@@ -24,7 +24,8 @@ type Props = {
 };
 
 function formatCurrency(value: number) {
-  return `₹${value.toFixed(1)} Cr`;
+  const { currencySymbol, currencyUnit } = tenantConfig();
+  return `${currencySymbol}${value.toFixed(1)} ${currencyUnit}`;
 }
 
 function formatPct(value: number | null | undefined) {

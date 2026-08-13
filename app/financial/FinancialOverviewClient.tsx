@@ -8,6 +8,7 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
 import { withNextBasePath } from "@/lib/next-base-path";
 import { formatCurrency as formatCurrencyCfg } from "@/lib/tenant-config/format";
+import { tenantConfig } from "@/lib/tenant-config";
 import { fetchFinanceSummary, fetchIfmsTimeseries } from "@/src/lib/services/financialService";
 import {
   Bar,
@@ -25,7 +26,8 @@ import {
 } from "recharts";
 
 function formatCurrency(value: number) {
-  return `₹${value.toFixed(1)} Cr`;
+  const { currencySymbol, currencyUnit } = tenantConfig();
+  return `${currencySymbol}${value.toFixed(1)} ${currencyUnit}`;
 }
 
 const CHART_BUDGET = "#1e3a8a";
