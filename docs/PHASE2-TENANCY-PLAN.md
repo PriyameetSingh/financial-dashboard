@@ -678,3 +678,53 @@ Two permanent CI legs were added to the golden: `check-tenant-chokepoint`
 (static: no unscoped-client/raw-SQL escapes) and `check-tenant-integrity`
 (data: zero NULL tenantIds, zero cross-tenant FK references, both derived from
 the schema rather than a hand-kept table list).
+
+
+---
+
+## 14. Gate E — as built
+
+**Demo tenant.** `prisma/seed_demo_tenant.js` seeds "Rivertown Development
+Authority" (slug `demo`, fixed id `…00d0`): wholly fictional org, officers,
+programmes, meeting, budgets, expenditure, KPIs and action items. It is a SEED,
+never a migration, so demo content cannot reach production or the
+migrations-only golden database via `migrate deploy`. `--reset` removes it, and
+every statement is addressed by the demo tenant id, so it can never touch
+another tenant's rows. Its fiscal calendar is deliberately a calendar year
+("FY 2026"), which only works because `FinancialYear` is tenant-scoped (§3).
+
+**Resolution.** Host `demo.<domain>` matches `tenants.slug`. For local work,
+`DEV_DEFAULT_TENANT_SLUG=demo` (development only, documented in `.env.example`)
+makes a fresh visitor land on Demo. Production posture is unchanged: with two
+tenants active, an unresolved host is denied, never defaulted.
+
+**Priming coverage is now a proof, not an observation.** Demo's branding
+differs from Odisha's on EVERY presentation key, so an unprimed surface renders
+Odisha values and fails. `tests/tenant-branding-coverage.test.ts` asserts the
+Demo values at each entry point: the root layout's resolver call, the format
+helpers every server component uses, the guard funnel's priming call (plus a
+structural assertion that `getSessionUser` makes it before touching `auth()` —
+next-auth cannot be imported under vitest), the client provider's browser
+holder, the rendered PDF, and the middleware header → resolver → config chain.
+Odisha is asserted byte-identical beside each one.
+
+**Two real unprimed paths were found and fixed** by that proof — both were
+`docs/TENANCY-BACKLOG.md` items, now dischargeable because the assertions bring
+their call sites under golden coverage:
+
+- the finance-table headings in the meeting-report PDF and the on-screen
+  meeting report hardcoded `(Cr.)`, `S.O. Exp.`, `IFMS Exp.` and
+  `% as per IFMS`; they now read `currencyUnit` and the tenant labels;
+- `TenantLabels` gained `soExpenditureFormal` / `ifmsExpenditureFormal`
+  (Odisha defaults `"S.O."` / `"IFMS"`) because the compact `"SO"` label would
+  have rendered `SO Exp.` where Odisha writes `S.O. Exp.` — a byte-identity
+  break the coverage test caught. Stored label rows are merged over the
+  defaults key-by-key, so the Gate B config rows stay valid with no migration.
+
+A third finding was in the test tooling, not the app: the PDF text extractor
+dropped any stream whose compressed bytes contained the literal `endstream`
+(common in font subsets), which made PDF assertions content-dependent — it had
+"proved" a correctly-rendered header missing. `tests/helpers/pdf-text.ts` now
+inflates from each stream offset with `Z_SYNC_FLUSH` and is shared by both PDF
+suites. It normalises whitespace, so it attests to text content and order, not
+to exact inter-run spacing.

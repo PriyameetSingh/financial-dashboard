@@ -57,7 +57,15 @@ describe("DB → config deserialization is byte-identical to ODISHA_DEFAULTS", (
     // env-backed keys fall back to the identical defaults.
     expect(config).toStrictEqual(ODISHA_DEFAULTS);
     // The labels OBJECT specifically survives jsonb round-trip key-for-key.
-    expect(config.labels).toStrictEqual({ soExpenditure: "SO", ifmsExpenditure: "IFMS" });
+    // The stored row carries the two compact keys; the formal report-heading
+    // forms come from the defaults through the label merge, so Odisha's
+    // headings stay byte-identical without a migration.
+    expect(config.labels).toStrictEqual({
+      soExpenditure: "SO",
+      ifmsExpenditure: "IFMS",
+      soExpenditureFormal: "S.O.",
+      ifmsExpenditureFormal: "IFMS",
+    });
   });
 
   it("loadTenantConfigFromDb (the resolver's own loader) agrees", async () => {
@@ -102,7 +110,7 @@ describe("Registry guardrails", () => {
   it("malformed rows degrade to defaults instead of breaking config", () => {
     const config = overlayConfigEntries(ODISHA_DEFAULTS, [
       { key: "currencySymbol", value: 42 }, // wrong shape → ignored
-      { key: "labels", value: { soExpenditure: 7 } }, // wrong shape → ignored
+      { key: "labels", value: { soExpenditure: 7 } }, // wrong-typed key → that key falls back
       { key: "keycloakRealm", value: "sneaky" }, // env-only → ignored
       { key: "unknown", value: "x" }, // unknown → ignored
     ]);

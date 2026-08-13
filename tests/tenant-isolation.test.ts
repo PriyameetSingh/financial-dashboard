@@ -256,6 +256,49 @@ describe("Write probes (both directions)", () => {
     expect(after?.tenantId).toBe(self.tenantId);
   });
 
+  bothDirections(
+    "connect is rejected even though the target row is INVISIBLE to this scope",
+    async (self, other) => {
+      // This pins the ownership probe to the UNSCOPED client. Through the
+      // scoped client the other tenant's row does not exist (asserted first),
+      // so a scoped probe would see "no such row", conclude there is nothing to
+      // object to, and let the connect through — a live cross-tenant hole. The
+      // probe must therefore read unscoped and reject on positive evidence of
+      // foreign ownership.
+      await withTenantContext(self.tenantId, async () => {
+        expect(await prisma.user.findUnique({ where: { id: other.seed.fullUser.id } })).toBeNull();
+        expect(await prisma.scheme.findUnique({ where: { id: other.seed.schemeB.id } })).toBeNull();
+
+        await expect(
+          prisma.kpiDefinition.update({
+            where: { id: self.seed.kpiDefA.id },
+            data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } },
+          }),
+        ).rejects.toThrow();
+
+        await expect(
+          prisma.actionItem.create({
+            data: {
+              title: "invisible-parent connect probe",
+              description: "should not be created",
+              itemType: "action_item",
+              priority: "Medium",
+              dueDate: new Date("2025-12-31"),
+              status: "OPEN",
+              scheme: { connect: { id: other.seed.schemeB.id } },
+            },
+          }),
+        ).rejects.toThrow();
+      });
+
+      // Nothing was grafted onto the other tenant's rows.
+      const performers = await prismaUnscoped.kpiDefinitionPerformer.count({
+        where: { userId: other.seed.fullUser.id, kpiDefinitionId: self.seed.kpiDefA.id },
+      });
+      expect(performers).toBe(0);
+    },
+  );
+
   bothDirections("a write referencing the other tenant's parent row is rejected", async (self, other) => {
     await withTenantContext(self.tenantId, async () => {
       await expect(

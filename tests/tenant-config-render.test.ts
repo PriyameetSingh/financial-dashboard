@@ -8,8 +8,8 @@
  * external PDF parser dependency.
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { inflateSync } from "node:zlib";
 import { prisma } from "@/lib/prisma";
+import { extractPdfText } from "./helpers/pdf-text";
 import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
 import { enterTenantScope } from "@/lib/tenant-context";
 import { resolveDataScopeForUser, type DataScope } from "@/lib/data-scope";
@@ -49,41 +49,6 @@ afterAll(async () => {
   await cleanupScopeSeed();
   await prisma.$disconnect();
 });
-
-/** Extract text from a PDF buffer by decoding hex (`<…>`) and literal (`(…)`)
- * string operands inside text-showing TJ/Tj operators across every
- * decompressed FlateDecode content stream. react-pdf stores text as
- * hex-encoded byte strings with kerning numbers between them, e.g.
- * `[<476f> 20 <7665726e…>] TJ` → "Government of Odisha". */
-function extractPdfText(buffer: Buffer): string {
-  const latin = buffer.toString("latin1");
-  const chunks: Buffer[] = [];
-  // Locate each `stream\r?\n ... \r?\nendstream` segment and inflate it.
-  const re = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(latin)) !== null) {
-    try {
-      chunks.push(inflateSync(Buffer.from(m[1], "latin1")));
-    } catch {
-      // Not a FlateDecode stream (e.g. an image). Skip.
-    }
-  }
-  const decoded = Buffer.concat(chunks).toString("latin1");
-  // Pull every hex-string operand `<…>` and literal-string operand `(…)`.
-  const parts: string[] = [];
-  const hexRe = /<([0-9a-fA-F]+)>/g;
-  let h: RegExpExecArray | null;
-  while ((h = hexRe.exec(decoded)) !== null) {
-    parts.push(Buffer.from(h[1], "hex").toString("latin1"));
-  }
-  const litRe = /\(((?:[^()\\]|\\.)*)\)/g;
-  let l: RegExpExecArray | null;
-  while ((l = litRe.exec(decoded)) !== null) {
-    // Unescape PDF string escapes minimally.
-    parts.push(l[1].replace(/\\([()\\])/g, "$1"));
-  }
-  return parts.join("");
-}
 
 describe("Blind spot (a) — formatted currency value (exact rendered string)", () => {
   it("matches today's inline ₹ + en-IN + Cr output", () => {

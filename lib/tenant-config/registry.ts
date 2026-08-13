@@ -57,14 +57,19 @@ export function assertStorableKey(key: string): asserts key is StorableKey {
   }
 }
 
-function isValidLabels(value: unknown): value is TenantLabels {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof (value as Record<string, unknown>).soExpenditure === "string" &&
-    typeof (value as Record<string, unknown>).ifmsExpenditure === "string"
-  );
+/**
+ * Merge a stored labels object over the defaults, keeping only known string
+ * keys. A partial object is valid: a row written before a label key existed
+ * still yields the default for that key rather than dropping the whole object.
+ */
+function mergeLabels(defaults: TenantLabels, value: unknown): TenantLabels {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return defaults;
+  const incoming = value as Record<string, unknown>;
+  const merged = { ...defaults };
+  for (const key of Object.keys(defaults) as (keyof TenantLabels)[]) {
+    if (typeof incoming[key] === "string") merged[key] = incoming[key] as string;
+  }
+  return merged;
 }
 
 export type TenantConfigRow = { key: string; value: unknown };
@@ -83,9 +88,7 @@ export function overlayConfigEntries(
   for (const row of rows) {
     if (!isStorableKey(row.key)) continue;
     if (row.key === "labels") {
-      if (isValidLabels(row.value)) {
-        config.labels = { soExpenditure: row.value.soExpenditure, ifmsExpenditure: row.value.ifmsExpenditure };
-      }
+      config.labels = mergeLabels(defaults.labels, row.value);
       continue;
     }
     if (typeof row.value === "string") {

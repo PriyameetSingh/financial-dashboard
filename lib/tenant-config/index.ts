@@ -15,10 +15,19 @@
 import { activeHolder } from "./request-store";
 
 export type TenantLabels = {
-  /** Sanction Order expenditure label (Odisha vocabulary). */
+  /** Compact expenditure-source label, e.g. inline UI copy. Odisha: "SO". */
   soExpenditure: string;
-  /** IFMS expenditure label (Odisha vocabulary). */
+  /** Compact settlement-source label. Odisha: "IFMS". */
   ifmsExpenditure: string;
+  /**
+   * Formal form used in report column headings, where Odisha writes the
+   * abbreviation with stops ("S.O. Exp.", "as per S.O. order") rather than the
+   * compact "SO". Kept as its own key so draining those headings to config does
+   * not change a single rendered character for Odisha.
+   */
+  soExpenditureFormal: string;
+  /** Formal form for the settlement source in report headings. Odisha: "IFMS". */
+  ifmsExpenditureFormal: string;
 };
 
 export type TenantConfig = {
@@ -64,6 +73,8 @@ export const ODISHA_DEFAULTS: TenantConfig = {
   labels: {
     soExpenditure: "SO",
     ifmsExpenditure: "IFMS",
+    soExpenditureFormal: "S.O.",
+    ifmsExpenditureFormal: "IFMS",
   },
   keycloakRealm: "",
   keycloakClientId: "",

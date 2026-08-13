@@ -41,6 +41,9 @@ function FinanceTable({
   tableWrapClassName?: string;
 }) {
   const asOf = asOfLabel ?? "—";
+  // Currency unit and SO/IFMS vocabulary come from tenant config; under the
+  // Odisha defaults this renders exactly as before ("(In Cr.)", "S.O.", "IFMS").
+  const { currencyUnit: unit, labels } = tenantConfig();
   return (
     <section className="space-y-2 break-inside-avoid">
       {!hideTitle ? (
@@ -62,19 +65,19 @@ function FinanceTable({
               <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
                 Budget Estimate
                 <br />
-                {fyLabel ?? "FY"} (In Cr.)
+                {fyLabel ?? "FY"} (In {unit}.)
               </th>
               <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
                 Expenditure as on {asOf}
                 <br />
-                as per S.O. order (In Cr.)
+                as per {labels.soExpenditureFormal} order (In {unit}.)
               </th>
               <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
                 Expenditure as on {asOf}
                 <br />
-                as per IFMS (In Cr.)
+                as per {labels.ifmsExpenditureFormal} (In {unit}.)
               </th>
-              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">% as per IFMS</th>
+              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">% as per {labels.ifmsExpenditureFormal}</th>
             </tr>
           </thead>
           <tbody>
@@ -249,7 +252,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
 
       {/* 2 */}
       <div className="mb-8 space-y-0">
-        <SectionTitleBar n={2} title={`Financial Progress ${fy} (In Cr.)`} />
+        <SectionTitleBar n={2} title={`Financial Progress ${fy} (In ${tenantConfig().currencyUnit}.)`} />
         <FinanceTable
           hideTitle
           title={`Financial Progress ${fy}`}
@@ -261,7 +264,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
 
       {/* 3 */}
       <div className="mb-8 space-y-6">
-        <SectionTitleBar n={3} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
+        <SectionTitleBar n={3} title={`Schemes wise Financial Progress ${fy} (In ${tenantConfig().currencyUnit}.)`} />
         {data.schemesFinancialProgress.map((block, i) => (
           <FinanceTable
             key={block.sponsorshipKey}
