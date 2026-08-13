@@ -3,6 +3,7 @@
 import { UserRole } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
+import { withNextBasePath } from "@/lib/next-base-path";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useEffect, useState, useCallback, Suspense } from "react";
 import {
@@ -252,7 +253,7 @@ function CommandCentreContent({ setActive }: Props) {
     let active = true;
     void (async () => {
       try {
-        const res = await fetch("/hudd-dashboard/api/v1/dashboard/ai-alerts", { cache: "no-store" });
+        const res = await fetch(withNextBasePath("/api/v1/dashboard/ai-alerts"), { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load agent insights");
         const data = await res.json();
         if (active) {

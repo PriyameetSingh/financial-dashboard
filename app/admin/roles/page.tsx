@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission, UserRole } from "@/lib/auth";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantTimezone } from "@/lib/tenant-config/format";
 import {
   BarChart3,
   Eye,
@@ -56,7 +57,7 @@ function formatTimestamp(iso: string): string {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Asia/Kolkata",
+      timeZone: tenantTimezone(),
     });
   } catch {
     return iso;

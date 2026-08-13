@@ -17,6 +17,7 @@ import {
   Settings2,
 } from "lucide-react";
 import Link from "next/link";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 type Config = {
   enabled: boolean;
@@ -42,8 +43,8 @@ export default function AdminAgentsDirectoryPage() {
     const fetchData = async () => {
       try {
         const [configRes, historyRes] = await Promise.all([
-          fetch("/hudd-dashboard/api/v1/admin/agent/config"),
-          fetch("/hudd-dashboard/api/v1/admin/agent/run"),
+          fetch(withNextBasePath("/api/v1/admin/agent/config")),
+          fetch(withNextBasePath("/api/v1/admin/agent/run")),
         ]);
 
         if (configRes.ok) {

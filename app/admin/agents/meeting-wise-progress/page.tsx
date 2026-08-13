@@ -6,6 +6,7 @@ import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission } from "@/lib/auth";
 import { ArrowLeft, Play, Save, CheckCircle, AlertTriangle, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 type Config = {
   enabled: boolean;
@@ -47,8 +48,8 @@ export default function MeetingWiseProgressAgentPage() {
   const fetchConfigAndHistory = async () => {
     try {
       const [configRes, historyRes] = await Promise.all([
-        fetch("/hudd-dashboard/api/v1/admin/agent/config"),
-        fetch("/hudd-dashboard/api/v1/admin/agent/run"),
+        fetch(withNextBasePath("/api/v1/admin/agent/config")),
+        fetch(withNextBasePath("/api/v1/admin/agent/run")),
       ]);
 
       if (configRes.ok) {
@@ -80,7 +81,7 @@ export default function MeetingWiseProgressAgentPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch("/hudd-dashboard/api/v1/admin/agent/config", {
+      const response = await fetch(withNextBasePath("/api/v1/admin/agent/config"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
@@ -103,7 +104,7 @@ export default function MeetingWiseProgressAgentPage() {
     setRunning(true);
     setRunResult(null);
     try {
-      const response = await fetch("/hudd-dashboard/api/v1/admin/agent/run", {
+      const response = await fetch(withNextBasePath("/api/v1/admin/agent/run"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: config.mode }),

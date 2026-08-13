@@ -5,6 +5,7 @@ import { Sparkles, RefreshCw, Settings, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { Permission, hasPermission } from "@/lib/auth";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 type Insight = {
   title: string;
@@ -30,7 +31,7 @@ export default function AiAlertsCard({ className = "" }: { className?: string })
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/hudd-dashboard/api/v1/dashboard/ai-alerts", { cache: "no-store" });
+      const res = await fetch(withNextBasePath("/api/v1/dashboard/ai-alerts"), { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load insights");
       const data = await res.json();
       setInsight(data.latestInsight);

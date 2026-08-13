@@ -1,4 +1,6 @@
 /** FY starts 1 April — months Jan–Mar belong to previous FY label. */
+import { withNextBasePath } from "@/lib/next-base-path";
+
 export function getFinancialYear(dateStr: string): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr + "T00:00:00");
@@ -18,7 +20,7 @@ export function todayISO(): string {
 export async function fetchFinancialYears(): Promise<Array<{ id: string; label: string; startDate: string; endDate: string }>> {
   try {
     console.log("Fetching financial years from /api/v1/financial-years");
-    const response = await fetch("/hudd-dashboard/api/v1/financial-years", { cache: "no-store" });
+    const response = await fetch(withNextBasePath("/api/v1/financial-years"), { cache: "no-store" });
     console.log("Response status:", response.status, response.statusText);
     
     if (!response.ok) {

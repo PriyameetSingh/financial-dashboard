@@ -9,6 +9,7 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
 import WhatsNewNotification from "@/components/WhatsNewNotification";
 import { NotificationDropdown } from "@/src/components/ui/NotificationDropdown";
+import { tenantTimezone } from "@/lib/tenant-config/format";
 
 interface Props {
   children: React.ReactNode;
@@ -65,7 +66,7 @@ export default function AppShell({ children, title }: Props) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Asia/Kolkata",
+      timeZone: tenantTimezone(),
       timeZoneName: "short",
     });
   }, []);
