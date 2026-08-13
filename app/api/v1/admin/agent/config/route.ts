@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
         mode: "BOTH",
         createdAt: new Date(),
         updatedAt: new Date(),
+        tenantId: null,
       };
     }
     return NextResponse.json(config);
