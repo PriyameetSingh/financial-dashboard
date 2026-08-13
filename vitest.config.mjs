@@ -12,5 +12,9 @@ export default defineConfig({
     },
     setupFiles: ["./tests/helpers/load-env.ts"],
     include: ["tests/**/*.test.ts"],
+    // DB-backed suites share a single seeded schema (TESTSCOPE_ prefix) and each
+    // file cleans up its own rows in afterAll. Run files serially so concurrent
+    // cleanup/seed across workers cannot collide on the shared FK graph.
+    fileParallelism: false,
   },
 });

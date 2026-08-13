@@ -44,4 +44,10 @@ jobs:
 
       - run: node scripts/verify-behaviors.mjs
 
+      # Tenancy lint: fails on tenant-identity branching and hardcoded Odisha
+      # literals that should live in tenant config. Currently NON-BLOCKING — it
+      # reports the Phase 1 extraction backlog in the CI logs. Flip to a hard
+      # gate (remove `|| true`) once the backlog reaches zero.
+      - run: node scripts/check-tenancy-lint.mjs || true
+
       - run: npm run build
