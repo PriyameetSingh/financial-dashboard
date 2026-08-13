@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import clsx from "clsx";
 import type { PendanceReportPayload } from "@/lib/pendance-report";
 import { formatPendanceReportDate } from "@/lib/pendance-report";
+import { tenantConfig } from "@/lib/tenant-config";
 
 function SectionTitleBar({ n, title }: { n: number; title: string }) {
   return (
@@ -32,7 +33,7 @@ export function PendanceReportContent({ data, logoSrc }: PendanceReportContentPr
       <header className="mb-6 border-b border-black pb-4">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1 text-center text-sm font-bold leading-snug sm:text-base">
-            <p>Government of Odisha</p>
+            <p>{tenantConfig().pdfHeaderLine}</p>
             <p>Housing &amp; Urban Development Department</p>
             <p className="mt-2 text-base">Pendance Report — User Adoption & Data Entry Status</p>
             <p className="mt-1 text-sm">

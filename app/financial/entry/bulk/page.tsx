@@ -21,6 +21,7 @@ import {
 } from "@/src/lib/services/financialService";
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import type { FinancialEntry } from "@/types";
+import { tenantConfig } from "@/lib/tenant-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -328,17 +329,18 @@ export default function BulkEntryPage() {
 
     // Validation check
     const validationErrors: Record<string, string> = {};
+    const { labels } = tenantConfig();
     for (const r of dirtyRows) {
       const d = getDraft(r.key);
       if (mode === "snapshot") {
         const soInvalid = d.so !== "" && !isValidPositiveNumeric(d.so);
         const ifmsInvalid = d.ifms !== "" && !isValidPositiveNumeric(d.ifms);
         if (soInvalid && ifmsInvalid) {
-          validationErrors[r.key] = "SO and IFMS must be valid positive numeric values.";
+          validationErrors[r.key] = `${labels.soExpenditure} and ${labels.ifmsExpenditure} must be valid positive numeric values.`;
         } else if (soInvalid) {
-          validationErrors[r.key] = "SO must be a valid positive numeric value.";
+          validationErrors[r.key] = `${labels.soExpenditure} must be a valid positive numeric value.`;
         } else if (ifmsInvalid) {
-          validationErrors[r.key] = "IFMS must be a valid positive numeric value.";
+          validationErrors[r.key] = `${labels.ifmsExpenditure} must be a valid positive numeric value.`;
         }
       } else {
         const supplementInvalid = d.supplement !== "" && !isValidSignedNumeric(d.supplement);
@@ -703,16 +705,16 @@ export default function BulkEntryPage() {
                             onKeyDown={handlePositiveNumericKeyDown}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              isRowError && status?.error?.includes("SO")
+                              isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure)
                                 ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
                                 : draft.so !== ""
                                   ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
                                   : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
-                          {isRowError && status?.error?.includes("SO") && (
+                          {isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure) && (
                             <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
-                              {status.error.includes("and") ? "Invalid SO value" : status.error}
+                              {status.error.includes("and") ? `Invalid ${tenantConfig().labels.soExpenditure} value` : status.error}
                             </p>
                           )}
                         </td>
@@ -734,16 +736,16 @@ export default function BulkEntryPage() {
                             onKeyDown={handlePositiveNumericKeyDown}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                              isRowError && status?.error?.includes("IFMS")
+                              isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure)
                                 ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
                                 : draft.ifms !== ""
                                   ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
                                   : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
-                          {isRowError && status?.error?.includes("IFMS") && (
+                          {isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure) && (
                             <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
-                              {status.error.includes("and") ? "Invalid IFMS value" : status.error}
+                              {status.error.includes("and") ? `Invalid ${tenantConfig().labels.ifmsExpenditure} value` : status.error}
                             </p>
                           )}
                         </td>

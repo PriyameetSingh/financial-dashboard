@@ -15,6 +15,7 @@ import {
 import { fetchSchemeModalData, type SchemeModalPayload } from "@/src/lib/services/schemeService";
 import type { SchemeOverview } from "@/types";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantConfig } from "@/lib/tenant-config";
 
 type Props = {
   open: boolean;
@@ -476,7 +477,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                             const n = Number.isFinite(v) ? v : 0;
                             return name === "util"
                               ? [`${n.toFixed(1)}%`, "Utilisation"]
-                              : [formatCurrency(n), "IFMS"];
+                              : [formatCurrency(n), tenantConfig().labels.ifmsExpenditure];
                           }}
                         />
                         <Legend />

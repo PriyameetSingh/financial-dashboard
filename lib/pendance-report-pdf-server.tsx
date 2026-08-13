@@ -18,6 +18,7 @@ import type { DocumentProps } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import type { PendanceReportPayload } from "@/lib/pendance-report";
 import { formatPendanceReportDate } from "@/lib/pendance-report";
+import { tenantConfig } from "@/lib/tenant-config";
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -239,7 +240,7 @@ export function PendanceReportPdfDocument({ data }: { data: PendanceReportPayloa
         {/* Document Header */}
         <View style={[s.documentHeader, s.mb16]}>
           <View style={s.documentHeaderTextBlock}>
-            <Text style={s.departmentName}>Government of Odisha</Text>
+            <Text style={s.departmentName}>{tenantConfig().pdfHeaderLine}</Text>
             <Text style={s.departmentName}>Housing &amp; Urban Development Department</Text>
             <Text style={s.reportTitle}>Pendance Report — User Adoption & Data Entry Status</Text>
             <Text style={s.reportSubtitle}>

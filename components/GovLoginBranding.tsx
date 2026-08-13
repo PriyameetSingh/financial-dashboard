@@ -1,5 +1,6 @@
 import { HUDD_LOGO_PUBLIC_PATH } from "@/lib/hudd-logo";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantConfig } from "@/lib/tenant-config";
 
 const LOGO_SRC = withNextBasePath(HUDD_LOGO_PUBLIC_PATH);
 
@@ -18,7 +19,7 @@ export default function GovLoginBranding() {
         />
       </div>
       <div className="space-y-1">
-        <p className="text-[11px] font-medium text-slate-600">Government of Odisha</p>
+        <p className="text-[11px] font-medium text-slate-600">{tenantConfig().pdfHeaderLine}</p>
         <p className="max-w-[16rem] text-sm font-semibold leading-snug text-slate-900">
           Housing &amp; Urban Development Department
         </p>

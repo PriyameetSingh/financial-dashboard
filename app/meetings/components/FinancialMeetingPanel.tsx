@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { fetchFinanceSummary, fetchIfmsTimeseries } from "@/src/lib/services/financialService";
 import type { FinanceSummaryRow } from "@/types";
+import { tenantConfig } from "@/lib/tenant-config";
 
 function shortLabel(label: string, max = 18) {
   return label.length <= max ? label : `${label.slice(0, max - 1)}…`;
@@ -154,8 +155,9 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
                   }}
                   formatter={(value, name) => {
                     const n = typeof value === "number" ? value : Number(value);
+                    const { labels } = tenantConfig();
                     const label =
-                      name === "ifms" ? "IFMS" : name === "budget" ? "Budget" : name === "so" ? "SO" : String(name);
+                      name === "ifms" ? labels.ifmsExpenditure : name === "budget" ? "Budget" : name === "so" ? labels.soExpenditure : String(name);
                     return [`₹${Number.isFinite(n) ? n.toFixed(2) : "0.00"} Cr`, label];
                   }}
                   labelFormatter={(_, payload) =>
@@ -189,7 +191,7 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
                   }}
                   formatter={(value) => {
                     const n = typeof value === "number" ? value : Number(value);
-                    return [`₹${Number.isFinite(n) ? n.toFixed(2) : "0.00"} Cr`, "IFMS"];
+                    return [`₹${Number.isFinite(n) ? n.toFixed(2) : "0.00"} Cr`, tenantConfig().labels.ifmsExpenditure];
                   }}
                 />
                 <Line type="monotone" dataKey="ifmsCr" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} />

@@ -21,6 +21,7 @@ import {
 import type { DocumentProps } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import type { MeetingReportPayload } from "@/lib/meeting-report";
+import { tenantConfig } from "@/lib/tenant-config";
 import {
   financialYearHeaderLine,
   formatMeetingScheduleLine,
@@ -584,7 +585,7 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
             <Image src={LOGO_PATH} style={{ width: 52, height: 52 }} />
           </View>
           <View style={s.documentHeaderTextBlock}>
-            <Text style={s.departmentName}>Government of Odisha</Text>
+            <Text style={s.departmentName}>{tenantConfig().pdfHeaderLine}</Text>
             <Text style={s.departmentName}>Housing &amp; Urban Development Department</Text>
             <Text style={s.financialYear}>{fyLine}</Text>
             <Text style={s.meetingTitle}>{meetingLine}</Text>

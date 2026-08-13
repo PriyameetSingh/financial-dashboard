@@ -12,6 +12,7 @@ import {
   formatMeetingScheduleLine,
   meetingReportTitleLine,
 } from "@/lib/meeting-report-display";
+import { tenantConfig } from "@/lib/tenant-config";
 
 function fmtCr(n: number): string {
   if (!Number.isFinite(n)) return "—";
@@ -206,7 +207,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
             <img src={logoSrc} alt="" width={80} height={80} className="h-16 w-16 object-contain sm:h-20 sm:w-20" />
           </div>
           <div className="min-w-0 text-center text-sm font-bold leading-snug sm:text-base">
-            <p>Government of Odisha</p>
+            <p>{tenantConfig().pdfHeaderLine}</p>
             <p>Housing &amp; Urban Development Department</p>
             <p>{fyLine}</p>
             <p>{meetingLine}</p>
