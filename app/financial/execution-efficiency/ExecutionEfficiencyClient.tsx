@@ -5,6 +5,7 @@ import AppShell from "@/components/AppShell";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { ArrowDown, ArrowUp, ArrowUpDown, Gauge, Lightbulb, Star, TriangleAlert } from "lucide-react";
+import { formatCurrency } from "@/lib/tenant-config/format";
 import {
   CartesianGrid,
   Cell,
@@ -328,7 +329,7 @@ function costTierValueClass(tier: CostCard["tier"]): string {
 
 function formatExpenditureCr(value: number | null): string {
   if (value === null) return "—";
-  return `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 3 })}`;
+  return formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 3, withUnit: false });
 }
 
 function formatPct(value: number, decimals = 2): string {

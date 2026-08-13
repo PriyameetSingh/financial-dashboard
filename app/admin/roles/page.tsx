@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { Permission, UserRole } from "@/lib/auth";
 import { withNextBasePath } from "@/lib/next-base-path";
-import { tenantTimezone } from "@/lib/tenant-config/format";
+import { tenantTimezone, tenantLocale } from "@/lib/tenant-config/format";
 import {
   BarChart3,
   Eye,
@@ -51,7 +51,7 @@ function formatRoleLabel(code: string): string {
 
 function formatTimestamp(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("en-IN", {
+    return new Date(iso).toLocaleString(tenantLocale(), {
       day: "2-digit",
       month: "short",
       year: "numeric",

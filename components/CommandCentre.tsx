@@ -4,6 +4,7 @@ import { UserRole } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useEffect, useState, useCallback, Suspense } from "react";
 import {
@@ -101,7 +102,7 @@ function pctTrendFromValue(pct: number): number[] {
 
 function formatMeetingDate(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(d);
+  return new Intl.DateTimeFormat(tenantLocale(), { day: "numeric", month: "short", year: "numeric" }).format(d);
 }
 
 function formatRelativeTime(isoString: string) {

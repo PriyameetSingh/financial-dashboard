@@ -22,6 +22,7 @@ import type { DocumentProps } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import type { MeetingReportPayload } from "@/lib/meeting-report";
 import { tenantConfig } from "@/lib/tenant-config";
+import { formatNumber } from "@/lib/tenant-config/format";
 import {
   financialYearHeaderLine,
   formatMeetingScheduleLine,
@@ -376,7 +377,7 @@ const s = StyleSheet.create({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCr(n: number): string {
   if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatNumber(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtPct(p: number | null): string {

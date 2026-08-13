@@ -9,7 +9,7 @@ import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import ConversationalAI from "@/components/ConversationalAI";
 import WhatsNewNotification from "@/components/WhatsNewNotification";
 import { NotificationDropdown } from "@/src/components/ui/NotificationDropdown";
-import { tenantTimezone } from "@/lib/tenant-config/format";
+import { tenantTimezone, tenantLocale } from "@/lib/tenant-config/format";
 
 interface Props {
   children: React.ReactNode;
@@ -60,7 +60,7 @@ export default function AppShell({ children, title }: Props) {
 
   const nowLabel = useMemo(() => {
     const now = new Date();
-    return now.toLocaleString("en-IN", {
+    return now.toLocaleString(tenantLocale(), {
       day: "2-digit",
       month: "short",
       year: "numeric",

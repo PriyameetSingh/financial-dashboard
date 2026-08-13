@@ -9,6 +9,7 @@ import { addActionItemProof, getActionItemById, updateActionItem } from "@/src/l
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import { ActionItem, UserRole, ActionItemStatus } from "@/types";
 import { hasPermission, Permission } from "@/lib/auth";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import type { SessionUser } from "@/types";
 import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
@@ -84,7 +85,7 @@ function isAssignedOfficer(item: ActionItem, u: { id: string; name: string }): b
 function formatDateTime(timestamp: string) {
   const parsed = new Date(timestamp);
   if (Number.isNaN(parsed.getTime())) return timestamp;
-  return parsed.toLocaleString("en-IN", {
+  return parsed.toLocaleString(tenantLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",

@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { useRequireAuth } from "@/src/lib/route-guards";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import { Calendar, Rocket, ShieldAlert, Sparkles, Wrench } from "lucide-react";
 
 type Entry = {
@@ -146,7 +147,7 @@ export default function ChangelogPage() {
         ) : (
           <div className="relative border-l border-[var(--border)]/80 ml-4 pl-8 space-y-12 py-2">
             {sortedReleases.map((release) => {
-              const dateLabel = new Date(release.createdAt).toLocaleDateString("en-IN", {
+              const dateLabel = new Date(release.createdAt).toLocaleDateString(tenantLocale(), {
                 day: "numeric",
                 month: "short",
                 year: "numeric",

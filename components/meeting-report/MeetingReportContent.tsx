@@ -13,10 +13,11 @@ import {
   meetingReportTitleLine,
 } from "@/lib/meeting-report-display";
 import { tenantConfig } from "@/lib/tenant-config";
+import { formatNumber } from "@/lib/tenant-config/format";
 
 function fmtCr(n: number): string {
   if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  return formatNumber(n, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 }
 
 function fmtPct(p: number | null): string {

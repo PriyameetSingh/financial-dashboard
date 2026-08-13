@@ -7,6 +7,7 @@ import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { formatCurrency as formatCurrencyCfg } from "@/lib/tenant-config/format";
 import { fetchFinanceSummary, fetchIfmsTimeseries } from "@/src/lib/services/financialService";
 import {
   Bar,
@@ -555,7 +556,7 @@ export default function FinancialOverviewClient({
                     <XAxis
                       type="number"
                       tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-                      tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                      tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                     />
                     <YAxis
                       type="category"
@@ -689,7 +690,7 @@ export default function FinancialOverviewClient({
                   />
                   <YAxis
                     tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                    tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                    tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                   />
                   <Tooltip
                     contentStyle={{
@@ -727,7 +728,7 @@ export default function FinancialOverviewClient({
                   />
                   <YAxis
                     tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                    tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                    tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                   />
                   <Tooltip
                     contentStyle={{

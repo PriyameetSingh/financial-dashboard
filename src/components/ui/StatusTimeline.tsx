@@ -1,5 +1,6 @@
 import { ActionItemStatus, ActionItemUpdate } from "@/types";
 import StatusBadge from "./StatusBadge";
+import { tenantLocale } from "@/lib/tenant-config/format";
 
 const DOT_COLORS: Record<ActionItemStatus, string> = {
   OPEN: "var(--text-muted)",
@@ -18,7 +19,7 @@ interface StatusTimelineProps {
 function formatDate(timestamp: string) {
   const parsed = new Date(timestamp);
   if (Number.isNaN(parsed.getTime())) return timestamp;
-  return parsed.toLocaleString("en-IN", {
+  return parsed.toLocaleString(tenantLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",

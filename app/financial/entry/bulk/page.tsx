@@ -22,6 +22,7 @@ import {
 import { fetchMeetings, type MeetingListItem } from "@/src/lib/services/meetingService";
 import type { FinancialEntry } from "@/types";
 import { tenantConfig } from "@/lib/tenant-config";
+import { formatNumber } from "@/lib/tenant-config/format";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ const emptyDraft = (): RowDraft => ({ so: "", ifms: "", supplement: "", suppleme
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtCr(n: number): string {
-  return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatNumber(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function utilizationColor(pct: number): string {

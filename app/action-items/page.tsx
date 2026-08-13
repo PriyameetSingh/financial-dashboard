@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/src/lib/route-guards";
 import { fetchActionItems, updateActionItem, deleteActionItem } from "@/src/lib/services/actionItemService";
 import { ActionItem, ActionItemStatus } from "@/types";
 import { UserRole, hasPermission, Permission } from "@/lib/auth";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import type { SessionUser } from "@/types";
 import { fetchDirectoryUsers } from "@/src/lib/directory-users";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
@@ -110,7 +111,7 @@ function lastActivityMs(item: ActionItem): number {
 function formatDateTime(timestamp: string) {
   const parsed = new Date(timestamp);
   if (Number.isNaN(parsed.getTime())) return timestamp;
-  return parsed.toLocaleString("en-IN", {
+  return parsed.toLocaleString(tenantLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",

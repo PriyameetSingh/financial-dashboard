@@ -1,5 +1,7 @@
 /** Shared copy for on-screen report and PDF capture (no React). */
 
+import { tenantLocale } from "@/lib/tenant-config/format";
+
 export function ordinalEn(n: number): string {
   const j = n % 10;
   const k = n % 100;
@@ -21,8 +23,8 @@ export function formatMeetingScheduleLine(isoDate: string): string {
   const d = Number(ds);
   if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return isoDate;
   const date = new Date(y, m - 1, d, 10, 0, 0);
-  const month = date.toLocaleDateString("en-IN", { month: "long" });
-  const weekday = date.toLocaleDateString("en-IN", { weekday: "long" });
+  const month = date.toLocaleDateString(tenantLocale(), { month: "long" });
+  const weekday = date.toLocaleDateString(tenantLocale(), { weekday: "long" });
   return `${ordinalEn(d)} ${month}, ${y}, 10:00 AM, ${weekday}`;
 }
 

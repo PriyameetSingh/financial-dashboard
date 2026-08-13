@@ -7,6 +7,7 @@ import { Permission } from "@/lib/auth";
 import { ArrowLeft, Play, Save, CheckCircle, AlertTriangle, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantLocale } from "@/lib/tenant-config/format";
 
 type Config = {
   enabled: boolean;
@@ -238,7 +239,7 @@ export default function MeetingWiseProgressAgentPage() {
                       history.map((log) => (
                         <tr key={log.id} className="hover:bg-[var(--bg-alternate-card)]">
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-[var(--text-muted)]">
-                            {new Date(log.runDate).toLocaleString("en-IN", {
+                            {new Date(log.runDate).toLocaleString(tenantLocale(), {
                               day: "numeric",
                               month: "short",
                               hour: "2-digit",
@@ -362,7 +363,7 @@ export default function MeetingWiseProgressAgentPage() {
               <div>
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">Execution Details</h3>
                 <p className="text-xs text-[var(--text-muted)]">
-                  Run Date: {new Date(selectedLog.runDate).toLocaleString("en-IN")} · Mode: {selectedLog.modeUsed}
+                  Run Date: {new Date(selectedLog.runDate).toLocaleString(tenantLocale())} · Mode: {selectedLog.modeUsed}
                 </p>
               </div>
               <button

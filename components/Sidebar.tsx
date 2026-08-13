@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { UserRole, hasPermission, Permission } from "@/lib/auth";
 import { HUDD_LOGO_PUBLIC_PATH } from "@/lib/hudd-logo";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import {
   canSeeMyTasksNav,
   hasPendingAssignedActionItems,
@@ -184,7 +185,7 @@ function isTopNavActive(pathname: string, href: string) {
 
 function formatMeetingSidebarLabel(m: MeetingListItem) {
   const d = new Date(`${m.meetingDate}T12:00:00`);
-  const label = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(d);
+  const label = new Intl.DateTimeFormat(tenantLocale(), { day: "numeric", month: "short", year: "numeric" }).format(d);
   const title = m.title?.trim();
   return title ? `${label} — ${title}` : label;
 }

@@ -6,6 +6,7 @@ import AppShell from "@/components/AppShell";
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 import { useRequireAnyPermission } from "@/src/lib/route-guards";
 import { getCurrentUser, Permission, hasPermission } from "@/lib/auth";
+import { tenantLocale } from "@/lib/tenant-config/format";
 import {
   fetchFinancialBudgets,
   submitFinancialSnapshot,
@@ -665,7 +666,7 @@ export default function SchemeEntryPage() {
   const requestDeleteSnapshot = (row: { id: string; asOfDate: string; ifms: number }) => {
     setConfirmConfig({
       title: "Remove financial entry",
-      message: `Remove the expenditure snapshot dated ${new Date(row.asOfDate).toLocaleDateString("en-IN")} (IFMS ₹${row.ifms.toFixed(2)} Cr)? This cannot be undone.`,
+      message: `Remove the expenditure snapshot dated ${new Date(row.asOfDate).toLocaleDateString(tenantLocale())} (IFMS ₹${row.ifms.toFixed(2)} Cr)? This cannot be undone.`,
       confirmLabel: "Remove",
       cancelLabel: "Cancel",
       onConfirm: () => {
@@ -680,7 +681,7 @@ export default function SchemeEntryPage() {
 
   // Chart configuration
   const chartData = {
-    labels: activeHistory.map(h => new Date(h.asOfDate).toLocaleString('en-IN', { month: 'short', year: '2-digit' })),
+    labels: activeHistory.map(h => new Date(h.asOfDate).toLocaleString(tenantLocale(), { month: 'short', year: '2-digit' })),
     datasets: [
       {
         label: "IFMS Actual",
@@ -892,18 +893,18 @@ export default function SchemeEntryPage() {
                     <div className="grid grid-cols-3 gap-6">
                       <div>
                         <div className="text-xs text-[var(--text-muted)] mb-1">Original</div>
-                        <div className="text-2xl font-semibold">₹ {activeOriginalBudgetCr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                        <div className="text-2xl font-semibold">₹ {activeOriginalBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                       </div>
                       <div>
                         <div className="text-xs text-[var(--text-muted)] mb-1">Supplementary</div>
                         <div className={`text-2xl font-semibold ${activeTotalSupplementCr > 0 ? 'text-[#2ecc71]' : activeTotalSupplementCr < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-primary)]'}`}>
-                          {activeTotalSupplementCr > 0 ? '+' : ''}{activeTotalSupplementCr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
+                          {activeTotalSupplementCr > 0 ? '+' : ''}{activeTotalSupplementCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                         </div>
                         <div className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">{supCountText}</div>
                       </div>
                       <div className="bg-[var(--bg-content-surface)] border border-[var(--border)] p-3 rounded-lg flex flex-col justify-center shadow-sm">
                         <div className="text-[11px] text-[#3498db] font-semibold mb-1 uppercase tracking-wider">Effective</div>
-                        <div className="text-2xl font-bold text-[#3498db]">₹ {activeEffectiveBudgetCr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                        <div className="text-2xl font-bold text-[#3498db]">₹ {activeEffectiveBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                       </div>
                     </div>
 
@@ -916,7 +917,7 @@ export default function SchemeEntryPage() {
                               <div>
                                 <div className="font-medium text-sm text-[var(--text-primary)]">{sup.reason}</div>
                                 <div className="text-[11px] text-[var(--text-muted)] mt-0.5 flex gap-2">
-                                  <span>{new Date(sup.createdAt).toLocaleDateString('en-IN')}</span>
+                                  <span>{new Date(sup.createdAt).toLocaleDateString(tenantLocale())}</span>
                                   <span>•</span>
                                   <span>{sup.createdByName}</span>
                                   {sup.referenceNo && (
@@ -925,7 +926,7 @@ export default function SchemeEntryPage() {
                                 </div>
                               </div>
                               <div className={`text-sm font-bold ${sup.amountCr > 0 ? 'text-[#2ecc71]' : 'text-[#e74c3c]'}`}>
-                                {sup.amountCr > 0 ? '+' : ''}{sup.amountCr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
+                                {sup.amountCr > 0 ? '+' : ''}{sup.amountCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                               </div>
                             </div>
                           ))}
@@ -998,7 +999,7 @@ export default function SchemeEntryPage() {
                           <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border)]">
                             <div>
                               <div className="text-xs text-[var(--text-muted)] mb-1">SO Sanction Amount</div>
-                              <div className="text-3xl font-light text-[var(--text-primary)]">₹ {currentSO.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                              <div className="text-3xl font-light text-[var(--text-primary)]">₹ {currentSO.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                             </div>
                             {canManageFinancials && (
                               <button onClick={() => setIsEditingSO(true)} className="px-4 py-1.5 rounded border border-[var(--border)] text-sm font-medium hover:bg-[var(--bg-content-surface)]">Edit</button>
@@ -1007,7 +1008,7 @@ export default function SchemeEntryPage() {
                         ) : (
                           <div className="bg-[rgba(52,152,219,0.05)] border border-[rgba(52,152,219,0.2)] p-4 rounded-lg mb-8">
                             <div className="text-xs font-semibold text-[#2980b9] uppercase tracking-wider mb-1">Add to Sanction Amount</div>
-                            <div className="text-[10px] text-[#2980b9] mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString('en-IN')} Cr</div>
+                            <div className="text-[10px] text-[#2980b9] mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString(tenantLocale())} Cr</div>
                             <div className="space-y-3">
                               <div className="relative">
                                 <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
@@ -1090,14 +1091,14 @@ export default function SchemeEntryPage() {
                       <div className="w-12 h-12 rounded-full border-4 border-[#2ecc71] flex items-center justify-center font-bold text-sm text-[#2ecc71]">{utilisation}%</div>
                       <div>
                         <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Utilisation</div>
-                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{currentIFMS.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> / ₹{activeEffectiveBudgetCr.toLocaleString('en-IN')}</div>
+                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{currentIFMS.toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> / ₹{activeEffectiveBudgetCr.toLocaleString(tenantLocale())}</div>
                       </div>
                     </div>
                     <div className="flex-1 flex items-center gap-4 bg-[var(--bg-primary)] p-2 border border-[var(--border)] rounded-lg">
                       <div className="w-12 h-12 rounded-full border-4 border-[#e74c3c] flex items-center justify-center font-bold text-sm text-[#e74c3c]">{lapseRisk}%</div>
                       <div>
                         <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Lapse Risk</div>
-                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{(activeEffectiveBudgetCr - currentIFMS).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> remaining</div>
+                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{(activeEffectiveBudgetCr - currentIFMS).toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> remaining</div>
                       </div>
                     </div>
                   </div>
@@ -1189,23 +1190,23 @@ export default function SchemeEntryPage() {
                                 >
                                   <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
                                   <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
-                                    {new Date(h.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    {new Date(h.asOfDate).toLocaleDateString(tenantLocale(), { day: '2-digit', month: 'short', year: 'numeric' })}
                                     {isLatest && (
                                       <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
                                     )}
                                   </td>
                                   <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
-                                    {h.ifms.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {h.ifms.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                   <td className="px-5 py-3 text-right text-[var(--text-secondary)]">
-                                    {h.so.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {h.so.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                   <td className="px-5 py-3 text-right">
                                     {delta === null ? (
                                       <span className="text-[var(--text-muted)] text-xs">—</span>
                                     ) : (
                                       <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
-                                        {delta > 0 ? '+' : ''}{delta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        {delta > 0 ? '+' : ''}{delta.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                       </span>
                                     )}
                                   </td>

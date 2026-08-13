@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { tenantLocale } from "@/lib/tenant-config/format";
 
 type Config = {
   enabled: boolean;
@@ -141,7 +142,7 @@ export default function AdminAgentsDirectoryPage() {
                           ) : (
                             <AlertTriangle className="h-3 w-3 text-red-500" />
                           )}
-                          {new Date(lastLog.runDate).toLocaleString("en-IN", {
+                          {new Date(lastLog.runDate).toLocaleString(tenantLocale(), {
                             day: "numeric",
                             month: "short",
                             hour: "2-digit",
