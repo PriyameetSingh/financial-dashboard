@@ -4,6 +4,22 @@ import { getToken } from "next-auth/jwt";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { prisma } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
+import { TENANT_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
+
+/**
+ * Phase 2 tenancy: build the forwarded request headers. Any client-supplied
+ * tenant header is STRIPPED (anti-spoof); the proxy alone derives the slug
+ * candidate (from the Host) and sets the internal header the server-side
+ * resolver (lib/tenant-context.ts) reads. Validation against the tenants
+ * table happens in the resolver, keeping the proxy free of extra DB hits.
+ */
+function tenantForwardHeaders(request: NextRequest): Headers {
+  const forwarded = new Headers(request.headers);
+  forwarded.delete(TENANT_HEADER);
+  const slug = tenantSlugFromHost(request.headers.get("host"));
+  if (slug) forwarded.set(TENANT_HEADER, slug);
+  return forwarded;
+}
 
 /** App Router + `fetch()` use the full pathname including `basePath` (e.g. `/hudd-dashboard/api/...`). */
 function isStaticAssetPath(pathname: string): boolean {
@@ -106,13 +122,15 @@ function logoutRedirect(request: NextRequest, pathname?: string, errorCode?: str
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const forwardHeaders = tenantForwardHeaders(request);
+  const forward = () => NextResponse.next({ request: { headers: forwardHeaders } });
 
   if (
     isStaticAssetPath(pathname) ||
     pathname.startsWith("/images") ||
     PUBLIC_STATIC_EXT.test(pathname)
   ) {
-    return NextResponse.next();
+    return forward();
   }
 
   // API surface. `/api/v1/**` requires a verified session token; everything
@@ -128,7 +146,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
       }
     }
-    return NextResponse.next();
+    return forward();
   }
 
   if (PUBLIC_PATHS.has(pathname)) {
@@ -139,7 +157,7 @@ export async function proxy(request: NextRequest) {
         // Session is no longer valid (reset password, or SSO identity has no
         // dashboard account). Clear the cookies so /login can render instead
         // of bouncing back to /dashboard.
-        const response = NextResponse.next();
+        const response = forward();
         response.cookies.delete("authjs.session-token");
         response.cookies.delete("__Secure-authjs.session-token");
         return response;
@@ -150,7 +168,7 @@ export async function proxy(request: NextRequest) {
         new URL(withNextBasePath("/dashboard"), request.nextUrl.origin),
       );
     }
-    return NextResponse.next();
+    return forward();
   }
 
   const token = await readToken(request);
@@ -165,7 +183,7 @@ export async function proxy(request: NextRequest) {
     return logoutRedirect(request, pathname, blockReason);
   }
 
-  return NextResponse.next();
+  return forward();
 }
 
 export const config = {

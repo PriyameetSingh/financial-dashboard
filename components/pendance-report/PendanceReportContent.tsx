@@ -3,7 +3,7 @@
 import { Fragment } from "react";
 import clsx from "clsx";
 import type { PendanceReportPayload } from "@/lib/pendance-report";
-import { formatPendanceReportDate } from "@/lib/pendance-report";
+import { formatPendanceReportDate } from "@/lib/pendance-report-display";
 import { tenantConfig } from "@/lib/tenant-config";
 
 function SectionTitleBar({ n, title }: { n: number; title: string }) {
