@@ -210,4 +210,8 @@ console.error(
   "Resolve by moving these literals into lib/tenant-config/ defaults and reading them",
   "through the tenant config resolver. Do NOT branch on tenant identity in code.",
 );
+console.error(
+  "\nTracked backlog & discharge procedure (extend the golden to the call site,",
+  "then convert): docs/TENANCY-BACKLOG.md",
+);
 process.exit(1);
