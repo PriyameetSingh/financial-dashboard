@@ -36,7 +36,7 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "KPI not found" }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await prisma.$transaction(async (tx) => {
       await tx.kpiDefinitionPerformer.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
       await tx.kpiTarget.deleteMany({ where: { kpiDefinitionId: id } });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, requireTenantScope } from "@/lib/prisma";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
-import { getTenantContextSafe } from "@/lib/tenant-context";
+
 
 export const runtime = "nodejs";
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         mode: "BOTH",
         createdAt: new Date(),
         updatedAt: new Date(),
-        tenantId: (await getTenantContextSafe()).tenantId,
+        tenantId: requireTenantScope("agent-config-fallback"),
       };
     }
     return NextResponse.json(config);

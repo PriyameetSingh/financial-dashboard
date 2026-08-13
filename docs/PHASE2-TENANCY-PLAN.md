@@ -597,3 +597,58 @@ would prove the filter works, not that the chokepoint applies it.
 | C | resolver (`proxy.ts` slug → header; `lib/tenant-context.ts`), DB-backed `tenantConfig()` via §7a bridge, singleton deleted, config round-trip assertion added | green, output identical |
 | D | Prisma extension chokepoint + uncovered-path handling (incl. tenant-keyed `unstable_cache`, tenant-scoped auth lookups, `prismaUnscoped` lint), isolation tests, integrity script, then M3 (NOT NULL + composite uniques) | green + new permanent isolation assertions |
 | E | `seed_demo_tenant.js` (fictional "Rivertown Development Authority" data), Demo resolvable via slug/dev override | green; Odisha byte-identical; Demo renders distinct branding/data |
+
+---
+
+## 13. Gate D — as built (deltas from the design above)
+
+The chokepoint shipped as designed (Prisma Client Extension on `$allModels /
+$allOperations`, model classification derived from the schema, request-scoped
+tenant read per operation). Five things differ from, or go beyond, §10 and are
+recorded here so the design doc matches the code.
+
+1. **Nested relation writes ARE covered, not just backstopped.** The design
+   assumed nested writes (`data: { performers: { create: [...] } }`) could only
+   be handled by hand-enumeration plus the `NOT NULL` backstop. Instead the
+   extension now walks create payloads using a schema-derived
+   `RELATION_TARGETS` map and stamps the tenant on nested `create`,
+   `createMany.data` and `connectOrCreate.create` for every relation whose
+   target model is tenant-scoped. Application code contains **zero** relation-
+   nested writes today (verified by grep across `app/`, `lib/`, `src/`); the
+   gap was found by the `NOT NULL` migration failing a nested write in the test
+   fixtures — i.e. the backstop worked, and the walk now closes the hole for
+   future code.
+
+2. **`tenantId` is `NOT NULL` in the database but optional in the Prisma create
+   input**, via `@default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))`.
+   The GUC is never set, so the default evaluates to NULL and the `NOT NULL`
+   constraint rejects any write that reaches the database without a stamped
+   tenant. This keeps the DB guarantee while avoiding ~40 hand edits to route
+   payloads, which Rule 5 exists to prevent. The chokepoint always supplies the
+   value explicitly; the default is a type-level affordance, not a data path.
+
+3. **By-unique lookups on the 11 newly-composite fields became `findFirst`.**
+   `findUnique({ where: { code } })` no longer compiles once `code` is unique
+   per tenant. 27 such call sites became `findFirst`, which the chokepoint
+   scopes — semantics are unchanged (the field is still unique *within* the
+   tenant). The operations that genuinely require a unique selector
+   (`update`/`upsert`/`delete`) use `lib/tenant-unique.ts`, whose helpers build
+   the composite key from the current scope so a call site cannot pass the
+   wrong tenant.
+
+4. **Seeds and scripts became explicitly tenant-addressed.** TS seeds enter an
+   explicit scope (`enterTenantScope`, default Odisha, `SEED_TENANT_ID`
+   override) and write through the same chokepoint; the JS seeds
+   (`prisma/seed.js`, `prisma/seed_roles_core.cjs`) stamp `TENANT_ID` directly.
+   `scripts/check-tenant-chokepoint.mjs` fails the build if `prismaUnscoped` or
+   raw SQL appears outside the recorded allowlist.
+
+5. **Physical storage namespacing landed here, not at Gate B/E.** New meeting
+   material uploads are written to `{tenantId}/{meetingId}/{uuid}-{name}`.
+   Reads are unchanged (they resolve whatever relative `storagePath` the row
+   holds), so existing Odisha files keep working at their legacy paths.
+
+Two permanent CI legs were added to the golden: `check-tenant-chokepoint`
+(static: no unscoped-client/raw-SQL escapes) and `check-tenant-integrity`
+(data: zero NULL tenantIds, zero cross-tenant FK references, both derived from
+the schema rather than a hand-kept table list).

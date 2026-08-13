@@ -127,7 +127,7 @@ export class NotificationService {
    */
   private static async getConfigValue(key: string, defaultValue: string): Promise<string> {
     try {
-      const config = await prisma.systemNotificationConfig.findUnique({
+      const config = await prisma.systemNotificationConfig.findFirst({
         where: { key },
       });
       return config ? config.value : defaultValue;

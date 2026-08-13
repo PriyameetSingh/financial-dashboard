@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "Reason is required" }, { status: 400 });
     }
 
-    const scheme = await prisma.scheme.findUnique({
+    const scheme = await prisma.scheme.findFirst({
       where: { code: body.schemeCode },
       include: { subschemes: true },
     });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "Scheme not found" }, { status: 404 });
     }
 
-    const fy = await prisma.financialYear.findUnique({ 
+    const fy = await prisma.financialYear.findFirst({ 
       where: { label: body.financialYearLabel } 
     });
 

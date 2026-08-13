@@ -10,6 +10,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { inflateSync } from "node:zlib";
 import { prisma } from "@/lib/prisma";
+import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
+import { enterTenantScope } from "@/lib/tenant-context";
 import { resolveDataScopeForUser, type DataScope } from "@/lib/data-scope";
 import { buildMeetingReport } from "@/lib/meeting-report";
 import { renderMeetingReportPdfBuffer } from "@/lib/meeting-report-pdf-server";
@@ -34,6 +36,10 @@ let fullScope: DataScope;
 let fullDbUser: Awaited<ReturnType<typeof loadDbUserWithRbac>>;
 
 beforeAll(async () => {
+  // Phase 2: these suites exercise Odisha's data through the tenant-scoped
+  // client, so the process enters Odisha's scope first (test-only ergonomic
+  // form of withTenantContext).
+  await enterTenantScope(ODISHA_TENANT_ID);
   seed = await seedScope();
   fullDbUser = await loadDbUserWithRbac(seed.fullUser.id);
   fullScope = await resolveDataScopeForUser(fullDbUser);

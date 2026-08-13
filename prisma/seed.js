@@ -1,4 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
+/**
+ * Phase 2 tenancy: seeds run outside any request, so they address the tenant
+ * explicitly. Defaults to the well-known Odisha tenant (created by migration
+ * 20260813084800_phase2_odisha_backfill); override with SEED_TENANT_ID.
+ */
+const TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
+
 const { seedRolesAndPermissions } = require("./seed_roles_core.cjs");
 
 const datasourceUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
@@ -162,6 +169,7 @@ async function ensureFinanceYearBudgetAllocationForYear(financialYearId) {
       data: {
         financialYearId,
         totalBudgetCr: 0,
+        tenantId: TENANT_ID,
       },
     });
   }
@@ -172,6 +180,7 @@ async function ensureFinanceYearBudgetAllocationForYear(financialYearId) {
       },
       update: {},
       create: {
+        tenantId: TENANT_ID,
         allocationId: allocation.id,
         category,
         budgetEstimateCr: 0,
@@ -187,59 +196,60 @@ async function main() {
 
   for (const v of VERTICALS) {
     await prisma.vertical.upsert({
-      where: { code: v.code },
+      where: { tenantId_code: { tenantId: TENANT_ID, code: v.code } },
       update: { name: v.name },
-      create: { code: v.code, name: v.name },
+      create: { tenantId: TENANT_ID, code: v.code, name: v.name },
     });
   }
 
   // Seed reference tables: sections, organisations, designations, ulbs
   for (const name of SECTIONS) {
     await prisma.section.upsert({
-      where: { name },
+      where: { tenantId_name: { tenantId: TENANT_ID, name } },
       update: {},
-      create: { name },
+      create: { tenantId: TENANT_ID, name },
     });
   }
 
   for (const name of ORGANISATIONS) {
     await prisma.organisation.upsert({
-      where: { name },
+      where: { tenantId_name: { tenantId: TENANT_ID, name } },
       update: {},
-      create: { name },
+      create: { tenantId: TENANT_ID, name },
     });
   }
 
   for (const name of DESIGNATIONS) {
     await prisma.designation.upsert({
-      where: { name },
+      where: { tenantId_name: { tenantId: TENANT_ID, name } },
       update: {},
-      create: { name },
+      create: { tenantId: TENANT_ID, name },
     });
   }
 
   for (const name of ULBS) {
     await prisma.ulb.upsert({
-      where: { name },
+      where: { tenantId_name: { tenantId: TENANT_ID, name } },
       update: {},
-      create: { name },
+      create: { tenantId: TENANT_ID, name },
     });
   }
 
   await prisma.financialYear.upsert({
-    where: { label: "2025-26" },
+    where: { tenantId_label: { tenantId: TENANT_ID, label: "2025-26" } },
     update: {
       startDate: new Date("2025-04-01"),
       endDate: new Date("2026-03-31"),
     },
     create: {
+      tenantId: TENANT_ID,
       label: "2025-26",
       startDate: new Date("2025-04-01"),
       endDate: new Date("2026-03-31"),
     },
   });
 
-  const fy = await prisma.financialYear.findUnique({ where: { label: "2025-26" } });
+  const fy = await prisma.financialYear.findFirst({ where: { tenantId: TENANT_ID, label: "2025-26" } });
   if (!fy) throw new Error("Financial year not found");
 
   const allFys = await prisma.financialYear.findMany({ select: { id: true } });
@@ -288,6 +298,7 @@ async function main() {
   if (!existingConfig) {
     await prisma.agentConfig.create({
       data: {
+        tenantId: TENANT_ID,
         id: "d3b07384-d113-43cf-a5a5-4828f306d860",
         enabled: true,
         runDay: "Monday",

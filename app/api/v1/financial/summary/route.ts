@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const fyLabel = searchParams.get("financialYearLabel");
 
     let fy = fyLabel
-      ? await prisma.financialYear.findUnique({ where: { label: fyLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: fyLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
     if (!fy && fyLabel) {
       fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Body;
     const fy = body.financialYearLabel
-      ? await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
     if (!fy) {

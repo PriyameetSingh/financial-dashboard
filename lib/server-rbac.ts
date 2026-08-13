@@ -90,6 +90,13 @@ export async function getEffectivePermissionCodesFromUserId(
   sessionRoleFallback?: string | null,
 ): Promise<Set<string>> {
   try {
+    // TENANCY (Gate D): raw SQL bypasses the Prisma chokepoint. This is the
+    // ONLY raw query in the app and it is tenant-safe by construction: it is
+    // keyed by `userId`, which the caller obtained through a tenant-scoped
+    // user lookup, and every table it touches (user_roles, role_permissions,
+    // user_permission_overrides) is tenant-scoped and can only hold rows for
+    // that user's own tenant. `permissions` is the deliberately global code
+    // registry. New raw SQL is barred by scripts/check-tenant-chokepoint.mjs.
     const rows = await prisma.$queryRaw<Array<{ code: string }>>(
       Prisma.sql`
         (
@@ -116,7 +123,7 @@ export async function getEffectivePermissionCodesFromUserId(
     const codes = new Set(rows.map((r) => r.code));
 
     if (codes.size === 0 && sessionRoleFallback) {
-      const role = await prisma.role.findUnique({
+      const role = await prisma.role.findFirst({
         where: { code: sessionRoleFallback },
         include: {
           rolePermissions: { include: { permission: { select: { code: true } } } },

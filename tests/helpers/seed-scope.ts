@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
+import { withTenantContext } from "@/lib/tenant-context";
 import {
   ActionItemPriority,
   ActionItemStatus,
@@ -52,7 +54,11 @@ export type ScopeSeed = {
 };
 
 /** Delete every row created by this seed (idempotent). */
-export async function cleanupScopeSeed(): Promise<void> {
+export async function cleanupScopeSeed(tenantId: string = ODISHA_TENANT_ID): Promise<void> {
+  return withTenantContext(tenantId, () => cleanupScopeSeedInner());
+}
+
+async function cleanupScopeSeedInner(): Promise<void> {
   const like = `${PREFIX}%`;
   await prisma.kpiMeasurement.deleteMany({ where: { kpiTarget: { kpiDefinition: { scheme: { code: { startsWith: PREFIX } } } } } }).catch(() => {});
   await prisma.kpiTarget.deleteMany({ where: { kpiDefinition: { scheme: { code: { startsWith: PREFIX } } } } }).catch(() => {});
@@ -81,16 +87,25 @@ async function ensurePermission(code: string, name: string) {
   });
 }
 
-async function ensureRole(code: string, name: string) {
+async function ensureRole(code: string, name: string, tenantId: string) {
   return prisma.role.upsert({
-    where: { code },
+    where: { tenantId_code: { tenantId, code } },
     update: { name },
     create: { code, name },
   });
 }
 
-export async function seedScope(): Promise<ScopeSeed> {
-  await cleanupScopeSeed();
+/**
+ * Seed the fixture for one tenant. Runs inside an explicit tenant scope, so
+ * every write goes through the Gate D chokepoint and is stamped with that
+ * tenant — the seed itself exercises the production write path.
+ */
+export async function seedScope(tenantId: string = ODISHA_TENANT_ID): Promise<ScopeSeed> {
+  return withTenantContext(tenantId, () => seedScopeInner(tenantId));
+}
+
+async function seedScopeInner(tenantId: string): Promise<ScopeSeed> {
+  await cleanupScopeSeedInner();
 
   // Use the REAL permission codes — resolveDataScopeForUser checks effective.has("VIEW_ALL_DATA")
   // / "VIEW_ASSIGNED_DATA". We upsert the real permission rows (idempotent) and link them to
@@ -98,9 +113,9 @@ export async function seedScope(): Promise<ScopeSeed> {
   const permAll = await ensurePermission("VIEW_ALL_DATA", "View all data");
   const permAssigned = await ensurePermission("VIEW_ASSIGNED_DATA", "View assigned data");
   const permEnterFinancial = await ensurePermission("ENTER_FINANCIAL_DATA", "Enter financial data");
-  const roleFull = await ensureRole(`${PREFIX}ACS`, "Test ACS");
-  const roleAssigned = await ensureRole(`${PREFIX}NODAL`, "Test Nodal");
-  const roleFinance = await ensureRole(`${PREFIX}FINANCE`, "Test Finance Nodal");
+  const roleFull = await ensureRole(`${PREFIX}ACS`, "Test ACS", tenantId);
+  const roleAssigned = await ensureRole(`${PREFIX}NODAL`, "Test Nodal", tenantId);
+  const roleFinance = await ensureRole(`${PREFIX}FINANCE`, "Test Finance Nodal", tenantId);
 
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleFull.id, permissionId: permAll.id } },
@@ -131,7 +146,7 @@ export async function seedScope(): Promise<ScopeSeed> {
       name: `${PREFIX} Full Access`,
       code: `${PREFIX}FULL`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleFull.id }] },
+      userRoles: { create: [{ roleId: roleFull.id, tenantId }] },
     },
   });
   const restrictedUser = await prisma.user.create({
@@ -140,7 +155,7 @@ export async function seedScope(): Promise<ScopeSeed> {
       name: `${PREFIX} Restricted`,
       code: `${PREFIX}RESTRICTED`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleAssigned.id }] },
+      userRoles: { create: [{ roleId: roleAssigned.id, tenantId }] },
     },
   });
   const financeUser = await prisma.user.create({
@@ -149,7 +164,7 @@ export async function seedScope(): Promise<ScopeSeed> {
       name: `${PREFIX} Finance Nodal`,
       code: `${PREFIX}FINANCE`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleFinance.id }] },
+      userRoles: { create: [{ roleId: roleFinance.id, tenantId }] },
     },
   });
 
@@ -336,7 +351,11 @@ export async function seedScope(): Promise<ScopeSeed> {
 }
 
 /** Load a DbUserWithRbac (with the role/permission graph) for a seeded user. */
-export async function loadDbUserWithRbac(userId: string) {
+export async function loadDbUserWithRbac(userId: string, tenantId: string = ODISHA_TENANT_ID) {
+  return withTenantContext(tenantId, () => loadDbUserWithRbacInner(userId));
+}
+
+async function loadDbUserWithRbacInner(userId: string) {
   return prisma.user.findUniqueOrThrow({
     where: { id: userId },
     include: {

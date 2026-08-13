@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { roleByCode } from "@/lib/tenant-unique";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
@@ -23,7 +24,7 @@ export async function PATCH(
     if (code && typeof code === "string") {
       const newCode = code.trim().toUpperCase();
       if (newCode !== roleCode) {
-        const existing = await prisma.role.findUnique({ where: { code: newCode } });
+        const existing = await prisma.role.findFirst({ where: { code: newCode } });
         if (existing) {
           return NextResponse.json({ detail: "Role code already exists" }, { status: 409 });
         }
@@ -32,7 +33,7 @@ export async function PATCH(
     }
 
     const updatedRole = await prisma.role.update({
-      where: { code: roleCode },
+      where: roleByCode(roleCode),
       data,
     });
 

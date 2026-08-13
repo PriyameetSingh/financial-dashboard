@@ -19,7 +19,13 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma";
+import { prismaUnscoped as prisma } from "../lib/prisma";
+import type { TenantTransactionClient } from "../lib/prisma";
+
+/** This verification script runs outside any tenant scope by design (it audits
+ * the transactional-audit contract itself), so it uses the unscoped client and
+ * casts its tx to the shape logAudit expects. */
+const asAuditTx = (tx: unknown) => tx as TenantTransactionClient;
 import { logAudit } from "../lib/audit";
 
 const BOGUS_USER_ID = "00000000-0000-0000-0000-000000000000"; // non-existent → FK violation on audit
@@ -76,7 +82,8 @@ test("Test 1 (control): successful mutation+audit commits both atomically", asyn
         createdById: f.actor,
       },
     });
-    await logAudit(tx, f.actor, action, "finance_expenditure_snapshot", snap.id, null, { marker });
+    await logAudit(
+      asAuditTx(tx), f.actor, action, "finance_expenditure_snapshot", snap.id, null, { marker });
   });
   const snap = await prisma.financeExpenditureSnapshot.findFirst({ where: { remarks: marker } });
   const audit = await prisma.auditLog.findFirst({ where: { actionType: action } });
@@ -105,7 +112,8 @@ test("Test 2 (financial): audit-insert failure rolls back the financial mutation
         },
       });
       // Force the audit write to fail via FK violation on actorUserId.
-      await logAudit(tx, BOGUS_USER_ID, action, "finance_expenditure_snapshot", null, null, { marker });
+      await logAudit(
+      asAuditTx(tx), BOGUS_USER_ID, action, "finance_expenditure_snapshot", null, null, { marker });
     });
   } catch (e) {
     caught = e;
@@ -132,7 +140,8 @@ test("Test 3 (RBAC): audit-insert failure rolls back the RBAC mutation", async (
         },
       });
       // Force the audit write to fail via FK violation on actorUserId.
-      await logAudit(tx, BOGUS_USER_ID, action, "user_permission_override", null, null, {
+      await logAudit(
+      asAuditTx(tx), BOGUS_USER_ID, action, "user_permission_override", null, null, {
         userId: f.pair.userId,
         permissionId: f.pair.permissionId,
       });
@@ -158,7 +167,8 @@ test("Test 4: mutation failure leaves no orphan audit row", async () => {
       // Audit is written first, then a mutation that fails (invalid schemeId FK).
       // This proves the transaction rolls back an already-written audit when a
       // later operation fails — i.e. no orphan audit row can survive a rollback.
-      await logAudit(tx, f.actor, action, "finance_expenditure_snapshot", null, null, { phase: "pre-mutation" });
+      await logAudit(
+      asAuditTx(tx), f.actor, action, "finance_expenditure_snapshot", null, null, { phase: "pre-mutation" });
       await tx.financeExpenditureSnapshot.create({
         data: {
           schemeId: BOGUS_SCHEME_ID, // FK violation → mutation fails

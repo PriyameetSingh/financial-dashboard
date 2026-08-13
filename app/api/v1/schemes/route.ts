@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
     const auditContext = getAuditRequestContext(request);
 
-    const created = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const created = await prisma.$transaction(async (tx) => {
       const scheme = await tx.scheme.create({
         data: {
           code,

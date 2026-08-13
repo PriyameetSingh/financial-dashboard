@@ -1,4 +1,8 @@
 import { OfficerType, PrismaClient } from "@prisma/client";
+
+/** Phase 2: this script runs outside any request, so it addresses the tenant
+ * explicitly (default: the Odisha tenant; override with SEED_TENANT_ID). */
+const SCRIPT_TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
 import {
   createOrFindKeycloakUser,
   replaceKeycloakClientRole,
@@ -259,7 +263,7 @@ async function main() {
         if (!dryRun) {
           await prisma.$transaction(async (tx) => {
             const user = await tx.user.upsert({
-              where: { email: row.email },
+              where: { tenantId_email: { tenantId: SCRIPT_TENANT_ID, email: row.email } },
               update: {
                 name: row.name,
                 code: username,

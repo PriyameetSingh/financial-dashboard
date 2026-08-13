@@ -100,13 +100,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const role = await prisma.role.findUnique({ where: { code: roleCode } });
+    const role = await prisma.role.findFirst({ where: { code: roleCode } });
     if (!role) {
       return NextResponse.json({ detail: `Role not found: ${roleCode}` }, { status: 400 });
     }
 
     // Validate email uniqueness
-    const existingUserByEmail = await prisma.user.findUnique({
+    const existingUserByEmail = await prisma.user.findFirst({
       where: { email },
     });
     if (existingUserByEmail) {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate phone number (code) uniqueness
-    const existingUserByCode = await prisma.user.findUnique({
+    const existingUserByCode = await prisma.user.findFirst({
       where: { code: username },
     });
     if (existingUserByCode) {

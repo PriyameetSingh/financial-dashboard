@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       { canManageSchemes },
     );
 
-    const fy = await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } });
+    const fy = await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } });
     if (!fy) {
       return NextResponse.json({ detail: "Financial year not found" }, { status: 404 });
     }

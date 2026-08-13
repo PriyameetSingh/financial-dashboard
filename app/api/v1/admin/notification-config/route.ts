@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { systemNotificationConfigByKey } from "@/lib/tenant-unique";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
         afterMap[key] = value;
 
         await tx.systemNotificationConfig.upsert({
-          where: { key },
+          where: systemNotificationConfigByKey(key),
           create: {
             key,
             value,

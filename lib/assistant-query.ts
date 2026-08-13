@@ -30,7 +30,7 @@ function mapKpiWorkflow(workflowStatus?: string | null): string {
 
 async function resolveFy(label?: string | null) {
   let fy = label
-    ? await prisma.financialYear.findUnique({ where: { label } })
+    ? await prisma.financialYear.findFirst({ where: { label } })
     : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
   if (!fy && label) {
     fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });

@@ -1,13 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 
+/** Phase 2: this script runs outside any request, so it addresses the tenant
+ * explicitly (default: the Odisha tenant; override with SEED_TENANT_ID). */
+const SCRIPT_TENANT_ID = process.env.SEED_TENANT_ID || '00000000-0000-4000-8000-000000000001';
+
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Starting role code update from PROGRAMME_MANAGER to VERTICAL_HEAD...');
 
   // Find the role with code PROGRAMME_MANAGER
-  const programmeManagerRole = await prisma.role.findUnique({
-    where: { code: 'PROGRAMME_MANAGER' },
+  const programmeManagerRole = await prisma.role.findFirst({
+    where: { tenantId: SCRIPT_TENANT_ID, code: 'PROGRAMME_MANAGER' },
   });
 
   if (!programmeManagerRole) {
@@ -18,7 +22,7 @@ async function main() {
   console.log('Found role:', programmeManagerRole);
 
   // Check if VERTICAL_HEAD already exists
-  const existingVerticalHead = await prisma.role.findUnique({
+  const existingVerticalHead = await prisma.role.findFirst({
     where: { code: 'VERTICAL_HEAD' },
   });
 
@@ -30,7 +34,7 @@ async function main() {
 
   // Update the role code and name
   const updatedRole = await prisma.role.update({
-    where: { code: 'PROGRAMME_MANAGER' },
+    where: { tenantId_code: { tenantId: SCRIPT_TENANT_ID, code: 'PROGRAMME_MANAGER' } },
     data: {
       code: 'VERTICAL_HEAD',
       name: 'Vertical Head',

@@ -25,6 +25,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { findActiveTenant } from "@/lib/tenant-resolve-db";
 import { ODISHA_DEFAULTS, type TenantConfig } from "@/lib/tenant-config";
 import { overlayConfigEntries } from "@/lib/tenant-config/registry";
 import { TENANT_HEADER } from "@/lib/tenant-config/resolution";
@@ -50,32 +51,6 @@ export type TenantContext = {
   slug: string;
   config: TenantConfig;
 };
-
-type TenantRow = { id: string; slug: string };
-
-async function findActiveTenant(slugCandidate: string | null): Promise<TenantRow | null> {
-  if (slugCandidate) {
-    const bySlug = await prisma.tenant.findFirst({
-      where: { slug: slugCandidate, status: "active" },
-      select: { id: true, slug: true },
-    });
-    if (bySlug) return bySlug;
-  }
-  if (process.env.NODE_ENV === "development" && process.env.DEV_DEFAULT_TENANT_SLUG) {
-    const dev = await prisma.tenant.findFirst({
-      where: { slug: process.env.DEV_DEFAULT_TENANT_SLUG, status: "active" },
-      select: { id: true, slug: true },
-    });
-    if (dev) return dev;
-  }
-  // Single-active-tenant default; two rows are enough to detect "multiple".
-  const actives = await prisma.tenant.findMany({
-    where: { status: "active" },
-    select: { id: true, slug: true },
-    take: 2,
-  });
-  return actives.length === 1 ? actives[0] : null;
-}
 
 export async function loadTenantConfigFromDb(tenantId: string): Promise<TenantConfig> {
   const rows = await prisma.tenantConfigEntry.findMany({
@@ -129,4 +104,20 @@ export async function withTenantContext<T>(
   const config = await loadTenantConfigFromDb(tenantId);
   const holder: TenantHolder = { cfg: config, tenantId };
   return explicitScope.run(holder, () => Promise.resolve(fn()));
+}
+
+/**
+ * Enter a tenant scope for the CURRENT async execution context and everything
+ * chained after it, without wrapping a callback (AsyncLocalStorage.enterWith).
+ *
+ * TEST AND SCRIPT USE ONLY — it is the ergonomic form for a vitest `beforeAll`
+ * or a CLI script's entry point. Never call it from a request path: request
+ * scoping must come from the per-request resolver (getTenantContext) or an
+ * explicit `withTenantContext()` wrap, both of which cannot bleed between
+ * concurrent requests. `enterWith` deliberately persists in the surrounding
+ * context, which is right for a single-tenant script and wrong for a server.
+ */
+export async function enterTenantScope(tenantId: string): Promise<void> {
+  const config = await loadTenantConfigFromDb(tenantId);
+  explicitScope.enterWith({ cfg: config, tenantId });
 }

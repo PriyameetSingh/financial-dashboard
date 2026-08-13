@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest) {
 
     const body = (await request.json()) as PatchBody;
 
-    const scheme = await prisma.scheme.findUnique({
+    const scheme = await prisma.scheme.findFirst({
       where: { code: body.schemeCode },
       include: { subschemes: true },
     });
@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const fy = body.financialYearLabel
-      ? await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
     if (!fy) {

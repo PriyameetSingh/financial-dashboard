@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
     }
 
-    const scheme = await prisma.scheme.findUnique({
+    const scheme = await prisma.scheme.findFirst({
       where: { code: body.schemeCode },
       include: { subschemes: true },
     });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const fy = body.financialYearLabel
-      ? await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
     if (!fy) {

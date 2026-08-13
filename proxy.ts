@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
-import { prisma } from "@/lib/prisma";
+import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
+import { findActiveTenant } from "@/lib/tenant-resolve-db";
 import { TENANT_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
 
 /**
@@ -83,11 +84,19 @@ async function readToken(request: NextRequest) {
  *
  * Returns `null` when the token is fine and the request should proceed.
  */
-async function getSessionBlockReason(token: any): Promise<"invalidated" | "account_not_registered" | null> {
+async function getSessionBlockReason(
+  token: any,
+  tenantId: string | null,
+): Promise<"invalidated" | "account_not_registered" | null> {
   if (!token) return null;
+  // Middleware runs BEFORE any tenant scope exists, so it uses the unscoped
+  // client with an explicit tenant filter. No tenant resolved ⇒ no account can
+  // be honoured (deny), never a cross-tenant lookup.
+  if (!tenantId) return "account_not_registered";
   try {
-    const dbUser = await prisma.user.findFirst({
+    const dbUser = await prismaUnscoped.user.findFirst({
       where: {
+        tenantId,
         OR: [
           { code: { equals: token.preferred_username as string, mode: "insensitive" } },
           { email: { equals: token.email as string, mode: "insensitive" } },
@@ -124,6 +133,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const forwardHeaders = tenantForwardHeaders(request);
   const forward = () => NextResponse.next({ request: { headers: forwardHeaders } });
+  // Resolved lazily: only the session-block checks below need the tenant row.
+  const tenantId = async () => (await findActiveTenant(forwardHeaders.get(TENANT_HEADER)))?.id ?? null;
 
   if (
     isStaticAssetPath(pathname) ||
@@ -152,7 +163,7 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.has(pathname)) {
     const token = await readToken(request);
     if (token) {
-      const blockReason = await getSessionBlockReason(token);
+      const blockReason = await getSessionBlockReason(token, await tenantId());
       if (blockReason) {
         // Session is no longer valid (reset password, or SSO identity has no
         // dashboard account). Clear the cookies so /login can render instead
@@ -178,7 +189,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const blockReason = await getSessionBlockReason(token);
+  const blockReason = await getSessionBlockReason(token, await tenantId());
   if (blockReason) {
     return logoutRedirect(request, pathname, blockReason);
   }

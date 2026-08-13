@@ -11,6 +11,10 @@
 
 import { PrismaClient } from "@prisma/client";
 
+/** Phase 2: runs outside any request, so the tenant is explicit
+ * (default: the Odisha tenant; override with SEED_TENANT_ID). */
+const SCRIPT_TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -18,13 +22,13 @@ async function main() {
 
   try {
     // Step 1: Find the PROGRAMME_MANAGER and VERTICAL_HEAD role records
-    const programmeManagerRole = await prisma.role.findUnique({
-      where: { code: "PROGRAMME_MANAGER" },
+    const programmeManagerRole = await prisma.role.findFirst({
+      where: { tenantId: SCRIPT_TENANT_ID, code: "PROGRAMME_MANAGER" },
       include: { rolePermissions: { include: { permission: true } } },
     });
 
-    const verticalHeadRole = await prisma.role.findUnique({
-      where: { code: "VERTICAL_HEAD" },
+    const verticalHeadRole = await prisma.role.findFirst({
+      where: { tenantId: SCRIPT_TENANT_ID, code: "VERTICAL_HEAD" },
       include: { rolePermissions: { include: { permission: true } } },
     });
 
@@ -72,7 +76,7 @@ async function main() {
       console.log("\nTransferring these permissions to VERTICAL_HEAD...");
 
       for (const permCode of uniquePmPermissions) {
-        const permission = await prisma.permission.findUnique({
+        const permission = await prisma.permission.findFirst({
           where: { code: permCode },
         });
         if (permission) {

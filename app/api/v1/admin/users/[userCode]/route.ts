@@ -274,7 +274,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
     }
 
     if (body.roleCode !== undefined) {
-      const role = await prisma.role.findUnique({ where: { code: body.roleCode } });
+      const role = await prisma.role.findFirst({ where: { code: body.roleCode } });
       if (!role) {
         return NextResponse.json({ detail: `Role not found: ${body.roleCode}` }, { status: 400 });
       }

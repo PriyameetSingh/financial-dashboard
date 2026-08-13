@@ -12,9 +12,19 @@
  *   ACS (reviewerId / reviewer for action items & KPIs):           7eb9971e-7b21-4624-a6a1-052e923d2658
  */
 
-import { PrismaClient, ActionItemStatus, ActionItemPriority, ActionItemType, KPIProgressStatus, KPIWorkflowStatus, KPIType, KPICategory, FinancialWorkflowStatus, SponsorshipType } from "@prisma/client";
+import { ActionItemStatus, ActionItemPriority, ActionItemType, KPIProgressStatus, KPIWorkflowStatus, KPIType, KPICategory, FinancialWorkflowStatus, SponsorshipType } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { prisma } from "./lib/prisma";
+import { ODISHA_TENANT_ID } from "./lib/tenant-config";
+import { enterTenantScope } from "./lib/tenant-context";
+
+/**
+ * Phase 2 tenancy: this seed runs outside any request, so it enters an explicit
+ * tenant scope (default: the Odisha tenant, override with SEED_TENANT_ID). Every
+ * write then flows through the same tenant chokepoint the app uses and is
+ * stamped automatically.
+ */
+const SEED_TENANT_ID = process.env.SEED_TENANT_ID || ODISHA_TENANT_ID;
 
 // ── User IDs ──────────────────────────────────────────────────────────────────
 const NODAL_OFFICER_ID = "6bc4de32-decf-4af1-90c1-0ce7813ac362";
@@ -52,11 +62,12 @@ function parseDueDate(raw: string | null | undefined): Date {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
+  await enterTenantScope(SEED_TENANT_ID);
   console.log("🌱  Seeding HUDD Dashboard data…\n");
 
   // ── Financial Year 2025-26 ─────────────────────────────────────────────────
   const fy2526 = await prisma.financialYear.upsert({
-    where: { label: "2025-26" },
+    where: { tenantId_label: { tenantId: SEED_TENANT_ID, label: "2025-26" } },
     update: {},
     create: {
       label: "2025-26",
@@ -68,7 +79,7 @@ async function main() {
 
   // ── Vertical ──────────────────────────────────────────────────────────────
   const vertical = await prisma.vertical.upsert({
-    where: { code: "HUDD" },
+    where: { tenantId_code: { tenantId: SEED_TENANT_ID, code: "HUDD" } },
     update: {},
     create: { code: "HUDD", name: "Housing & Urban Development Department" },
   });
@@ -104,7 +115,7 @@ async function main() {
   const schemes: Record<string, string> = {};
   for (const s of schemeData) {
     const scheme = await prisma.scheme.upsert({
-      where: { code: s.code },
+      where: { tenantId_code: { tenantId: SEED_TENANT_ID, code: s.code } },
       update: {},
       create: {
         code: s.code,

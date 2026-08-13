@@ -3,6 +3,13 @@
  * Used by `prisma/seed.js` (full seed) and `prisma/seed_roles.js` (RBAC only).
  */
 
+/**
+ * Phase 2 tenancy: seeds run outside any request, so they address the tenant
+ * explicitly. Defaults to the well-known Odisha tenant (created by migration
+ * 20260813084800_phase2_odisha_backfill); override with SEED_TENANT_ID.
+ */
+const TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
+
 const PERMISSIONS = [
   { code: "VIEW_ALL_DATA", name: "View all data" },
   { code: "VIEW_ASSIGNED_DATA", name: "View assigned data" },
@@ -99,12 +106,12 @@ const ROLES = [
 
 /** Reassign users and scheme templates off legacy roles, then delete those roles. */
 async function migrateLegacyRoles(prisma) {
-  const pm = await prisma.role.findUnique({ where: { code: "PROGRAMME_MANAGER" } });
+  const pm = await prisma.role.findFirst({ where: { tenantId: TENANT_ID, code: "PROGRAMME_MANAGER" } });
   if (!pm) return;
 
   const legacyCodes = ["AS", "PS_HUDD", "DIRECTOR", "VIEWER"];
   for (const oldCode of legacyCodes) {
-    const old = await prisma.role.findUnique({ where: { code: oldCode } });
+    const old = await prisma.role.findFirst({ where: { tenantId: TENANT_ID, code: oldCode } });
     if (!old) continue;
 
     await prisma.schemeAssignment.updateMany({
@@ -117,7 +124,7 @@ async function migrateLegacyRoles(prisma) {
       await prisma.userRole.upsert({
         where: { userId_roleId: { userId: ur.userId, roleId: pm.id } },
         update: {},
-        create: { userId: ur.userId, roleId: pm.id },
+        create: { tenantId: TENANT_ID, userId: ur.userId, roleId: pm.id },
       });
     }
     await prisma.userRole.deleteMany({ where: { roleId: old.id } });
@@ -137,9 +144,9 @@ async function seedRolesAndPermissions(prisma) {
 
   for (const r of ROLES) {
     const role = await prisma.role.upsert({
-      where: { code: r.code },
+      where: { tenantId_code: { tenantId: TENANT_ID, code: r.code } },
       update: { name: r.name },
-      create: { code: r.code, name: r.name },
+      create: { tenantId: TENANT_ID, code: r.code, name: r.name },
     });
 
     const permissionRows = await prisma.permission.findMany({ where: { code: { in: r.permissions } } });
@@ -147,7 +154,7 @@ async function seedRolesAndPermissions(prisma) {
       await prisma.rolePermission.upsert({
         where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
         update: {},
-        create: { roleId: role.id, permissionId: perm.id },
+        create: { tenantId: TENANT_ID, roleId: role.id, permissionId: perm.id },
       });
     }
   }
@@ -158,11 +165,11 @@ async function seedRolesAndPermissions(prisma) {
 /** One dummy TASU user (MANAGE_USERS + MANAGE_PERMISSIONS) for admin UI after RBAC reset. Idempotent by email. */
 async function ensureBootstrapTasuAdmin(prisma) {
   const email = process.env.BOOTSTRAP_TASU_EMAIL || "tasu.admin@hudd.bootstrap";
-  const tasu = await prisma.role.findUnique({ where: { code: "TASU" } });
+  const tasu = await prisma.role.findFirst({ where: { tenantId: TENANT_ID, code: "TASU" } });
   if (!tasu) throw new Error("TASU role missing after seed");
 
   const user = await prisma.user.upsert({
-    where: { email },
+    where: { tenantId_email: { tenantId: TENANT_ID, email } },
     update: {
       name: "TASU Bootstrap Admin",
       department: "Technical & Advisory Support Unit",
@@ -170,6 +177,7 @@ async function ensureBootstrapTasuAdmin(prisma) {
       isActive: true,
     },
     create: {
+      tenantId: TENANT_ID,
       email,
       name: "TASU Bootstrap Admin",
       department: "Technical & Advisory Support Unit",
@@ -181,7 +189,7 @@ async function ensureBootstrapTasuAdmin(prisma) {
   await prisma.userRole.upsert({
     where: { userId_roleId: { userId: user.id, roleId: tasu.id } },
     update: {},
-    create: { userId: user.id, roleId: tasu.id },
+    create: { tenantId: TENANT_ID, userId: user.id, roleId: tasu.id },
   });
 
   return { email, userId: user.id };
@@ -199,12 +207,12 @@ async function ensureKnownUserRoleLinks(prisma) {
       console.warn(`[seed_roles] Skip role link — user not found: ${email}`);
       continue;
     }
-    const role = await prisma.role.findUnique({ where: { code: roleCode } });
+    const role = await prisma.role.findFirst({ where: { tenantId: TENANT_ID, code: roleCode } });
     if (!role) throw new Error(`Role not found: ${roleCode}`);
     await prisma.userRole.upsert({
       where: { userId_roleId: { userId: user.id, roleId: role.id } },
       update: {},
-      create: { userId: user.id, roleId: role.id },
+      create: { tenantId: TENANT_ID, userId: user.id, roleId: role.id },
     });
     console.log(`[seed_roles] Linked ${user.email} → ${roleCode}`);
   }

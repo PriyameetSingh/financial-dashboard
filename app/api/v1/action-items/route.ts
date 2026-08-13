@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     let scheme = null;
     if (body.schemeCode) {
-      scheme = await prisma.scheme.findUnique({
+      scheme = await prisma.scheme.findFirst({
         where: { code: body.schemeCode },
         include: { subschemes: true },
       });
