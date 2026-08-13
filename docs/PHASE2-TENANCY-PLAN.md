@@ -495,9 +495,44 @@ Operation handling (all 46 scoped models):
 |---|---|
 | `findMany` / `findFirst(OrThrow)` / `count` / `aggregate` / `groupBy` | `where := AND(tenantId, where)` |
 | `findUnique(OrThrow)` | run, then post-check `result.tenantId === current` → null / NotFound (unique selectors can't carry extra predicates; rows never change tenant, so post-check is sound) |
-| `create` / `createMany(AndReturn)` | inject `data.tenantId = current`; reject explicit foreign `tenantId` |
+| `create` / `createMany(AndReturn)` | inject `data.tenantId = current`; reject explicit foreign `tenantId`; **validate referenced parents** (below) |
 | `update` / `delete` / `upsert` (unique selectors) | pre-flight `findFirst(selector AND tenantId)`; absent → NotFound before any mutation (rows never migrate tenants, so no TOCTOU) |
 | `updateMany` / `deleteMany` | `where := AND(tenantId, where)` |
+
+**Write-path parent validation (not just stamping):** stamping
+`data.tenantId = current` alone would still let a create reference another
+tenant's parent row by id (e.g. an `ActionItem` created under tenant A with a
+tenant-B `schemeId`) — an integrity anomaly the CI sweep would only catch
+after the fact, not prevent in prod. Therefore the extension carries a
+`PARENT_FKS` registry (model → its tenant-scoped FK fields, taken from §1's
+CHILD table plus the nullable FKs on `ActionItem`/`DashboardMeeting`). On
+`create`/`createMany`/`upsert`-create/`update` that sets any such FK, the
+extension validates each non-null referenced parent belongs to the current
+tenant (one indexed PK lookup per FK) and rejects with NotFound otherwise.
+This runs on the hot create paths; reads remain leak-safe independently via
+the where-injection above.
+
+**Interactive-transaction propagation — VERIFIED by spike (pre-Gate B):**
+an extension installed via `$extends(query.$allModels.$allOperations)` fires
+for every operation made through the `tx` client of an interactive
+`$transaction(async (tx) => …)` on Prisma 6.19.3, and injected filters narrow
+results inside the transaction (impossible-filter probe returned 0 rows in
+tx while an unextended control tx returned the fixture row; callback log
+showed `Scheme.findMany`, `Scheme.count`, `User.count` from within the tx).
+Batch `$transaction([...])` equally covered. A permanent regression test
+re-asserting this ships with Gate D.
+
+**Physical file storage is tenant-namespaced:** uploads live under
+`data/meeting-materials/` with DB-stored relative `storagePath`s (today
+`{meetingId}/{randomId}-{fileName}`, `lib/local-file-storage.ts`). From the
+point write paths become tenant-aware (Gate D chokepoint work), new uploads
+gain a tenant prefix: `{tenantId}/{meetingId}/{randomId}-{fileName}` — the
+read path needs no change since it resolves whatever relative `storagePath`
+the row stores. Existing Odisha files stay at their legacy paths
+(byte-identical behavior, no file moves; their rows are Odisha's after M2
+backfill and unreachable cross-tenant via the scoped queries). Gate E's demo
+tenant uploads prove the separation on disk. `storagePath` stays globally
+unique — now structurally guaranteed by the tenant prefix for all new files.
 
 **Enumerated paths the extension does NOT cover — each handled deliberately:**
 
@@ -520,11 +555,16 @@ users, roles, schemes, FY, budgets/snapshots, KPI defs, meeting, action items �
 self-seeded and self-cleaned by the test file (golden DB stays
 migrations-only).
 
-Assertions, run under tenant-A context and tenant-B context symmetrically
-(context established via a `withTenant` test helper that primes the same
-request-scoped store the app uses):
+Assertions run **in both directions** — every check executes once under
+tenant-A context and once under tenant-B context, symmetrically — and they go
+**through the real production path**: a `withTenant` test helper establishes
+the same request-scoped context the app uses (the resolver's store, not a
+test-only substitute) and all queries run through the extension-scoped
+client. No test may pass a hand-written `where: { tenantId }` bypass — that
+would prove the filter works, not that the chokepoint applies it.
 
-1. **Surface sweeps** — the five named surfaces return only own-tenant rows:
+1. **Surface sweeps** — the five named surfaces return only own-tenant rows,
+   asserted A→A/B-invisible AND B→B/A-invisible for each surface:
    schemes list, financial summary (command-centre totals), KPI definitions,
    command centre dashboard, report builders (meeting/pendance data
    functions). Assert counts AND that no returned id belongs to the other
