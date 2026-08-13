@@ -14,8 +14,6 @@ jobs:
       # missing env vars. Jenkins has the REAL .env on the server already.
       DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
       DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci"
-      NEXT_PUBLIC_SUPABASE_URL: "https://ci.supabase.co"
-      SUPABASE_SERVICE_ROLE_KEY: "ci-fake-key"
       AUTH_SECRET: "ci-fake-secret-not-real-00000000000000000000"
       AUTH_URL: "http://localhost:8765/hudd-dashboard/api/auth"
       AUTH_TRUST_HOST: "true"
