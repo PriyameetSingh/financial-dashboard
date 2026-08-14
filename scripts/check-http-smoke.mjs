@@ -21,6 +21,12 @@
  *   B. primed request, allowed route  → 200 AND tenant-correct payload
  *   C. primed request, disabled module→ 404 on API and page (entitlement gate)
  *   D. interleaved concurrent requests→ no cross-tenant bleed
+ *   E. generated PDF/XLSX            → carry the REQUESTING tenant's branding,
+ *                                      not the Odisha defaults (report filename
+ *                                      prefix and PDF header line), which is
+ *                                      what proves `withRequestTenantScope`
+ *                                      repairs the sync `tenantConfig()` reads
+ *                                      buried in the document renderers
  *
  * Sessions come from the dev-only minting route (app/api/v1/../api/dev/session),
  * which is why this runs `next dev`: `process.env.NODE_ENV` is inlined at build
@@ -37,6 +43,7 @@
 import { spawn } from "node:child_process";
 import { request } from "node:http";
 import { setTimeout as sleep } from "node:timers/promises";
+import { extractPdfText } from "./lib/pdf-text.mjs";
 
 const PORT = Number(process.env.SMOKE_PORT ?? 8799);
 const BASE = `http://127.0.0.1:${PORT}/hudd-dashboard`;
@@ -118,12 +125,16 @@ function getOnce(path, { host, cookie } = {}) {
     const req = request(
       { hostname: "127.0.0.1", port: PORT, path: `/hudd-dashboard${path}`, method: "GET", headers },
       (res) => {
+        // latin1, not utf8: PDF/XLSX bodies are binary, and latin1 keeps
+        // every byte addressable so embedded ASCII text stays greppable.
         let body = "";
+        res.setEncoding("latin1");
         res.on("data", (c) => (body += c));
         res.on("end", () =>
           resolve({
             status: res.statusCode,
             location: res.headers.location,
+            disposition: res.headers["content-disposition"],
             setCookie: res.headers["set-cookie"] ?? [],
             body,
             json: () => {
@@ -246,6 +257,42 @@ try {
         : get("/api/v1/rbac/me", { host: DEMO_HOST, cookie: demo }).then((r) => ({ want: "demo", id: r.json()?.user?.dbId })),
     ),
   );
+  // ── E. Generated artifacts carry the RIGHT TENANT'S branding ─────────────
+  // The report routes render through sync `tenantConfig()` reads, deep inside
+  // PDF/XLSX builders. Those reads are only correct because the handler wraps
+  // its body in withRequestTenantScope — a plain Route Handler cannot hold a
+  // request-scoped config. This asserts the wrap, end to end, for a tenant
+  // whose branding differs from the Odisha defaults on every key.
+  const meetings = (await get("/api/v1/meetings", { host: DEMO_HOST, cookie: demo })).json();
+  const meetingId = Array.isArray(meetings) ? meetings[0]?.id : meetings?.meetings?.[0]?.id;
+  check("demo tenant has a meeting to report on", Boolean(meetingId), `got ${JSON.stringify(meetings)?.slice(0, 120)}`);
+
+  if (meetingId) {
+    const pdf = await get(`/api/v1/reports/meeting/${meetingId}/pdf`, { host: DEMO_HOST, cookie: demo });
+    check("report PDF renders for the demo tenant", pdf.status === 200, `got ${pdf.status}`);
+    check(
+      "PDF filename carries the TENANT's prefix, not the Odisha default",
+      (pdf.disposition ?? "").includes("RIVERTOWN-meeting-report") &&
+        !(pdf.disposition ?? "").includes("HUDD-"),
+      `Content-Disposition: ${pdf.disposition}`,
+    );
+    // PDF text is Flate-compressed, so the raw bytes are not greppable —
+    // inflate with the same extractor the vitest branding assertions use.
+    const pdfText = extractPdfText(Buffer.from(pdf.body, "latin1"));
+    check(
+      "PDF body carries the tenant's header line, not Odisha's",
+      pdfText.includes("Rivertown Development Authority") && !pdfText.includes("Government of Odisha"),
+      `extracted ${pdfText.length} chars; Odisha text present: ${pdfText.includes("Government of Odisha")}`,
+    );
+
+    const xlsx = await get(`/api/v1/reports/meeting/${meetingId}/xlsx`, { host: DEMO_HOST, cookie: demo });
+    check(
+      "XLSX filename carries the tenant's prefix",
+      xlsx.status === 200 && (xlsx.disposition ?? "").includes("RIVERTOWN-meeting-report"),
+      `${xlsx.status} / Content-Disposition: ${xlsx.disposition}`,
+    );
+  }
+
   const bled = interleaved.filter((r) =>
     r.want === "odisha" ? r.id !== meOdisha.user.dbId : r.id !== meDemo.user.dbId,
   );

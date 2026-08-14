@@ -27,7 +27,6 @@
  */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { toAuthErrorResponse, requirePermission } from "@/lib/server-rbac";
 import { getTenantContext } from "@/lib/tenant-context";
 import { ODISHA_DEFAULTS } from "@/lib/tenant-config";
@@ -37,6 +36,11 @@ import {
   overlayConfigEntries,
   validateConfigValue,
 } from "@/lib/tenant-config/registry";
+import {
+  clearTenantConfigEntry,
+  readTenantConfigEntries,
+  writeTenantConfigEntry,
+} from "@/lib/tenant-config/store";
 
 export const runtime = "nodejs";
 
@@ -55,10 +59,7 @@ export async function GET() {
     await requirePermission(MANAGE);
     const { tenantId } = await getTenantContext();
 
-    const rows = await prisma.tenantConfigEntry.findMany({
-      where: { tenantId },
-      select: { key: true, value: true },
-    });
+    const rows = await readTenantConfigEntries(tenantId);
     const stored = new Map(rows.map((r) => [r.key, r.value]));
     const effective = overlayConfigEntries(ODISHA_DEFAULTS, rows);
 
@@ -107,11 +108,7 @@ export async function PUT(request: NextRequest) {
     const reason = validateConfigValue(key, body.value);
     if (reason) return NextResponse.json({ detail: reason }, { status: 400 });
 
-    await prisma.tenantConfigEntry.upsert({
-      where: { tenantId_key: { tenantId, key } },
-      update: { value: body.value as never },
-      create: { tenantId, key, value: body.value as never },
-    });
+    await writeTenantConfigEntry(tenantId, key, body.value);
 
     const cls = configKeyClass(key);
     // Never echo a secret back, not even the value just written.
@@ -142,10 +139,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ detail: `Unknown or non-storable config key "${key}"` }, { status: 400 });
     }
 
-    // deleteMany, not delete: a key this tenant never set is a no-op rather
-    // than a 404, so the endpoint is idempotent.
-    const { count } = await prisma.tenantConfigEntry.deleteMany({ where: { tenantId, key } });
-    return NextResponse.json({ key, class: cls, cleared: count > 0 });
+    // Clearing a key this tenant never set is a no-op rather than a 404, so the
+    // endpoint is idempotent.
+    const cleared = await clearTenantConfigEntry(tenantId, key);
+    return NextResponse.json({ key, class: cls, cleared });
   } catch (error) {
     const mapped = toAuthErrorResponse(error);
     if (mapped) return NextResponse.json({ detail: mapped.detail }, { status: mapped.status });

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tenantConfig } from "@/lib/tenant-config";
+import { withRequestTenantScope } from "@/lib/tenant-context";
 import { buildPendanceReport } from "@/lib/pendance-report";
 import { renderPendanceReportPdfBuffer } from "@/lib/pendance-report-pdf-server";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -22,35 +24,38 @@ export async function GET(
   ctx: { params: Promise<{ meetingId: string }> },
 ) {
   try {
-    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
-    const scope = await resolveDataScope(user);
+    return await withRequestTenantScope(async () => {
+      const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+      const scope = await resolveDataScope(user);
 
-    const { meetingId } = await ctx.params;
-    const trimmed = meetingId?.trim();
-    if (!trimmed) {
-      return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
-    }
+      const { meetingId } = await ctx.params;
+      const trimmed = meetingId?.trim();
+      if (!trimmed) {
+        return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
+      }
 
-    const payload = await buildPendanceReport(trimmed, scope);
-    if (!payload) {
-      return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
-    }
+      const payload = await buildPendanceReport(trimmed, scope);
+      if (!payload) {
+        return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+      }
 
-    const pdfBuffer = await renderPendanceReportPdfBuffer(payload);
+      const pdfBuffer = await renderPendanceReportPdfBuffer(payload);
 
-    const filename = `HUDD-pendance-report-${payload.meeting.meetingDate}.pdf`;
-    const isDownload = request.nextUrl.searchParams.get("download") === "1";
+      // Tenant-visible on every download; discharges backlog D1-D3.
+      const filename = `${tenantConfig().reportFilenamePrefix}-pendance-report-${payload.meeting.meetingDate}.pdf`;
+      const isDownload = request.nextUrl.searchParams.get("download") === "1";
 
-    return new Response(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Length": String(pdfBuffer.byteLength),
-        "Content-Disposition": isDownload
-          ? `attachment; filename="${filename}"`
-          : `inline; filename="${filename}"`,
-        "Cache-Control": "private, no-store",
-      },
+      return new Response(new Uint8Array(pdfBuffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Length": String(pdfBuffer.byteLength),
+          "Content-Disposition": isDownload
+            ? `attachment; filename="${filename}"`
+            : `inline; filename="${filename}"`,
+          "Cache-Control": "private, no-store",
+        },
+    });
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

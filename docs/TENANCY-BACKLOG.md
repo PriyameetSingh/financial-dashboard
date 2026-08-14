@@ -114,6 +114,11 @@ a new `departmentFullName` key.
 
 | # | Location | Current literal | Target |
 |---|----------|-----------------|--------|
+> **DISCHARGED** (Phase 3 follow-up): all three now read `reportFilenamePrefix`
+> from tenant config, and the golden's HTTP smoke leg asserts a non-Odisha tenant's
+> downloads carry that tenant's prefix. Odisha's default is the former literal
+> (`HUDD`), so its filenames are byte-identical.
+>
 | D1 | `app/api/v1/reports/meeting/[meetingId]/pdf/route.ts:53` | `` `HUDD-meeting-report-${date}.pdf` `` | `reportFilenamePrefix` key |
 | D2 | `app/api/v1/reports/meeting/[meetingId]/xlsx/route.ts:57` | `` `HUDD-meeting-report-${date}.xlsx` `` | same |
 | D3 | `app/api/v1/reports/pendance/[meetingId]/pdf/route.ts:41` | `` `HUDD-pendance-report-${date}.pdf` `` | same |

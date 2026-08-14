@@ -22,7 +22,7 @@ import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
 import { prismaUnscoped } from "@/lib/prisma";
 import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
-import { TENANT_HEADER } from "@/lib/tenant-config/resolution";
+import { TENANT_HEADER, TENANT_ID_HEADER } from "@/lib/tenant-config/resolution";
 import { verifyTenantSession, isTenantSessionRejected } from "@/lib/tenant-session";
 
 const B_SLUG = "sessiontenant-b";
@@ -142,6 +142,119 @@ describe("Same-tenant sessions still work", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
     expect(res.headers.get(`x-middleware-request-${TENANT_HEADER}`)).toBe(B_SLUG);
+  });
+});
+
+/**
+ * Phase 3 — header forgery.
+ *
+ * The chokepoint now trusts TENANT_ID_HEADER when the request-scoped holder is
+ * empty (Route Handlers, where React `cache()` cannot hold one). That makes the
+ * header part of the security boundary, so it needs the same proof the Phase 2
+ * slug header has: a client-supplied value must be STRIPPED, never honoured.
+ *
+ * Next surfaces middleware header rewrites as `x-middleware-request-<name>` on
+ * the response, which is what these assert against — the forwarded value, not
+ * the inbound one.
+ */
+describe("Client-supplied tenant headers cannot forge scope", () => {
+  const FORGED_ID = "00000000-0000-4000-8000-0000000000ff";
+
+  function forgedRequest(host: string, path: string, headers: Record<string, string>) {
+    return new NextRequest(new URL(`https://${host}${path}`), {
+      headers: { host, "x-forwarded-proto": "https", ...headers },
+    });
+  }
+
+  it("a forged tenant-id header is replaced by the host-resolved tenant", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_ID_HEADER]: FORGED_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    // Odisha's real id, not the forged one — the value the chokepoint will read.
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBe(ODISHA_TENANT_ID);
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).not.toBe(FORGED_ID);
+  });
+
+  it("a forged tenant-id header cannot point a session at ANOTHER tenant's data", async () => {
+    // The strongest form: a valid Odisha session, forging tenant B's REAL id.
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_ID_HEADER]: tenantBId }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBe(ODISHA_TENANT_ID);
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).not.toBe(tenantBId);
+  });
+
+  it("a forged tenant SLUG header is replaced by the host-derived slug (Phase 2, still true)", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_HEADER]: B_SLUG }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get(`x-middleware-request-${TENANT_HEADER}`)).toBe("odisha");
+  });
+
+  it("forging BOTH headers at once still resolves to the host's tenant", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", {
+        [TENANT_HEADER]: B_SLUG,
+        [TENANT_ID_HEADER]: tenantBId,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get(`x-middleware-request-${TENANT_HEADER}`)).toBe("odisha");
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBe(ODISHA_TENANT_ID);
+  });
+
+  /**
+   * These two are the cases that make the STRIP load-bearing rather than
+   * decorative.
+   *
+   * On an authenticated path the proxy resolves the tenant and overwrites the
+   * header, so a forgery loses whether or not it was stripped first. But paths
+   * that are forwarded WITHOUT ever resolving a tenant — `/api/health`,
+   * `/api/auth/**`, public static files — never perform that overwrite. Without
+   * the unconditional `delete`, a client-supplied id would ride straight
+   * through to the handler and become the scope the chokepoint trusts.
+   */
+  it("a forged id is stripped on a forwarded path that never resolves a tenant (/api/health)", async () => {
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/api/health", { [TENANT_ID_HEADER]: FORGED_ID }),
+    );
+
+    expect(res.headers.get("x-middleware-next")).toBe("1"); // forwarded, not denied
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBeNull();
+  });
+
+  it("a forged id is stripped on a public static path", async () => {
+    const res = await proxy(
+      forgedRequest(A_HOST, "/hudd-dashboard/images/logo.svg", { [TENANT_ID_HEADER]: FORGED_ID }),
+    );
+
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBeNull();
+  });
+
+  it("a forged id on an UNRESOLVABLE host is dropped, not honoured", async () => {
+    // No host slug ⇒ no tenant (two are active), so nothing may be stamped.
+    // Otherwise a forged header would be the only tenant signal left.
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(
+      forgedRequest("unknown-tenant.airawat.test", "/hudd-dashboard/api/v1/schemes", {
+        [TENANT_ID_HEADER]: ODISHA_TENANT_ID,
+      }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(res.headers.get(`x-middleware-request-${TENANT_ID_HEADER}`)).toBeNull();
   });
 });
 

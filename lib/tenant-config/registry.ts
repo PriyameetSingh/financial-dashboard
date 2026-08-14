@@ -27,6 +27,7 @@ type StorableKey =
   | "currencyUnit"
   | "pdfHeaderLine"
   | "productName"
+  | "reportFilenamePrefix"
   | "labels";
 
 const STRING_KEYS: readonly Exclude<StorableKey, "labels">[] = [
@@ -37,6 +38,7 @@ const STRING_KEYS: readonly Exclude<StorableKey, "labels">[] = [
   "currencyUnit",
   "pdfHeaderLine",
   "productName",
+  "reportFilenamePrefix",
 ];
 
 export const STORABLE_KEYS: readonly StorableKey[] = [...STRING_KEYS, "labels"];
@@ -135,6 +137,12 @@ export function validateConfigValue(key: string, value: unknown): string | null 
       return value.length <= 8 ? null : `currencySymbol is too long (max 8 characters)`;
     case "currencyUnit":
       return value.length <= 16 ? null : `currencyUnit is too long (max 16 characters)`;
+    case "reportFilenamePrefix":
+      // Interpolated into a Content-Disposition filename, so keep it to
+      // characters that cannot break the header or escape a directory.
+      return /^[A-Za-z0-9._-]{1,32}$/.test(value)
+        ? null
+        : `reportFilenamePrefix must be 1-32 characters of A-Z, a-z, 0-9, dot, underscore or hyphen`;
     case "logoPublicPath":
       return isValidAssetPath(value)
         ? null

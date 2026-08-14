@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tenantConfig } from "@/lib/tenant-config";
+import { withRequestTenantScope } from "@/lib/tenant-context";
 import { buildMeetingReport } from "@/lib/meeting-report";
 import {
   renderMeetingReportXlsxBuffer,
@@ -27,34 +29,36 @@ export async function GET(
   ctx: { params: Promise<{ meetingId: string }> },
 ) {
   try {
-    const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
-    const scope = await resolveDataScope(user);
+    return await withRequestTenantScope(async () => {
+      const user = await requireAnyPermissionAndDbUser("VIEW_ALL_DATA", "VIEW_ASSIGNED_DATA");
+      const scope = await resolveDataScope(user);
 
-    const { meetingId } = await ctx.params;
-    const trimmed = meetingId?.trim();
-    if (!trimmed) {
-      return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
-    }
+      const { meetingId } = await ctx.params;
+      const trimmed = meetingId?.trim();
+      if (!trimmed) {
+        return NextResponse.json({ detail: "Meeting id required" }, { status: 400 });
+      }
 
-    const payload = await buildMeetingReport(trimmed, scope);
-    if (!payload) {
-      return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
-    }
+      const payload = await buildMeetingReport(trimmed, scope);
+      if (!payload) {
+        return NextResponse.json({ detail: "Meeting not found" }, { status: 404 });
+      }
 
-    const searchParams = request.nextUrl.searchParams;
-    const monitoringLevel = searchParams.get("monitoringLevel") || undefined;
-    const priority = searchParams.get("priority") || undefined;
-    const status = searchParams.get("status") || undefined;
+      const searchParams = request.nextUrl.searchParams;
+      const monitoringLevel = searchParams.get("monitoringLevel") || undefined;
+      const priority = searchParams.get("priority") || undefined;
+      const status = searchParams.get("status") || undefined;
 
-    const filteredPayload = filterMeetingReportPayload(payload, {
-      monitoringLevel,
-      priority,
-      status,
+      const filteredPayload = filterMeetingReportPayload(payload, {
+        monitoringLevel,
+        priority,
+        status,
     });
 
     const xlsxBuffer = renderMeetingReportXlsxBuffer(filteredPayload);
 
-    const filename = `HUDD-meeting-report-${payload.meeting.meetingDate}.xlsx`;
+    // Tenant-visible on every download; discharges backlog D1-D3.
+    const filename = `${tenantConfig().reportFilenamePrefix}-meeting-report-${payload.meeting.meetingDate}.xlsx`;
     const isDownload = request.nextUrl.searchParams.get("download") === "1";
 
     return new Response(new Uint8Array(xlsxBuffer), {
@@ -67,6 +71,7 @@ export async function GET(
           : `inline; filename="${filename}"`,
         "Cache-Control": "private, no-store",
       },
+    });
     });
   } catch (error) {
     const auth = toAuthErrorResponse(error);

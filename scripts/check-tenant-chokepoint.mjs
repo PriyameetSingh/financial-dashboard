@@ -51,6 +51,19 @@ const RAW_SQL_ALLOWLIST = [
 
 const UNSCOPED_RE = /\bprismaUnscoped\b/;
 const RAW_SQL_RE = /\$(?:query|execute)Raw(?:Unsafe)?\b/;
+/**
+ * `TenantConfigEntry` is in GLOBAL_MODELS, so the chokepoint does NOT filter
+ * it: a bare `findMany()` returns every tenant's config and a bare
+ * `deleteMany({ where: { key } })` wipes every tenant's row. All access must go
+ * through lib/tenant-config/store.ts, whose functions require a tenantId.
+ */
+const CONFIG_ENTRY_RE = /\btenantConfigEntry\b/;
+const CONFIG_ENTRY_ALLOWLIST = [
+  /^lib\/tenant-config\/store\.ts$/,  // the sanctioned accessor
+  /^scripts\//,
+  /^prisma\//,
+  /^tests\//,
+];
 
 function listFiles(dir) {
   const out = [];
@@ -73,6 +86,12 @@ for (const full of listFiles(ROOT)) {
   if (UNSCOPED_RE.test(src) && !UNSCOPED_ALLOWLIST.some((re) => re.test(rel))) {
     offenders.push(`${rel}: imports/uses prismaUnscoped outside the allowlist — use the scoped \`prisma\` client`);
   }
+  if (CONFIG_ENTRY_RE.test(src) && !CONFIG_ENTRY_ALLOWLIST.some((re) => re.test(rel))) {
+    offenders.push(
+      `${rel}: touches tenantConfigEntry directly — that table is NOT auto-scoped; ` +
+        `use lib/tenant-config/store.ts, which requires an explicit tenantId`,
+    );
+  }
   if (RAW_SQL_RE.test(src) && !RAW_SQL_ALLOWLIST.some((a) => a.file.test(rel))) {
     offenders.push(`${rel}: raw SQL bypasses the tenant chokepoint — scope it explicitly and allowlist it here`);
   }
@@ -87,4 +106,6 @@ if (offenders.length > 0) {
   );
   process.exit(1);
 }
-console.log("check-tenant-chokepoint: ok (no unscoped-client or raw-SQL escapes outside the allowlist)");
+console.log(
+  "check-tenant-chokepoint: ok (no unscoped-client, raw-SQL, or unscoped tenant-config escapes outside the allowlist)",
+);

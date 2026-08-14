@@ -47,6 +47,11 @@ export type TenantConfig = {
   pdfHeaderLine: string;
   /** Product / app display name. */
   productName: string;
+  /**
+   * Prefix for generated report filenames, e.g. "HUDD" →
+   * `HUDD-meeting-report-2026-01-31.pdf`. Tenant-visible on every download.
+   */
+  reportFilenamePrefix: string;
   /** Domain labels hardwired in UI copy. */
   labels: TenantLabels;
   /** Keycloak realm (default mirrors KEYCLOAK_REALM env). */
@@ -70,6 +75,7 @@ export const ODISHA_DEFAULTS: TenantConfig = {
   currencyUnit: "Cr",
   pdfHeaderLine: "Government of Odisha",
   productName: "HUDD Dashboard",
+  reportFilenamePrefix: "HUDD",
   labels: {
     soExpenditure: "SO",
     ifmsExpenditure: "IFMS",

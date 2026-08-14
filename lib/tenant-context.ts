@@ -24,10 +24,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { cache } from "react";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
 import { ODISHA_DEFAULTS, type TenantConfig } from "@/lib/tenant-config";
 import { overlayConfigEntries } from "@/lib/tenant-config/registry";
+import { readTenantConfigEntries } from "@/lib/tenant-config/store";
 import { TENANT_HEADER } from "@/lib/tenant-config/resolution";
 import {
   primeTenantHolder,
@@ -53,11 +53,7 @@ export type TenantContext = {
 };
 
 export async function loadTenantConfigFromDb(tenantId: string): Promise<TenantConfig> {
-  const rows = await prisma.tenantConfigEntry.findMany({
-    where: { tenantId },
-    select: { key: true, value: true },
-  });
-  return overlayConfigEntries(ODISHA_DEFAULTS, rows);
+  return overlayConfigEntries(ODISHA_DEFAULTS, await readTenantConfigEntries(tenantId));
 }
 
 async function resolveTenantContext(): Promise<TenantContext> {
@@ -139,6 +135,31 @@ export async function withTenantContext<T>(
   const config = await loadTenantConfigFromDb(tenantId);
   const holder: TenantHolder = { cfg: config, tenantId };
   return explicitScope.run(holder, () => Promise.resolve(fn()));
+}
+
+/**
+ * Run `fn` inside the CURRENT REQUEST's tenant scope, so sync `tenantConfig()`
+ * reads resolve to this tenant's branding.
+ *
+ * This is the answer to a real asymmetry. The Prisma chokepoint could be fixed
+ * symmetrically — it is already async, so it can `await` the proxy-stamped
+ * header when the holder is empty. `tenantConfig()` cannot: it is SYNCHRONOUS
+ * by design (it is called hot, deep inside React-PDF component trees and
+ * formatting helpers), and `headers()` is async. There is no sync request-scoped
+ * channel in Next to read, and `enterWith` does not survive back out of an
+ * awaited callee, so the holder cannot be repaired from below.
+ *
+ * What DOES work is `AsyncLocalStorage.run()` — proven by `withTenantContext`.
+ * So a Route Handler that renders tenant-branded output wraps its body once,
+ * here, and every sync read beneath it is correct with no signature changes.
+ *
+ * Use this in any route handler whose OUTPUT carries tenant branding — reports,
+ * exports, generated documents. Handlers that only return JSON data do not need
+ * it: the chokepoint scopes their queries on its own.
+ */
+export async function withRequestTenantScope<T>(fn: () => T | Promise<T>): Promise<T> {
+  const { tenantId, config } = await getTenantContext();
+  return explicitScope.run({ cfg: config, tenantId }, () => Promise.resolve(fn()));
 }
 
 /**

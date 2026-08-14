@@ -25,6 +25,11 @@ import {
   overlayConfigEntries,
   validateConfigValue,
 } from "@/lib/tenant-config/registry";
+import {
+  clearTenantConfigEntry,
+  readTenantConfigEntries,
+  writeTenantConfigEntry,
+} from "@/lib/tenant-config/store";
 
 const OTHER_SLUG = "configtenant-b";
 let otherTenantId: string;
@@ -208,5 +213,30 @@ describe("Round-trip and tenant isolation", () => {
       where: { tenantId: otherTenantId, key: "productName" },
     });
     expect((await loadTenantConfigFromDb(otherTenantId)).productName).toBe(ODISHA_DEFAULTS.productName);
+  });
+});
+
+describe("Store accessor guard", () => {
+  it("refuses a missing tenantId rather than reading across tenants", async () => {
+    // `tenant_config_entries` is a GLOBAL model — the chokepoint does not filter
+    // it — so an empty tenantId slipping through a loose type would read or
+    // delete every tenant's rows. Fail loudly instead.
+    await expect(readTenantConfigEntries("")).rejects.toThrow(/requires an explicit tenantId/);
+    await expect(writeTenantConfigEntry("", "locale", "en-IN")).rejects.toThrow(
+      /requires an explicit tenantId/,
+    );
+    await expect(clearTenantConfigEntry("", "locale")).rejects.toThrow(/requires an explicit tenantId/);
+  });
+
+  it("reads back only the requested tenant's rows", async () => {
+    await prismaUnscoped.tenantConfigEntry.upsert({
+      where: { tenantId_key: { tenantId: otherTenantId, key: "productName" } },
+      update: { value: "Store Test" as never },
+      create: { tenantId: otherTenantId, key: "productName", value: "Store Test" as never },
+    });
+    const rows = await readTenantConfigEntries(otherTenantId);
+    expect(rows.some((r) => r.key === "productName" && r.value === "Store Test")).toBe(true);
+    const odishaRows = await readTenantConfigEntries(ODISHA_TENANT_ID);
+    expect(odishaRows.some((r) => r.value === "Store Test")).toBe(false);
   });
 });

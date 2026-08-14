@@ -40,6 +40,7 @@ const DEMO_CONFIG = {
   currencySymbol: "$",
   currencyUnit: "M",
   pdfHeaderLine: "Rivertown Development Authority",
+  reportFilenamePrefix: "RIVERTOWN",
   labels: {
     soExpenditure: "Sanctioned",
     ifmsExpenditure: "Disbursed",
