@@ -64,10 +64,16 @@ function check(name, ok, detail) {
   }
 }
 
+// `detached` so the whole process group can be signalled on the way out. `npx
+// next dev` is a shim that forks the real server, and killing only the shim
+// leaves `next-server` alive holding the port. That was survivable while this
+// was the last leg of the golden; it is not survivable now that check-a11y runs
+// after it and boots a dev server of its own, because Next 16 refuses to start
+// a second one while any is running.
 const server = spawn(
   "npx",
   ["next", "dev", "-p", String(PORT), "-H", "127.0.0.1"],
-  { env: { ...process.env, DEV_AUTH_ENABLED: "1" }, stdio: ["ignore", "pipe", "pipe"] },
+  { env: { ...process.env, DEV_AUTH_ENABLED: "1" }, stdio: ["ignore", "pipe", "pipe"], detached: true },
 );
 let serverLog = "";
 server.stdout.on("data", (d) => (serverLog += d));
@@ -75,9 +81,14 @@ server.stderr.on("data", (d) => (serverLog += d));
 
 function shutdown() {
   try {
-    server.kill("SIGTERM");
+    // Negative pid: the whole process group, not just the shim.
+    process.kill(-server.pid, "SIGTERM");
   } catch {
-    /* already gone */
+    try {
+      server.kill("SIGTERM");
+    } catch {
+      /* already gone */
+    }
   }
 }
 process.on("exit", shutdown);

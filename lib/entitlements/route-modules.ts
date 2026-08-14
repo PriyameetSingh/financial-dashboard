@@ -72,6 +72,16 @@ export const ROUTE_MODULE_RULES: readonly RouteRule[] = [
   // financial years stays under /api/v1/admin/financial-years above.
   { path: "/api/v1/financial-years", module: "MOD-ADMIN" },
 
+  // The component gallery. DEV-ONLY — the page calls `notFound()` whenever
+  // NODE_ENV is production, and Next inlines that comparison at build time, so
+  // the route does not exist in a deployed artifact at all. It is mapped to
+  // MOD-SHELL because entitlement is the wrong tool for it twice over: it holds
+  // no tenant data to gate, and a tenant's plan should not decide whether this
+  // repository's own developers can look at their button styles. The map still
+  // has to name it, because "unmapped" fails closed and would 404 the gallery
+  // for everyone including in dev.
+  { path: "/design-system", module: "MOD-SHELL" },
+
   // ── Gated ─────────────────────────────────────────────────────────────────
   { path: "/financial", module: "MOD-FIN" },
   { path: "/api/v1/financial", module: "MOD-FIN" },

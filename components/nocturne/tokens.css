@@ -1,0 +1,176 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Airawat platform tokens — layered over the Nocturne base sheet.
+
+   Ported from `design-reference/tokens.css`, scoped under `.noct` for the same
+   reason `nocturne.css` is (see its header). Three deliberate differences from
+   the reference file:
+
+   1. The reference carries a sample tenant theme (`[data-tenant="suryapur"]`)
+      as a demonstration of runtime swapping. It is NOT carried over: a tenant
+      list hardcoded in a stylesheet is exactly the "hardcoded / mock data in a
+      shipped surface" this phase forbids, and it would not scale past the one
+      tenant someone remembered to add. The same capability is delivered
+      properly by `NocturneRoot`, which emits a scoped override block from
+      whatever role values it is handed at runtime. See `theme.ts`.
+
+   2. A dark peer is written for every light override. The reference relies on
+      `:root` defaults for dark, which works when a document has exactly one
+      theme; the gallery renders both themes on one page, so a nested dark
+      island inside a light page has to be able to get its dark values back.
+
+   3. A colour-contrast correction block at the bottom. Every entry in it is a
+      value the raw design system computes below WCAG 2.1 AA for the size it is
+      used at. Each is annotated with the measured ratio before and after.
+
+   Everything a tenant theme may swap at runtime is a custom property. Nothing
+   in this file names a tenant.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct {
+  /* Data-viz palette — categorical set, checked against the dark ground for
+     deutan and protan vision. */
+  --dv-cat-1: #9184d9; /* blurple — follows the tenant accent */
+  --dv-cat-2: #5fa8a0; /* river teal */
+  --dv-cat-3: #c2925c; /* laterite */
+  --dv-cat-4: #7f9cc9; /* slate blue */
+  --dv-cat-5: #c07f92; /* rosewood */
+  --dv-cat-6: #9397ab; /* graphite */
+
+  /* Sequential scale — one hue, lightness ramp, low → high. Order reads
+     without colour vision. */
+  --dv-seq-1: #2b2741;
+  --dv-seq-2: #423a6a;
+  --dv-seq-3: #5d5294;
+  --dv-seq-4: #796cbf;
+  --dv-seq-5: #968ae0;
+
+  /* Diverging scale — deficit → neutral → surplus. */
+  --dv-div-neg: #c07f92;
+  --dv-div-mid: #595d6c;
+  --dv-div-pos: #5fa8a0;
+
+  /* Status roles. Mono scheme: status is carried by weight, tint and a mark —
+     never by hue alone, which is why every status tag also ships a glyph. */
+  --status-ok-bg: var(--color-neutral-800);
+  --status-ok-fg: var(--color-neutral-100);
+  --status-risk-bg: var(--color-accent-800);
+  --status-risk-fg: var(--color-accent-100);
+  --status-breach-border: var(--color-accent);
+  --status-breach-fg: var(--color-accent);
+}
+
+/* ── Light theme — an equal peer of the dark default, not an afterthought ──
+   Selectors are doubled (`.noct[…]` and `.noct […]`) so a theme can be set on
+   the scope root OR on any island inside it. That is what lets one page show
+   the same component set in both themes side by side. */
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --color-bg: #eef0f8;
+  --color-surface: #f8f9fd;
+  --color-text: #232532;
+  --color-accent: #5d5294;
+  --color-divider: color-mix(in srgb, #232532 16%, transparent);
+  --shadow-sm: 0 0 0 1px #d9dde9;
+  --shadow-md: 0 0 0 1px #dfe2ee, 0 6px 18px rgba(35, 37, 50, 0.1);
+  --shadow-lg: 0 0 0 1px #cfd3e5, 0 16px 40px rgba(35, 37, 50, 0.16);
+  /* The tinted-fill pairs invert: on a light ground the tint is the light ramp
+     step and the text on it is the dark one. */
+  --color-accent-800: #e7e5fe;
+  --color-accent-100: #423a6a;
+  --color-accent-2-800: #e7e5fe;
+  --color-accent-2-100: #423a6a;
+  --color-neutral-800: #e4e7f5;
+  --color-neutral-100: #3f424d;
+}
+
+/* Dark peer — restores the base values for a dark island nested in a light
+   page. Identical to the `.noct` defaults in `nocturne.css`; stated again
+   because a nested scope cannot otherwise escape an ancestor's light block. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
+  --color-accent-800: #423a6a;
+  --color-accent-100: #f5f4ff;
+  --color-accent-2-800: #423e5d;
+  --color-accent-2-100: #f5f4ff;
+  --color-neutral-800: #3f424d;
+  --color-neutral-100: #f3f5fe;
+}
+
+/* ── Density switch — spacing moves, type sizes hold ──
+   Type stays put on purpose: shrinking text to fit more on screen is how a
+   dense interface becomes an unreadable one. */
+.noct[data-density="compact"],
+.noct [data-density="compact"] {
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-6: 11px;
+  --space-8: 15px;
+}
+
+.noct[data-density="comfortable"],
+.noct [data-density="comfortable"] {
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+  --space-6: 16.8px;
+  --space-8: 22.4px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Colour-contrast corrections — WCAG 2.1 AA, 1.4.3 Contrast (Minimum)
+
+   The design system expresses muted text as a percentage mix of the text
+   colour into the ground. Several of those percentages land below 4.5:1 at the
+   sizes they are actually used at, and the shortfall is much worse on the light
+   ground than the dark one, because mixing toward a light ground loses contrast
+   far faster than mixing toward a dark one.
+
+   Each correction below is the smallest change that clears 4.5:1 while keeping
+   the intended visual hierarchy (meta still reads quieter than body, which
+   still reads quieter than headings). Measured ratios are recorded so a future
+   retune can tell what was being protected.
+
+   The design system's own light-theme override for `.text-muted` is the
+   precedent for this: it already replaces the 55% mix with a fixed #575a68 on
+   light, for exactly this reason.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* `.card-meta` — 11px. Dark: 50% mix measures 4.49:1, four hundredths short.
+   Raised to 62%, which measures 6.2:1. */
+.noct .card-meta {
+  color: color-mix(in srgb, var(--color-text) 62%, transparent);
+}
+
+/* `.table th` — 11px uppercase. Dark: 60% mix measures 5.7:1 and passes; it is
+   raised in step with `.card-meta` only so the two quiet greys stay visually
+   matched rather than one drifting lighter than the other. */
+.noct .table th {
+  color: color-mix(in srgb, var(--color-text) 66%, transparent);
+}
+
+/* On the light ground the percentage mixes collapse: `.text-muted` at 55%
+   measures 3.4:1, `.card-meta` at 50% measures 3.0:1 and `.table th` at 60%
+   measures 4.0:1 — all failing. The design system already answers this for
+   `.text-muted` with a fixed grey at 6.0:1; the same grey is used for the other
+   two rather than inventing a second one. */
+.noct[data-theme="light"] .text-muted,
+.noct [data-theme="light"] .text-muted,
+.noct[data-theme="light"] figcaption,
+.noct [data-theme="light"] figcaption,
+.noct[data-theme="light"] .card-meta,
+.noct [data-theme="light"] .card-meta,
+.noct[data-theme="light"] .table th,
+.noct [data-theme="light"] .table th {
+  color: #575a68;
+}

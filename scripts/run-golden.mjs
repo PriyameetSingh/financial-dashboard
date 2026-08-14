@@ -23,6 +23,11 @@
  *                             concurrent cross-tenant traffic does not bleed.
  *                             The only leg that sees the middleware/priming
  *                             layer, where two shipped defects have now lived.
+ *  10. check-a11y            — WCAG 2.1 AA over the component gallery in a real
+ *                             browser, across both themes and both densities.
+ *                             Contrast, focus and target size are properties of
+ *                             computed style, so nothing short of a browser can
+ *                             assert them (Phase 4 / S0).
  *
  * Requires a reachable Postgres at DATABASE_URL/DIRECT_URL (see .env.test.local
  * for the vitest leg; .env.local for the build leg) with migrations applied.
@@ -47,6 +52,9 @@ const legs = [
   // Last: boots the app and drives it over a real socket. Slowest leg, and the
   // only one that can see the middleware/priming layer between socket and query.
   { name: "check-http-smoke", cmd: "node", args: ["scripts/check-http-smoke.mjs"] },
+  // Also boots the app, so it runs after the smoke leg rather than beside it:
+  // Next 16 refuses to start a second dev server while one is running.
+  { name: "check-a11y", cmd: "node", args: ["scripts/check-a11y.mjs"] },
 ];
 
 let failed = null;
