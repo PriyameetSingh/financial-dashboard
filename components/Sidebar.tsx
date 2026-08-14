@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { UserRole, hasPermission, Permission } from "@/lib/auth";
+import { visibleNavItems } from "@/lib/entitlements/guard";
 import { HUDD_LOGO_PUBLIC_PATH } from "@/lib/hudd-logo";
 import { withNextBasePath } from "@/lib/next-base-path";
 import { tenantLocale } from "@/lib/tenant-config/format";
@@ -480,13 +481,22 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     );
   }, [user]);
 
+  /**
+   * Nav = entitlement ∩ role ∩ hub gate, in that order.
+   *
+   * Entitlement composes with the existing role filter rather than replacing it:
+   * a module being provisioned says nothing about whether THIS user may see it.
+   * Hiding is presentation only — proxy.ts 404s a disabled module by direct URL
+   * regardless — but both read the same route→module map, so a link that is
+   * shown can never 404 and a route that 404s can never be linked.
+   */
   const visibleItems = useMemo(() => {
-    return user
-      ? items.filter(
-        (item) =>
-          item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
-      )
-      : [];
+    if (!user) return [];
+    const enabled = new Set(user.enabledModules ?? []);
+    return visibleNavItems(items, enabled).filter(
+      (item) =>
+        item.roles.includes(user.role) && (!item.myTasksHubGate || canSeeMyTasksNav(user, actionItems)),
+    );
   }, [user, actionItems]);
   const roleLabel = user?.role.replaceAll("_", " ");
 

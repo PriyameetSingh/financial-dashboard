@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { isModuleRejected, moduleVerdict } from "@/lib/entitlements/guard";
+import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
+import { resolveRouteModule } from "@/lib/entitlements/route-modules";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
@@ -120,6 +123,54 @@ async function getSessionBlockReason(
   return null;
 }
 
+/**
+ * Phase 3 — the entitlement gate. THE single enforcement point.
+ *
+ * Composes as the fourth layer: tenant → ENTITLEMENT → RBAC → data-scope. It runs
+ * after the tenant and session are resolved (it needs a trustworthy tenantId) and
+ * before RBAC, which still runs in full inside every route handler. This gate
+ * only ever removes access; it grants nothing, and it is not an authorization
+ * layer — it answers "is this ORGANISATION provisioned for this module?", not
+ * "may this USER do this?".
+ *
+ * It lives here rather than in the handlers because the product's pages are
+ * client components with no server-side guard to hang a check on. One point
+ * covers all 119 routes; scripts/check-proxy-matcher.mjs proves the matcher
+ * reaches every one of them, and scripts/check-route-module-map.mjs proves every
+ * one of them maps to a module.
+ *
+ * Returns a 404 response when the module is off, or `null` to continue.
+ *
+ * 404 and not 403: a 403 would confirm the module exists and that this tenant
+ * has not bought it. 404 leaks nothing about the shape of the product.
+ */
+async function entitlementDenial(
+  pathname: string,
+  resolvedTenantId: string | null,
+  isApi: boolean,
+): Promise<NextResponse | null> {
+  // Core routes short-circuit BEFORE any I/O. This is what keeps `/api/health`
+  // (a liveness probe) and `/login` free of a database round-trip, and it is why
+  // the gate can safely be applied to every path rather than only `/api/v1`.
+  if (resolveRouteModule(pathname)?.enforcement === "core") return null;
+
+  const enabled = await loadEnabledModuleCodes(resolvedTenantId);
+  const verdict = moduleVerdict(pathname, enabled);
+  if (!isModuleRejected(verdict)) return null;
+
+  if (isApi) {
+    return NextResponse.json({ detail: "Not Found" }, { status: 404 });
+  }
+  // Deliberately unbranded and self-contained. The app has no app/not-found.tsx,
+  // and a branded, entitlement-aware 404 belongs to the phase that owns the
+  // design system — tracked as deferred, not forgotten.
+  return new NextResponse(
+    "<!doctype html><html><head><meta charset=\"utf-8\"><title>Not Found</title></head>" +
+      "<body><h1>404</h1><p>This page could not be found.</p></body></html>",
+    { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
+  );
+}
+
 function logoutRedirect(request: NextRequest, pathname?: string, errorCode?: string) {
   const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
   if (pathname && pathname !== "/login") {
@@ -152,6 +203,9 @@ export async function proxy(request: NextRequest) {
   // API surface. `/api/v1/**` requires a verified session token; everything
   // else under `/api` (health, NextAuth callbacks) stays open.
   if (isApiPath(pathname)) {
+    // Resolved only on the authenticated surface; stays null for `/api/health`
+    // and `/api/auth/**`, which are core and never consult it.
+    let apiTenantId: string | null = null;
     if (isV1ApiPath(pathname)) {
       // `getToken` verifies the JWT signature with AUTH_SECRET. A missing or
       // incorrectly signed token resolves to `null` → 401. This is a cheap,
@@ -164,11 +218,18 @@ export async function proxy(request: NextRequest) {
       // Phase 2: a valid signature is not enough — the token must belong to the
       // tenant this host resolves to. Otherwise a session minted for tenant A
       // and replayed against tenant B's host would be silently scoped into B.
-      const verdict = verifyTenantSession(token.tenantId, await tenantId());
+      apiTenantId = await tenantId();
+      const verdict = verifyTenantSession(token.tenantId, apiTenantId);
       if (isTenantSessionRejected(verdict)) {
         return NextResponse.json({ detail: tenantSessionErrorCode(verdict) }, { status: 401 });
       }
     }
+    // Phase 3: tenant and session are settled; gate the module before the
+    // handler's RBAC guards run. Applied to the WHOLE `/api` surface, not just
+    // `/api/v1`, so a future gated endpoint outside v1 cannot escape. Core paths
+    // short-circuit inside without touching the database.
+    const denial = await entitlementDenial(pathname, apiTenantId, true);
+    if (denial) return denial;
     return forward();
   }
 
@@ -213,6 +274,11 @@ export async function proxy(request: NextRequest) {
   if (blockReason) {
     return logoutRedirect(request, pathname, blockReason);
   }
+
+  // Phase 3: same gate, page surface. Runs after the tenant/session checks above
+  // and before any page or handler executes.
+  const denial = await entitlementDenial(pathname, resolvedTenantId, false);
+  if (denial) return denial;
 
   return forward();
 }

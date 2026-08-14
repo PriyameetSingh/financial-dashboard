@@ -150,8 +150,50 @@ async function reset() {
   await prisma.vertical.deleteMany({ where });
   await prisma.financialYear.deleteMany({ where });
   await prisma.tenantConfigEntry.deleteMany({ where });
+  await prisma.tenantEntitlement.deleteMany({ where });
   await prisma.tenant.deleteMany({ where: { id: DEMO_TENANT_ID } });
   console.log("🧹  Demo tenant removed.");
+}
+
+/**
+ * Phase 3 entitlements for the demo tenant.
+ *
+ * Unlike Odisha (all-on, backfilled by migration so the golden stays
+ * byte-identical), Rivertown is deliberately provisioned as a PARTIAL tenant:
+ * Notifications is OFF. That gives the enforcement a real, browsable
+ * disabled-module case — `/admin/notifications` and `/api/v1/notifications/**`
+ * return 404 by direct URL, and the nav item is absent — and it is what the
+ * eventual menu-card demo will show.
+ *
+ * This lives in the seed, never in a migration: demo content must not reach
+ * production or the golden's migrations-only test database.
+ */
+const DEMO_DISABLED_MODULES = ["MOD-NOTIF"];
+
+async function seedEntitlements() {
+  const modules = await prisma.module.findMany({
+    where: { enforcement: { not: "roadmap" } },
+    select: { id: true, code: true, tier: true },
+  });
+  if (modules.length === 0) {
+    throw new Error(
+      "No rows in `modules` — run `prisma migrate deploy` so the Phase 3 catalog is seeded before this script.",
+    );
+  }
+  for (const m of modules) {
+    await prisma.tenantEntitlement.create({
+      data: {
+        tenantId: DEMO_TENANT_ID,
+        moduleId: m.id,
+        enabled: !DEMO_DISABLED_MODULES.includes(m.code),
+        tier: m.tier,
+      },
+    });
+  }
+  const off = DEMO_DISABLED_MODULES.join(", ");
+  console.log(
+    `✅  Entitlements: ${modules.length - DEMO_DISABLED_MODULES.length} on, ${DEMO_DISABLED_MODULES.length} off (${off} — 404s by direct URL, hidden in nav)`,
+  );
 }
 
 async function main() {
@@ -173,6 +215,8 @@ async function main() {
     await prisma.tenantConfigEntry.create({ data: { tenantId: DEMO_TENANT_ID, key, value } });
   }
   console.log(`✅  Config: ${Object.keys(DEMO_CONFIG).length} keys (${DEMO_CONFIG.productName}, ${DEMO_CONFIG.currencySymbol}/${DEMO_CONFIG.currencyUnit}, ${DEMO_CONFIG.locale})`);
+
+  await seedEntitlements();
 
   const fy = await prisma.financialYear.create({
     data: {

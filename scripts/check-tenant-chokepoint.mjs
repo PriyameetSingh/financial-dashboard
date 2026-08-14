@@ -29,6 +29,7 @@ const CODE_EXTS = new Set([".ts", ".tsx", ".js", ".cjs", ".mjs", ".jsx"]);
 const UNSCOPED_ALLOWLIST = [
   /^lib\/prisma\.ts$/,               // defines both clients
   /^lib\/tenant-resolve-db\.ts$/,    // resolves the tenant itself (pre-scope)
+  /^lib\/entitlements\/lookup\.ts$/, // proxy-time entitlement read (pre-scope), explicit tenantId
   /^lib\/cached-financial-metadata\.ts$/, // cross-request cache: explicit tenantId in key + where
   /^proxy\.ts$/,                     // middleware: runs before any scope exists
   /^scripts\//,

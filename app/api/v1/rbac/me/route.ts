@@ -130,7 +130,21 @@ export async function GET() {
 
     const permissions = codesToPermissions(effectiveCodes);
 
+    // Phase 3: the modules this TENANT is provisioned for. Read through the
+    // scoped client, so it is the current tenant's rows by construction.
+    //
+    // This is nav derivation only. Hiding a link is presentation; the gate in
+    // proxy.ts is the enforcement, and it denies by direct URL whether or not
+    // anything links to the route. Both read the same catalog codes, so a
+    // visible link can never 404 and a 404 route can never appear in the nav.
+    const entitlementRows = await prisma.tenantEntitlement.findMany({
+      where: { enabled: true },
+      select: { module: { select: { code: true } } },
+    });
+    const enabledModules = entitlementRows.map((r) => r.module.code).sort();
+
     return NextResponse.json({
+      enabledModules,
       user: {
         id: dbUser.code ?? sessionUser.id,
         dbId: dbUser.id,

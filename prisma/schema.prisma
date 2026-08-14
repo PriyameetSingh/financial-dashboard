@@ -1362,6 +1362,7 @@ model Tenant {
   notificationDispatches         NotificationDispatch[]
   userNotificationPreferences    UserNotificationPreference[]
   userSeenReleases               UserSeenRelease[]
+  entitlements                   TenantEntitlement[]
 
   @@map("tenants")
 }
@@ -1380,4 +1381,76 @@ model TenantConfigEntry {
 
   @@unique([tenantId, key])
   @@map("tenant_config_entries")
+}
+
+/// Phase 3: enforcement class of a module. `core` is never gated (auth, shell,
+/// profile, RBAC, administration, the landing dashboard); `gated` is checked
+/// against TenantEntitlement on every request; `roadmap` is catalog vocabulary —
+/// no route may map to it and the guard denies if one does.
+enum ModuleEnforcement {
+  core
+  gated
+  roadmap
+}
+
+/// Phase 3: commercial tier, mirroring the Notion `Tier` property. A placeholder
+/// for the future menu-card pricing — the guard NEVER reads it. A module is
+/// enabled or it is not.
+enum ModuleTier {
+  core
+  standard
+  premium
+  addon
+}
+
+/// Phase 3: catalog lifecycle, mirroring the Notion `Status` property.
+enum ModuleStatus {
+  active
+  deprecated
+  planned
+}
+
+/// Phase 3: the global module catalog. Tenant-INDEPENDENT, exactly like
+/// `Permission`: a closed registry whose codes are referenced literally in source
+/// (lib/entitlements/catalog.ts) and written only by migration/seed. It is
+/// provisioning vocabulary, never tenant data, so it is listed in GLOBAL_MODELS
+/// and is not auto-scoped by the chokepoint.
+model Module {
+  id          String            @id @default(uuid()) @db.Uuid
+  code        String            @unique
+  name        String
+  enforcement ModuleEnforcement @default(gated)
+  tier        ModuleTier?
+  status      ModuleStatus      @default(active)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  entitlements TenantEntitlement[]
+
+  @@map("modules")
+}
+
+/// Phase 3: which modules a tenant is provisioned for — what a tenant "has".
+/// Tenant-scoped (carries `tenantId`), so the Phase 2 chokepoint auto-scopes
+/// every application query against it with no registry change.
+///
+/// Absence of a row means NOT entitled (fail closed). The Phase 3 migration
+/// backfills an explicit row per existing tenant per provisionable module so no
+/// tenant loses a module on deploy; onboarding writes rows for new tenants.
+model TenantEntitlement {
+  id        String      @id @default(uuid()) @db.Uuid
+  tenantId  String      @db.Uuid
+  moduleId  String      @db.Uuid
+  enabled   Boolean     @default(false)
+  tier      ModuleTier?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, moduleId])
+  @@index([tenantId])
+  @@index([moduleId])
+  @@map("tenant_entitlements")
 }

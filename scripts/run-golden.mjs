@@ -13,8 +13,10 @@
  *   4. check-api-guards      — every /api/v1 route handler is guarded
  *   5. check-proxy-matcher  — every route reaches proxy.ts, where the tenant-session
  *                             binding (Phase 2) and entitlement gate (Phase 3) live
- *   6. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
- *   7. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
+ *   6. check-route-module-map — every route maps to a module or an always-on
+ *                             core module; no unmapped route, no stale rule (Phase 3)
+ *   7. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
+ *   8. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
  *
  * Requires a reachable Postgres at DATABASE_URL/DIRECT_URL (see .env.test.local
  * for the vitest leg; .env.local for the build leg) with migrations applied.
@@ -29,6 +31,7 @@ const legs = [
   { name: "verify-behaviors", cmd: "node", args: ["scripts/verify-behaviors.mjs"] },
   { name: "check-api-guards", cmd: "node", args: ["scripts/check-api-guards.mjs"] },
   { name: "check-proxy-matcher", cmd: "node", args: ["scripts/check-proxy-matcher.mjs"] },
+  { name: "check-route-module-map", cmd: "npx", args: ["tsx", "scripts/check-route-module-map.ts"] },
   { name: "check-tenant-chokepoint", cmd: "node", args: ["scripts/check-tenant-chokepoint.mjs"] },
   {
     name: "check-tenant-integrity",

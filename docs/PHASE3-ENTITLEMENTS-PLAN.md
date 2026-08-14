@@ -465,7 +465,69 @@ a distinct assertion, not a restatement.
 
 ---
 
-## 7. What this gate does *not* do
+## 7. Gate B — as built (deviations from the plan above)
+
+The plan survived implementation; six things changed or were added, each for a
+reason worth recording.
+
+1. **The golden is now 8 legs, not 7.** Verifying matcher coverage before
+   putting enforcement behind a single point turned up a real Phase 2 gap: the
+   catch-all matcher compiles with a REQUIRED trailing group, so the app root
+   (`/hudd-dashboard`, `app/page.tsx`) never entered `proxy.ts` at all, in any
+   spelling — it bypassed the tenant-session binding too. Fixed by adding `"/"`
+   to the matcher, and pinned by `scripts/check-proxy-matcher.mjs`, which reads
+   the REAL compiled regexes from `.next/server/functions-config-manifest.json`
+   rather than re-implementing Next's matching. Verified non-vacuous by
+   reverting the fix (it then fails and names `app/page.tsx`).
+
+2. **The gate covers the whole `/api` surface, not just `/api/v1`.** Restricting
+   it to v1 would let a future gated endpoint outside v1 escape. To keep this
+   free, `entitlementDenial` resolves the route FIRST and short-circuits on
+   `core` before any I/O — so `/api/health` (a liveness probe) and `/login` still
+   cost zero database round-trips.
+
+3. **The migration drops 46 statements Prisma wanted to emit.** `migrate dev`
+   also generated `ALTER TABLE … ALTER COLUMN "tenantId" SET DEFAULT
+   (current_setting('app.tenant_id', true))::uuid` for 46 tables. That is
+   pre-existing drift — `schema.prisma` declares the default, no migration ever
+   created it, and no database has it — and per §2 of the Phase 2 plan the
+   standing hazard runs in that direction: without the default a chokepoint
+   bypass fails loudly on NOT NULL; with it, the same write becomes a
+   silent-stamp path the moment anything binds `app.tenant_id`. Reconciling that
+   drift is its own decision. See the migration header.
+
+4. **Nav derivation** landed as `enabledModules` on `/api/v1/rbac/me` →
+   `SessionUser.enabledModules` → `visibleNavItems()` in `components/Sidebar.tsx`,
+   composing with (not replacing) the existing role filter.
+
+5. **Proxy-level integration tests live in `tests/tenant-session-isolation.test.ts`**,
+   which already drives the real `proxy()`. Six cases there prove the gate is
+   wired in and returns the right shape; `tests/entitlements.test.ts` proves the
+   decision itself. Provisioning that file's tenant B revealed the correct
+   compose order in practice: a page request runs the session-block check
+   (unregistered identity → redirect to login) BEFORE the entitlement gate, so a
+   broken session redirects rather than 404s.
+
+6. **Model counts moved 46/5 → 47/6** (`TenantEntitlement` scoped,
+   `Module` global), updated in `tests/tenant-isolation.test.ts` and in the
+   integrity script's own copy of `GLOBAL_MODELS`.
+
+### Open item carried out of Gate B
+
+A local end-to-end probe with a hand-minted session cookie confirmed the DENY
+path (the demo tenant 404s on `/api/v1/notifications` and `/admin/notifications`;
+Odisha does not). On ALLOWED paths that same probe produced a 500 —
+`TenantScopeError: No tenant scope resolved for User.findFirst`, meaning
+`getTenantContextSafe()` failed to prime inside the route handler while the
+proxy's own resolution had succeeded. This is **not attributed**: the same probe
+against the pre-Phase-3 commit was rejected at the proxy (401) and so never
+exercised the handler, leaving no baseline to compare against. On an allowed
+route the gate returns `null` and falls through to the identical `forward()`, so
+it does not alter the forwarded request — but that is an argument, not a
+measurement. Worth reproducing with a real Keycloak login before the onboarding
+phase.
+
+## 8. What this gate does *not* do
 
 - No UI. No onboarding flow, no configurator, no menu cards, no admin console.
 - No tier enforcement. `tier` is stored and never consulted by the guard.

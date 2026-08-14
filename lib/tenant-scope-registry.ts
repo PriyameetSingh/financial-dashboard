@@ -24,6 +24,14 @@ import { Prisma } from "@prisma/client";
  *  - Tenant              platform infrastructure; reachable only through the resolver.
  *  - TenantConfigEntry   read only as "the resolved tenant's rows"; secret-class
  *                        keys are barred from the table by the registry guard.
+ *  - Module              Phase 3 catalog: closed registry of module codes
+ *                        referenced literally in source (lib/entitlements/
+ *                        catalog.ts); written only by migration/seed. The grants
+ *                        around it (TenantEntitlement) are tenant-scoped. Same
+ *                        argument as Permission.
+ *
+ * NOTE: scripts/check-tenant-integrity.mjs keeps its own copy of this set (it
+ * runs standalone against the DB). Both must be updated together.
  */
 export const GLOBAL_MODELS: ReadonlySet<string> = new Set([
   "Permission",
@@ -31,6 +39,7 @@ export const GLOBAL_MODELS: ReadonlySet<string> = new Set([
   "ChangelogEntry",
   "Tenant",
   "TenantConfigEntry",
+  "Module",
 ]);
 
 export const TENANT_ID_FIELD = "tenantId";

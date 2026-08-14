@@ -50,9 +50,42 @@ beforeAll(async () => {
     create: { slug: B_SLUG, name: "Session Test Authority", status: "active" },
   });
   tenantBId = b.id;
+
+  // Phase 3: provision tenant B the way onboarding will — every provisionable
+  // module on, except Notifications. Without entitlement rows a tenant is
+  // entitled to core and nothing else (fail closed), so an unprovisioned
+  // fixture would 404 on every gated route. The one disabled module gives the
+  // gate a real negative case to prove at the proxy level below.
+  const modules = await prismaUnscoped.module.findMany({
+    where: { enforcement: { not: "roadmap" } },
+    select: { id: true, code: true },
+  });
+  for (const m of modules) {
+    await prismaUnscoped.tenantEntitlement.upsert({
+      where: { tenantId_moduleId: { tenantId: tenantBId, moduleId: m.id } },
+      update: { enabled: m.code !== "MOD-NOTIF" },
+      create: { tenantId: tenantBId, moduleId: m.id, enabled: m.code !== "MOD-NOTIF" },
+    });
+  }
+
+  // A directory row matching the mocked token. PAGE requests run
+  // `getSessionBlockReason` (an unregistered SSO identity is bounced to login)
+  // BEFORE the entitlement gate — a broken session must redirect, not 404 — so
+  // without this row the page-surface cases would 307 and never reach the gate.
+  await prismaUnscoped.user.deleteMany({ where: { tenantId: tenantBId } });
+  await prismaUnscoped.user.create({
+    data: {
+      tenantId: tenantBId,
+      code: "officer",
+      name: "Session Test Officer",
+      email: "officer@example.test",
+    },
+  });
 });
 
 afterAll(async () => {
+  await prismaUnscoped.user.deleteMany({ where: { tenantId: tenantBId } }).catch(() => {});
+  await prismaUnscoped.tenantEntitlement.deleteMany({ where: { tenantId: tenantBId } }).catch(() => {});
   await prismaUnscoped.tenant.deleteMany({ where: { slug: B_SLUG } }).catch(() => {});
   await prismaUnscoped.$disconnect();
 });
@@ -109,6 +142,80 @@ describe("Same-tenant sessions still work", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
     expect(res.headers.get(`x-middleware-request-${TENANT_HEADER}`)).toBe(B_SLUG);
+  });
+});
+
+/**
+ * Phase 3 — the entitlement gate, driven through the REAL proxy.
+ *
+ * The pure decision is exhaustively covered in tests/entitlements.test.ts; what
+ * these add is that proxy.ts actually calls it, in the right order, and returns
+ * the right shape. Tenant B has every module except Notifications.
+ */
+describe("Entitlement gate (Phase 3) at the real proxy", () => {
+  it("a DISABLED module 404s on the API surface, for a fully valid session", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(tenantBId));
+    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/notifications"));
+
+    // The session is valid and bound to the right tenant — this is not a 401.
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ detail: "Not Found" });
+  });
+
+  it("a DISABLED module 404s by direct URL on the page surface — deny, not hide", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(tenantBId));
+    const res = await proxy(request(B_HOST, "/hudd-dashboard/admin/notifications"));
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    // Not forwarded: the page never rendered.
+    expect(res.headers.get("x-middleware-next")).toBeNull();
+  });
+
+  it("an ENABLED module is forwarded normally", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(tenantBId));
+    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/kpis/definitions"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("the SAME path is allowed for a tenant that has the module — the gate is per-tenant", async () => {
+    // Odisha is all-on by the Phase 3 backfill.
+    getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
+    const res = await proxy(request(A_HOST, "/hudd-dashboard/api/v1/notifications"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("core routes stay reachable for a tenant with NO entitlement rows at all", async () => {
+    // A tenant can never be locked out of login/shell/admin by provisioning.
+    const bare = await prismaUnscoped.tenant.upsert({
+      where: { slug: "sessiontenant-bare" },
+      update: { status: "active" },
+      create: { slug: "sessiontenant-bare", name: "Bare Authority", status: "active" },
+    });
+    try {
+      getTokenMock.mockResolvedValue(tokenFor(bare.id));
+      const ok = await proxy(request("sessiontenant-bare.airawat.test", "/hudd-dashboard/api/v1/rbac/me"));
+      expect(ok.status).toBe(200);
+      expect(ok.headers.get("x-middleware-next")).toBe("1");
+
+      // ...while every gated module is denied for that same tenant.
+      const denied = await proxy(
+        request("sessiontenant-bare.airawat.test", "/hudd-dashboard/api/v1/kpis/definitions"),
+      );
+      expect(denied.status).toBe(404);
+    } finally {
+      await prismaUnscoped.tenant.deleteMany({ where: { slug: "sessiontenant-bare" } }).catch(() => {});
+    }
+  });
+
+  it("an unmapped path fails closed even with a valid session", async () => {
+    getTokenMock.mockResolvedValue(tokenFor(tenantBId));
+    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/not-a-real-endpoint"));
+    expect(res.status).toBe(404);
   });
 });
 

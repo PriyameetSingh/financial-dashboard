@@ -378,9 +378,12 @@ describe("Chokepoint invariants", () => {
     expect({ unclassified, both }).toEqual({ unclassified: [], both: [] });
   });
 
-  it("46 models are tenant-scoped and 5 are deliberately global", () => {
-    expect(TENANT_SCOPED_MODELS.size).toBe(46);
-    expect(GLOBAL_MODELS.size).toBe(5);
+  // Phase 3 added TenantEntitlement (tenant-scoped, auto-classified by its
+  // tenantId column) and Module (global — a closed code registry, same argument
+  // as Permission), taking these from 46/5 to 47/6.
+  it("47 models are tenant-scoped and 6 are deliberately global", () => {
+    expect(TENANT_SCOPED_MODELS.size).toBe(47);
+    expect(GLOBAL_MODELS.size).toBe(6);
   });
 
   it("a tenant-scoped query with NO resolved scope fails closed", async () => {

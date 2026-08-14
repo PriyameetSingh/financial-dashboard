@@ -16,7 +16,16 @@
  */
 import { PrismaClient, Prisma } from "@prisma/client";
 
-const GLOBAL_MODELS = new Set(["Permission", "Release", "ChangelogEntry", "Tenant", "TenantConfigEntry"]);
+// Mirrors GLOBAL_MODELS in lib/tenant-scope-registry.ts — this script runs
+// standalone against the database, so it keeps its own copy. Update both.
+const GLOBAL_MODELS = new Set([
+  "Permission",
+  "Release",
+  "ChangelogEntry",
+  "Tenant",
+  "TenantConfigEntry",
+  "Module",
+]);
 const prisma = new PrismaClient();
 
 function tableOf(model) {
