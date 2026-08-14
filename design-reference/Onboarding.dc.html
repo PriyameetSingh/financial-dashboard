@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
+<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  @keyframes noct-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; display: flex; flex-direction: column;">
+
+  <header style="display: flex; align-items: center; gap: 16px; padding: 14px 28px; background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+    <span style="display: block; width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--color-accent); background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);"></span>
+    <span style="font-family: var(--font-heading); font-size: 15px;">Airawat</span>
+    <span class="text-muted" style="font-size: 12px; padding-left: 12px; border-left: 1px solid var(--color-divider);">Organization onboarding</span>
+    <span style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+      <sc-if value="{{ resumed }}" hint-placeholder-val="{{ false }}">
+        <span class="tag tag-neutral">Draft resumed</span>
+      </sc-if>
+      <button class="btn btn-secondary" onClick="{{ saveExit }}" style="font-size: 12px;">Save &amp; exit</button>
+    </span>
+  </header>
+
+  <sc-if value="{{ launched }}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; display: grid; place-items: center; padding: 40px;">
+      <div style="max-width: 30rem; text-align: left; animation: noct-rise 0.3s ease both;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--color-accent); display: grid; place-items: center; color: var(--color-accent); font-size: 24px; margin-bottom: 22px;">✓</div>
+        <h1 style="font-size: 34px; margin-bottom: 10px;">Your workspace is live</h1>
+        <p style="opacity: 0.75; font-size: 15px; line-height: 1.6;">{{ orgNameOut }} is set up at <span style="color: var(--color-accent);">{{ slugOut }}.airawat.app</span>. Invitations are on their way to {{ inviteCountLabel }}. Your branding, locale, and {{ moduleCountOut }} modules are already applied.</p>
+        <div style="display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap;">
+          <a class="btn btn-primary" href="Airawat Platform.dc.html">Open the workspace</a>
+          <a class="btn btn-secondary" href="Menu Card.dc.html">Adjust the menu card</a>
+          <button class="btn btn-ghost" onClick="{{ startOver }}" style="font-size: 13px;">Onboard another organization</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ notLaunched }}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; display: grid; grid-template-columns: 260px minmax(0, 720px); justify-content: center; gap: 48px; padding: 44px 28px 64px; align-items: start;">
+
+      <aside style="position: sticky; top: 24px; display: grid; gap: 2px;">
+        <div class="text-muted" style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 0 10px 10px;">Eight steps · resume any time</div>
+        <sc-for list="{{ steps }}" as="st" hint-placeholder-count="7">
+          <button onClick="{{ st.go }}" disabled="{{ st.disabled }}" style="{{ st.style }}">
+            <span style="{{ st.numStyle }}">{{ st.mark }}</span>
+            <span style="text-align: left;">
+              <span style="display: block; font-size: 13px;">{{ st.label }}</span>
+              <span style="display: block; font-size: 10px; opacity: 0.6;">{{ st.sub }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </aside>
+
+      <main style="display: grid; gap: 22px; align-content: start;">
+        <div>
+          <h1 style="font-size: 26px; margin-bottom: 4px;">{{ stepTitle }}</h1>
+          <p class="text-muted" style="font-size: 13px; margin: 0;">{{ stepHint }}</p>
+        </div>
+
+        <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; gap: 16px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <div class="field">
+              <label>Organization name *</label>
+              <input class="input" value="{{ orgName }}" onChange="{{ setOrgName }}" placeholder="e.g. Suryapur Development Authority">
+              <sc-if value="{{ errOrgName }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 11px; color: var(--color-accent-300); margin-top: 5px;">! Enter your organization's official name to continue.</div>
+              </sc-if>
+            </div>
+            <div class="field">
+              <label>Workspace address *</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input class="input" value="{{ slug }}" onChange="{{ setSlug }}" style="max-width: 240px;" placeholder="suryapur">
+                <span class="text-muted" style="font-size: 13px;">.airawat.app</span>
+              </div>
+              <sc-if value="{{ errSlug }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 11px; color: var(--color-accent-300); margin-top: 5px;">! Lowercase letters, numbers and hyphens only.</div>
+              </sc-if>
+            </div>
+            <div class="field">
+              <label>Sector</label>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="ob-sector" checked="{{ secGov }}" onChange="{{ pickSecGov }}">Government</label>
+                <label class="seg-opt"><input type="radio" name="ob-sector" checked="{{ secPsu }}" onChange="{{ pickSecPsu }}">Public undertaking</label>
+                <label class="seg-opt"><input type="radio" name="ob-sector" checked="{{ secEnt }}" onChange="{{ pickSecEnt }}">Enterprise</label>
+              </div>
+            </div>
+            <div class="field">
+              <label>Primary contact email</label>
+              <input class="input" value="{{ contact }}" onChange="{{ setContact }}" placeholder="secretary@suryapur.gov" style="max-width: 340px;">
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 16px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <div class="field">
+              <label>Logo</label>
+              <label style="display: flex; align-items: center; gap: 12px; padding: 18px; border: 1px dashed var(--color-divider); border-radius: var(--radius-md); cursor: pointer;" style-hover="border-color: var(--color-accent);">
+                <input type="file" accept="image/*" onChange="{{ setLogo }}" style="display: none;">
+                <span style="width: 40px; height: 40px; border-radius: var(--radius-md); border: 1px solid var(--color-accent); display: grid; place-items: center; color: var(--color-accent); flex: none;">
+                  <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224 152v56a16 16 0 0 1-16 16H48a16 16 0 0 1-16-16v-56a8 8 0 0 1 16 0v56h160v-56a8 8 0 0 1 16 0ZM93.7 93.7 120 67.3V152a8 8 0 0 0 16 0V67.3l26.3 26.4a8 8 0 0 0 11.4-11.4l-40-40a8 8 0 0 0-11.4 0l-40 40a8 8 0 0 0 11.4 11.4Z"></path></svg>
+                </span>
+                <span>
+                  <span style="display: block; font-size: 13px;">{{ logoLabel }}</span>
+                  <span class="text-muted" style="display: block; font-size: 11px;">SVG or PNG, transparent background preferred</span>
+                </span>
+              </label>
+            </div>
+            <div class="field">
+              <label>Brand color</label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="6">
+                  <button onClick="{{ sw.pick }}" aria-label="{{ sw.name }}" title="{{ sw.name }}" style="{{ sw.style }}"></button>
+                </sc-for>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 10px;">
+                <sc-if value="{{ contrastOk }}" hint-placeholder-val="{{ true }}">
+                  <span class="tag tag-neutral">✓ Contrast {{ contrastRatio }}:1</span>
+                  <span class="text-muted">readable on dark and light grounds</span>
+                </sc-if>
+                <sc-if value="{{ contrastBad }}" hint-placeholder-val="{{ false }}">
+                  <span class="tag tag-outline">! Contrast {{ contrastRatio }}:1</span>
+                  <span class="text-muted">below 3:1 — we will deepen it for text automatically</span>
+                </sc-if>
+              </div>
+            </div>
+            <div class="field">
+              <label>Logo on dark surfaces</label>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="ob-logodark" checked="{{ ldAuto }}" onChange="{{ pickLdAuto }}">Invert automatically</label>
+                <label class="seg-opt"><input type="radio" name="ob-logodark" checked="{{ ldAlt }}" onChange="{{ pickLdAlt }}">I'll upload a dark-mode version</label>
+              </div>
+            </div>
+            <div class="text-muted" style="font-size: 12px;">Fine-tuning — density, corners, typography scale — lives in the design-system configurator inside your workspace.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 16px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="field">
+                <label>Language</label>
+                <select class="input" value="{{ lang }}" onChange="{{ setLang }}">
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                  <option value="or">Odia</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Timezone</label>
+                <select class="input" value="{{ tz }}" onChange="{{ setTz }}">
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Currency &amp; number format</label>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="ob-num" checked="{{ numIn }}" onChange="{{ pickNumIn }}">₹ 12,34,567 · lakh/crore</label>
+                <label class="seg-opt"><input type="radio" name="ob-num" checked="{{ numIntl }}" onChange="{{ pickNumIntl }}">₹ 1,234,567 · million</label>
+                <label class="seg-opt"><input type="radio" name="ob-num" checked="{{ numEu }}" onChange="{{ pickNumEu }}">€ 1.234.567</label>
+              </div>
+            </div>
+            <div class="field">
+              <label>Fiscal year begins</label>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="ob-fy" checked="{{ fyApr }}" onChange="{{ pickFyApr }}">1 April</label>
+                <label class="seg-opt"><input type="radio" name="ob-fy" checked="{{ fyJan }}" onChange="{{ pickFyJan }}">1 January</label>
+                <label class="seg-opt"><input type="radio" name="ob-fy" checked="{{ fyJul }}" onChange="{{ pickFyJul }}">1 July</label>
+              </div>
+            </div>
+            <div style="padding: 12px 14px; border-radius: var(--radius-md); box-shadow: inset 2px 0 0 var(--color-accent); font-size: 12px;">
+              Sample: <span style="font-family: var(--font-heading);">{{ localePreview }}</span> <span class="text-muted">— this is how amounts and dates will render everywhere.</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 16px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <div class="field">
+              <label>Plan tier</label>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="ob-tier" checked="{{ tier1 }}" onChange="{{ pickTier1 }}">Essential</label>
+                <label class="seg-opt"><input type="radio" name="ob-tier" checked="{{ tier2 }}" onChange="{{ pickTier2 }}">Governance</label>
+                <label class="seg-opt"><input type="radio" name="ob-tier" checked="{{ tier3 }}" onChange="{{ pickTier3 }}">Institution</label>
+              </div>
+            </div>
+            <div style="display: grid; gap: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); font-size: 13px;">
+                <span>Starting selection</span><span class="tag tag-accent">{{ tierPreset }}</span>
+              </div>
+              <div class="text-muted" style="font-size: 12px;">Your tier sets which capabilities you can enable. Compose the exact build on the menu card — your draft carries over.</div>
+            </div>
+            <a class="btn btn-primary" href="Menu Card.dc.html" style="justify-self: start;">Open the menu card ↗</a>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;">
+              <button onClick="{{ pickAiManaged }}" style="{{ aiManagedStyle }}">
+                <span style="display: block; font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Airawat-hosted models</span>
+                <span style="display: block; font-size: 12px; opacity: 0.7; line-height: 1.5;">Part of your subscription. No keys to manage, hosted in-region, fair-use metering.</span>
+              </button>
+              <button onClick="{{ pickAiByok }}" style="{{ aiByokStyle }}">
+                <span style="display: block; font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Bring your own key</span>
+                <span style="display: block; font-size: 12px; opacity: 0.7; line-height: 1.5;">Use your organization's own provider account. Usage is billed to you directly.</span>
+              </button>
+              <button onClick="{{ pickAiSelf }}" style="{{ aiSelfStyle }}">
+                <span style="display: block; font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Self-hosted models</span>
+                <span style="display: block; font-size: 12px; opacity: 0.7; line-height: 1.5;">Open models running in your own data centre. Nothing leaves your network.</span>
+              </button>
+            </div>
+            <sc-if value="{{ aiManaged }}" hint-placeholder-val="{{ true }}">
+              <div style="display: grid; gap: 14px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface); animation: noct-rise 0.2s ease both;">
+                <div class="field">
+                  <label>Model tier</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="ob-aitier" checked="{{ aiTierStd }}" onChange="{{ pickAiTierStd }}">Standard — assistant &amp; alerts</label>
+                    <label class="seg-opt"><input type="radio" name="ob-aitier" checked="{{ aiTierAdv }}" onChange="{{ pickAiTierAdv }}">Advanced — adds forecasting agents</label>
+                  </div>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">Includes 50,000 assistant queries a month; anomaly checks and progress agents are unmetered. Models run in the ap-south region and are never trained on your data.</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ aiByok }}" hint-placeholder-val="{{ false }}">
+              <div style="display: grid; gap: 14px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface); animation: noct-rise 0.2s ease both;">
+                <div style="display: grid; grid-template-columns: 220px 1fr; gap: 14px;">
+                  <div class="field">
+                    <label>Provider</label>
+                    <select class="input" value="{{ aiProvider }}" onChange="{{ setAiProvider }}">
+                      <option value="anthropic">Anthropic Claude</option>
+                      <option value="openai">OpenAI</option>
+                      <option value="azure">Azure OpenAI</option>
+                      <option value="google">Google Gemini</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>API key *</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <input class="input" type="password" value="{{ aiKey }}" onChange="{{ setAiKey }}" placeholder="sk-…" style="max-width: 320px;">
+                      <sc-if value="{{ keyVerified }}" hint-placeholder-val="{{ false }}">
+                        <span class="tag tag-neutral">✓ Key accepted</span>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ errAiKey }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size: 11px; color: var(--color-accent-300); margin-top: 5px;">! Paste a valid API key to continue, or switch to Airawat-hosted models.</div>
+                    </sc-if>
+                  </div>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">The key is stored encrypted in your tenant's vault, used only for your workspace's requests, and revocable here at any time. Rate limits and spend stay under your provider account.</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ aiSelf }}" hint-placeholder-val="{{ false }}">
+              <div style="display: grid; gap: 14px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface); animation: noct-rise 0.2s ease both;">
+                <div style="display: grid; grid-template-columns: 220px 1fr; gap: 14px;">
+                  <div class="field">
+                    <label>Model</label>
+                    <select class="input" value="{{ aiModel }}" onChange="{{ setAiModel }}">
+                      <option value="qwen">Qwen 2.5 · 72B</option>
+                      <option value="llama">Llama 3.3 · 70B</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Inference endpoint *</label>
+                    <input class="input" value="{{ aiEndpoint }}" onChange="{{ setAiEndpoint }}" placeholder="https://llm.sdc.example.gov/v1" style="max-width: 360px;">
+                    <sc-if value="{{ errAiEndpoint }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size: 11px; color: var(--color-accent-300); margin-top: 5px;">! Enter the https endpoint of your inference service.</div>
+                    </sc-if>
+                  </div>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">Suited to state data centre (SDC) deployments. Plan for 4× A100 80 GB or equivalent; we supply the deployment charts, health checks, and a conformance test your team runs before go-live.</div>
+              </div>
+            </sc-if>
+            <div style="display: grid; gap: 14px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+              <div style="font-family: var(--font-heading); font-size: 14px;">Data controls</div>
+              <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                <div class="field" style="margin: 0;">
+                  <label>Processing region</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="ob-aireg" checked="{{ regIn }}" onChange="{{ pickRegIn }}">In-region only</label>
+                    <label class="seg-opt"><input type="radio" name="ob-aireg" checked="{{ regDef }}" onChange="{{ pickRegDef }}">Provider default</label>
+                  </div>
+                </div>
+                <div class="field" style="margin: 0;">
+                  <label>Officer names in prompts</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="ob-aired" checked="{{ redOn }}" onChange="{{ pickRedOn }}">Redacted</label>
+                    <label class="seg-opt"><input type="radio" name="ob-aired" checked="{{ redOff }}" onChange="{{ pickRedOff }}">Sent as-is</label>
+                  </div>
+                </div>
+              </div>
+              <div class="text-muted" style="font-size: 12px;">Powers: Urban Assistant · AI alerts · progress agents · meeting notetaker. Every AI response cites the dashboard records it read; prompts and outputs are kept in your audit trail for one year.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <button onClick="{{ pickEmpty }}" style="{{ starterEmptyStyle }}">
+              <span style="display: block; font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Start empty</span>
+              <span style="display: block; font-size: 12px; opacity: 0.7; line-height: 1.5;">A clean workspace. Your officers enter schemes, budgets and KPIs from scratch — best when data entry is part of adoption.</span>
+            </button>
+            <button onClick="{{ pickSample }}" style="{{ starterSampleStyle }}">
+              <span style="display: block; font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Load sample data</span>
+              <span style="display: block; font-size: 12px; opacity: 0.7; line-height: 1.5;">A demonstration portfolio of schemes, KPIs and meetings to explore and train on. Remove it in one click before go-live.</span>
+            </button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 10px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <sc-for list="{{ people }}" as="p" hint-placeholder-count="2">
+              <div style="display: grid; grid-template-columns: 1fr 170px 34px; gap: 8px; align-items: center;">
+                <input class="input" value="{{ p.email }}" onChange="{{ p.setEmail }}" placeholder="officer@example.gov">
+                <select class="input" value="{{ p.role }}" onChange="{{ p.setRole }}">
+                  <option value="Administrator">Administrator</option>
+                  <option value="Approver">Approver</option>
+                  <option value="Viewer">Viewer</option>
+                </select>
+                <button class="btn btn-secondary btn-icon" onClick="{{ p.remove }}" aria-label="Remove row" style="width: 34px; height: 34px;">×</button>
+              </div>
+            </sc-for>
+            <button class="btn btn-ghost" onClick="{{ addPerson }}" style="justify-self: start; font-size: 13px;">+ Add another person</button>
+            <div class="text-muted" style="font-size: 12px;">Invitations go out when you launch. You can add everyone else later from Users &amp; roles.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep7 }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; gap: 2px; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <sc-for list="{{ review }}" as="r" hint-placeholder-count="7">
+              <div style="display: grid; grid-template-columns: 150px 1fr auto; gap: 12px; align-items: center; padding: 11px 4px; background: linear-gradient(to right, color-mix(in srgb, var(--color-text) 8%, transparent), transparent) no-repeat bottom / 100% 1px;">
+                <span class="text-muted" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">{{ r.label }}</span>
+                <span style="font-size: 13px;">{{ r.value }}</span>
+                <button class="btn btn-ghost" onClick="{{ r.edit }}" style="font-size: 11px;">Edit</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-secondary" onClick="{{ goBack }}">← Back</button>
+          </sc-if>
+          <span style="margin-left: auto;"></span>
+          <sc-if value="{{ notLast }}" hint-placeholder-val="{{ true }}">
+            <button class="btn btn-primary" onClick="{{ goNext }}">Continue →</button>
+          </sc-if>
+          <sc-if value="{{ isStep7 }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-primary" onClick="{{ launch }}" style="padding: 10px 22px;">Launch workspace</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ savedNote }}" hint-placeholder-val="{{ false }}">
+          <div role="status" class="text-muted" style="font-size: 12px; animation: noct-rise 0.2s ease both;">Draft saved — you can close this tab and pick up where you left off.</div>
+        </sc-if>
+      </main>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static KEY = 'airawat-onboarding-draft';
+  static DEFAULTS = { step: 0, maxStep: 0, orgName: '', slug: '', slugTouched: false, sector: 'gov', contact: '',
+    brand: '#9184d9', logoName: '', logoDark: 'auto', lang: 'en', tz: 'Asia/Kolkata', num: 'in', fy: 'apr',
+    tier: 2, starter: 'sample', aiMode: 'managed', aiTier: 'standard', aiProvider: 'anthropic', aiKey: '', aiModel: 'qwen', aiEndpoint: '', aiRegion: true, aiRedact: true, people: [{ email: '', role: 'Administrator' }], launched: false };
+  state = { ...Component.DEFAULTS, errs: false, resumed: false, savedNote: false };
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(Component.KEY);
+      if (raw) { const d = JSON.parse(raw); if (d && typeof d === 'object' && !d.launched) this.setState({ ...d, resumed: true }); }
+    } catch (e) {}
+  }
+  persist(patch) {
+    this.setState(patch, () => {
+      const { errs, resumed, savedNote, ...keep } = this.state;
+      try { localStorage.setItem(Component.KEY, JSON.stringify(keep)); } catch (e) {}
+    });
+  }
+  lum(hex) {
+    const c = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map(i => { let v = parseInt(c.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  valid(step) {
+    const s = this.state;
+    if (step === 0) return s.orgName.trim().length > 1 && /^[a-z0-9-]+$/.test(s.slug);
+    if (step === 4) { if (s.aiMode === 'byok') return s.aiKey.trim().length >= 12; if (s.aiMode === 'selfhost') return s.aiEndpoint.trim().startsWith('http'); }
+    return true;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const STEPS = [
+      ['Org profile', 'Name, address, contact'], ['Branding', 'Logo and brand color'],
+      ['Localization', 'Language, currency, fiscal year'], ['Modules', 'Tier and menu card'],
+      ['AI setup', 'Models, keys, data controls'], ['Starter data', 'Empty or sample'], ['People', 'Invite your first users'],
+      ['Review & launch', 'Check everything, go live']];
+    const HINTS = [
+      'Tell us who this workspace is for. The address becomes your permanent sign-in URL.',
+      'Your identity, applied everywhere — screens, report packs, invitation emails.',
+      'Amounts, dates and the fiscal year follow your organization, not ours.',
+      'Pick your tier; compose the exact capability set on the menu card.',
+      'Choose how the assistant and AI agents run — hosted by us, on your key, or inside your network.',
+      'Choose how the workspace should look on day one.',
+      'Invite the administrators first — they can bring in everyone else.',
+      'Everything below is editable after launch, from your workspace settings.'];
+    const go = (i) => { if (i <= s.maxStep) this.persist({ step: i, errs: false }); };
+    const next = () => {
+      if (!this.valid(s.step)) { this.setState({ errs: true }); return; }
+      const n = Math.min(7, s.step + 1);
+      this.persist({ step: n, maxStep: Math.max(s.maxStep, n), errs: false });
+    };
+    const ratio = (() => { const l1 = this.lum(s.brand), l2 = this.lum('#161826'); return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); })();
+    const swatchList = [['Nocturne blurple', '#9184d9'], ['River teal', '#5fa8a0'], ['Laterite', '#c2925c'], ['Slate blue', '#7f9cc9'], ['Rosewood', '#c07f92'], ['Graphite', '#9397ab']];
+    const numLabels = { in: '₹ · lakh/crore grouping', intl: '₹ · million grouping', eu: '€ · European grouping' };
+    const tierNames = { 1: 'Essential', 2: 'Governance', 3: 'Institution' };
+    const tierPresets = { 1: 'Core monitoring · 8 modules', 2: 'Leadership Review · 17 modules', 3: 'Full Platform · 23 modules' };
+    const peopleFilled = s.people.filter(p => p.email.trim());
+    const setP = (i, patch) => this.persist({ people: s.people.map((p, j) => j === i ? { ...p, ...patch } : p) });
+    const starterCard = (on) => ({ textAlign: 'left', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)', border: 'none', boxShadow: on ? 'inset 0 0 0 1px var(--color-accent), var(--shadow-sm)' : 'var(--shadow-sm)' });
+    const providerNames = { anthropic: 'Anthropic Claude', openai: 'OpenAI', azure: 'Azure OpenAI', google: 'Google Gemini' };
+    const aiSummary = s.aiMode === 'managed' ? 'Airawat-hosted · ' + (s.aiTier === 'standard' ? 'Standard' : 'Advanced') + ' tier' : s.aiMode === 'byok' ? 'Your key · ' + providerNames[s.aiProvider] : 'Self-hosted · ' + (s.aiModel === 'qwen' ? 'Qwen 2.5 72B' : 'Llama 3.3 70B');
+
+    return {
+      steps: STEPS.map(([label, sub], i) => {
+        const done = i < s.step || (i <= s.maxStep && i !== s.step && this.valid(i) && i < 6);
+        const cur = i === s.step, reachable = i <= s.maxStep;
+        return { label, sub, go: () => go(i), disabled: !reachable, mark: done && !cur ? '✓' : String(i + 1),
+          style: { display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', font: 'inherit', border: 0, cursor: reachable ? 'pointer' : 'default', padding: '9px 10px', borderRadius: 'var(--radius-md)', color: cur ? 'var(--color-accent)' : 'inherit', background: cur ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent', opacity: reachable ? 1 : 0.45 },
+          numStyle: { width: '24px', height: '24px', flex: 'none', borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: '11px', border: '1px solid ' + (cur || done ? 'var(--color-accent)' : 'var(--color-divider)'), color: done && !cur ? 'var(--color-accent)' : 'inherit' } };
+      }),
+      stepTitle: STEPS[s.step][0], stepHint: HINTS[s.step],
+      isStep0: s.step === 0, isStep1: s.step === 1, isStep2: s.step === 2, isStep3: s.step === 3,
+      isStep4: s.step === 4, isStep5: s.step === 5, isStep6: s.step === 6, isStep7: s.step === 7,
+      canBack: s.step > 0, notLast: s.step < 7, goBack: () => go(s.step - 1), goNext: next,
+      launched: s.launched, notLaunched: !s.launched, resumed: s.resumed, savedNote: s.savedNote,
+      saveExit: () => { this.persist({}); this.setState({ savedNote: true }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ savedNote: false }), 2600); },
+
+      orgName: s.orgName,
+      setOrgName: (e) => { const v = e.target.value; const patch = { orgName: v }; if (!s.slugTouched) patch.slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24); this.persist(patch); },
+      slug: s.slug, setSlug: (e) => this.persist({ slug: e.target.value, slugTouched: true }),
+      errOrgName: s.errs && s.orgName.trim().length <= 1, errSlug: s.errs && !/^[a-z0-9-]+$/.test(s.slug),
+      contact: s.contact, setContact: (e) => this.persist({ contact: e.target.value }),
+      secGov: s.sector === 'gov', secPsu: s.sector === 'psu', secEnt: s.sector === 'ent',
+      pickSecGov: () => this.persist({ sector: 'gov' }), pickSecPsu: () => this.persist({ sector: 'psu' }), pickSecEnt: () => this.persist({ sector: 'ent' }),
+
+      logoLabel: s.logoName || 'Drop your logo here or click to browse',
+      setLogo: (e) => this.persist({ logoName: e.target.files && e.target.files[0] ? e.target.files[0].name + ' — looks good' : s.logoName }),
+      swatches: swatchList.map(([name, hex]) => ({ name, pick: () => this.persist({ brand: hex }),
+        style: { width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', background: hex, border: '2px solid ' + (s.brand === hex ? 'var(--color-text)' : 'transparent'), boxShadow: s.brand === hex ? '0 0 0 2px var(--color-accent)' : 'var(--shadow-sm)', padding: 0 } })),
+      contrastOk: ratio >= 3, contrastBad: ratio < 3, contrastRatio: ratio.toFixed(1),
+      ldAuto: s.logoDark === 'auto', ldAlt: s.logoDark === 'alt',
+      pickLdAuto: () => this.persist({ logoDark: 'auto' }), pickLdAlt: () => this.persist({ logoDark: 'alt' }),
+
+      lang: s.lang, setLang: (e) => this.persist({ lang: e.target.value }),
+      tz: s.tz, setTz: (e) => this.persist({ tz: e.target.value }),
+      numIn: s.num === 'in', numIntl: s.num === 'intl', numEu: s.num === 'eu',
+      pickNumIn: () => this.persist({ num: 'in' }), pickNumIntl: () => this.persist({ num: 'intl' }), pickNumEu: () => this.persist({ num: 'eu' }),
+      fyApr: s.fy === 'apr', fyJan: s.fy === 'jan', fyJul: s.fy === 'jul',
+      pickFyApr: () => this.persist({ fy: 'apr' }), pickFyJan: () => this.persist({ fy: 'jan' }), pickFyJul: () => this.persist({ fy: 'jul' }),
+      localePreview: (s.num === 'eu' ? '€ 48.12.345' : s.num === 'in' ? '₹ 48,12,345' : '₹ 4,812,345') + ' · ' + (s.fy === 'apr' ? 'FY 2026–27 begins 1 Apr' : s.fy === 'jan' ? 'FY 2027 begins 1 Jan' : 'FY 2026–27 begins 1 Jul'),
+
+      tier1: s.tier === 1, tier2: s.tier === 2, tier3: s.tier === 3,
+      pickTier1: () => this.persist({ tier: 1 }), pickTier2: () => this.persist({ tier: 2 }), pickTier3: () => this.persist({ tier: 3 }),
+      tierPreset: tierPresets[s.tier],
+
+      aiManaged: s.aiMode === 'managed', aiByok: s.aiMode === 'byok', aiSelf: s.aiMode === 'selfhost',
+      pickAiManaged: () => this.persist({ aiMode: 'managed' }), pickAiByok: () => this.persist({ aiMode: 'byok' }), pickAiSelf: () => this.persist({ aiMode: 'selfhost' }),
+      aiManagedStyle: starterCard(s.aiMode === 'managed'), aiByokStyle: starterCard(s.aiMode === 'byok'), aiSelfStyle: starterCard(s.aiMode === 'selfhost'),
+      aiTierStd: s.aiTier === 'standard', aiTierAdv: s.aiTier === 'advanced',
+      pickAiTierStd: () => this.persist({ aiTier: 'standard' }), pickAiTierAdv: () => this.persist({ aiTier: 'advanced' }),
+      aiProvider: s.aiProvider, setAiProvider: (e) => this.persist({ aiProvider: e.target.value }),
+      aiKey: s.aiKey, setAiKey: (e) => this.persist({ aiKey: e.target.value }),
+      keyVerified: s.aiKey.trim().length >= 12,
+      errAiKey: s.errs && s.aiMode === 'byok' && s.aiKey.trim().length < 12,
+      aiModel: s.aiModel, setAiModel: (e) => this.persist({ aiModel: e.target.value }),
+      aiEndpoint: s.aiEndpoint, setAiEndpoint: (e) => this.persist({ aiEndpoint: e.target.value }),
+      errAiEndpoint: s.errs && s.aiMode === 'selfhost' && !s.aiEndpoint.trim().startsWith('http'),
+      regIn: s.aiRegion, regDef: !s.aiRegion, pickRegIn: () => this.persist({ aiRegion: true }), pickRegDef: () => this.persist({ aiRegion: false }),
+      redOn: s.aiRedact, redOff: !s.aiRedact, pickRedOn: () => this.persist({ aiRedact: true }), pickRedOff: () => this.persist({ aiRedact: false }),
+      pickEmpty: () => this.persist({ starter: 'empty' }), pickSample: () => this.persist({ starter: 'sample' }),
+      starterEmptyStyle: starterCard(s.starter === 'empty'), starterSampleStyle: starterCard(s.starter === 'sample'),
+
+      people: s.people.map((p, i) => ({ email: p.email, role: p.role,
+        setEmail: (e) => setP(i, { email: e.target.value }), setRole: (e) => setP(i, { role: e.target.value }),
+        remove: () => this.persist({ people: s.people.length > 1 ? s.people.filter((_, j) => j !== i) : s.people }) })),
+      addPerson: () => this.persist({ people: [...s.people, { email: '', role: 'Viewer' }] }),
+
+      review: [
+        ['Organization', s.orgName || '—', 0], ['Address', (s.slug || '—') + '.airawat.app', 0],
+        ['Branding', (s.logoName ? 'Logo uploaded · ' : 'No logo yet · ') + s.brand, 1],
+        ['Locale', numLabels[s.num] + ' · ' + s.tz, 2],
+        ['Tier & modules', tierNames[s.tier] + ' · ' + tierPresets[s.tier].split('·')[1].trim(), 3],
+        ['AI setup', aiSummary + (s.aiRegion ? ' · in-region' : '') + (s.aiRedact ? ' · names redacted' : ''), 4],
+        ['Starter data', s.starter === 'sample' ? 'Sample portfolio (removable)' : 'Empty workspace', 5],
+        ['People', peopleFilled.length + ' invitation' + (peopleFilled.length === 1 ? '' : 's') + ' ready', 6]
+      ].map(([label, value, i]) => ({ label, value, edit: () => this.persist({ step: i }) })),
+
+      launch: () => this.persist({ launched: true }),
+      orgNameOut: s.orgName || 'Your organization', slugOut: s.slug || 'workspace',
+      inviteCountLabel: (() => { const n = Math.max(1, peopleFilled.length); return n === 1 ? '1 person' : n + ' people'; })(), moduleCountOut: tierPresets[s.tier].match(/\d+/)[0],
+      startOver: () => { try { localStorage.removeItem(Component.KEY); } catch (e) {} this.setState({ ...Component.DEFAULTS, resumed: false, errs: false, savedNote: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

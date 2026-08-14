@@ -1,0 +1,71 @@
+/* Airawat platform tokens — layered over the Nocturne base stylesheet.
+   Everything a tenant theme may swap at runtime lives in a CSS variable. */
+
+:root {
+  /* Data-viz palette — categorical set, color-blind-checked against the dark ground */
+  --dv-cat-1: #9184d9; /* blurple (platform accent) */
+  --dv-cat-2: #5fa8a0; /* river teal */
+  --dv-cat-3: #c2925c; /* laterite */
+  --dv-cat-4: #7f9cc9; /* slate blue */
+  --dv-cat-5: #c07f92; /* rosewood */
+  --dv-cat-6: #9397ab; /* graphite */
+
+  /* Sequential scale — accent ramp, low → high */
+  --dv-seq-1: #2b2741;
+  --dv-seq-2: #423a6a;
+  --dv-seq-3: #5d5294;
+  --dv-seq-4: #796cbf;
+  --dv-seq-5: #968ae0;
+
+  /* Diverging scale — negative → neutral → positive */
+  --dv-div-neg: #c07f92;
+  --dv-div-mid: #595d6c;
+  --dv-div-pos: #5fa8a0;
+
+  /* Status roles (mono scheme: weight, tint and mark — never hue alone) */
+  --status-ok-bg: var(--color-neutral-800);
+  --status-ok-fg: var(--color-neutral-100);
+  --status-risk-bg: var(--color-accent-800);
+  --status-risk-fg: var(--color-accent-100);
+  --status-breach-border: var(--color-accent);
+  --status-breach-fg: var(--color-accent);
+}
+
+/* Light theme — equal peer of the dark default */
+[data-theme="light"] {
+  --color-bg: #eef0f8;
+  --color-surface: #f8f9fd;
+  --color-text: #232532;
+  --color-accent: #5d5294;
+  --color-divider: color-mix(in srgb, #232532 16%, transparent);
+  --shadow-sm: 0 0 0 1px #d9dde9;
+  --shadow-md: 0 0 0 1px #dfe2ee, 0 6px 18px rgba(35,37,50,0.10);
+  --shadow-lg: 0 0 0 1px #cfd3e5, 0 16px 40px rgba(35,37,50,0.16);
+  --color-accent-800: #e7e5fe;
+  --color-accent-100: #423a6a;
+  --color-accent-2-800: #e7e5fe;
+  --color-accent-2-100: #423a6a;
+  --color-neutral-800: #e4e7f5;
+  --color-neutral-100: #3f424d;
+}
+[data-theme="light"] .text-muted,
+[data-theme="light"] figcaption { color: #575a68; }
+
+/* Density switch — spacing moves, type does not */
+[data-density="compact"] {
+  --space-1: 2px; --space-2: 4px; --space-3: 6px;
+  --space-4: 8px; --space-6: 11px; --space-8: 15px;
+}
+
+/* Sample tenant theme — Suryapur Development Authority (river teal) */
+[data-tenant="suryapur"] {
+  --color-accent: #3f847c;
+  --color-accent-800: #d9ecea;
+  --color-accent-100: #2b5a54;
+  --dv-cat-1: #3f847c;
+  --dv-seq-3: #3f847c;
+}
+[data-tenant="suryapur"][data-theme-dark],
+[data-theme="dark"] [data-tenant="suryapur"] {
+  --color-accent: #5fa8a0;
+}

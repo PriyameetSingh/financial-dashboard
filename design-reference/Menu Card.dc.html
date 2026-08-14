@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
+<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  @keyframes noct-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh;">
+
+  <header style="padding: 52px 40px 36px; background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-bg) 70%);">
+    <div style="display: flex; align-items: flex-start; gap: 20px;">
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 14px;">Airawat Product Catalogue · HUDD Finance &amp; Governance</div>
+        <h1 style="font-size: clamp(36px, 5vw, 58px); line-height: 0.98; letter-spacing: -0.03em; margin-bottom: 16px;">Finance Dashboard<br><span style="color: var(--color-accent);">menu card</span></h1>
+        <p style="color: var(--color-neutral-400); font-size: 15px; max-width: 58ch; line-height: 1.65; margin-bottom: 24px;">Compose your department's build capability by capability. The platform standard is always included — add the monitoring, intelligence, and automation capabilities your mandate needs, or start from a set menu.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span class="tag tag-outline">Multi-scheme · multi-department</span>
+          <span class="tag tag-neutral">Keycloak SSO</span>
+          <span class="tag tag-neutral">IFMS-ready</span>
+          <span class="tag tag-neutral">Typical buyer: State HUDD · Urban Dept · Smart City PMU</span>
+        </div>
+      </div>
+      <a class="btn btn-secondary" href="Airawat Platform.dc.html" style="flex: none; font-size: 12px;">← Platform demo</a>
+    </div>
+  </header>
+
+  <div style="padding: 10px 40px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-400); background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent) no-repeat top / 100% 1px, linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+    <span style="display: flex; align-items: center; gap: 7px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent);"></span>Available now</span>
+    <span style="display: flex; align-items: center; gap: 7px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent-300);"></span>In development</span>
+    <span style="display: flex; align-items: center; gap: 7px;"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--color-neutral-500);"></span>On the roadmap</span>
+    <span style="margin-left: auto; color: var(--color-neutral-600);">Platform standard is mandatory · always included</span>
+  </div>
+
+  <div style="padding: 14px 40px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+    <span style="font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-neutral-600); margin-right: 4px; white-space: nowrap;">Set menus</span>
+    <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+      <button class="btn" onClick="{{ p.apply }}" style="{{ p.style }}">{{ p.label }}</button>
+    </sc-for>
+    <button class="btn btn-secondary" onClick="{{ clearAll }}" style="font-size: 12px;">Clear optional</button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; align-items: start;">
+    <div style="padding: 24px 32px 64px 40px; display: grid; gap: 36px; box-shadow: inset -1px 0 0 var(--color-divider);">
+
+      <div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; background: linear-gradient(to right, var(--color-divider), transparent) no-repeat bottom / 100% 1px;">
+          <div style="width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--color-accent); display: flex; align-items: center; justify-content: center; color: var(--color-accent); font-family: var(--font-heading); font-size: 13px;">PS</div>
+          <div>
+            <div style="font-size: 14px; font-family: var(--font-heading);">Platform standard</div>
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">Mandatory · identity, access, audit, shell</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 8px;">
+          <sc-for list="{{ coreCaps }}" as="c" hint-placeholder-count="8">
+            <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: 12px 14px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent); position: relative;">
+              <span style="position: absolute; top: 9px; right: 11px; font-size: 10px; color: var(--color-accent);">✓</span>
+              <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 5px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); flex: none;"></span>
+                <span style="font-size: 9px; letter-spacing: 0.08em; color: var(--color-neutral-600);">{{ c.id }}</span>
+              </div>
+              <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 4px;">{{ c.name }}</div>
+              <div style="font-size: 11px; color: var(--color-neutral-400); line-height: 1.5;">{{ c.desc }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+        <div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; background: linear-gradient(to right, var(--color-divider), transparent) no-repeat bottom / 100% 1px;">
+            <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-accent-900); color: var(--color-accent-200); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-size: 12px;">{{ g.abbr }}</div>
+            <div>
+              <div style="font-size: 14px; font-family: var(--font-heading);">{{ g.name }}</div>
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">{{ g.blurb }}</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 8px;">
+            <sc-for list="{{ g.caps }}" as="c" hint-placeholder-count="4">
+              <div onClick="{{ c.toggle }}" role="checkbox" aria-checked="{{ c.ariaSel }}" tabIndex="0" onKeyDown="{{ c.key }}" style="{{ c.cardStyle }}" style-hover="background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));">
+                <sc-if value="{{ c.sel }}" hint-placeholder-val="{{ false }}">
+                  <span style="position: absolute; top: 9px; right: 11px; font-size: 10px; color: var(--color-accent);">✓</span>
+                </sc-if>
+                <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 5px;">
+                  <span style="{{ c.dotStyle }}"></span>
+                  <span style="font-size: 9px; letter-spacing: 0.08em; color: var(--color-neutral-600);">{{ c.id }}</span>
+                </div>
+                <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 4px;">{{ c.name }}</div>
+                <div style="font-size: 11px; color: var(--color-neutral-400); line-height: 1.5;">{{ c.desc }}</div>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px;">
+                  <sc-for list="{{ c.chips }}" as="t" hint-placeholder-count="1">
+                    <span class="tag" style="{{ t.style }}">{{ t.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <aside style="position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 28px 24px; background: var(--color-surface);">
+      <div style="font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 18px;">Your finance build</div>
+      <div style="font-size: 20px; font-family: var(--font-heading); margin-bottom: 4px; min-height: 26px;">{{ buildName }}</div>
+      <div style="font-size: 12px; color: var(--color-neutral-500); margin-bottom: 20px; min-height: 16px;">{{ buildSub }}</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px;">
+        <div style="background: var(--color-bg); border-radius: var(--radius-md); padding: 12px 8px; text-align: center; box-shadow: var(--shadow-sm);">
+          <div style="font-size: 24px; font-family: var(--font-heading); color: var(--color-accent);">{{ statCaps }}</div>
+          <div style="font-size: 9px; color: var(--color-neutral-500); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">Capabilities</div>
+        </div>
+        <div style="background: var(--color-bg); border-radius: var(--radius-md); padding: 12px 8px; text-align: center; box-shadow: var(--shadow-sm);">
+          <div style="font-size: 24px; font-family: var(--font-heading); color: var(--color-accent);">{{ statMods }}</div>
+          <div style="font-size: 9px; color: var(--color-neutral-500); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">Modules</div>
+        </div>
+        <div style="background: var(--color-bg); border-radius: var(--radius-md); padding: 12px 8px; text-align: center; box-shadow: var(--shadow-sm);">
+          <div style="font-size: 24px; font-family: var(--font-heading); color: var(--color-accent);">{{ statAi }}</div>
+          <div style="font-size: 9px; color: var(--color-neutral-500); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">AI features</div>
+        </div>
+      </div>
+      <sc-if value="{{ hasRoadmap }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size: 11px; color: var(--color-neutral-400); padding: 9px 11px; border-radius: var(--radius-sm); box-shadow: inset 2px 0 0 var(--color-accent-700); margin-bottom: 16px;">{{ roadmapNote }}</div>
+      </sc-if>
+      <div style="font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 10px;">Included capabilities</div>
+      <div style="margin-bottom: 4px;">
+        <div style="padding: 8px 0; display: flex; gap: 8px; align-items: flex-start; background: linear-gradient(to right, color-mix(in srgb, var(--color-text) 8%, transparent), transparent) no-repeat bottom / 100% 1px;">
+          <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); flex: none; margin-top: 5px;"></span>
+          <span>
+            <span style="display: block; font-size: 11px; font-family: var(--font-heading);">Platform standard</span>
+            <span style="display: block; font-size: 9px; color: var(--color-neutral-500);">{{ coreCount }} capabilities · always included</span>
+          </span>
+        </div>
+        <sc-for list="{{ selList }}" as="s" hint-placeholder-count="4">
+          <div style="padding: 8px 0; display: flex; gap: 8px; align-items: flex-start; background: linear-gradient(to right, color-mix(in srgb, var(--color-text) 8%, transparent), transparent) no-repeat bottom / 100% 1px;">
+            <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); flex: none; margin-top: 5px;"></span>
+            <span>
+              <span style="display: block; font-size: 11px; font-family: var(--font-heading);">{{ s.name }}</span>
+              <span style="display: block; font-size: 9px; color: var(--color-neutral-500);">{{ s.meta }}</span>
+            </span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noneSelected }}" hint-placeholder-val="{{ true }}">
+          <div style="color: var(--color-neutral-600); font-size: 12px; font-style: italic; text-align: center; padding: 18px 0;">No optional capabilities selected yet</div>
+        </sc-if>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 18px;">
+        <button class="btn btn-primary" onClick="{{ exportBuild }}" style="font-size: 12px;">Export build</button>
+        <button class="btn btn-secondary" onClick="{{ selectAll }}" style="font-size: 12px;">Select all</button>
+      </div>
+      <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="margin-top: 14px; padding: 10px 12px; border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--color-accent); font-size: 12px; animation: noct-rise 0.2s ease both;">{{ toastMsg }}</div>
+      </sc-if>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sel: {}, toast: false, toastMsg: '' };
+
+  static CORE = [
+    ['PS-01', 'Keycloak SSO sign-in', 'Officials sign in via Keycloak OIDC; federated logout ends the IdP session too.'],
+    ['PS-02', 'Role-based access (RBAC)', 'Role catalog, role-permission matrix, and per-user overrides with server-side resolution.'],
+    ['PS-03', 'User administration', 'Create, update, and soft-delete officers with Keycloak sync and temporary password reset.'],
+    ['PS-04', 'Audit logging', 'Structured audit rows for every sensitive admin and workflow mutation.'],
+    ['PS-05', 'App shell & branding', 'Role-filtered sidebar, mobile drawer, department branding, clock, and logout.'],
+    ['PS-06', 'Master data', 'Organisations, designations, sections, ULBs, and verticals administration.'],
+    ['PS-07', 'Officer profile', 'Profile view with self-service password change and release notes.'],
+    ['PS-08', 'Route & permission guards', 'Proxy auth middleware, client guards, and a read-only watermark for view-only users.']
+  ];
+
+  static DATA = [
+    ['CC', 'Command Centre', 'Leadership landing dashboard', [
+      ['CC-01', 'Command Centre / Overview Dashboard', 'Utilisation, IFMS trend, lapse risk, meeting summary, pending approvals, AI alerts, and scheme drill-down.', 'live', ['core']],
+      ['CC-02', 'Dashboard Quick Filters', 'One-tap This Month / Quarter / FY filters across the landing dashboard.', 'plan', ['config']],
+      ['CC-03', 'Dashboard Advanced Filters', 'Filter by date range, scheme, department, officer, and status.', 'plan', ['config']]
+    ]],
+    ['FIN', 'Financial Progress', 'Budget, SO, IFMS and utilisation', [
+      ['FIN-01', 'Financial Overview Dashboard', 'FY totals, funding-source chart, IFMS timeseries, period comparison, per-scheme utilisation table.', 'live', ['core']],
+      ['FIN-02', 'Scheme-wise Financial Entry', 'Enter scheme/subscheme SO and IFMS expenditure as dated snapshots linked to a meeting.', 'live', ['core']],
+      ['FIN-03', 'Bulk Financial Entry', 'Spreadsheet-style grid to post SO/IFMS deltas across many schemes in one pass.', 'live', []],
+      ['FIN-04', 'Budget Revision & Supplements', 'Revise annual estimates with reason history; post signed top-up or cut supplements.', 'live', []],
+      ['FIN-05', 'FY Summary / Category Allocation', 'Edit manual FY category lines; scheme buckets derived from scheme data.', 'live', ['config']],
+      ['FIN-06', 'Budget vs Expense Board', 'Kanban board bucketing schemes by IFMS utilisation against quarterly targets.', 'live', []],
+      ['FIN-07', 'Execution Efficiency Dashboard', 'Financial vs physical progress comparison per scheme.', 'plan', []]
+    ]],
+    ['KPI', 'KPIs', 'Definition, entry, review, monitoring', [
+      ['KPI-01', 'KPI Definition Create & Edit', 'Define KPIs on a scheme with type, units, monitoring level, performers and reviewers.', 'live', ['core']],
+      ['KPI-02', 'KPI Measurement Entry', 'Assignees enter numerators, remarks, or yes/no for the selected meeting and submit for review.', 'live', ['core']],
+      ['KPI-03', 'KPI Review & Approval', 'Designated reviewers approve or reject submissions with notes.', 'live', ['core']],
+      ['KPI-04', 'KPI Monitoring Dashboard', 'List and filter KPIs by workflow status with staleness and escalation signals.', 'live', ['core']],
+      ['KPI-05', 'KPI Target Denominator (FY)', 'Set the financial-year target; locked after first set unless a manager overrides.', 'live', ['config']],
+      ['KPI-06', 'KPI Owner Reassignment', 'Reassign performers and reviewers for an existing KPI, including self-approved mode.', 'live', []],
+      ['KPI-07', 'KPI Escalation Flags', 'Bottleneck reasons and needs-decision flags surfaced in monitoring.', 'dev', []]
+    ]],
+    ['SR', 'Scheme Registry', 'Schemes, subschemes, ownership', [
+      ['SR-01', 'Scheme Registry List & Overview', 'Browse schemes with budget/SO/IFMS summary, KPI counts, and Active/Archived filters.', 'live', ['core']],
+      ['SR-02', 'Scheme Create & Edit', 'Create or edit a scheme with default owner assignments and optional subschemes.', 'live', ['core']],
+      ['SR-03', 'Scheme Progress & Analytics', 'Drill-down with FY financials, IFMS trend, subscheme breakdown, and KPI progress.', 'live', []],
+      ['SR-04', 'Subscheme Management', 'Add subschemes at creation or later; reorder via admin.', 'live', []],
+      ['SR-05', 'Scheme Ownership Assignments', 'Per-scheme default owners for priority, KPI fallbacks, and action-item templates.', 'live', ['config']],
+      ['SR-06', 'Scheme Archive & Delete', 'Soft-archive for day-to-day lists, or permanent delete with cascade.', 'live', []],
+      ['SR-07', 'Display Order Administration', 'Set the global display order of schemes and subschemes for all users.', 'live', ['config']],
+      ['SR-08', 'Scheme Workflow Config', 'Per-scheme workflow configuration.', 'plan', ['config']]
+    ]],
+    ['ACT', 'Decision Tracker', 'Action items and decisions (TASU)', [
+      ['ACT-01', 'Action Item List & Tracker', 'Searchable master list with status, priority, assignee, and vertical filters.', 'live', ['core']],
+      ['ACT-02', 'Action Item Create', 'Create form with scheme, priority, due date, performers, reviewers, and meeting link.', 'live', ['core']],
+      ['ACT-03', 'Lifecycle & Review', 'Status workflow, meeting-attributed progress notes, reassignment, archive.', 'live', []],
+      ['ACT-04', 'Proof Upload', 'Register proof of completion against an action item.', 'dev', []],
+      ['ACT-05', 'Meeting Decision Type', 'Distinguish decisions from action items in tracking and reports.', 'plan', []]
+    ]],
+    ['MTG', 'Meeting Organizer', 'Review meetings and live mode', [
+      ['MTG-01', 'Meeting Calendar & CRUD', 'Schedule and manage dashboard meetings with topics and financial year.', 'live', ['core']],
+      ['MTG-02', 'Materials & Presentations', 'Upload, preview, and manage meeting presentation files.', 'live', []],
+      ['MTG-03', 'Active Meeting Mode', 'Full-screen live overlay with timer, agenda, finance/KPI/action panels, and assistant.', 'live', []],
+      ['MTG-04', 'Create Action Item from Meeting', 'Raise an action item pre-linked to the running meeting.', 'live', []],
+      ['MTG-05', 'Data-Entry Window & Closure', 'Admin-set closure time locks entry after the meeting; override permission for backdating.', 'live', ['config']]
+    ]],
+    ['TASK', 'My Tasks', 'Personal work hub', [
+      ['TASK-01', 'My Tasks Hub', 'Personal landing with pending KPI entry/review, tracker work, and entry shortcuts.', 'live', []],
+      ['TASK-02', 'Inline Pendance (Vertical Head)', 'Embedded meeting-scoped task table for working pending reviews.', 'live', []]
+    ]],
+    ['RPT', 'Reports', 'Packs and adoption reporting', [
+      ['RPT-01', 'Meeting Report Pack (Web + PDF)', 'Printable briefing pack with topics, finance, schemes, KPIs, and decisions.', 'live', ['core']],
+      ['RPT-02', 'Pendance / Adoption Report', 'Per-meeting officer completion and update activity, web and PDF.', 'live', []],
+      ['RPT-03', 'Reports Hub', 'Pick a meeting and open its pack or pendance report.', 'live', []],
+      ['RPT-04', 'Scheduled ACS Reports', 'Monthly/quarterly cross-module leadership summaries, auto-dispatched.', 'plan', ['config']],
+      ['RPT-05', 'On-Demand Date-Range Reports', 'Ad-hoc reports over any date range.', 'plan', []]
+    ]],
+    ['AI', 'AI Insights', 'Assistant and progress agents', [
+      ['AI-01', 'Conversational Urban Assistant', 'In-app Q&A answering from live financial, KPI, action-item, and meeting data.', 'live', ['ai']],
+      ['AI-02', 'AI Alerts / Progress Monitor', 'Latest agent insights surfaced on the Command Centre as administrative alerts.', 'live', ['ai']],
+      ['AI-03', 'Meeting-Wise Progress Agent', 'Configurable rule/LLM agent generating progress insights since the last meeting.', 'live', ['ai']]
+    ]],
+    ['ANOM', 'Anomaly Detection', 'Rule-based and AI checks', [
+      ['ANOM-01', 'Rule-Based Anomaly Checks', 'Duplicate entries, 2× average deviation, and window-violation checks.', 'plan', ['ai']],
+      ['ANOM-02', 'Nightly Batch Job', 'Scheduled nightly run of rule-based and AI-augmented anomaly checks.', 'plan', ['ai']],
+      ['ANOM-03', 'Anomaly Dashboard', 'Severity, module, and trend view with click-through to the source record.', 'plan', ['ai']]
+    ]],
+    ['LAPSE', 'Lapse Risk', 'Year-end fund lapse prevention', [
+      ['LAPSE-01', 'Lapse-Risk Alert Generation', 'Threshold-based lapse detection across financial, KPI, and task data.', 'plan', ['ai']],
+      ['LAPSE-02', 'Grace-Period Escalation', 'Escalates unresolved lapse-risk items to the next authority after a grace period.', 'plan', ['config']],
+      ['LAPSE-03', 'Lapse-Risk Dashboard', 'Heatmap, trend, and officer-wise view of lapse risk.', 'plan', ['ai']]
+    ]],
+    ['NOTIF', 'Notifications', 'Event-based alerting', [
+      ['NOTIF-01', 'Event-Based Triggers', 'Notification engine firing on overdue tasks, flags, and pending approvals.', 'dev', ['config']],
+      ['NOTIF-02', 'User Notification Preferences', 'Per-officer channel and frequency preferences.', 'plan', ['config']]
+    ]],
+    ['EXP', 'Data Export', 'Structured outputs', [
+      ['EXP-01', 'CSV / XLSX Export', 'Export tables and charts in structured formats across modules.', 'dev', []],
+      ['EXP-02', 'Dashboard PDF Export', 'One-click PDF of any dashboard view.', 'plan', []]
+    ]],
+    ['APR', 'Approval Workflows', 'Configurable approval chains', [
+      ['APR-01', 'Configurable Approval Chains', 'Per-module and per-scheme chains — who approves what, in what order.', 'plan', ['config']],
+      ['APR-02', 'Sequential Enforcement', 'Approvers act in defined order; skipping is blocked.', 'plan', []],
+      ['APR-03', 'Approval Delegation', 'Time-bound delegation of approval authority.', 'plan', ['config']]
+    ]]
+  ];
+
+  static PRESETS = [
+    ['Odisha Pilot', 'Core monitoring + AI alerts + report pack', ['CC-01', 'FIN-01', 'FIN-02', 'KPI-01', 'KPI-02', 'KPI-03', 'KPI-04', 'MTG-01', 'RPT-01', 'AI-02']],
+    ['Leadership Review', 'Full review cycle: monitor, meet, report', ['CC-01', 'FIN-01', 'FIN-02', 'FIN-03', 'KPI-01', 'KPI-02', 'KPI-03', 'KPI-04', 'SR-01', 'SR-02', 'SR-03', 'ACT-01', 'ACT-02', 'ACT-03', 'MTG-01', 'MTG-03', 'RPT-01', 'RPT-03', 'TASK-01']],
+    ['Intelligence Stack', 'AI assistant, anomaly and lapse-risk suite', ['CC-01', 'AI-01', 'AI-02', 'AI-03', 'ANOM-01', 'ANOM-02', 'ANOM-03', 'LAPSE-01', 'LAPSE-02', 'LAPSE-03']],
+    ['Full Platform', 'Every capability across all modules', null]
+  ];
+
+  say(msg) {
+    clearTimeout(this._t);
+    this.setState({ toast: true, toastMsg: msg });
+    this._t = setTimeout(() => this.setState({ toast: false }), 2600);
+  }
+
+  renderVals() {
+    const sel = this.state.sel;
+    const dot = (st) => ({ width: '6px', height: '6px', borderRadius: '50%', flex: 'none',
+      background: st === 'live' ? 'var(--color-accent)' : st === 'dev' ? 'var(--color-accent-300)' : 'transparent',
+      border: st === 'plan' ? '1px solid var(--color-neutral-500)' : 'none' });
+    const chip = (t) => t === 'ai'
+      ? { label: 'AI-powered', style: { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px' } }
+      : t === 'core'
+        ? { label: 'Core', style: { border: '1px solid var(--color-accent-700)', color: 'var(--color-accent-300)', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px' } }
+        : { label: 'Configurable', style: { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px' } };
+
+    const groups = Component.DATA.map(([abbr, name, blurb, caps]) => ({ abbr, name, blurb,
+      caps: caps.map(([id, cname, desc, st, tags]) => {
+        const isSel = !!sel[id];
+        return { id, name: cname, desc, sel: isSel, ariaSel: String(isSel),
+          toggle: () => this.setState(p => ({ sel: { ...p.sel, [id]: !p.sel[id] } })),
+          key: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.setState(p => ({ sel: { ...p.sel, [id]: !p.sel[id] } })); } },
+          dotStyle: dot(st), chips: tags.map(chip),
+          cardStyle: { background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '12px 14px', cursor: 'pointer', position: 'relative', userSelect: 'none',
+            boxShadow: isSel ? 'inset 0 0 0 1px var(--color-accent), var(--shadow-sm)' : 'var(--shadow-sm)' } };
+      }) }));
+
+    const all = [];
+    for (const [abbr, name, , caps] of Component.DATA)
+      for (const [id, cname, , st, tags] of caps)
+        if (sel[id]) all.push({ id, name: cname, mod: name, st, ai: tags.includes('ai') });
+    const mods = new Set(all.map(c => c.id.split('-')[0]));
+    const roadmapCount = all.filter(c => c.st === 'plan').length;
+    const totalIds = Component.DATA.flatMap(([, , , caps]) => caps.map(c => c[0]));
+
+    let buildName = 'Custom build', buildSub = mods.size + ' modules · ' + all.length + ' optional capabilities';
+    if (all.length === 0) { buildName = 'Core only'; buildSub = 'Identity, access, audit, and shell'; }
+    for (const [label, sub, ids] of Component.PRESETS) {
+      const match = ids === null ? all.length === totalIds.length
+        : ids.length === all.length && ids.every(id => sel[id]);
+      if (match && all.length > 0) { buildName = label; buildSub = sub; break; }
+    }
+
+    return {
+      coreCaps: Component.CORE.map(([id, name, desc]) => ({ id, name, desc })),
+      coreCount: Component.CORE.length,
+      groups,
+      presets: Component.PRESETS.map(([label, sub, ids]) => {
+        const active = ids === null ? all.length === totalIds.length : ids !== null && ids.length === all.length && ids.every(id => sel[id]) && all.length > 0;
+        return { label, apply: () => {
+          const next = {};
+          (ids === null ? totalIds : ids).forEach(id => { next[id] = true; });
+          this.setState({ sel: next });
+        }, style: { fontSize: '12px', borderColor: active ? 'var(--color-accent)' : 'var(--color-divider)', color: active ? 'var(--color-accent)' : 'inherit', background: active ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)' : 'transparent' } };
+      }),
+      clearAll: () => this.setState({ sel: {} }),
+      selectAll: () => { const next = {}; totalIds.forEach(id => { next[id] = true; }); this.setState({ sel: next }); },
+      buildName, buildSub,
+      statCaps: Component.CORE.length + all.length, statMods: 1 + mods.size, statAi: all.filter(c => c.ai).length,
+      hasRoadmap: roadmapCount > 0,
+      roadmapNote: roadmapCount + (roadmapCount === 1 ? ' selected capability is' : ' selected capabilities are') + ' on the roadmap — delivery is scheduled with your onboarding lead.',
+      selList: all.map(c => ({ name: c.name, meta: c.mod + ' · ' + c.id })),
+      noneSelected: all.length === 0,
+      exportBuild: () => this.say('Build exported — ' + (Component.CORE.length + all.length) + ' capabilities across ' + (1 + mods.size) + ' modules. Your Airawat contact receives a copy.'),
+      toast: this.state.toast, toastMsg: this.state.toastMsg
+    };
+  }
+}
+</script>
+</body>
+</html>
