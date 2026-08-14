@@ -16,7 +16,7 @@
  * test the database, not the chokepoint.
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma, prismaUnscoped, TenantScopeError } from "@/lib/prisma";
+import { prisma, prismaUnscoped, tenantStamped, TenantScopeError } from "@/lib/prisma";
 import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
 import { withTenantContext } from "@/lib/tenant-context";
 import { resolveDataScopeForUser, type DataScope } from "@/lib/data-scope";
@@ -239,7 +239,13 @@ describe("Write probes (both directions)", () => {
       await expect(
         prisma.kpiDefinition.update({
           where: { id: self.seed.kpiDefA.id },
-          data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } },
+          // `as never`: these probes deliberately use Prisma's CHECKED input
+          // (relation `connect`), where the tenant is a relation rather than the
+          // `tenantId` scalar `tenantStamped` supplies. The payload is exactly
+          // what production code would send; the point of the probe is that the
+          // chokepoint REJECTS it at runtime, which is what the assertion below
+          // proves. Typing it is beside the point.
+          data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } } as never,
         }),
       ).rejects.toThrow();
 
@@ -272,12 +278,19 @@ describe("Write probes (both directions)", () => {
         await expect(
           prisma.kpiDefinition.update({
             where: { id: self.seed.kpiDefA.id },
-            data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } },
+            // `as never`: these probes deliberately use Prisma's CHECKED input
+          // (relation `connect`), where the tenant is a relation rather than the
+          // `tenantId` scalar `tenantStamped` supplies. The payload is exactly
+          // what production code would send; the point of the probe is that the
+          // chokepoint REJECTS it at runtime, which is what the assertion below
+          // proves. Typing it is beside the point.
+          data: { performers: { create: [{ user: { connect: { id: other.seed.fullUser.id } } }] } } as never,
           }),
         ).rejects.toThrow();
 
         await expect(
           prisma.actionItem.create({
+            // Checked-input probe — see the `as never` note above.
             data: {
               title: "invisible-parent connect probe",
               description: "should not be created",
@@ -286,7 +299,7 @@ describe("Write probes (both directions)", () => {
               dueDate: new Date("2025-12-31"),
               status: "OPEN",
               scheme: { connect: { id: other.seed.schemeB.id } },
-            },
+            } as never,
           }),
         ).rejects.toThrow();
       });
@@ -303,7 +316,7 @@ describe("Write probes (both directions)", () => {
     await withTenantContext(self.tenantId, async () => {
       await expect(
         prisma.actionItem.create({
-          data: {
+          data: tenantStamped({
             title: "cross-tenant parent probe",
             description: "should not be created",
             itemType: "action_item",
@@ -311,7 +324,7 @@ describe("Write probes (both directions)", () => {
             dueDate: new Date("2025-12-31"),
             status: "OPEN",
             schemeId: other.seed.schemeA.id, // parent belongs to the other tenant
-          },
+          }),
         }),
       ).rejects.toThrow();
     });
@@ -351,12 +364,12 @@ describe("Operation-class coverage (aggregates, upsert, createMany, transactions
         prisma.scheme.upsert({
           where: { id: other.seed.schemeA.id },
           update: { name: "hijacked-by-upsert" },
-          create: {
+          create: tenantStamped({
             code: `ISO_UPSERT_${Date.now()}`,
             name: "probe",
             verticalName: "Test Vertical",
             sponsorshipType: "STATE",
-          },
+          }),
         }),
       ).rejects.toThrow();
     });

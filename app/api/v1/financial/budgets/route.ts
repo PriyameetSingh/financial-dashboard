@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { getFinancialBudgetEntriesOverview } from "@/lib/financial-budget-entries";
@@ -64,13 +64,13 @@ export async function PATCH(request: NextRequest) {
     await prisma.$transaction(async (tx) => {
       if (existing) {
         await tx.financeBudgetRevision.create({
-          data: {
+          data: tenantStamped({
             financeBudgetId: existing.id,
             oldBudgetEstimateCr: existing.budgetEstimateCr,
             newBudgetEstimateCr: body.newBudgetCr,
             reason: body.reason,
             createdById: actor?.id ?? null,
-          },
+          }),
         });
         await tx.financeBudget.update({
           where: { id: existing.id },
@@ -88,13 +88,13 @@ export async function PATCH(request: NextRequest) {
         );
       } else {
         const created = await tx.financeBudget.create({
-          data: {
+          data: tenantStamped({
             schemeId: scheme.id,
             subschemeId,
             financialYearId: fy.id,
             budgetEstimateCr: body.newBudgetCr,
             createdById: actor?.id ?? null,
-          },
+          }),
         });
         await logAudit(
           tx,

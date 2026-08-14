@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, requireTenantScope } from "@/lib/prisma";
+import { prisma, requireTenantScope, tenantStamped } from "@/lib/prisma";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
 
 
@@ -55,12 +55,12 @@ export async function POST(request: NextRequest) {
       });
     } else {
       config = await prisma.agentConfig.create({
-        data: {
+        data: tenantStamped({
           id: "d3b07384-d113-43cf-a5a5-4828f306d860",
           enabled: body.enabled,
           runDay: body.runDay,
           mode: body.mode,
-        },
+        }),
       });
     }
 

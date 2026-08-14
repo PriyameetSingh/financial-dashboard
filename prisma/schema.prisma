@@ -8,33 +8,42 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Phase 2 multi-tenancy ───────────────────────────────────────────────────
+// ─── Phase 2/3 multi-tenancy ─────────────────────────────────────────────────
 //
 // Every tenant-owned model carries:
 //
-//   tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+//   tenantId String @db.Uuid          -- required, NOT NULL, no column default
 //
-// READ THIS BEFORE CHANGING THAT DEFAULT.
+// THE TENANT IS STAMPED IN EXACTLY ONE PLACE: the Prisma client extension in
+// lib/prisma.ts. Application code never writes `tenantId` by hand; it marks a
+// create payload with `tenantStamped()` (lib/prisma.ts), which asserts to the
+// type system what the extension guarantees at runtime. Code that legitimately
+// runs outside a tenant scope — seeds, migrations, maintenance scripts — uses
+// `prismaUnscoped` and passes a real `tenantId`, which the compiler now
+// requires of it.
 //
-// The default is a TYPE-LEVEL AFFORDANCE ONLY — it is not, and must not become,
-// a way for rows to acquire a tenant. Its entire purpose is to make `tenantId`
-// optional in Prisma's generated create inputs, so the tenant is stamped in ONE
-// place (the client extension in lib/prisma.ts) instead of being hand-written
-// into ~40 route payloads. The `app.tenant_id` GUC is never set by this
-// application, so `current_setting(..., true)` returns NULL and the NOT NULL
-// column constraint rejects any write that reaches the database without a
-// tenant stamped by the chokepoint. That loud failure is the point.
+// HISTORY, so this is not "helpfully" reintroduced (backlog H1, resolved):
+// these columns used to declare
 //
-// CONSEQUENCE IF THAT CHANGES: the moment anything sets `app.tenant_id` on a
-// connection — most plausibly a future Postgres Row-Level Security rollout,
-// which conventionally sets exactly this kind of session variable — the default
-// stops evaluating to NULL and silently stamps whatever that connection's GUC
-// says. A write that bypasses the chokepoint would then succeed quietly and
-// land in whichever tenant the pooled connection last had set, instead of
-// failing. If RLS (or anything else that sets a session variable) is
-// introduced, DROP these column defaults in the same migration and make the
-// chokepoint the only writer, or bind the GUC per transaction and treat it as
-// the authoritative tenant source. Do not leave both mechanisms half-live.
+//   @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))
+//
+// NO DATABASE EVER HAD THAT DEFAULT. It existed only in this file, where its
+// sole effect was type-level — making `tenantId` optional in generated create
+// inputs. Its cost was a live hazard: the moment anything binds the
+// `app.tenant_id` GUC (a Postgres Row-Level Security rollout is the obvious
+// candidate, since RLS conventionally sets exactly this kind of session
+// variable), the default would stop evaluating to NULL and become a SILENT
+// STAMP — a write that bypassed the chokepoint would quietly land in whichever
+// tenant the pooled connection last had set, instead of failing on NOT NULL.
+//
+// Removing it also ended a standing annoyance: `prisma migrate dev` proposed 46
+// `ALTER COLUMN … SET DEFAULT` statements on every new migration, because the
+// schema and every database disagreed. Schema and database now match, and the
+// removal required no migration at all.
+//
+// If RLS is introduced later, bind the GUC per transaction and treat it as the
+// authoritative tenant source, or leave the chokepoint as the only writer. Do
+// not restore a column default: the two mechanisms must never be half-live.
 
 /// Scheme sponsorship; maps to FinanceYearBudgetCategory for scheme buckets:
 /// STATE → STATE_SCHEME, CENTRAL → CENTRALLY_SPONSORED_SCHEME, CENTRAL_SECTOR → CENTRAL_SECTOR_SCHEME
@@ -223,7 +232,7 @@ model User {
   updatedConfigs    SystemNotificationConfig[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, code])
@@ -244,7 +253,7 @@ model Role {
   schemeAssignments SchemeAssignment[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, code])
@@ -273,7 +282,7 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([roleId, permissionId])
@@ -289,7 +298,7 @@ model UserRole {
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([userId, roleId])
@@ -310,7 +319,7 @@ model UserPermissionOverride {
   createdBy  User?      @relation("CreatedOverrides", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([userId, permissionId])
@@ -328,7 +337,7 @@ model Vertical {
   actionItems ActionItem[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, code])
@@ -345,7 +354,7 @@ model Section {
   userSections UserSection[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, name])
@@ -363,7 +372,7 @@ model Organisation {
   userOrganisations UserOrganisation[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, name])
@@ -380,7 +389,7 @@ model Designation {
   users User[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, name])
@@ -397,7 +406,7 @@ model Ulb {
   users User[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, name])
@@ -413,7 +422,7 @@ model UserSection {
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([userId, sectionId])
@@ -429,7 +438,7 @@ model UserOrganisation {
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([userId, organisationId])
@@ -454,7 +463,7 @@ model FinancialYear {
   meetings                    DashboardMeeting[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, label])
@@ -486,7 +495,7 @@ model Scheme {
   supplements          FinanceBudgetSupplement[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, code])
@@ -515,7 +524,7 @@ model Subscheme {
   supplements          FinanceBudgetSupplement[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([schemeId, code])
@@ -539,7 +548,7 @@ model SchemeAssignment {
   role      Role?      @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([schemeId, assignmentKind])
@@ -557,7 +566,7 @@ model SchemeWorkflowConfig {
   scheme Scheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([schemeId, workflowType])
@@ -584,7 +593,7 @@ model FinanceBudget {
   revisions FinanceBudgetRevision[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([schemeId, subschemeId, financialYearId])
@@ -606,7 +615,7 @@ model FinanceBudgetRevision {
   createdBy     User?         @relation("FinanceBudgetRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([financeBudgetId])
@@ -635,7 +644,7 @@ model FinanceExpenditureSnapshot {
   createdBy     User?             @relation("FinanceSnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([schemeId, financialYearId, asOfDate])
@@ -661,7 +670,7 @@ model FinanceSummaryHead {
   createdBy     User?         @relation("FinanceSummaryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([financialYearId, headCode, asOfDate])
@@ -706,7 +715,7 @@ model KpiDefinition {
   targets KpiTarget[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([schemeId])
@@ -728,7 +737,7 @@ model KpiDefinitionPerformer {
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([kpiDefinitionId, isActive])
@@ -746,7 +755,7 @@ model KpiDefinitionReviewerUser {
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([kpiDefinitionId, userId])
@@ -767,7 +776,7 @@ model KpiTarget {
   measurements KpiMeasurement[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([kpiDefinitionId, financialYearId])
@@ -799,7 +808,7 @@ model KpiMeasurement {
   reviewedBy User?             @relation("KpiMeasurementReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([kpiTargetId, measuredAt])
@@ -828,7 +837,7 @@ model DashboardMeeting {
   actionItemProgressUpdates   ActionItemUpdate[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([meetingDate])
@@ -847,7 +856,7 @@ model MeetingTopic {
   createdBy User?            @relation("MeetingTopicCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([meetingId])
@@ -870,7 +879,7 @@ model MeetingMaterial {
   uploadedBy User?            @relation("MeetingMaterialUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([meetingId])
@@ -908,7 +917,7 @@ model ActionItem {
   proofs  ActionItemProof[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([status, dueDate])
@@ -930,7 +939,7 @@ model ActionItemPerformer {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([actionItemId, isActive])
@@ -947,7 +956,7 @@ model ActionItemReviewerUser {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([actionItemId, userId])
@@ -970,7 +979,7 @@ model ActionItemUpdate {
   createdBy  User?             @relation("ActionItemUpdateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([actionItemId, timestamp])
@@ -993,7 +1002,7 @@ model File {
   actionItemProofs ActionItemProof[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([tenantId])
@@ -1012,7 +1021,7 @@ model ActionItemProof {
   uploadedBy User?      @relation("ActionItemProofUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([actionItemId, fileId])
@@ -1034,7 +1043,7 @@ model AuditLog {
   actorUser User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([occurredAt])
@@ -1065,7 +1074,7 @@ model FinanceBudgetSupplement {
   createdBy     User?         @relation("FinanceBudgetSupplementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([schemeId, financialYearId])
@@ -1088,7 +1097,7 @@ model FinanceYearBudgetAllocation {
   categoryLines FinanceYearBudgetCategoryLine[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([tenantId])
@@ -1106,7 +1115,7 @@ model FinanceYearBudgetCategoryLine {
   allocation FinanceYearBudgetAllocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([allocationId, category])
@@ -1157,7 +1166,7 @@ model UserSeenRelease {
   release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([userId, releaseId])
@@ -1174,7 +1183,7 @@ model AgentConfig {
   updatedAt DateTime @updatedAt
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([tenantId])
@@ -1192,7 +1201,7 @@ model AgentInsight {
   createdAt     DateTime @default(now())
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([tenantId])
@@ -1235,7 +1244,7 @@ model Notification {
   dispatches NotificationDispatch[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([userId, status, createdAt])
@@ -1256,7 +1265,7 @@ model NotificationDispatch {
   notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([notificationId, channel])
@@ -1276,7 +1285,7 @@ model UserNotificationPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([userId, category, channel])
@@ -1293,7 +1302,7 @@ model SystemNotificationConfig {
   updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
-  tenantId String @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid")) @db.Uuid
+  tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, key])

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { KPICategory, KPIType, KpiMonitoringLevel } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import {
   groupKpiAssignmentsBySchemeId,
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const created = await tx.kpiDefinition.create({
-        data: {
+        data: tenantStamped({
           schemeId,
           subschemeId,
           category,
@@ -394,16 +394,18 @@ export async function POST(request: NextRequest) {
           monitoringLevel: monitoringLevel ?? undefined,
           createdById: actor?.id ?? null,
           performers: {
-            create: performerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+            create: tenantStamped(performerUserIds.map((userId, i) => ({ userId, sortOrder: i }))),
           },
           ...(reviewerUserIds.length > 0
             ? {
                 reviewerUsers: {
-                  create: reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+                  create: tenantStamped(
+                    reviewerUserIds.map((userId, i) => ({ userId, sortOrder: i })),
+                  ),
                 },
               }
             : {}),
-        },
+        }),
       });
 
       const initialDenominator =
@@ -419,11 +421,11 @@ export async function POST(request: NextRequest) {
               financialYearId: fy.id,
             },
           },
-          create: {
+          create: tenantStamped({
             kpiDefinitionId: created.id,
             financialYearId: fy.id,
             denominatorValue: initialDenominator,
-          },
+          }),
           update: {},
         });
       }

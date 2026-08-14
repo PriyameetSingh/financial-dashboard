@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import {
   FINANCE_YEAR_BUDGET_CATEGORY_LABELS,
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
               asOfDate,
             },
           },
-          create: {
+          create: tenantStamped({
             financialYearId: fy.id,
             headCode: row.headCode,
             asOfDate,
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
             soExpenditureCr: row.soExpenditureCr,
             ifmsExpenditureCr: row.ifmsExpenditureCr,
             createdById: actor?.id ?? null,
-          },
+          }),
           update: {
             budgetEstimateCr: row.budgetEstimateCr,
             soExpenditureCr: row.soExpenditureCr,

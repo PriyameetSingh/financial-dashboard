@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getDbUserBySession } from "@/lib/server-rbac";
 
 export const runtime = "nodejs";
@@ -33,10 +33,10 @@ export async function POST(
         },
       },
       update: {},
-      create: {
+      create: tenantStamped({
         userId: dbUser.id,
         releaseId,
-      },
+      }),
     });
 
     return NextResponse.json({ success: true });

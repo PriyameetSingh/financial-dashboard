@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { isValidAssignment, mapSchemeView, parseSponsorshipType } from "@/lib/scheme-api";
 import { requireAnyPermission, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           }));
 
         if (rows.length > 0) {
-          await tx.schemeAssignment.createMany({ data: rows });
+          await tx.schemeAssignment.createMany({ data: tenantStamped(rows)});
         }
       }
 

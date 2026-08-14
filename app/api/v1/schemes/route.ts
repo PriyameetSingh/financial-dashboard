@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { isValidAssignment, mapSchemeView, parseSponsorshipType } from "@/lib/scheme-api";
 import { requireAnyPermissionAndDbUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -102,18 +102,18 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const scheme = await tx.scheme.create({
-        data: {
+        data: tenantStamped({
           code,
           name,
           verticalName,
           sponsorshipType,
           createdById: actor?.id ?? null,
-        },
+        }),
       });
 
       if (body.subschemes?.length) {
         await tx.subscheme.createMany({
-          data: body.subschemes
+          data: tenantStamped(body.subschemes
             .map((item) => ({ code: item.code.trim().toUpperCase(), name: item.name.trim() }))
             .filter((item) => item.code && item.name)
             .map((item) => ({
@@ -121,13 +121,13 @@ export async function POST(request: NextRequest) {
               code: item.code,
               name: item.name,
               createdById: actor?.id ?? null,
-            })),
+            }))),
         });
       }
 
       if (body.assignments?.length) {
         await tx.schemeAssignment.createMany({
-          data: body.assignments
+          data: tenantStamped(body.assignments
             .filter(isValidAssignment)
             .map((assignment) => ({
               schemeId: scheme.id,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
               userId: assignment.userId ?? null,
               roleId: assignment.roleId ?? null,
               sortOrder: assignment.sortOrder ?? 0,
-            })),
+            }))),
         });
       }
 

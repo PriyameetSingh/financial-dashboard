@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { KpiMonitoringLevel } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { NotificationService } from "@/lib/services/NotificationService";
@@ -191,13 +191,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             });
           } else {
             await tx.kpiDefinitionPerformer.create({
-              data: {
+              data: tenantStamped({
                 kpiDefinitionId: id,
                 userId,
                 isActive: true,
                 assignedAt: new Date(),
                 sortOrder: i,
-              },
+              }),
             });
           }
         }
@@ -205,7 +205,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         await tx.kpiDefinitionReviewerUser.deleteMany({ where: { kpiDefinitionId: id } });
         if (reviewerUserIds.length > 0) {
           await tx.kpiDefinitionReviewerUser.createMany({
-            data: reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i })),
+            data: tenantStamped(reviewerUserIds.map((userId, i) => ({ kpiDefinitionId: id, userId, sortOrder: i }))),
           });
         }
       }
@@ -236,11 +236,11 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           });
         } else {
           await tx.kpiTarget.create({
-            data: {
+            data: tenantStamped({
               kpiDefinitionId: id,
               financialYearId: fy.id,
               denominatorValue: newDenominatorValue,
-            },
+            }),
           });
         }
       }

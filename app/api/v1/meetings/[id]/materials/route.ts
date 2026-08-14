@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { prisma, requireTenantScope } from "@/lib/prisma";
+import { prisma, requireTenantScope, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { assertAllowedMeetingMaterial, sanitizeMeetingFileName, MEETING_MATERIAL_MAX_BYTES } from "@/lib/meeting-materials";
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
 
     const created = await prisma.$transaction(async (tx) => {
       const material = await tx.meetingMaterial.create({
-        data: {
+        data: tenantStamped({
           meetingId,
           storagePath: objectKey,
           fileName: safeName,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
           sizeBytes: file.size,
           sortOrder,
           uploadedById: actor?.id ?? null,
-        },
+        }),
         select: { id: true, fileName: true, mimeType: true, sizeBytes: true },
       });
 

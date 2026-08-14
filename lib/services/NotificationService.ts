@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { ActionItemPriority, NotificationChannel, NotificationStatus, DispatchStatus } from "@prisma/client";
 
 export interface CreateNotificationParams {
@@ -48,7 +48,7 @@ export class NotificationService {
 
       // 4. Create the base notification in the database (always accessible in-app)
       const notification = await prisma.notification.create({
-        data: {
+        data: tenantStamped({
           userId: params.userId,
           title: params.title,
           content: params.content,
@@ -57,7 +57,7 @@ export class NotificationService {
           link: params.link || null,
           metadata: params.metadata ? params.metadata : null,
           status: NotificationStatus.UNREAD,
-        },
+        }),
       });
 
       // 5. Fetch recipient notification preferences
@@ -84,12 +84,12 @@ export class NotificationService {
         if (channel === NotificationChannel.IN_APP) {
           // In-app is visible immediately, record dispatch status as SENT
           await prisma.notificationDispatch.create({
-            data: {
+            data: tenantStamped({
               notificationId: notification.id,
               channel,
               status: DispatchStatus.SENT,
               dispatchedAt: new Date(),
-            },
+            }),
           });
           continue;
         }
@@ -102,11 +102,11 @@ export class NotificationService {
         if (isQuietHours && !isUrgent) {
           // Queue for later dispatch during office hours
           await prisma.notificationDispatch.create({
-            data: {
+            data: tenantStamped({
               notificationId: notification.id,
               channel,
               status: DispatchStatus.QUEUED_FOR_OFFICE_HOURS,
-            },
+            }),
           });
           console.log(`[Notification Service] Queued ${channel} dispatch for user ${params.userId} due to quiet hours.`);
         } else {
@@ -186,12 +186,12 @@ export class NotificationService {
         where: {
           notificationId_channel: { notificationId, channel },
         },
-        create: {
+        create: tenantStamped({
           notificationId,
           channel,
           status: DispatchStatus.SENT,
           dispatchedAt: new Date(),
-        },
+        }),
         update: {
           status: DispatchStatus.SENT,
           dispatchedAt: new Date(),
@@ -204,12 +204,12 @@ export class NotificationService {
         where: {
           notificationId_channel: { notificationId, channel },
         },
-        create: {
+        create: tenantStamped({
           notificationId,
           channel,
           status: DispatchStatus.FAILED,
           errorMessage: e.message || "Unknown error during dispatch",
-        },
+        }),
         update: {
           status: DispatchStatus.FAILED,
           errorMessage: e.message || "Unknown error during dispatch",

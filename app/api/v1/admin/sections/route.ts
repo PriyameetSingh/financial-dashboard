@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const created = await tx.section.create({
-        data: { name },
+        data: tenantStamped({ name }),
         select: { id: true, name: true },
       });
 

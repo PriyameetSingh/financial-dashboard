@@ -34,7 +34,7 @@ const BOGUS_SCHEME_ID = "11111111-1111-1111-1111-111111111111"; // non-existent 
 async function fixture() {
   const actor = await prisma.user.findFirst({ where: { isActive: true }, select: { id: true } });
   if (!actor) throw new Error("No active user found in test DB for fixture");
-  const scheme = await prisma.scheme.findFirst({ select: { id: true } });
+  const scheme = await prisma.scheme.findFirst({ select: { id: true, tenantId: true } });
   if (!scheme) throw new Error("No scheme found in test DB for fixture");
   const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" }, select: { id: true } });
   if (!fy) throw new Error("No financial year found in test DB for fixture");
@@ -63,7 +63,8 @@ async function fixture() {
     if (pair) break;
   }
   if (!pair) throw new Error("Could not find an unused (user, permission) pair for RBAC fixture");
-  return { actor: actor.id, scheme: scheme.id, fy: fy.id, role: role.id, pair };
+  // Unscoped client: every create below must carry the tenant explicitly.
+  return { tenantId: scheme.tenantId, actor: actor.id, scheme: scheme.id, fy: fy.id, role: role.id, pair };
 }
 
 test("Test 1 (control): successful mutation+audit commits both atomically", async () => {
@@ -73,6 +74,7 @@ test("Test 1 (control): successful mutation+audit commits both atomically", asyn
   await prisma.$transaction(async (tx) => {
     const snap = await tx.financeExpenditureSnapshot.create({
       data: {
+        tenantId: f.tenantId,
         schemeId: f.scheme,
         financialYearId: f.fy,
         asOfDate: new Date(),
@@ -102,6 +104,7 @@ test("Test 2 (financial): audit-insert failure rolls back the financial mutation
     await prisma.$transaction(async (tx) => {
       await tx.financeExpenditureSnapshot.create({
         data: {
+          tenantId: f.tenantId,
           schemeId: f.scheme,
           financialYearId: f.fy,
           asOfDate: new Date(),
@@ -133,6 +136,7 @@ test("Test 3 (RBAC): audit-insert failure rolls back the RBAC mutation", async (
     await prisma.$transaction(async (tx) => {
       await tx.userPermissionOverride.create({
         data: {
+          tenantId: f.tenantId,
           userId: f.pair.userId,
           permissionId: f.pair.permissionId,
           effect: "allow",
@@ -171,6 +175,7 @@ test("Test 4: mutation failure leaves no orphan audit row", async () => {
       asAuditTx(tx), f.actor, action, "finance_expenditure_snapshot", null, null, { phase: "pre-mutation" });
       await tx.financeExpenditureSnapshot.create({
         data: {
+          tenantId: f.tenantId,
           schemeId: BOGUS_SCHEME_ID, // FK violation → mutation fails
           financialYearId: f.fy,
           asOfDate: new Date(),

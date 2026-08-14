@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         });
       } else {
         await tx.financeExpenditureSnapshot.create({
-          data: {
+          data: tenantStamped({
             schemeId: scheme.id,
             subschemeId,
             financialYearId: fy.id,
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
             remarks: body.remarks,
             workflowStatus,
             createdById: createdBy?.id ?? null,
-          },
+          }),
         });
       }
 

@@ -73,6 +73,37 @@ if (!globalForPrisma.prismaUnscoped) {
 /** Raw client — no tenant filter. See the header for the allowed call sites. */
 export const prismaUnscoped = basePrisma;
 
+/**
+ * Mark a create payload as one the CHOKEPOINT will stamp with `tenantId`.
+ *
+ * Background (ledger H1): `tenantId` used to carry
+ * `@default(dbgenerated("current_setting('app.tenant_id')"))` in the Prisma
+ * schema. No database ever had that default — its only real effect was
+ * type-level, making `tenantId` optional in generated create inputs. It was
+ * removed because the moment anything binds that GUC (an RLS rollout is the
+ * obvious candidate) the default stops evaluating to NULL and becomes a
+ * SILENT-STAMP path: a write that bypassed the chokepoint would quietly land in
+ * whichever tenant the pooled connection last had set, instead of failing on
+ * NOT NULL.
+ *
+ * Removing it made `tenantId` required in every create input, which the
+ * application must NOT satisfy by hand — the whole design is that exactly one
+ * place stamps the tenant. This helper is that affordance, made explicit:
+ * it asserts to the type system what `prepareCreateData` guarantees at runtime.
+ *
+ * USE ONLY WITH THE SCOPED `prisma` CLIENT. On `prismaUnscoped` nothing stamps,
+ * so the row would reach the database tenant-less and be rejected by NOT NULL —
+ * loudly, but at runtime. Unscoped call sites must pass a real `tenantId`, and
+ * now the compiler makes them.
+ */
+type Stamped<T> = T extends readonly (infer U)[]
+  ? (U & { tenantId: string })[]
+  : T & { tenantId: string };
+
+export function tenantStamped<T>(data: T): Stamped<T> {
+  return data as unknown as Stamped<T>;
+}
+
 /** Raised when a tenant-scoped query runs with no resolved tenant scope. */
 export class TenantScopeError extends Error {
   status = 500;

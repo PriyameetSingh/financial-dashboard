@@ -82,6 +82,8 @@ async function main() {
         if (permission) {
           await prisma.rolePermission.create({
             data: {
+              // Unscoped client: the grant belongs to the role's own tenant.
+              tenantId: verticalHeadRole.tenantId,
               roleId: verticalHeadRole.id,
               permissionId: permission.id,
             },

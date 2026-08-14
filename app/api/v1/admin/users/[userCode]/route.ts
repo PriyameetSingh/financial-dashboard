@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OfficerType } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import {
   deleteKeycloakUserById,
@@ -229,10 +229,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
         await tx.userSection.deleteMany({ where: { userId: user.id } });
         if (nextSectionIds.length > 0) {
           await tx.userSection.createMany({
-            data: nextSectionIds.map((sectionId) => ({
+            data: tenantStamped(nextSectionIds.map((sectionId) => ({
               userId: user.id,
               sectionId,
-            })),
+            }))),
             skipDuplicates: true,
           });
         }
@@ -242,10 +242,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
         await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
         if (nextOrganisationIds.length > 0) {
           await tx.userOrganisation.createMany({
-            data: nextOrganisationIds.map((organisationId) => ({
+            data: tenantStamped(nextOrganisationIds.map((organisationId) => ({
               userId: user.id,
               organisationId,
-            })),
+            }))),
             skipDuplicates: true,
           });
         }
@@ -286,7 +286,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ userC
 
       await prisma.$transaction(async (tx) => {
         await tx.userRole.deleteMany({ where: { userId: user.id } });
-        await tx.userRole.create({ data: { userId: user.id, roleId: role.id } });
+        await tx.userRole.create({ data: tenantStamped({ userId: user.id, roleId: role.id }) });
 
         await logAudit(
           tx,

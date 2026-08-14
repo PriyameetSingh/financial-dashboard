@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { FINANCE_YEAR_BUDGET_CATEGORY_ORDER } from "@/lib/finance-year-budget-allocation";
 
 /** Ensures FY-level budget allocation and one line per category exist (read/entry paths). */
@@ -8,11 +8,11 @@ export async function ensureFyBudgetAllocationWithLines(financialYearId: string,
   });
   if (!allocation) {
     allocation = await prisma.financeYearBudgetAllocation.create({
-      data: {
+      data: tenantStamped({
         financialYearId,
         totalBudgetCr: 0,
         createdById,
-      },
+      }),
     });
   }
   await Promise.all(
@@ -22,13 +22,13 @@ export async function ensureFyBudgetAllocationWithLines(financialYearId: string,
           allocationId_category: { allocationId: allocation.id, category },
         },
         update: {},
-        create: {
+        create: tenantStamped({
           allocationId: allocation.id,
           category,
           budgetEstimateCr: 0,
           soExpenditureCr: 0,
           ifmsExpenditureCr: 0,
-        },
+        }),
       }),
     ),
   );

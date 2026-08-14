@@ -172,40 +172,46 @@ extract to `lib/tenant-config/`. Tracked separately from the discharge rule abov
 Items that need an explicit human call. An agent must **document and exclude**
 them, never resolve them unilaterally.
 
-### H1. `tenantId` column-default drift (`current_setting('app.tenant_id')`)
+### H1. `tenantId` column-default drift — **RESOLVED**
 
-**State.** `prisma/schema.prisma` declares
+**Decision (operator, Phase 3):** remove the defaults. Option 1 of the two below.
+
+`prisma/schema.prisma` declared
 `@default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))` on the
-`tenantId` of 46 tenant-scoped models. **No migration has ever created that
-default, and no database has it.** So `prisma migrate dev` proposes 46
-`ALTER TABLE … ALTER COLUMN "tenantId" SET DEFAULT …` statements on *every* new
-migration, and will keep doing so until someone decides.
+`tenantId` of 46 tenant-scoped models. **No database ever had it** — the schema
+was the only place it existed — so `prisma migrate dev` proposed 46
+`ALTER COLUMN … SET DEFAULT` statements on every new migration.
 
-**Why an agent must not just apply it.** Per `docs/PHASE2-TENANCY-PLAN.md` §2,
-the standing hazard runs in the direction of *adding* the default:
+**Why removal, not materialisation.** Per `docs/PHASE2-TENANCY-PLAN.md` §2 the
+hazard ran in the direction of *adding* it:
 
-- **Today (no default):** a write that bypasses the chokepoint hits `NOT NULL`
+- **No default (today):** a write that bypasses the chokepoint hits `NOT NULL`
   and fails loudly. That is the safe failure.
-- **With the default, and nothing binding the GUC:** identical behaviour — the
-  setting is unset, the default evaluates to NULL, `NOT NULL` still rejects.
-- **With the default, once anything binds `app.tenant_id`** (RLS is the obvious
-  candidate): the same bypassing write silently succeeds, stamped with whatever
-  tenant the pooled connection last had. A silent cross-tenant write.
+- **Default present, GUC unbound:** identical behaviour — evaluates to NULL,
+  `NOT NULL` still rejects.
+- **Default present, GUC bound** (an RLS rollout being the obvious candidate):
+  the same bypassing write silently succeeds, stamped with whatever tenant the
+  pooled connection last had set. A silent cross-tenant write.
 
-So the two mechanisms must never be half-live together, and materialising the
-default is a step toward exactly that.
+**What landed.**
 
-**The decision needed.** One of:
-1. **Drop the defaults from `schema.prisma`.** The chokepoint stays the only
-   writer, `NOT NULL` stays the backstop, and migrate stops proposing them.
-   Lowest risk; loses a type-level affordance that was never actually live.
-2. **Materialise them in a dedicated migration**, with a written commitment that
-   RLS/GUC binding will not be introduced without dropping them in the same
-   change.
+- The defaults are gone from the schema. **The removal produced an empty
+  migration** — confirmed twice with `prisma migrate dev --create-only` — because
+  schema and database now agree. Migrate no longer proposes anything.
+- `tenantId` became required in every generated create input. Resolved with a
+  typed wrapper, `tenantStamped()` (lib/prisma.ts), applied at the ~116
+  scoped-client create sites: it asserts to the type system what the chokepoint
+  guarantees at runtime, so the chokepoint remains the **sole** stamper and no
+  application code hand-writes a tenant id.
+- The ~14 unscoped-client sites (seeds, maintenance scripts) now pass a real
+  `tenantId`, which the compiler requires of them. That is a net safety gain:
+  those writes previously depended on a default that did not exist.
+- Schema header rewritten to record this decision, so the default is not
+  reintroduced by a future "helpful" edit.
 
-**Excluded so far by:** `prisma/migrations/20260814062230_phase3_entitlements`
-(header records the removal). Any future migration must do the same until this
-is decided.
+**If RLS is introduced later:** bind the GUC per transaction and treat it as the
+authoritative tenant source, or leave the chokepoint as the only writer. Do not
+restore a column default — the two mechanisms must never be half-live.
 
 ---
 

@@ -14,7 +14,7 @@
 
 import { ActionItemStatus, ActionItemPriority, ActionItemType, KPIProgressStatus, KPIWorkflowStatus, KPIType, KPICategory, FinancialWorkflowStatus, SponsorshipType } from "@prisma/client";
 
-import { prisma } from "../lib/prisma";
+import { prisma, tenantStamped } from "../lib/prisma";
 import { ODISHA_TENANT_ID } from "../lib/tenant-config";
 import { enterTenantScope } from "../lib/tenant-context";
 
@@ -69,11 +69,11 @@ async function main() {
   const fy2526 = await prisma.financialYear.upsert({
     where: { tenantId_label: { tenantId: SEED_TENANT_ID, label: "2025-26" } },
     update: {},
-    create: {
+    create: tenantStamped({
       label: "2025-26",
       startDate: new Date("2025-04-01"),
       endDate: new Date("2026-03-31"),
-    },
+    }),
   });
   console.log(`✅  Financial year: ${fy2526.label}`);
 
@@ -81,7 +81,7 @@ async function main() {
   const vertical = await prisma.vertical.upsert({
     where: { tenantId_code: { tenantId: SEED_TENANT_ID, code: "HUDD" } },
     update: {},
-    create: { code: "HUDD", name: "Housing & Urban Development Department" },
+    create: tenantStamped({ code: "HUDD", name: "Housing & Urban Development Department" }),
   });
   console.log(`✅  Vertical: ${vertical.name}`);
 
@@ -117,12 +117,12 @@ async function main() {
     const scheme = await prisma.scheme.upsert({
       where: { tenantId_code: { tenantId: SEED_TENANT_ID, code: s.code } },
       update: {},
-      create: {
+      create: tenantStamped({
         code: s.code,
         name: s.name,
         verticalName: vertical.name,
         sponsorshipType: s.sponsorshipType,
-      },
+      }),
     });
     schemes[s.code] = scheme.id;
   }
@@ -135,10 +135,10 @@ async function main() {
   const allocation = await prisma.financeYearBudgetAllocation.upsert({
     where: { financialYearId: fy2526.id },
     update: { totalBudgetCr: 9907.56 },
-    create: {
+    create: tenantStamped({
       financialYearId: fy2526.id,
       totalBudgetCr: 9907.56,
-    },
+    }),
   });
 
   const categoryLines = [
@@ -155,7 +155,7 @@ async function main() {
     await prisma.financeYearBudgetCategoryLine.upsert({
       where: { allocationId_category: { allocationId: allocation.id, category: line.category } },
       update: { budgetEstimateCr: line.budgetEstimateCr, soExpenditureCr: line.soExpenditureCr, ifmsExpenditureCr: line.ifmsExpenditureCr },
-      create: { allocationId: allocation.id, ...line },
+      create: tenantStamped({ allocationId: allocation.id, ...line }),
     });
   }
   console.log(`✅  Finance year budget allocation (61st data, as of 20-Mar-2026)`);
@@ -199,11 +199,11 @@ async function main() {
       });
     } else {
       await prisma.financeBudget.create({
-        data: {
+        data: tenantStamped({
           schemeId: schemes[sb.code],
           financialYearId: fy2526.id,
           budgetEstimateCr: sb.budgetCr,
-        },
+        }),
       });
     }
   }
@@ -246,14 +246,14 @@ async function main() {
     if (!schemes[snap.code]) continue;
     // Use createMany-style; no unique constraint on scheme+date, so just create
     await prisma.financeExpenditureSnapshot.create({
-      data: {
+      data: tenantStamped({
         schemeId: schemes[snap.code],
         financialYearId: fy2526.id,
         asOfDate: new Date(snap.asOfDate),
         soExpenditureCr: snap.soExp,
         ifmsExpenditureCr: snap.ifmsExp,
         workflowStatus: FinancialWorkflowStatus.submitted,
-      },
+      }),
     }).catch(() => {/* ignore duplicates on rerun */});
   }
   console.log(`✅  Expenditure snapshots inserted (52nd & 61st)`);
@@ -262,11 +262,11 @@ async function main() {
   //  52nd DASHBOARD MEETING  (December 2025)
   // ──────────────────────────────────────────────────────────────────────────
   const meeting52 = await prisma.dashboardMeeting.create({
-    data: {
+    data: tenantStamped({
       meetingDate: new Date("2025-12-26"),
       title: "52nd HUDD Dashboard Meeting",
       notes: "Monthly review meeting. Financial data as on 26-Dec-2025.",
-    },
+    }),
   });
   console.log(`✅  Created 52nd Dashboard meeting (${meeting52.id})`);
 
@@ -274,11 +274,11 @@ async function main() {
   //  61st DASHBOARD MEETING  (March 2026)
   // ──────────────────────────────────────────────────────────────────────────
   const meeting61 = await prisma.dashboardMeeting.create({
-    data: {
+    data: tenantStamped({
       meetingDate: new Date("2026-03-20"),
       title: "61st HUDD Dashboard Meeting",
       notes: "Monthly review meeting. Financial data as on 20-Mar-2026.",
-    },
+    }),
   });
   console.log(`✅  Created 61st Dashboard meeting (${meeting61.id})`);
 
@@ -293,7 +293,7 @@ async function main() {
     "New Big Ticket Items",
   ];
   for (const topic of topics61) {
-    await prisma.meetingTopic.create({ data: { meetingId: meeting61.id, topic } });
+    await prisma.meetingTopic.create({ data: tenantStamped({ meetingId: meeting61.id, topic }) });
   }
   console.log(`✅  Meeting topics for 61st (${topics61.length})`);
 
@@ -735,7 +735,7 @@ async function main() {
   let aiCount = 0;
   for (const ai of actionItems61) {
     const item = await prisma.actionItem.create({
-      data: {
+      data: tenantStamped({
         meetingId: meeting61.id,
         verticalId: vertical.id,
         itemType: ActionItemType.meeting_decision,
@@ -744,16 +744,16 @@ async function main() {
         priority: ActionItemPriority.Medium,
         dueDate: new Date(ai.dueDate),
         status: ai.status,
-      },
+      }),
     });
     if (ai.update) {
       await prisma.actionItemUpdate.create({
-        data: {
+        data: tenantStamped({
           actionItemId: item.id,
           timestamp: new Date("2026-03-20"),
           status: ai.status,
           note: ai.update,
-        },
+        }),
       });
     }
     aiCount++;
@@ -897,26 +897,26 @@ async function main() {
     if (!schemes[row.schemeCode]) continue;
 
     const kpiDef = await prisma.kpiDefinition.create({
-      data: {
+      data: tenantStamped({
         schemeId: schemes[row.schemeCode],
         category: "STATE" as KPICategory,
         description: row.description,
         kpiType: row.kpiType,
         numeratorUnit: row.numeratorUnit,
         denominatorUnit: row.denominatorUnit,
-      },
+      }),
     });
 
     const target = await prisma.kpiTarget.create({
-      data: {
+      data: tenantStamped({
         kpiDefinitionId: kpiDef.id,
         financialYearId: fy2526.id,
         denominatorValue: row.denominatorValue ?? undefined,
-      },
+      }),
     });
 
     await prisma.kpiMeasurement.create({
-      data: {
+      data: tenantStamped({
         kpiTargetId: target.id,
         measuredAt: new Date("2026-03-20"),
         numeratorValue: (row.kpiType !== "BINARY" && row.numeratorValue != null) ? row.numeratorValue : undefined,
@@ -924,7 +924,7 @@ async function main() {
         progressStatus: row.progressStatus as KPIProgressStatus,
         workflowStatus: KPIWorkflowStatus.submitted,
         remarks: row.remarks ?? null,
-      },
+      }),
     });
 
     kpiCount++;

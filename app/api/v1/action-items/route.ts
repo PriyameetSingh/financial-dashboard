@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ActionItemPriority, ActionItemStatus, ActionItemType, Prisma } from "@prisma/client";
 import { parseListLimit } from "@/lib/list-query-limit";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { resolveDataScope } from "@/lib/data-scope";
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const actionItem = await tx.actionItem.create({
-        data: {
+        data: tenantStamped({
           meetingId: body.meetingId ?? null,
           schemeId: scheme?.id ?? null,
           subschemeId,
@@ -285,22 +285,22 @@ export async function POST(request: NextRequest) {
           status: ActionItemStatus.OPEN,
           createdById: actor?.id ?? null,
           performers: {
-            create: performerIds.map((userId, i) => ({ userId, sortOrder: i })),
+            create: tenantStamped(performerIds.map((userId, i) => ({ userId, sortOrder: i }))),
           },
           reviewerUsers: {
-            create: reviewerIds.map((userId, i) => ({ userId, sortOrder: i })),
+            create: tenantStamped(reviewerIds.map((userId, i) => ({ userId, sortOrder: i }))),
           },
-        },
+        }),
       });
 
       await tx.actionItemUpdate.create({
-        data: {
+        data: tenantStamped({
           actionItemId: actionItem.id,
           timestamp: new Date(),
           status: ActionItemStatus.OPEN,
           note: "Action item created",
           createdById: actor?.id ?? null,
-        },
+        }),
       });
 
       await logAudit(

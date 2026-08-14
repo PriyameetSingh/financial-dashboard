@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ roleCo
         await tx.rolePermission.upsert({
           where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
           update: {},
-          create: { roleId: role.id, permissionId: perm.id },
+          create: tenantStamped({ roleId: role.id, permissionId: perm.id }),
         });
       } else {
         await tx.rolePermission
