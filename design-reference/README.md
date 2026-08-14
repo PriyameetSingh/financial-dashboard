@@ -16,27 +16,46 @@ descriptions of them.
 | `tokens.css` | The token layer this repo must adopt |
 | `support.js` | The `.dc.html` preview harness (not shipped) |
 
-## Status: token values recovered, component CSS still missing
+## Status: export complete
 
-A second upload delivered four more assets, **rotated by one relative to their
-filenames** (the file named `_ds_manifest.json` held the bundle, the one named
-`readme.md` held the manifest, the one named `styles.css` held the readme). They
-are filed here under names matching their actual contents. A fourth file — an
-ESLint config — was not among the four requested; it is kept as `ds-eslint.json`
-and usefully bans raw hex/px literals in consuming code.
+The design system lives under
+`_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/`:
 
-**What that recovered:** `_ds_manifest.json` carries all **51 tokens with their
-exact values**, and `readme.md` is the system's normative written guide
-(component inventory, interaction states, do/don't). Both are authoritative.
+| File | What it is |
+|---|---|
+| `styles.css` | **The stylesheet** — 294 lines: the `:root` token sheet, the base type layer and the full component layer |
+| `readme.md` | The system's normative written guide (component inventory, interaction states, do/don't) |
+| `_ds_manifest.json` | Machine-readable record of all 51 tokens with exact values, plus the card/template inventory |
+| `_ds_bundle.js` | The component bundle — empty for this system (no scripted components) |
+| `ds-eslint.json` | The system's ESLint config; usefully bans raw hex/px literals in consuming code |
 
-**What is still absent:** `_ds/nocturne-…/styles.css` itself — the stylesheet
-that *implements* the ~30 component classes (`.btn`, `.tag`, `.input`, `.field`,
-`.seg`, `.radio`, `.card`, `.table`, `.dialog`, `.elev-*`, `.nav`, `.lighten`).
-The manifest confirms it should exist: `"globalCssPaths": ["styles.css"]`, and
-every token records `"definedIn": "styles.css"`. No uploaded file contains a
-single component rule.
+The uploads arrived in two rounds and the second round's four files were
+**rotated by one relative to their filenames** (the file named
+`_ds_manifest.json` held the bundle, the one named `readme.md` held the
+manifest, the one named `styles.css` held the readme). They are filed here under
+names matching their actual contents. `styles.css` itself arrived in a third
+round.
 
-### The tokens, as recovered (authoritative)
+### Verification performed against `styles.css`
+
+- **Custom properties**: 57 referenced across the five `.dc.html` mockups and
+  `tokens.css`; 71 defined in `styles.css`. Every referenced property resolves —
+  no dangling `var()`.
+- **Component classes**: 32 used, 35 defined. The three apparent gaps are not
+  gaps — `.dot` is defined as `.radio .dot` / `.radio input:checked + .dot`, and
+  `.noct-nav` / `.noct-tab` are mockup-local classes declared in the mockups'
+  own `<style>` blocks.
+- **Normative rules present as written CSS**, not just as prose:
+  `:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px }`
+  (line 121, plus three component-specific focus rules),
+  `.btn:disabled { opacity: 0.45; cursor: not-allowed }` (line 148), and
+  `.btn-primary` as `color` + `border-color` only — an outline, never a fill
+  (line 149).
+
+Nothing in this reference needs to be reconstructed from prose. Build the
+surfaces from these files.
+
+### The tokens (authoritative — mirrored from `_ds_manifest.json`)
 
 | Token | Value | Kind |
 |---|---|---|
@@ -95,7 +114,7 @@ single component rule.
 Density is 0.70× (hence the 2.8/5.6/8.4… spacing scale) and the base radius is
 8px, both already baked into the values above.
 
-### Normative rules from `readme.md` that the component layer must satisfy
+### Normative rules the consuming token layer and primitives must preserve
 
 - Primary buttons are an **accent outline on transparent, never a fill**.
 - Keyboard focus is `outline: 2px solid var(--color-accent); outline-offset: 2px`
