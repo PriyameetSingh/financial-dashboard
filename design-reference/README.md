@@ -16,32 +16,94 @@ descriptions of them.
 | `tokens.css` | The token layer this repo must adopt |
 | `support.js` | The `.dc.html` preview harness (not shipped) |
 
-## ⚠️ Incomplete — the Nocturne base stylesheet is missing
+## Status: token values recovered, component CSS still missing
 
-Every mockup opens with:
+A second upload delivered four more assets, **rotated by one relative to their
+filenames** (the file named `_ds_manifest.json` held the bundle, the one named
+`readme.md` held the manifest, the one named `styles.css` held the readme). They
+are filed here under names matching their actual contents. A fourth file — an
+ESLint config — was not among the four requested; it is kept as `ds-eslint.json`
+and usefully bans raw hex/px literals in consuming code.
 
-```html
-<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
-<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
-```
+**What that recovered:** `_ds_manifest.json` carries all **51 tokens with their
+exact values**, and `readme.md` is the system's normative written guide
+(component inventory, interaction states, do/don't). Both are authoritative.
 
-Neither file was exported, and `support.js` does not inline them. `tokens.css`
-says so itself in its first line: *"layered over the Nocturne base stylesheet."*
+**What is still absent:** `_ds/nocturne-…/styles.css` itself — the stylesheet
+that *implements* the ~30 component classes (`.btn`, `.tag`, `.input`, `.field`,
+`.seg`, `.radio`, `.card`, `.table`, `.dialog`, `.elev-*`, `.nav`, `.lighten`).
+The manifest confirms it should exist: `"globalCssPaths": ["styles.css"]`, and
+every token records `"definedIn": "styles.css"`. No uploaded file contains a
+single component rule.
 
-**What is therefore undefined here:**
+### The tokens, as recovered (authoritative)
 
-- **The default (dark) colour roles.** `tokens.css` defines `--color-bg`,
-  `--color-surface`, `--color-text`, `--color-accent`, `--color-divider` and
-  `--shadow-*` **only inside `[data-theme="light"]`**. Dark is the default
-  theme — those values live in the missing stylesheet.
-- **20 custom properties**: `--color-accent-{200,300,400,600,700,900}`,
-  `--color-neutral-{400,500,600,700,900}`, `--color-section`, `--font-body`,
-  `--font-heading`, `--radius-{sm,md,lg}`, `--space-{2,3,6,8}`.
-- **~30 component classes** the markup renders through: `btn` (+`primary`,
-  `secondary`, `ghost`, `icon`, `block`), `tag` (+`accent`, `neutral`,
-  `outline`), `input`, `field`, `seg`, `seg-opt`, `radio`, `dot`, `table`,
-  `card` (+`body`, `title`, `kicker`, `meta`), `dialog` (+`title`, `body`,
-  `actions`), `elev-{sm,md,lg}`, `text-muted`.
+| Token | Value | Kind |
+|---|---|---|
+| `--color-bg` | `#161826` | color |
+| `--color-surface` | `#232532` | color |
+| `--color-text` | `#e9e9ed` | font |
+| `--color-accent` | `#9184d9` | color |
+| `--color-accent-2` | `#a7a1db` | color |
+| `--color-divider` | `color-mix(in srgb, #e9e9ed 16%, transparent)` | color |
+| `--color-neutral-100` | `#f3f5fe` | color |
+| `--color-neutral-200` | `#e4e7f5` | color |
+| `--color-neutral-300` | `#cfd3e5` | color |
+| `--color-neutral-400` | `#b2b6ca` | color |
+| `--color-neutral-500` | `#9397ab` | color |
+| `--color-neutral-600` | `#75798c` | color |
+| `--color-neutral-700` | `#595d6c` | color |
+| `--color-neutral-800` | `#3f424d` | color |
+| `--color-neutral-900` | `#292b31` | color |
+| `--color-accent-100` | `#f5f4ff` | color |
+| `--color-accent-200` | `#e7e5fe` | color |
+| `--color-accent-300` | `#d2cefd` | color |
+| `--color-accent-400` | `#b5abfc` | color |
+| `--color-accent-500` | `#968ae0` | color |
+| `--color-accent-600` | `#796cbf` | color |
+| `--color-accent-700` | `#5d5294` | color |
+| `--color-accent-800` | `#423a6a` | color |
+| `--color-accent-900` | `#2b2741` | color |
+| `--color-accent-2-100` | `#f5f4ff` | color |
+| `--color-accent-2-200` | `#e7e5fe` | color |
+| `--color-accent-2-300` | `#d2cefd` | color |
+| `--color-accent-2-400` | `#b5afe8` | color |
+| `--color-accent-2-500` | `#9690c9` | color |
+| `--color-accent-2-600` | `#7972a9` | color |
+| `--color-accent-2-700` | `#5c5783` | color |
+| `--color-accent-2-800` | `#423e5d` | color |
+| `--color-accent-2-900` | `#2b293a` | color |
+| `--color-section` | `#262a60` | color |
+| `--color-section-glow` | `#353b80` | color |
+| `--color-section-ghost` | `#4c5397` | color |
+| `--font-heading` | `"Inter", system-ui, sans-serif` | font |
+| `--font-heading-weight` | `500` | font |
+| `--font-body` | `"Inter", system-ui, sans-serif` | font |
+| `--space-1` | `2.8px` | spacing |
+| `--space-2` | `5.6px` | spacing |
+| `--space-3` | `8.4px` | spacing |
+| `--space-4` | `11.2px` | spacing |
+| `--space-6` | `16.8px` | spacing |
+| `--space-8` | `22.4px` | spacing |
+| `--radius-sm` | `4px` | radius |
+| `--radius-md` | `8px` | radius |
+| `--radius-lg` | `14px` | radius |
+| `--shadow-sm` | `0 0 0 1px #3f424d` | shadow |
+| `--shadow-md` | `0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55)` | shadow |
+| `--shadow-lg` | `0 0 0 1px #9397ab, 0 16px 40px rgba(0,0,0,0.65)` | shadow |
 
-Until `_ds/nocturne-…/styles.css` is exported, building S0 would mean inventing
-the base scale — which is reconstructing the design, not implementing it.
+Density is 0.70× (hence the 2.8/5.6/8.4… spacing scale) and the base radius is
+8px, both already baked into the values above.
+
+### Normative rules from `readme.md` that the component layer must satisfy
+
+- Primary buttons are an **accent outline on transparent, never a fill**.
+- Keyboard focus is `outline: 2px solid var(--color-accent); outline-offset: 2px`
+  on `:focus-visible` — never the browser default.
+- Disabled controls drop to **45% opacity**.
+- Hover/pressed tints come from the accent ramp (`-600` on light, `-400` on dark).
+- Rules fade to transparent at their ends over 48px; short accent marks stay solid.
+- Headings never exceed weight 500 — hierarchy is size and space.
+- No pure black or white; no accent floods except `--color-section` grounds.
+- Accent-to-ground is tuned to ~3:1 — fine for chrome and large text, **not for
+  body copy**, which must use `--color-accent-300` on the dark ground.
