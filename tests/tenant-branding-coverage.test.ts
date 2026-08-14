@@ -54,13 +54,13 @@ const DEMO_SLUG = "demo";
 
 /** Demo branding — every key differs from Odisha's, so an unprimed surface shows. */
 const DEMO = {
-  productName: "Rivertown Insights",
-  logoPublicPath: "/rivertown-logo.svg",
+  productName: "Suryapur Insights",
+  logoPublicPath: "/suryapur-logo.svg",
   locale: "en-US",
   timezone: "America/Chicago",
   currencySymbol: "$",
   currencyUnit: "M",
-  pdfHeaderLine: "Rivertown Development Authority",
+  pdfHeaderLine: "Suryapur Development Authority",
   labels: {
     soExpenditure: "Sanctioned",
     ifmsExpenditure: "Disbursed",
@@ -73,7 +73,7 @@ const DEMO = {
 async function seedDemoTenant() {
   await removeDemoTenant();
   await prismaUnscoped.tenant.create({
-    data: { id: DEMO_TENANT_ID, slug: DEMO_SLUG, name: "Rivertown Development Authority", status: "active" },
+    data: { id: DEMO_TENANT_ID, slug: DEMO_SLUG, name: "Suryapur Development Authority", status: "active" },
   });
   for (const [key, value] of Object.entries(DEMO)) {
     await prismaUnscoped.tenantConfigEntry.create({ data: { tenantId: DEMO_TENANT_ID, key, value } });
@@ -87,7 +87,7 @@ async function seedDemoTenant() {
     },
   });
   const role = await prismaUnscoped.role.create({
-    data: { tenantId: DEMO_TENANT_ID, code: "RDA_ACS", name: "Director" },
+    data: { tenantId: DEMO_TENANT_ID, code: "SDA_ACS", name: "Director" },
   });
   const perm = await prismaUnscoped.permission.findFirst({ where: { code: "VIEW_ALL_DATA" } });
   if (perm) {
@@ -98,9 +98,9 @@ async function seedDemoTenant() {
   const director = await prismaUnscoped.user.create({
     data: {
       tenantId: DEMO_TENANT_ID,
-      code: "RDA_DIR",
+      code: "SDA_DIR",
       name: "Avery Lindqvist",
-      email: "avery.lindqvist@rivertown.example",
+      email: "avery.lindqvist@suryapur.example",
       isActive: true,
       userRoles: { create: [{ tenantId: DEMO_TENANT_ID, roleId: role.id }] },
     },
@@ -108,7 +108,7 @@ async function seedDemoTenant() {
   const scheme = await prismaUnscoped.scheme.create({
     data: {
       tenantId: DEMO_TENANT_ID,
-      code: "RDA_RIVERWALK",
+      code: "SDA_RIVERWALK",
       name: "Riverwalk Embankment Renewal",
       verticalName: "Water & Sanitation",
       sponsorshipType: "STATE",
@@ -119,7 +119,7 @@ async function seedDemoTenant() {
     data: {
       tenantId: DEMO_TENANT_ID,
       meetingDate: new Date("2026-06-18"),
-      title: "Rivertown Quarterly Programme Review",
+      title: "Suryapur Quarterly Programme Review",
       financialYearId: fy.id,
       createdById: director.id,
     },
@@ -284,7 +284,7 @@ describe("Entry point 3 — client provider surfaces", () => {
 });
 
 describe("Entry point 4 — PDF export path", () => {
-  it("the Demo meeting PDF carries Rivertown's header and $ currency, never Odisha's", async () => {
+  it("the Demo meeting PDF carries Suryapur's header and $ currency, never Odisha's", async () => {
     const director = await prismaUnscoped.user.findUniqueOrThrow({
       where: { id: demo.director.id },
       include: {
@@ -336,7 +336,7 @@ describe("Odisha PDF remains byte-identical (same code path, Odisha config)", ()
       expect(text).toContain("(In Cr.)");
       expect(text).toContain("S.O. Exp");
       expect(text).toContain("IFMS Exp");
-      expect(text).not.toContain("Rivertown");
+      expect(text).not.toContain("Suryapur");
       expect(text).not.toContain("(In M.)");
     } finally {
       await cleanupScopeSeed(ODISHA_TENANT_ID).catch(() => {});

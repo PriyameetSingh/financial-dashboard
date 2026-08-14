@@ -272,7 +272,7 @@ try {
     check("report PDF renders for the demo tenant", pdf.status === 200, `got ${pdf.status}`);
     check(
       "PDF filename carries the TENANT's prefix, not the Odisha default",
-      (pdf.disposition ?? "").includes("RIVERTOWN-meeting-report") &&
+      (pdf.disposition ?? "").includes("SURYAPUR-meeting-report") &&
         !(pdf.disposition ?? "").includes("HUDD-"),
       `Content-Disposition: ${pdf.disposition}`,
     );
@@ -281,14 +281,14 @@ try {
     const pdfText = extractPdfText(Buffer.from(pdf.body, "latin1"));
     check(
       "PDF body carries the tenant's header line, not Odisha's",
-      pdfText.includes("Rivertown Development Authority") && !pdfText.includes("Government of Odisha"),
+      pdfText.includes("Suryapur Development Authority") && !pdfText.includes("Government of Odisha"),
       `extracted ${pdfText.length} chars; Odisha text present: ${pdfText.includes("Government of Odisha")}`,
     );
 
     const xlsx = await get(`/api/v1/reports/meeting/${meetingId}/xlsx`, { host: DEMO_HOST, cookie: demo });
     check(
       "XLSX filename carries the tenant's prefix",
-      xlsx.status === 200 && (xlsx.disposition ?? "").includes("RIVERTOWN-meeting-report"),
+      xlsx.status === 200 && (xlsx.disposition ?? "").includes("SURYAPUR-meeting-report"),
       `${xlsx.status} / Content-Disposition: ${xlsx.disposition}`,
     );
   }

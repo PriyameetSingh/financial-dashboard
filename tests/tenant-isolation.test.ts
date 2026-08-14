@@ -56,12 +56,12 @@ beforeAll(async () => {
   const tenantB = await prismaUnscoped.tenant.upsert({
     where: { slug: TENANT_B_SLUG },
     update: { status: "active" },
-    create: { slug: TENANT_B_SLUG, name: "Rivertown Test Authority", status: "active" },
+    create: { slug: TENANT_B_SLUG, name: "Suryapur Test Authority", status: "active" },
   });
   await prismaUnscoped.tenantConfigEntry.upsert({
     where: { tenantId_key: { tenantId: tenantB.id, key: "productName" } },
-    update: { value: "Rivertown Dashboard" },
-    create: { tenantId: tenantB.id, key: "productName", value: "Rivertown Dashboard" },
+    update: { value: "Suryapur Dashboard" },
+    create: { tenantId: tenantB.id, key: "productName", value: "Suryapur Dashboard" },
   });
 
   A = await buildFixture(ODISHA_TENANT_ID);

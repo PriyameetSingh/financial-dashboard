@@ -91,9 +91,9 @@ describe("Storage classes", () => {
   it("a stored secret row is ignored by the config overlay", () => {
     const config = overlayConfigEntries(ODISHA_DEFAULTS, [
       { key: "llmApiKey", value: "sk-super-secret" },
-      { key: "productName", value: "Rivertown Insights" },
+      { key: "productName", value: "Suryapur Insights" },
     ]);
-    expect(config.productName).toBe("Rivertown Insights");
+    expect(config.productName).toBe("Suryapur Insights");
     expect(JSON.stringify(config)).not.toContain("sk-super-secret");
   });
 });
@@ -107,9 +107,9 @@ describe("Per-key value validation (backlog P4)", () => {
       ["timezone", "America/Chicago"],
       ["currencySymbol", "₹"],
       ["currencyUnit", "Cr"],
-      ["productName", "Rivertown Insights"],
-      ["pdfHeaderLine", "Rivertown Development Authority"],
-      ["logoPublicPath", "/rivertown-logo.svg"],
+      ["productName", "Suryapur Insights"],
+      ["pdfHeaderLine", "Suryapur Development Authority"],
+      ["logoPublicPath", "/suryapur-logo.svg"],
       ["logoPublicPath", "https://cdn.example.test/logo.svg"],
       ["labels", { soExpenditure: "Sanctioned", ifmsExpenditure: "Disbursed" }],
     ];

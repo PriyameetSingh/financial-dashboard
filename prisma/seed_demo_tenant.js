@@ -1,7 +1,7 @@
 /**
  * Demo tenant seed — Phase 2 Gate E.
  *
- * Creates the "Rivertown Development Authority" tenant: a WHOLLY FICTIONAL
+ * Creates the "Suryapur Development Authority" tenant: a WHOLLY FICTIONAL
  * organisation with its own branding, locale, currency and governance data.
  * No real government, place, scheme, officer or department names appear here.
  *
@@ -25,7 +25,7 @@ const prisma = new PrismaClient(
 
 const DEMO_TENANT_ID = "00000000-0000-4000-8000-0000000000d0";
 const DEMO_SLUG = "demo";
-const PREFIX = "RDA_";
+const PREFIX = "SDA_";
 
 /**
  * Demo branding — deliberately different from Odisha's on EVERY presentation
@@ -33,14 +33,14 @@ const PREFIX = "RDA_";
  * shows up immediately as Odisha defaults instead of these values.
  */
 const DEMO_CONFIG = {
-  productName: "Rivertown Insights",
-  logoPublicPath: "/rivertown-logo.svg",
+  productName: "Suryapur Insights",
+  logoPublicPath: "/suryapur-logo.svg",
   locale: "en-US",
   timezone: "America/Chicago",
   currencySymbol: "$",
   currencyUnit: "M",
-  pdfHeaderLine: "Rivertown Development Authority",
-  reportFilenamePrefix: "RIVERTOWN",
+  pdfHeaderLine: "Suryapur Development Authority",
+  reportFilenamePrefix: "SURYAPUR",
   labels: {
     soExpenditure: "Sanctioned",
     ifmsExpenditure: "Disbursed",
@@ -86,9 +86,9 @@ const SCHEMES = [
 ];
 
 const OFFICERS = [
-  { code: `${PREFIX}DIR`, name: "Avery Lindqvist", email: "avery.lindqvist@rivertown.example", role: "ACS" },
-  { code: `${PREFIX}NODAL1`, name: "Priya Okonkwo", email: "priya.okonkwo@rivertown.example", role: "NODAL_OFFICER" },
-  { code: `${PREFIX}NODAL2`, name: "Tomas Beaumont", email: "tomas.beaumont@rivertown.example", role: "NODAL_OFFICER" },
+  { code: `${PREFIX}DIR`, name: "Avery Lindqvist", email: "avery.lindqvist@suryapur.example", role: "ACS" },
+  { code: `${PREFIX}NODAL1`, name: "Priya Okonkwo", email: "priya.okonkwo@suryapur.example", role: "NODAL_OFFICER" },
+  { code: `${PREFIX}NODAL2`, name: "Tomas Beaumont", email: "tomas.beaumont@suryapur.example", role: "NODAL_OFFICER" },
 ];
 
 /**
@@ -160,7 +160,7 @@ async function reset() {
  * Phase 3 entitlements for the demo tenant.
  *
  * Unlike Odisha (all-on, backfilled by migration so the golden stays
- * byte-identical), Rivertown is deliberately provisioned as a PARTIAL tenant:
+ * byte-identical), Suryapur is deliberately provisioned as a PARTIAL tenant:
  * Notifications is OFF. That gives the enforcement a real, browsable
  * disabled-module case — `/admin/notifications` and `/api/v1/notifications/**`
  * return 404 by direct URL, and the nav item is absent — and it is what the
@@ -208,7 +208,7 @@ async function main() {
   await reset(); // idempotent re-seed
 
   const tenant = await prisma.tenant.create({
-    data: { id: DEMO_TENANT_ID, slug: DEMO_SLUG, name: "Rivertown Development Authority", status: "active" },
+    data: { id: DEMO_TENANT_ID, slug: DEMO_SLUG, name: "Suryapur Development Authority", status: "active" },
   });
   console.log(`✅  Tenant: ${tenant.name} (slug: ${tenant.slug})`);
 
@@ -270,7 +270,7 @@ async function main() {
     data: {
       tenantId: DEMO_TENANT_ID,
       meetingDate: new Date("2026-06-18"),
-      title: "Rivertown Quarterly Programme Review",
+      title: "Suryapur Quarterly Programme Review",
       financialYearId: fy.id,
       createdById: users[`${PREFIX}DIR`].id,
     },
