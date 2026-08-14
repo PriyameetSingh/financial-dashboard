@@ -65,8 +65,43 @@ async function resolveTenantContext(): Promise<TenantContext> {
   const tenant = await findActiveTenant(requestHeaders.get(TENANT_HEADER));
   if (!tenant) throw new TenantResolutionError();
   const config = await loadTenantConfigFromDb(tenant.id);
-  primeTenantHolder(config, tenant.id);
+  primeRequestScope(config, tenant.id);
   return { tenantId: tenant.id, slug: tenant.slug, config };
+}
+
+/**
+ * Establish the resolved tenant for the REST OF THIS REQUEST, on both rails.
+ *
+ * Why two rails, and why this is not belt-and-braces for its own sake:
+ *
+ *   React `cache()` only memoises inside a render scope. RSC rendering has one;
+ *   a Route Handler does NOT. There, every `requestHolder()` call returns a
+ *   fresh object, so `primeTenantHolder()` wrote to a throwaway and the holder
+ *   read microseconds later was still empty. The visible symptom was that every
+ *   authenticated `/api/v1/**` request died with `TenantScopeError` — the
+ *   chokepoint refusing, correctly, to run an unscoped query. It stayed hidden
+ *   because the whole test suite establishes scope through `withTenantContext`
+ *   (AsyncLocalStorage), which never touches this path, and because
+ *   `tenantConfig()` degrades silently to ODISHA_DEFAULTS when unprimed.
+ *
+ *   - `primeTenantHolder` covers RSC: React's cache cell is shared across the
+ *     component tree of one render, including sibling branches that never enter
+ *     this function's async context.
+ *   - `enterWith` covers Route Handlers: AsyncLocalStorage is scoped to the
+ *     request's async context, which Next establishes per request (it is the
+ *     same rail `headers()` itself rides on).
+ *
+ * `enterWith` is only reached when no store exists yet, so an explicit
+ * `withTenantContext()` scope (tests, scripts, cron) always wins and is never
+ * clobbered. It is called only AFTER `await headers()` has succeeded, which
+ * proves we are inside a request context — the case the Phase 2 note warns
+ * about (`enterWith` persisting into a shared/global frame) cannot arise here.
+ */
+function primeRequestScope(config: TenantConfig, tenantId: string): void {
+  primeTenantHolder(config, tenantId);
+  if (!explicitScope.getStore()) {
+    explicitScope.enterWith({ cfg: config, tenantId });
+  }
 }
 
 /** One tenant resolution per request (React cache — request-scoped by contract). */

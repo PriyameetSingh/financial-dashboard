@@ -35,6 +35,7 @@
  */
 import { Prisma, PrismaClient } from "@prisma/client";
 import { activeHolder } from "@/lib/tenant-config/request-store";
+import { TENANT_ID_HEADER } from "@/lib/tenant-config/resolution";
 import {
   GLOBAL_MODELS,
   PARENT_FKS,
@@ -98,6 +99,47 @@ function currentTenantId(model: string, operation: string): string {
   const tenantId = activeHolder().tenantId;
   if (!tenantId) throw new TenantScopeError(model, operation);
   return tenantId;
+}
+
+/**
+ * The resolved tenant id stamped on the request by proxy.ts.
+ *
+ * `next/headers` is imported dynamically and defensively: this module is also
+ * loaded by seeds, scripts and vitest, where the import may not resolve or
+ * `headers()` throws for want of a request. Every one of those failures means
+ * "no request-scoped tenant", which falls through to TenantScopeError — the
+ * same fail-closed direction as before.
+ */
+async function tenantIdFromRequest(): Promise<string | null> {
+  try {
+    const { headers } = await import("next/headers");
+    return (await headers()).get(TENANT_ID_HEADER);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Tenant id for a chokepoint operation, over BOTH request-scoped rails.
+ *
+ * The holder (React `cache()`) is authoritative when primed — RSC renders and
+ * explicit `withTenantContext()` scopes both populate it. But React `cache()`
+ * only memoises inside a render scope, and a Route Handler is not one: there,
+ * every read of the holder returns a fresh empty object, so a value primed by
+ * the resolver microseconds earlier is already gone. Before this fallback,
+ * every authenticated `/api/v1/**` request died with TenantScopeError.
+ *
+ * The header is set by the proxy from a DB-validated active tenant and stripped
+ * from inbound requests, so it is not client-supplied. It is read only when the
+ * holder is empty, so an explicit scope always wins and nothing about the
+ * existing behaviour changes where the holder already worked.
+ */
+async function resolveTenantId(model: string, operation: string): Promise<string> {
+  const fromHolder = activeHolder().tenantId;
+  if (fromHolder) return fromHolder;
+  const fromRequest = await tenantIdFromRequest();
+  if (fromRequest) return fromRequest;
+  throw new TenantScopeError(model, operation);
 }
 
 /**
@@ -289,7 +331,7 @@ function buildScopedClient() {
           );
         }
 
-        const tenantId = currentTenantId(model, operation);
+        const tenantId = await resolveTenantId(model, operation);
         const a = (args ?? {}) as AnyArgs;
 
         if (READ_MANY_OPS.has(operation)) {

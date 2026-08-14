@@ -8,7 +8,7 @@ import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
-import { TENANT_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
+import { TENANT_HEADER, TENANT_ID_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
 import {
   isTenantSessionRejected,
   tenantSessionErrorCode,
@@ -25,6 +25,9 @@ import {
 function tenantForwardHeaders(request: NextRequest): Headers {
   const forwarded = new Headers(request.headers);
   forwarded.delete(TENANT_HEADER);
+  // Anti-spoof: the resolved-id header is stripped unconditionally here and set
+  // only by `stampResolvedTenant` below, after a DB-validated resolution.
+  forwarded.delete(TENANT_ID_HEADER);
   const slug = tenantSlugFromHost(request.headers.get("host"));
   if (slug) forwarded.set(TENANT_HEADER, slug);
   return forwarded;
@@ -189,8 +192,20 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const forwardHeaders = tenantForwardHeaders(request);
   const forward = () => NextResponse.next({ request: { headers: forwardHeaders } });
-  // Resolved lazily: only the session-block checks below need the tenant row.
-  const tenantId = async () => (await findActiveTenant(forwardHeaders.get(TENANT_HEADER)))?.id ?? null;
+  // Resolved lazily (one DB lookup per request at most), memoised so the
+  // session-block check, the entitlement gate and the id stamp share it.
+  let resolved: string | null | undefined;
+  const tenantId = async () => {
+    if (resolved === undefined) {
+      resolved = (await findActiveTenant(forwardHeaders.get(TENANT_HEADER)))?.id ?? null;
+      // Stamp the resolved id for the server runtime. This is what lets the
+      // Prisma chokepoint find a tenant inside Route Handlers, where the
+      // React-cache-backed holder cannot hold one. Set on `forwardHeaders`, so
+      // every later `forward()` carries it.
+      if (resolved) forwardHeaders.set(TENANT_ID_HEADER, resolved);
+    }
+    return resolved;
+  };
 
   if (
     isStaticAssetPath(pathname) ||

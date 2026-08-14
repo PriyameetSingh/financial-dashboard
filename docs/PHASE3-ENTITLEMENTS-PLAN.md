@@ -512,20 +512,57 @@ reason worth recording.
    `Module` global), updated in `tests/tenant-isolation.test.ts` and in the
    integrity script's own copy of `GLOBAL_MODELS`.
 
-### Open item carried out of Gate B
+### Gate B's open 500 — root-caused and fixed (spike)
 
-A local end-to-end probe with a hand-minted session cookie confirmed the DENY
-path (the demo tenant 404s on `/api/v1/notifications` and `/admin/notifications`;
-Odisha does not). On ALLOWED paths that same probe produced a 500 —
-`TenantScopeError: No tenant scope resolved for User.findFirst`, meaning
-`getTenantContextSafe()` failed to prime inside the route handler while the
-proxy's own resolution had succeeded. This is **not attributed**: the same probe
-against the pre-Phase-3 commit was rejected at the proxy (401) and so never
-exercised the handler, leaving no baseline to compare against. On an allowed
-route the gate returns `null` and falls through to the identical `forward()`, so
-it does not alter the forwarded request — but that is an argument, not a
-measurement. Worth reproducing with a real Keycloak login before the onboarding
-phase.
+The 500 carried out of Gate B was **real, pre-existing, and unrelated to the
+gate**: a Phase 2 request-scoping defect that made *every* authenticated
+`/api/v1/**` request fail.
+
+**Reproduced** with a properly-minted session over real HTTP (the new dev-only
+`/api/dev/session` route), then instrumented. The measurement:
+
+```
+header: "odisha"          ← the proxy forwards the slug correctly
+findActiveTenant: "odisha" ← resolution works
+getTenantContext: "odisha" ← the resolver runs and calls primeTenantHolder
+holderAfterResolve: null   ← …and the priming is GONE, microseconds later
+holderIdentityStable: false ← activeHolder() returns a NEW object every call
+```
+
+**Root cause.** `lib/tenant-config/request-store.ts` backs the per-request holder
+with React `cache()`. `cache()` only memoises inside a **render** scope; a Route
+Handler is not one. There, every `requestHolder()` call constructs a fresh
+object, so the resolver primed a throwaway and the chokepoint — correctly —
+refused to run an unscoped query. `AsyncLocalStorage` was proven still sound in
+the same probe (`withTenantContext` worked), which is exactly why the entire
+test suite missed this: it establishes scope through ALS and never touches the
+React-cache path. `tenantConfig()` hid it further by degrading silently to
+`ODISHA_DEFAULTS` instead of failing.
+
+`enterWith` inside the resolver was tried and does **not** work: the store set in
+an awaited callee does not survive back into the caller's frame.
+
+**Fix.** The proxy now stamps the resolved tenant id on a stripped internal
+header (`TENANT_ID_HEADER`), and the chokepoint reads it when the holder is
+empty. `headers()` is the one request-scoped channel Next guarantees in both RSC
+and Route Handlers. The holder still wins when primed, so explicit
+`withTenantContext()` scopes are untouched, and the header is DB-validated by the
+proxy and stripped from inbound requests, so it is no more trusted than
+`TENANT_HEADER` already was.
+
+**Guarded by** the new `check-http-smoke` golden leg (leg 9), including 24
+interleaved cross-tenant requests asserting no bleed.
+
+### Still open: `tenantConfig()` inside Route Handlers
+
+The same root cause has a second, milder consequence that this spike did **not**
+fix: because the holder still cannot hold a value in a Route Handler,
+`tenantConfig()` there returns `ODISHA_DEFAULTS` rather than the resolved
+tenant's branding. The failure direction is the safe one Phase 2 designed for —
+default branding, never another tenant's — but it is wrong for any non-Odisha
+tenant in an API-generated artifact (report filename prefixes, PDF/XLSX header
+lines). It needs a decision on mechanism rather than a quick patch, and it is
+invisible today because Odisha's defaults are correct for Odisha.
 
 ## 8. What this gate does *not* do
 

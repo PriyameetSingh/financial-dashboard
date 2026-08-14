@@ -17,6 +17,12 @@
  *                             core module; no unmapped route, no stale rule (Phase 3)
  *   7. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
  *   8. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
+ *   9. check-http-smoke     — boots the app and drives it over a real socket:
+ *                             the proxy runs, the request-scoped tenant reaches
+ *                             the chokepoint, the entitlement gate denies, and
+ *                             concurrent cross-tenant traffic does not bleed.
+ *                             The only leg that sees the middleware/priming
+ *                             layer, where two shipped defects have now lived.
  *
  * Requires a reachable Postgres at DATABASE_URL/DIRECT_URL (see .env.test.local
  * for the vitest leg; .env.local for the build leg) with migrations applied.
@@ -38,6 +44,9 @@ const legs = [
     cmd: "node",
     args: ["--env-file=.env.test.local", "scripts/check-tenant-integrity.mjs"],
   },
+  // Last: boots the app and drives it over a real socket. Slowest leg, and the
+  // only one that can see the middleware/priming layer between socket and query.
+  { name: "check-http-smoke", cmd: "node", args: ["scripts/check-http-smoke.mjs"] },
 ];
 
 let failed = null;

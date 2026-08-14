@@ -162,6 +162,48 @@ extract to `lib/tenant-config/`. Tracked separately from the discharge rule abov
 
 ---
 
+## H. Human decisions — not agent-dischargeable
+
+Items that need an explicit human call. An agent must **document and exclude**
+them, never resolve them unilaterally.
+
+### H1. `tenantId` column-default drift (`current_setting('app.tenant_id')`)
+
+**State.** `prisma/schema.prisma` declares
+`@default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))` on the
+`tenantId` of 46 tenant-scoped models. **No migration has ever created that
+default, and no database has it.** So `prisma migrate dev` proposes 46
+`ALTER TABLE … ALTER COLUMN "tenantId" SET DEFAULT …` statements on *every* new
+migration, and will keep doing so until someone decides.
+
+**Why an agent must not just apply it.** Per `docs/PHASE2-TENANCY-PLAN.md` §2,
+the standing hazard runs in the direction of *adding* the default:
+
+- **Today (no default):** a write that bypasses the chokepoint hits `NOT NULL`
+  and fails loudly. That is the safe failure.
+- **With the default, and nothing binding the GUC:** identical behaviour — the
+  setting is unset, the default evaluates to NULL, `NOT NULL` still rejects.
+- **With the default, once anything binds `app.tenant_id`** (RLS is the obvious
+  candidate): the same bypassing write silently succeeds, stamped with whatever
+  tenant the pooled connection last had. A silent cross-tenant write.
+
+So the two mechanisms must never be half-live together, and materialising the
+default is a step toward exactly that.
+
+**The decision needed.** One of:
+1. **Drop the defaults from `schema.prisma`.** The chokepoint stays the only
+   writer, `NOT NULL` stays the backstop, and migrate stops proposing them.
+   Lowest risk; loses a type-level affordance that was never actually live.
+2. **Materialise them in a dedicated migration**, with a written commitment that
+   RLS/GUC binding will not be introduced without dropping them in the same
+   change.
+
+**Excluded so far by:** `prisma/migrations/20260814062230_phase3_entitlements`
+(header records the removal). Any future migration must do the same until this
+is decided.
+
+---
+
 ## Re-surfacing
 
 `scripts/check-tenancy-lint.mjs` re-emits sections A–D every CI run (currently

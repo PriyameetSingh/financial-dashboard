@@ -37,6 +37,10 @@ export const ROUTE_MODULE_RULES: readonly RouteRule[] = [
   { path: "/auth", module: "MOD-AUTH" },
   { path: "/api/auth", module: "MOD-AUTH" },
   { path: "/api/health", module: "MOD-AUTH" },
+  // DEV-ONLY session minting (404s unless NODE_ENV!=production AND
+  // DEV_AUTH_ENABLED=1). Core because it IS the login path for the smoke leg;
+  // gating a login route behind entitlements would be incoherent.
+  { path: "/api/dev", module: "MOD-AUTH" },
 
   { path: "/profile", module: "MOD-PROF" },
   { path: "/api/v1/profile", module: "MOD-PROF" },
