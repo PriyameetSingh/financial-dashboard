@@ -217,6 +217,25 @@ export async function proxy(request: NextRequest) {
   return forward();
 }
 
+/**
+ * Matcher coverage is load-bearing: from Phase 3 the entitlement gate lives in
+ * this file and nowhere else, so a route the matcher misses silently escapes it.
+ *
+ * The `"/"` entry is NOT redundant with the catch-all below. Next compiles the
+ * catch-all to
+ *
+ *   ^\/hudd-dashboard(?:\/(_next\/data\/[^/]+))?(?:\/((?!_next\/static|…).*))…$
+ *
+ * in which the trailing `(?:\/(…))` group is REQUIRED — path-to-regexp treats
+ * `(…)` as a mandatory parameter, so it cannot match the empty remainder. The
+ * app root (`/hudd-dashboard`, i.e. `app/page.tsx`) therefore never matched, and
+ * `trailingSlash: false` 308-redirects `/hudd-dashboard/` back to it, so there
+ * was no spelling of the root that entered the proxy at all. Before this entry,
+ * the root also escaped the Phase 2 tenant-session binding.
+ *
+ * scripts/check-proxy-matcher.mjs pins this: it reads the REAL compiled regexes
+ * out of the build manifest and asserts every route file's pathname matches one.
+ */
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/", "/((?!_next/static|_next/image|favicon.ico).*)"],
 };

@@ -11,8 +11,10 @@
  *   2. vitest run            — DB-backed core-surface + data-scope assertions
  *   3. verify-behaviors      — pure-logic derivation checks
  *   4. check-api-guards      — every /api/v1 route handler is guarded
- *   5. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
- *   6. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
+ *   5. check-proxy-matcher  — every route reaches proxy.ts, where the tenant-session
+ *                             binding (Phase 2) and entitlement gate (Phase 3) live
+ *   6. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
+ *   7. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
  *
  * Requires a reachable Postgres at DATABASE_URL/DIRECT_URL (see .env.test.local
  * for the vitest leg; .env.local for the build leg) with migrations applied.
@@ -26,6 +28,7 @@ const legs = [
   { name: "vitest run", cmd: "npx", args: ["vitest", "run"] },
   { name: "verify-behaviors", cmd: "node", args: ["scripts/verify-behaviors.mjs"] },
   { name: "check-api-guards", cmd: "node", args: ["scripts/check-api-guards.mjs"] },
+  { name: "check-proxy-matcher", cmd: "node", args: ["scripts/check-proxy-matcher.mjs"] },
   { name: "check-tenant-chokepoint", cmd: "node", args: ["scripts/check-tenant-chokepoint.mjs"] },
   {
     name: "check-tenant-integrity",
@@ -49,5 +52,5 @@ if (failed) {
   process.exit(1);
 }
 console.log(
-  "\n✓ GOLDEN GREEN — all six legs passed (build, vitest, verify-behaviors, check-api-guards, check-tenant-chokepoint, check-tenant-integrity)",
+  `\n✓ GOLDEN GREEN — all ${legs.length} legs passed (${legs.map((l) => l.name).join(", ")})`,
 );
