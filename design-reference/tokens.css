@@ -51,6 +51,57 @@
 [data-theme="light"] .text-muted,
 [data-theme="light"] figcaption { color: #575a68; }
 
+/* ── Contrast corrections — WCAG 2.1 AA, 1.4.3 ─────────────────────────────
+   Found by an automated axe-core audit of the built surfaces in a real
+   browser, and corrected HERE rather than only in the app, so that a future
+   re-export of this project does not silently undo them.
+
+   The shared cause: muted text is expressed as a percentage mix of the text
+   colour into the ground, and mixing toward a LIGHT ground loses contrast far
+   faster than mixing toward a dark one. Values tuned on the dark ground alone
+   therefore fail on the light peer. The `.text-muted` override above was
+   already an instance of this; these are the rest of them.
+
+   1. Quiet micro-text (kickers, footnotes, hints, captions, table headers) at
+      10-11px. A 62% mix measures 6.2:1 on the dark ground and 4.2:1 on the
+      light one. One token per theme rather than a percentage per class, so a
+      new quiet-text class cannot reintroduce the failure. */
+:root { --ax-muted: color-mix(in srgb, var(--color-text) 62%, transparent); }
+[data-theme="light"] { --ax-muted: #575a68; }
+
+/* 2. Accent-coloured text at paragraph size (field errors, inline emphasis).
+      The written guidance — "for paragraph-size text in the accent use a deep
+      ramp step (--color-accent-300 on this ground)" — is correct on the dark
+      ground and wrong on the light one, where -300 is the LIGHT end of the ramp
+      and measures 1.31:1. The deep step on a light ground is -800. Naming a
+      ramp step at the call site gets it right in exactly one theme, so the
+      token names the intent and resolves per theme.
+      Dark: 10.1:1 on a surface. Light: 9.7:1 on a surface. */
+:root { --ax-accent-text: var(--color-accent-300); }
+[data-theme="light"] { --ax-accent-text: #423a6a; }
+
+/* 3. Links inside a text block. The system relies on the browser's default
+      underline and only tunes `text-underline-offset`. Any consuming project
+      with a CSS reset that clears `text-decoration` — Tailwind's preflight sets
+      `a { text-decoration: inherit }`, and it is not unusual — leaves the accent
+      alone to carry the link, at 2.7:1 against the surrounding text. That is a
+      WCAG 1.4.1 failure (colour as the only distinguishing signal). Stating the
+      underline explicitly costs nothing and removes the dependency. */
+a { text-decoration: underline; }
+.nav a, .btn { text-decoration: none; }
+
+/* 4. `.card-body` / `.dialog-body` opacity. Expressed as `opacity`, which
+      composites the entire subtree rather than only the text: a muted label
+      nested in a card body measures 4.19:1 (its own mix, then multiplied by
+      0.8), and an accent outline button nested in one measures 3.54:1 — a
+      control that fails AA purely because of where it sits. Neither shows up
+      when the body holds nothing but a paragraph, which is what the system's
+      own examples hold. `color` reaches the text that inherits it and stops at
+      any descendant with a colour of its own, which is what the rule wants;
+      plain body text renders identically. */
+.card-body { opacity: 1; color: color-mix(in srgb, var(--color-text) 80%, transparent); }
+.dialog-body { opacity: 1; color: color-mix(in srgb, var(--color-text) 85%, transparent); }
+
 /* Density switch — spacing moves, type does not */
 [data-density="compact"] {
   --space-1: 2px; --space-2: 4px; --space-3: 6px;

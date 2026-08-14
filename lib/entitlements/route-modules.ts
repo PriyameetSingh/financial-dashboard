@@ -42,6 +42,16 @@ export const ROUTE_MODULE_RULES: readonly RouteRule[] = [
   // gating a login route behind entitlements would be incoherent.
   { path: "/api/dev", module: "MOD-AUTH" },
 
+  // The public platform surface (S1 landing, and the onboarding entry point).
+  // Core, and it has to be: these are the two pages reachable without a session
+  // at all, so there is no tenant whose entitlements could be consulted, and a
+  // visitor denied here would have no way to fix it. `proxy.ts` keeps them in
+  // `PUBLIC_CONTENT_PATHS` and a test pins that every path in that set resolves
+  // to a core module — the pairing is what stops one of these being reclassified
+  // as gated and silently 404ing for the entire public internet.
+  { path: "/platform", module: "MOD-AUTH" },
+  { path: "/onboarding", module: "MOD-AUTH" },
+
   { path: "/profile", module: "MOD-PROF" },
   { path: "/api/v1/profile", module: "MOD-PROF" },
 

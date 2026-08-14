@@ -5,6 +5,7 @@ import { isModuleRejected, moduleVerdict } from "@/lib/entitlements/guard";
 import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
 import { resolveRouteModule } from "@/lib/entitlements/route-modules";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
+import { PUBLIC_AUTH_PATHS, PUBLIC_CONTENT_PATHS } from "@/lib/entitlements/public-paths";
 import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
@@ -61,7 +62,23 @@ function isV1ApiPath(pathname: string): boolean {
   return false;
 }
 
-const PUBLIC_PATHS = new Set(["/login"]);
+/**
+ * The public surfaces, defined in `lib/entitlements/public-paths.ts` so they can
+ * be asserted against the module map without importing this file (and with it
+ * `next-auth/jwt` and the edge runtime) into a test.
+ *
+ *   PUBLIC_PATHS          auth entry. No session needed; a visitor who has one
+ *                         is redirected onward.
+ *   PUBLIC_CONTENT_PATHS  the platform's own pages. No session needed, and a
+ *                         visitor who has one still sees the page.
+ *
+ * Two things keep the content surface safe to serve to an anonymous stranger
+ * rather than one: `tests/platform-landing.test.ts` pins every content path to a
+ * CORE module, and the Prisma chokepoint refuses any tenant-scoped query without
+ * a resolved tenant — and none is resolved on that branch. A page added there
+ * that tried to read tenant rows would fail loudly, not leak quietly.
+ */
+const PUBLIC_PATHS = PUBLIC_AUTH_PATHS;
 
 // Static files under `public/` must not require a session; otherwise the proxy returns 307 to /login and assets break.
 // In markup, prefix paths with `withNextBasePath()` so requests hit `{basePath}/...`, not the host root.
@@ -244,6 +261,19 @@ export async function proxy(request: NextRequest) {
     // `/api/v1`, so a future gated endpoint outside v1 cannot escape. Core paths
     // short-circuit inside without touching the database.
     const denial = await entitlementDenial(pathname, apiTenantId, true);
+    if (denial) return denial;
+    return forward();
+  }
+
+  if (PUBLIC_CONTENT_PATHS.has(pathname)) {
+    // No session is read and no tenant is resolved — there is nothing here that
+    // belongs to one. The entitlement gate still runs, so this branch does not
+    // become a second way into the app that skips the single enforcement point.
+    // `null` is passed for the tenant deliberately: a core module short-circuits
+    // before the gate touches the database, and anything else fails closed,
+    // which is the correct outcome for a path that should never have been
+    // mapped to a gated module in the first place.
+    const denial = await entitlementDenial(pathname, null, false);
     if (denial) return denial;
     return forward();
   }

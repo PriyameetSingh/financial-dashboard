@@ -7,6 +7,12 @@ import type { ReactNode } from "react";
  * automatically a document section, and emitting an `h3` per card is how a page
  * ends up with a heading outline that reads as noise. Pass `titleAs` when the
  * card genuinely is a section.
+ *
+ * `actions` is a slot rather than something a caller drops into `children`,
+ * because `children` becomes `.card-body`, and `.card-body` is quieter than the
+ * rest of the card by design. A button placed inside it inherits that quietness
+ * — an accent outline button nested in a card body measured 3.54:1 against the
+ * surface, failing AA purely because of where it sat. The slot puts it outside.
  */
 export type CardElevation = "none" | "sm" | "md" | "lg";
 
@@ -22,6 +28,8 @@ export type CardProps = {
   title?: ReactNode;
   titleAs?: "div" | "h2" | "h3" | "h4";
   meta?: ReactNode;
+  /** Buttons and links. Rendered outside the quieter body. */
+  actions?: ReactNode;
   elevation?: CardElevation;
   className?: string;
   children?: ReactNode;
@@ -32,6 +40,7 @@ export default function Card({
   title,
   titleAs: TitleTag = "div",
   meta,
+  actions,
   elevation = "none",
   className,
   children,
@@ -43,6 +52,7 @@ export default function Card({
       {title ? <TitleTag className="card-title">{title}</TitleTag> : null}
       {children ? <div className="card-body">{children}</div> : null}
       {meta ? <div className="card-meta">{meta}</div> : null}
+      {actions ? <div className="card-actions">{actions}</div> : null}
     </div>
   );
 }

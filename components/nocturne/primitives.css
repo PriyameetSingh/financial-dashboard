@@ -68,6 +68,38 @@
   --ax-accent-text: #423a6a;
 }
 
+/* ── accessibility utilities ─────────────────────────────────────────────────
+   Two things every full-page surface needs and no design system ships, because
+   they are about the page rather than about any component. */
+
+/* Text present for assistive technology and not painted. Clip-based rather than
+   `display: none` or `visibility: hidden`, both of which remove it from the
+   accessibility tree as well as from the screen. */
+.noct .ax-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The skip link. Off-screen until it takes keyboard focus, then it lands in the
+   top-left corner as a normal button. A keyboard user arriving on a long page
+   should not have to tab through the whole header to reach the content. */
+.noct .ax-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.noct .ax-skip:focus-visible {
+  left: 8px;
+  top: 8px;
+  background: var(--color-surface);
+}
+
 /* ── layout helpers ─────────────────────────────────────────────────────── */
 
 .noct .ax-page {
@@ -500,4 +532,384 @@
    value that token resolves to at 50%. */
 .noct dialog::backdrop {
   background: rgba(41, 43, 49, 0.5);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Landing surface (S1)
+   ─────────────────────────────────────────────────────────────────────────────
+   Page-scale layout for the public landing. Kept in this file rather than in a
+   sheet of its own so that the containment guarantee stays a property of three
+   known files: one place to assert that nothing escapes `.noct`, instead of one
+   more place to forget.
+
+   `ax-lp-` marks these as landing-specific — they are page furniture, not
+   reusable primitives, and a later surface should not reach for them.
+
+   Every width here is fluid or `auto-fit`, so the page reflows to a phone
+   without a single fixed breakpoint doing the work. The one media query at the
+   end only tightens padding, which is the part that cannot be expressed as a
+   ratio.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* The scope root itself paints the ground. The host document's `<body>` still
+   belongs to the app's own globals, so a Nocturne surface that did not paint
+   would show the existing product's page colour behind it. */
+.noct .ax-lp-root {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow-x: hidden;
+}
+
+.noct .ax-lp-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: 28px;
+}
+
+.noct .ax-lp-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+}
+
+.noct .ax-lp-bar {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding-block: 14px;
+}
+
+.noct .ax-lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  margin-right: auto;
+}
+
+.noct .ax-lp-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);
+}
+
+.noct .ax-lp-wordmark {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.noct .ax-lp-suffix {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-left: 9px;
+  border-left: 1px solid var(--color-divider);
+  color: var(--ax-muted);
+}
+
+/* Anchor navigation. Underlines are suppressed here for the same reason the
+   design system suppresses them on `.nav` — these are chrome, sitting alone in
+   a bar, not links inside a sentence, so nothing is signalled by colour that
+   position does not already signal. */
+.noct .ax-lp-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.noct .ax-lp-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.noct .ax-lp-nav a:hover,
+.noct .ax-lp-nav a:focus-visible {
+  color: var(--color-accent);
+}
+
+/* — hero — */
+.noct .ax-lp-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 56px;
+  align-items: center;
+  padding-block: 88px 64px;
+}
+
+.noct .ax-lp-title {
+  font-size: clamp(34px, 5vw, 60px);
+  margin: 18px 0 20px;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.noct .ax-lp-lede {
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 32rem;
+  text-wrap: pretty;
+}
+
+.noct .ax-lp-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.noct .ax-lp-actions .btn {
+  padding: 11px 18px;
+  font-size: 15px;
+}
+
+/* The hero illustration. A figure, with its caption, because that is what it
+   is — a picture of the product, not a reading of anyone's data. */
+.noct .ax-lp-figure {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.noct .ax-lp-figure-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 12px;
+  font-family: var(--font-heading);
+}
+
+.noct .ax-lp-figure-body {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-lp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 10px;
+}
+
+/* — the one saturated band on the page — */
+.noct .ax-lp-band {
+  background: var(--color-section);
+  /* The band carries its own ground, so it also carries its own foreground.
+     Reading `--color-text` here would put dark text on deep indigo in the light
+     theme; the band is the same colour in both. */
+  color: #e9e9ed;
+}
+
+.noct .ax-lp-band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 28px;
+  padding-block: 34px;
+}
+
+.noct .ax-lp-band-figure {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 30px;
+}
+
+.noct .ax-lp-band-label {
+  font-size: 13px;
+  /* Fixed, not a mix: the band's ground does not follow the theme, so a muted
+     value derived from `--color-text` would drift off it. 7.4:1 on the band. */
+  color: #c4c6d8;
+}
+
+/* — sections — */
+.noct .ax-lp-section {
+  padding-block: 80px 24px;
+}
+
+.noct .ax-lp-h2 {
+  font-size: clamp(26px, 3.4vw, 38px);
+  margin-bottom: 12px;
+}
+
+.noct .ax-lp-intro {
+  max-width: 36rem;
+  font-size: 15px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-lp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 14px;
+  margin-top: 34px;
+}
+
+/* — module tour — */
+.noct .ax-lp-tour-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.noct .ax-lp-tour-panel {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.noct .ax-lp-tour-points {
+  display: grid;
+  gap: 7px;
+  padding-left: 16px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--ax-muted);
+}
+
+/* — trust — hairline grid drawn with a 1px gap over a divider ground — */
+.noct .ax-lp-trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 1px;
+  background: var(--color-divider);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 30px;
+}
+
+.noct .ax-lp-trust > div {
+  background: var(--color-bg);
+  padding: 20px;
+}
+
+.noct .ax-lp-trust-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+/* — plans — */
+.noct .ax-lp-plan-featured {
+  box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-md);
+}
+
+.noct .ax-lp-plan-count {
+  font-size: 12px;
+  color: var(--ax-muted);
+}
+
+/* — closing call to action — */
+.noct .ax-lp-cta {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 40px 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 24px;
+  align-items: center;
+  margin-block: 80px;
+}
+
+/* — footer — */
+.noct .ax-lp-footer {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 1px;
+}
+
+.noct .ax-lp-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 28px;
+  padding-block: 40px 24px;
+}
+
+.noct .ax-lp-footer-col {
+  display: grid;
+  gap: 7px;
+  align-content: start;
+  font-size: 13px;
+}
+
+.noct .ax-lp-footer-head {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+}
+
+.noct .ax-lp-footer-col a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.noct .ax-lp-footer-col a:hover,
+.noct .ax-lp-footer-col a:focus-visible {
+  color: var(--color-accent);
+}
+
+.noct .ax-lp-fineprint {
+  font-size: 11px;
+  color: var(--ax-muted);
+  padding-bottom: 40px;
+  margin: 0;
+}
+
+/* Padding is the one thing a fluid grid cannot solve: 28px inline and 88px of
+   hero on a 360px screen is most of the viewport spent on nothing. */
+@media (max-width: 640px) {
+  .noct .ax-lp-shell { padding-inline: 18px; }
+  .noct .ax-lp-hero { padding-block: 48px 40px; gap: 36px; }
+  .noct .ax-lp-section { padding-block: 52px 16px; }
+  .noct .ax-lp-cta { padding: 26px 20px; margin-block: 52px; }
+  .noct .ax-lp-actions .btn { width: 100%; }
+}
+
+/* The card's action row. Sits outside `.card-body`, so a button in a card keeps
+   its own contrast rather than inheriting the body's quieter text colour. */
+.noct .card-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
 }

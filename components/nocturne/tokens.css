@@ -146,6 +146,34 @@
    light, for exactly this reason.
    ════════════════════════════════════════════════════════════════════════════ */
 
+/* `.card-body` and `.dialog-body` — expressed as `opacity` in the design system,
+   re-expressed as a colour here.
+
+   `opacity` composites the whole subtree, so anything nested inside a card body
+   is dimmed too: a muted 12px label inside one measured 4.19:1 (its own 62% mix,
+   then multiplied by the body's 0.8), and an accent outline button inside one
+   measured 3.54:1 — a button that fails AA purely because of where it sits.
+   Neither is visible when the body holds nothing but a paragraph, which is what
+   the design system's own examples hold.
+
+   `color` reaches exactly the text that inherits it and stops at any descendant
+   with a colour of its own, which is what the rule actually wants. The rendered
+   value for plain body text is identical to the opacity version (8.5:1 dark,
+   7.7:1 light); what changes is that a nested control keeps its own contrast.
+
+   Structural corollary, in `Card.tsx`: buttons belong in the `actions` slot,
+   outside the body, not inside it. This rule keeps the failure from being
+   silent; the slot keeps it from arising. */
+.noct .card-body {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.noct .dialog-body {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
 /* `.card-meta` — 11px. Dark: 50% mix measures 4.49:1, four hundredths short.
    Raised to 62%, which measures 6.2:1. */
 .noct .card-meta {

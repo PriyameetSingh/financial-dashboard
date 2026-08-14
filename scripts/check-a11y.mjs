@@ -19,11 +19,19 @@
  * into the live page. Chromium is the one preinstalled in this environment; the
  * driver is `playwright-core`, which ships no browser of its own.
  *
- * WHAT IS COVERED. The component gallery, which renders every primitive in
- * every state. Four passes — the two themes crossed with the two densities —
- * because a contrast value that passes on the dark ground can fail on the light
- * one (three corrections in `tokens.css` came from exactly that), and because
- * density changes spacing, which changes what overlaps.
+ * WHAT IS COVERED. Every net-new surface, listed in `SURFACES` below. Each one
+ * is audited in its own right rather than assumed to inherit the gallery's pass:
+ * the primitives being accessible does not make a page built from them
+ * accessible, because heading order, landmarks, link purpose, skip links and
+ * reflow are properties of the page, not of its parts. A surface added to this
+ * phase without an entry here is a surface nothing checks.
+ *
+ * Each surface declares its own views. Themes are always crossed, because a
+ * contrast value that passes on the dark ground can fail on the light one —
+ * three corrections in `tokens.css` came from exactly that. Beyond that, a
+ * surface asks for what it needs: the gallery crosses densities, the public
+ * landing is also loaded at a phone viewport, since reflow (1.4.10) is a real
+ * requirement for a page whose readers are on their phones.
  *
  * WHAT IS NOT COVERED, and cannot be by any automated tool: axe finds roughly a
  * third of WCAG issues. It cannot judge whether alt text is accurate, whether a
@@ -48,8 +56,7 @@ const require = createRequire(import.meta.url);
 const PORT = Number(process.env.A11Y_PORT ?? 8798);
 const HOST = "odisha.airawat.test";
 const BASE_PATH = "/hudd-dashboard";
-const GALLERY = "/design-system";
-const WATCHDOG_MS = Number(process.env.A11Y_WATCHDOG_MS ?? 300_000);
+const WATCHDOG_MS = Number(process.env.A11Y_WATCHDOG_MS ?? 600_000);
 
 /** The browser this environment preinstalls. `playwright-core` ships none. */
 const CHROMIUM = process.env.A11Y_CHROMIUM ?? "/opt/pw-browsers/chromium";
@@ -61,12 +68,62 @@ const CHROMIUM = process.env.A11Y_CHROMIUM ?? "/opt/pw-browsers/chromium";
  */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
-/** The gallery renders every primitive, so these four URLs cover the set. */
-const VIEWS = [
-  { name: "dark · comfortable", query: "?theme=dark&density=comfortable" },
-  { name: "dark · compact", query: "?theme=dark&density=compact" },
-  { name: "light · comfortable", query: "?theme=light&density=comfortable" },
-  { name: "light · compact", query: "?theme=light&density=compact" },
+const DESKTOP = { width: 1280, height: 900 };
+/** iPhone SE — the narrowest screen this product has to work on. */
+const PHONE = { width: 375, height: 780 };
+
+/**
+ * Every surface this phase adds, with the views each one is audited in and a
+ * selector that proves the page actually rendered.
+ *
+ * `readySelector` and `minMatches` are the non-vacuity guard. Without them a
+ * page that failed to render — an error boundary, an empty shell, a redirect to
+ * sign-in — has nothing for axe to find fault with, and the leg reports a clean
+ * pass over nothing at all. That is not hypothetical: it happened twice while
+ * this leg was being written, and the guard is why it was noticed.
+ */
+const SURFACES = [
+  {
+    name: "component gallery",
+    path: "/design-system",
+    // A dev/internal surface behind a session.
+    authenticated: true,
+    readySelector: ".noct .ax-panel",
+    minMatches: 6,
+    views: [
+      { name: "dark · comfortable", query: "?theme=dark&density=comfortable", viewport: DESKTOP },
+      { name: "dark · compact", query: "?theme=dark&density=compact", viewport: DESKTOP },
+      { name: "light · comfortable", query: "?theme=light&density=comfortable", viewport: DESKTOP },
+      { name: "light · compact", query: "?theme=light&density=compact", viewport: DESKTOP },
+    ],
+  },
+  {
+    name: "platform landing (S1)",
+    path: "/platform",
+    // Public. Audited WITHOUT a session on purpose — that is how a visitor
+    // arrives, and auditing it signed-in would silently test a different page
+    // if the proxy ever started redirecting it.
+    authenticated: false,
+    readySelector: ".noct .ax-lp-root section",
+    minMatches: 5,
+    views: [
+      { name: "dark · desktop", query: "?theme=dark", viewport: DESKTOP },
+      { name: "light · desktop", query: "?theme=light", viewport: DESKTOP },
+      { name: "dark · phone", query: "?theme=dark", viewport: PHONE },
+      { name: "light · phone", query: "?theme=light", viewport: PHONE },
+    ],
+  },
+  {
+    name: "onboarding entry (S2 placeholder)",
+    path: "/onboarding",
+    authenticated: false,
+    readySelector: ".noct .ax-lp-root main",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
 ];
 
 const failures = [];
@@ -216,67 +273,86 @@ async function main() {
     executablePath: CHROMIUM,
     args: [`--host-resolver-rules=MAP ${HOST} 127.0.0.1`],
   });
+
+  // Two contexts, not one. A public surface must be audited by a visitor with no
+  // session — that is who reads it — and sharing one cookie jar would quietly
+  // audit a signed-in variant of a page that is supposed to work signed-out.
+  const signedIn = await browser.newContext();
+  await signedIn.addCookies([
+    { name: cookie.name, value: cookie.value, domain: HOST, path: "/", httpOnly: true, sameSite: "Lax" },
+  ]);
+  const anonymous = await browser.newContext();
+
   try {
-    const context = await browser.newContext({
-      // The gallery is a desktop surface, but the viewport is narrow enough
-      // that reflow (WCAG 1.4.10) is exercised rather than assumed.
-      viewport: { width: 1280, height: 900 },
-    });
-    await context.addCookies([
-      { name: cookie.name, value: cookie.value, domain: HOST, path: "/", httpOnly: true, sameSite: "Lax" },
-    ]);
+    for (const surface of SURFACES) {
+      console.log(`  · ${surface.name}`);
+      const context = surface.authenticated ? signedIn : anonymous;
 
-    for (const view of VIEWS) {
-      const page = await context.newPage();
-      const url = `http://${HOST}:${PORT}${BASE_PATH}${GALLERY}${view.query}`;
-      // `load` rather than `networkidle`: the dev server holds a hot-reload
-      // socket open for the life of the page, so "idle" is not a state it
-      // reliably reaches. The specimen wait below is the real readiness signal.
-      const response = await page.goto(url, { waitUntil: "load", timeout: 120_000 });
+      for (const view of surface.views) {
+        const label = `${surface.name} — ${view.name}`;
+        const page = await context.newPage();
+        await page.setViewportSize(view.viewport);
 
-      if (!response || response.status() !== 200) {
-        failures.push(`${view.name}: gallery returned ${response ? response.status() : "no response"}`);
-        console.log(`  ✗ ${view.name} — HTTP ${response ? response.status() : "none"}`);
-        await page.close();
-        continue;
-      }
+        const url = `http://${HOST}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
+        // `load` rather than `networkidle`: the dev server holds a hot-reload
+        // socket open for the life of the page, so "idle" is not a state it
+        // reliably reaches. The readiness selector below is the real signal.
+        const response = await page.goto(url, { waitUntil: "load", timeout: 120_000 });
 
-      // A guard against the whole leg passing vacuously: if the page rendered
-      // an error boundary or an empty shell, axe would find nothing wrong with
-      // it and report a clean run.
-      // The gallery body is a client component, so the specimens arrive on
-      // hydration rather than in the server HTML.
-      await page.locator(".noct .ax-panel").first().waitFor({ timeout: 60_000 }).catch(() => {});
-      const specimens = await page.locator(".noct .ax-panel").count();
-      if (specimens < 6) {
-        const landed = page.url();
-        failures.push(
-          `${view.name}: only ${specimens} specimen panels rendered — the gallery did not load (landed on ${landed})`,
+        if (!response || response.status() !== 200) {
+          failures.push(`${label}: returned ${response ? response.status() : "no response"}`);
+          console.log(`    ✗ ${view.name} — HTTP ${response ? response.status() : "none"}`);
+          await page.close();
+          continue;
+        }
+
+        // Non-vacuity: a page that did not render has no violations either.
+        await page
+          .locator(surface.readySelector)
+          .first()
+          .waitFor({ timeout: 60_000 })
+          .catch(() => {});
+        const found = await page.locator(surface.readySelector).count();
+        if (found < surface.minMatches) {
+          failures.push(
+            `${label}: only ${found} of ${surface.minMatches} expected elements ` +
+              `("${surface.readySelector}") — the page did not render (landed on ${page.url()})`,
+          );
+          console.log(`    ✗ ${view.name} — ${found}/${surface.minMatches} expected elements`);
+          await page.close();
+          continue;
+        }
+
+        // A public page audited signed-out must still be the public page. If the
+        // proxy ever started bouncing it to sign-in, the readiness selector might
+        // still match something and the audit would pass on the wrong document.
+        if (!surface.authenticated && new URL(page.url()).pathname !== `${BASE_PATH}${surface.path}`) {
+          failures.push(`${label}: redirected to ${page.url()} — public surfaces must render signed-out`);
+          console.log(`    ✗ ${view.name} — redirected to ${page.url()}`);
+          await page.close();
+          continue;
+        }
+
+        await page.addScriptTag({ content: axeSource });
+        const result = await page.evaluate(
+          async (tags) => await window.axe.run(document, { runOnly: { type: "tag", values: tags } }),
+          TAGS,
         );
-        console.log(`  ✗ ${view.name} — ${specimens} specimen panels (expected ≥ 6), landed on ${landed}`);
+
+        if (result.violations.length === 0) {
+          console.log(
+            `    ✓ ${view.name} — ${result.passes.length} rule checks passed, ` +
+              `${found} elements at ${view.viewport.width}px, 0 violations`,
+          );
+        } else {
+          const total = result.violations.reduce((sum, v) => sum + v.nodes.length, 0);
+          console.log(`    ✗ ${view.name} — ${result.violations.length} violations across ${total} elements`);
+          for (const violation of result.violations) console.log(describe(violation));
+          failures.push(`${label}: ${result.violations.map((v) => v.id).join(", ")}`);
+        }
+
         await page.close();
-        continue;
       }
-
-      await page.addScriptTag({ content: axeSource });
-      const result = await page.evaluate(
-        async (tags) => await window.axe.run(document, { runOnly: { type: "tag", values: tags } }),
-        TAGS,
-      );
-
-      if (result.violations.length === 0) {
-        console.log(
-          `  ✓ ${view.name} — ${result.passes.length} rule checks passed, ` +
-            `${specimens} specimen panels, 0 violations`,
-        );
-      } else {
-        const total = result.violations.reduce((sum, v) => sum + v.nodes.length, 0);
-        console.log(`  ✗ ${view.name} — ${result.violations.length} violations across ${total} elements`);
-        for (const violation of result.violations) console.log(describe(violation));
-        failures.push(`${view.name}: ${result.violations.map((v) => v.id).join(", ")}`);
-      }
-
-      await page.close();
     }
   } finally {
     await browser.close();
@@ -291,8 +367,9 @@ main()
       console.error(`\ncheck-a11y: FAILED\n${failures.map((f) => `  - ${f}`).join("\n")}`);
       process.exit(1);
     }
+    const views = SURFACES.reduce((sum, surface) => sum + surface.views.length, 0);
     console.log(
-      `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — over ${VIEWS.length} theme/density views of the gallery)`,
+      `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — ${SURFACES.length} surfaces, ${views} views)`,
     );
     process.exit(0);
   })
