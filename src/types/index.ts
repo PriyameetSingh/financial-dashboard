@@ -76,6 +76,8 @@ export enum Permission {
   REORDER_SCHEMES = "REORDER_SCHEMES",
   MANAGE_NOTIFICATION_CONFIG = "MANAGE_NOTIFICATION_CONFIG",
   SEND_MANUAL_NOTIFICATIONS = "SEND_MANUAL_NOTIFICATIONS",
+  /** Read/write the tenant's own branding + locale configuration. */
+  MANAGE_TENANT_CONFIG = "MANAGE_TENANT_CONFIG",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";

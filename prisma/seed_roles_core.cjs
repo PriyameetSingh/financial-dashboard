@@ -34,6 +34,7 @@ const PERMISSIONS = [
   { code: "REORDER_SCHEMES", name: "Reorder schemes for all users" },
   { code: "MANAGE_NOTIFICATION_CONFIG", name: "Manage notification configs" },
   { code: "SEND_MANUAL_NOTIFICATIONS", name: "Send manual notifications" },
+  { code: "MANAGE_TENANT_CONFIG", name: "Manage tenant configuration" },
 ];
 
 /** Merged former AS / PS HUDD / similar desk roles — permission set aligned with Nodal Officer. */
@@ -95,6 +96,7 @@ const ROLES = [
       "REORDER_SCHEMES",
       "MANAGE_NOTIFICATION_CONFIG",
       "SEND_MANUAL_NOTIFICATIONS",
+      "MANAGE_TENANT_CONFIG",
     ],
   },
   {
