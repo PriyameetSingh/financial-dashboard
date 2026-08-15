@@ -90,6 +90,60 @@ export function isDensity(value: unknown): value is Density {
   return value === "comfortable" || value === "compact";
 }
 
+/**
+ * The platform's own value for every swappable role, per theme.
+ *
+ * One source, because there were four. The design-system configurator restated
+ * the palette to show "what you get if you change nothing", the onboarding
+ * branding step restated it as its swatch list, and the draft's default brand
+ * colour restated the accent — all as hex literals, in three files that had no
+ * reason to agree with `nocturne.css` and no way to notice when they stopped.
+ * `scripts/check-no-hardcoded-color.mjs` found all of it on its first run.
+ *
+ * These MUST stay equal to the values in `nocturne.css` and `tokens.css`;
+ * `tests/nocturne-theme.test.ts` asserts it. They are duplicated in TypeScript
+ * at all only because CSS custom properties cannot be read from Node, and the
+ * contrast maths has to run on the server and in tests.
+ */
+export const PLATFORM_ROLE_DEFAULTS: Record<ThemeName, Record<ThemeRole, string>> = {
+  dark: {
+    "--color-accent": "#9184d9",
+    "--color-bg": "#161826",
+    "--color-surface": "#232532",
+    "--color-text": "#e9e9ed",
+    "--dv-cat-1": "#9184d9",
+  },
+  light: {
+    "--color-accent": "#5d5294",
+    "--color-bg": "#eef0f8",
+    "--color-surface": "#f8f9fd",
+    "--color-text": "#232532",
+    "--dv-cat-1": "#9184d9",
+  },
+};
+
+/** The ground a role is read against, per theme. Used by the contrast checks. */
+export function themeGround(theme: ThemeName): string {
+  return PLATFORM_ROLE_DEFAULTS[theme]["--color-bg"];
+}
+
+/**
+ * Suggested brand colours, offered wherever a tenant picks one.
+ *
+ * The data-viz categorical palette, which is where they came from: six hues
+ * already checked against the dark ground and against each other for deutan and
+ * protan vision. Offering a tenant a palette that is known to work beats
+ * offering them a colour wheel and hoping.
+ */
+export const BRAND_SWATCHES: readonly { name: string; value: string }[] = [
+  { name: "Nocturne blurple", value: "#9184d9" },
+  { name: "River teal", value: "#5fa8a0" },
+  { name: "Laterite", value: "#c2925c" },
+  { name: "Slate blue", value: "#7f9cc9" },
+  { name: "Rosewood", value: "#c07f92" },
+  { name: "Graphite", value: "#9397ab" },
+];
+
 /* ── colour parsing and contrast ──────────────────────────────────────────── */
 
 export type Rgb = { r: number; g: number; b: number };

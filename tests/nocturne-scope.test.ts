@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest";
  */
 
 const CSS_DIR = join(process.cwd(), "components", "nocturne");
-const SCOPED_FILES = ["nocturne.css", "tokens.css", "primitives.css"];
+const SCOPED_FILES = ["nocturne.css", "tokens.css", "primitives.css", "legacy-bridge.css"];
 
 /**
  * A floor per file, well under the real count but far above zero. Its only job
@@ -33,6 +33,8 @@ const MIN_SELECTORS: Record<string, number> = {
   "nocturne.css": 40,
   "tokens.css": 8,
   "primitives.css": 25,
+  // One rule: the whole bridge is a single `.noct` block of declarations.
+  "legacy-bridge.css": 1,
 };
 
 /** Comments only. Kept separate because some checks need the strings intact. */

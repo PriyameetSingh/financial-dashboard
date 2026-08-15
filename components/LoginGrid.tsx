@@ -41,13 +41,14 @@ export default function LoginGrid() {
     <div className="flex max-w-md flex-col gap-4">
       <button
         onClick={handleSignIn}
-        className="w-full rounded-lg border border-[#0c2340] bg-[#0c2340] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152a45] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0c2340] disabled:cursor-not-allowed disabled:opacity-70"
+        // The design system's primary action: an accent outline, never a fill.
+        className="btn btn-primary btn-block px-6 py-3.5 text-sm"
         disabled={isSigningIn}
         type="button"
       >
         {isSigningIn ? "Redirecting to secure login…" : "Proceed to secure sign-on"}
       </button>
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed" style={{ color: "var(--ax-muted)" }}>
         You will be redirected to the approved identity provider. After successful authentication you will return to this
         dashboard.
       </p>

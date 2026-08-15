@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
+  PLATFORM_ROLE_DEFAULTS,
+  BRAND_SWATCHES,
   THEME_ROLES,
   checkRoleContrast,
   contrastRatio,
   formatContrastRatio,
   isDensity,
   isHexColor,
+  themeGround,
   isThemeName,
   parseHexColor,
   relativeLuminance,
@@ -207,5 +212,117 @@ describe("theme and density guards", () => {
     expect(isDensity("compact")).toBe(true);
     expect(isDensity("cosy")).toBe(false);
     expect(isDensity(null)).toBe(false);
+  });
+});
+
+describe("the platform's role defaults match the stylesheets", () => {
+  const dir = join(process.cwd(), "components", "nocturne");
+  const nocturne = readFileSync(join(dir, "nocturne.css"), "utf8");
+  const tokens = readFileSync(join(dir, "tokens.css"), "utf8");
+  const primitives = readFileSync(join(dir, "primitives.css"), "utf8");
+
+  /**
+   * The value `token` ends up with, across EVERY rule whose selector list
+   * contains `selector` exactly.
+   *
+   * Scanning all of them rather than the first matters: the token layer has
+   * several `.noct` rules and several `[data-theme="light"]` rules — the AI
+   * accent, the status pair, the theme itself — and a lookup that stopped at the
+   * first would report whichever happened to be written highest in the file.
+   * Later declarations win in CSS, so the last match is the answer.
+   *
+   * The selector must match a whole entry in the list, so `.noct` does not also
+   * match `.noct .btn`.
+   */
+  function declared(source: string, selector: string, token: string): string | null {
+    // Comments first. A rule's "prelude" is everything since the previous `}`,
+    // which for the first rule in a file is its entire header comment — and
+    // these files have long ones.
+    const css = source.replace(/\/\*[\s\S]*?\*\//g, "");
+    let found: string | null = null;
+    for (const [, prelude, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selectors = prelude.split(",").map((part) => part.trim());
+      if (!selectors.includes(selector)) continue;
+      const match = body.match(new RegExp(`${token}\\s*:\\s*([^;]+);`));
+      if (match) found = match[1].trim();
+    }
+    return found;
+  }
+
+  it("duplicates the dark values exactly", () => {
+    // The TypeScript copy exists only because Node cannot read a custom
+    // property. It has no way to notice when the CSS moves, so this notices.
+    for (const [token, value] of Object.entries(PLATFORM_ROLE_DEFAULTS.dark)) {
+      const source = token.startsWith("--dv-") ? tokens : nocturne;
+      const inCss = declared(source, ".noct", token);
+      expect(inCss, `${token} in ${token.startsWith("--dv-") ? "tokens" : "nocturne"}.css`).toBe(value);
+    }
+  });
+
+  it("duplicates the light values exactly", () => {
+    for (const [token, value] of Object.entries(PLATFORM_ROLE_DEFAULTS.light)) {
+      if (token === "--dv-cat-1") continue; // the data-viz series does not change per theme
+      const inCss = declared(tokens, '.noct[data-theme="light"]', token);
+      expect(inCss, `${token} in tokens.css light block`).toBe(value);
+    }
+  });
+
+  /**
+   * Every token that takes a light-theme value must also state a dark one.
+   *
+   * This is not symmetry for its own sake. A custom property is resolved where
+   * it is DECLARED: a token declared once on `.noct` and again under
+   * `[data-theme="light"]` has no dark declaration to find, so a dark island
+   * nested inside a light page inherits the light literal and paints it on a
+   * dark surface. The sidebar is exactly that island, and this is exactly how
+   * the accessibility audit found `--ax-muted` at 2.21:1 on every nav label —
+   * after the dark theme had been clean.
+   *
+   * The check reads the stylesheets rather than a list, so a token added
+   * tomorrow is covered without anyone remembering to add it here.
+   */
+  it("gives every light-theme token a dark peer", () => {
+    const LIGHT = '.noct[data-theme="light"]';
+    const DARK = '.noct[data-theme="dark"]';
+
+    function tokensUnder(source: string, selector: string): Set<string> {
+      const css = source.replace(/\/\*[\s\S]*?\*\//g, "");
+      const names = new Set<string>();
+      for (const [, prelude, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        if (!prelude.split(",").map((part) => part.trim()).includes(selector)) continue;
+        for (const [, name] of body.matchAll(/(--[a-z0-9-]+)\s*:/g)) names.add(name);
+      }
+      return names;
+    }
+
+    for (const [file, source] of [["tokens.css", tokens], ["primitives.css", primitives]] as const) {
+      const light = tokensUnder(source, LIGHT);
+      const dark = tokensUnder(source, DARK);
+      const orphans = [...light].filter((name) => !dark.has(name));
+      expect(
+        orphans,
+        `${file}: light-only tokens — a nested dark island would inherit the light value`,
+      ).toEqual([]);
+    }
+  });
+
+  it("names a ground for each theme", () => {
+    expect(themeGround("dark")).toBe(PLATFORM_ROLE_DEFAULTS.dark["--color-bg"]);
+    expect(themeGround("light")).toBe(PLATFORM_ROLE_DEFAULTS.light["--color-bg"]);
+  });
+
+  it("covers every swappable role in both themes", () => {
+    for (const role of THEME_ROLES) {
+      expect(PLATFORM_ROLE_DEFAULTS.dark[role.token], `dark ${role.token}`).toBeDefined();
+      expect(PLATFORM_ROLE_DEFAULTS.light[role.token], `light ${role.token}`).toBeDefined();
+    }
+  });
+
+  it("offers only legible, well-formed brand swatches", () => {
+    for (const swatch of BRAND_SWATCHES) {
+      expect(isHexColor(swatch.value), swatch.name).toBe(true);
+      // Offered as an accent, so the accent's own floor applies.
+      expect(contrastRatio(swatch.value, themeGround("dark"))!, swatch.name).toBeGreaterThanOrEqual(3);
+    }
   });
 });

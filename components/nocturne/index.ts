@@ -60,6 +60,9 @@ export type { ToastProps, InlineAlertProps, EmptyStateProps, SpinnerProps, Loadi
 
 export {
   THEME_ROLES,
+  PLATFORM_ROLE_DEFAULTS,
+  BRAND_SWATCHES,
+  themeGround,
   THEME_NAMES,
   DENSITIES,
   isThemeName,

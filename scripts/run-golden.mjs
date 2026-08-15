@@ -10,7 +10,12 @@
  *   1. next build            — static analysis / route compilation
  *   2. vitest run            — DB-backed core-surface + data-scope assertions
  *   3. verify-behaviors      — pure-logic derivation checks
- *   4. check-api-guards      — every /api/v1 route handler is guarded
+ *   4. check-api-guards      — every API route handler is guarded, or named as
+ *                             unauthenticated by design with the control that
+ *                             replaces a session
+ *   5. check-no-hardcoded-color — reskinned screens resolve every colour through
+ *                             a Nocturne role token, so per-tenant theming keeps
+ *                             working. Scope grows per reskin tranche.
  *   5. check-proxy-matcher  — every route reaches proxy.ts, where the tenant-session
  *                             binding (Phase 2) and entitlement gate (Phase 3) live
  *   6. check-route-module-map — every route maps to a module or an always-on
@@ -41,6 +46,7 @@ const legs = [
   { name: "vitest run", cmd: "npx", args: ["vitest", "run"] },
   { name: "verify-behaviors", cmd: "node", args: ["scripts/verify-behaviors.mjs"] },
   { name: "check-api-guards", cmd: "node", args: ["scripts/check-api-guards.mjs"] },
+  { name: "check-no-hardcoded-color", cmd: "node", args: ["scripts/check-no-hardcoded-color.mjs"] },
   { name: "check-proxy-matcher", cmd: "node", args: ["scripts/check-proxy-matcher.mjs"] },
   { name: "check-route-module-map", cmd: "npx", args: ["tsx", "scripts/check-route-module-map.ts"] },
   { name: "check-tenant-chokepoint", cmd: "node", args: ["scripts/check-tenant-chokepoint.mjs"] },

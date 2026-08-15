@@ -59,6 +59,69 @@
   --status-breach-fg: var(--color-accent);
 }
 
+/* ── Status colours ──────────────────────────────────────────────────────────
+   Nocturne is a mono palette: status is carried by a mark and a word, which is
+   what `StatusTag` does and what WCAG 1.4.1 actually asks for. These three
+   exist for the screens that still paint status as bare colour, and for the
+   places where a hue genuinely adds — a chart series, a threshold line.
+
+   Each is a pair, measured on its own ground. The light values are markedly
+   deeper than the dark ones, for the reason this file keeps running into: a hue
+   that reads against a dark ground washes out against a light one.
+
+   Dark:  critical 5.56:1 · warning 6.28:1 · ok 6.32:1  (on --color-bg)
+   Light: critical 5.67:1 · warning 5.21:1 · ok 5.51:1  (on --color-bg) */
+.noct {
+  --ax-status-critical: #c07f92;
+  --ax-status-warning: #c2925c;
+  --ax-status-ok: #5fa8a0;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-status-critical: #b02a41;
+  --ax-status-warning: #8a5a00;
+  --ax-status-ok: #1a6b5f;
+}
+
+/* Dark peer, so a dark island inside a light page — the sidebar, where the
+   pending-work badges live — gets the values measured for its own ground rather
+   than inheriting the deep light ones. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-status-critical: #c07f92;
+  --ax-status-warning: #c2925c;
+  --ax-status-ok: #5fa8a0;
+}
+
+/* ── The AI accent ───────────────────────────────────────────────────────────
+   A distinct hue for AI and agent features, borrowed from the company design
+   guide and re-measured on Nocturne's own grounds before adoption.
+
+   The guide's value (#CA920D) holds up on the dark ground — 6.4:1 on the page,
+   5.5:1 on a surface — and collapses on the light one, where it measures
+   2.42:1 and fails even the 3:1 floor for chrome. That is the same failure mode
+   as the three corrections below it: a value validated against one background
+   and carried to the other. So the token is a pair, and the light peer is a
+   deeper gold: 5.7:1 on the light ground, 6.2:1 on a light surface.
+
+   It is deliberately NOT a swappable role. A tenant brands the product; "this
+   was written by a machine" is a property of the product, and a tenant who
+   could recolour it to match their accent would erase the distinction. */
+.noct {
+  --ax-ai-accent: #ca920d;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-ai-accent: #7a5800;
+}
+
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-ai-accent: #ca920d;
+}
+
 /* ── Light theme — an equal peer of the dark default, not an afterthought ──
    Selectors are doubled (`.noct[…]` and `.noct […]`) so a theme can be set on
    the scope root OR on any island inside it. That is what lets one page show

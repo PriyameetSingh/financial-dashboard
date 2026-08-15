@@ -13,7 +13,9 @@ import {
   checkRoleContrast,
   contrastRatio,
   formatContrastRatio,
+  PLATFORM_ROLE_DEFAULTS,
   THEME_ROLES,
+  themeGround,
   type RoleValues,
   type ThemeName,
   type ThemeOverrides,
@@ -48,24 +50,15 @@ import { withNextBasePath } from "@/lib/next-base-path";
  * state after it has been delivered has no purpose.
  */
 
-/** The two grounds a role is measured against, per theme. */
-const GROUND: Record<ThemeName, string> = { dark: "#161826", light: "#eef0f8" };
-
-const ROLE_DEFAULTS: Record<ThemeName, Record<string, string>> = {
-  dark: {
-    "--color-accent": "#9184d9",
-    "--color-bg": "#161826",
-    "--color-surface": "#232532",
-    "--color-text": "#e9e9ed",
-    "--dv-cat-1": "#9184d9",
-  },
-  light: {
-    "--color-accent": "#5d5294",
-    "--color-bg": "#eef0f8",
-    "--color-surface": "#f8f9fd",
-    "--color-text": "#232532",
-    "--dv-cat-1": "#9184d9",
-  },
+/**
+ * What a role shows when the tenant has not overridden it — read from the token
+ * layer rather than restated. Restating it is how the configurator ends up
+ * telling an administrator their accent is one colour while the page paints
+ * another.
+ */
+const GROUND: Record<ThemeName, string> = {
+  dark: themeGround("dark"),
+  light: themeGround("light"),
 };
 
 export default function DesignSystemConfigurator({
@@ -88,7 +81,7 @@ export default function DesignSystemConfigurator({
   const active: RoleValues = overrides[theme] ?? {};
 
   function valueFor(role: ThemeRole): string {
-    return active[role] ?? ROLE_DEFAULTS[theme][role] ?? "#000000";
+    return active[role] ?? PLATFORM_ROLE_DEFAULTS[theme][role];
   }
 
   function setRole(role: ThemeRole, value: string) {

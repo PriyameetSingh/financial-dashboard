@@ -47,6 +47,17 @@
   --ax-muted: #575a68;
 }
 
+/* Dark peer. A custom property is resolved where it is DECLARED, so a dark
+   island inside a light page (the sidebar) would otherwise inherit the light
+   literal above and paint #575a68 on a #232532 surface — 2.21:1, which the audit
+   caught on every nav label at once. `nocturne.css` states the same peer for the
+   `--color-*` block for the same reason; every extension token below needs one
+   too, and `tests/nocturne-theme.test.ts` now checks that they all have it. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-muted: color-mix(in srgb, var(--color-text) 62%, transparent);
+}
+
 /* Accent-coloured text at paragraph size — field errors, inline emphasis.
    The design system's guidance is to use "a deep ramp step (`--color-accent-300`
    on this ground)" rather than the accent itself, because the accent is tuned to
@@ -66,6 +77,11 @@
 .noct[data-theme="light"],
 .noct [data-theme="light"] {
   --ax-accent-text: #423a6a;
+}
+
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-accent-text: var(--color-accent-300);
 }
 
 /* ── accessibility utilities ─────────────────────────────────────────────────
@@ -1343,4 +1359,217 @@
   .noct .ax-cfg {
     padding: 24px 18px 56px;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   The authenticated app frame (reskin, Gate A)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* The top bar. The fading rule is the Nocturne signature applied to the app's
+   own chrome, so the frame reads as the same system as the landing page. */
+.noct .ax-app-topbar {
+  background: var(--color-bg);
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+}
+
+/* The assistant's floating button. It carries the AI accent, which is the one
+   thing on the frame that is deliberately not the tenant's brand — "a machine
+   wrote this" is a property of the product, not of the organization. */
+.noct .ax-app-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 60;
+  display: flex;
+  height: 56px;
+  width: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--ax-ai-accent);
+  background: var(--color-surface);
+  color: var(--ax-ai-accent);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: transform 0.12s ease-out, background 0.12s ease-out;
+}
+
+.noct .ax-app-fab:hover {
+  background: color-mix(in srgb, var(--ax-ai-accent) 14%, var(--color-surface));
+  transform: scale(1.05);
+}
+
+.noct .ax-app-fab:active {
+  transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noct .ax-app-fab {
+    transition: none;
+  }
+  .noct .ax-app-fab:hover,
+  .noct .ax-app-fab:active {
+    transform: none;
+  }
+}
+
+/* ── the sidebar ─────────────────────────────────────────────────────────────
+   A permanent dark island: the element carries `data-theme="dark"`, so every
+   token inside it resolves to its dark value whichever theme the reader chose.
+   That is the borrowed treatment, and expressing it as a nested theme rather
+   than a private palette is what keeps the tenant's own accent on it. */
+.noct .ax-nav {
+  background: var(--color-surface);
+  box-shadow: inset -1px 0 0 var(--color-divider);
+}
+
+/* Nav links opt out of the accent-and-underline that `.noct a` gives a link in
+   running text — the same opt-out the export gives `.nav a`, and for the same
+   reason. A list of destinations in a rail is identified by where it is, not by
+   being coloured differently from the words around it; there are no words around
+   it. Leaving the global rule to apply cost real contrast, which is how this was
+   found: the active item's label kept the raw accent instead of inheriting the
+   item's own foreground, and read at 3.6:1 on its accent tint. */
+.noct .ax-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.noct .ax-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ax-muted);
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.noct .ax-nav-item:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* The active item takes an accent tint AND an inline-start mark, so "where am
+   I" survives greyscale and low vision — the same reason the stat tiles flag
+   with an edge rather than a fill. */
+.noct .ax-nav-item-active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-text);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+
+.noct .ax-nav-section {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+}
+
+/* The brand plate. A surface rather than a white card, so a tenant logo sits on
+   the tenant's own palette instead of on an imported sheet of paper. */
+.noct .ax-nav-brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  padding: 6px;
+}
+
+/* ── status tones ────────────────────────────────────────────────────────────
+   For the places that paint status as a text colour rather than as a tag.
+
+   `StatusTag` remains the right answer wherever a label fits, because it pairs
+   the tone with a mark and a word and therefore survives greyscale. These exist
+   for the cases where there is genuinely no room for one — a count in a nav
+   badge, a figure in a dense row — and they read their colour from the status
+   token pair, so both themes are covered and a tenant swap cannot strand them.
+
+   A tone alone still must not be the only signal. Every call site pairs one
+   with text that says the same thing. */
+.noct .ax-tone-critical { color: var(--ax-status-critical); }
+.noct .ax-tone-warning { color: var(--ax-status-warning); }
+.noct .ax-tone-ok { color: var(--ax-status-ok); }
+
+/* The same three as a tinted chip: the borrowed ActionCard treatment, expressed
+   as tokens. Never a flat grey — the guide's own instruction — and never a fill
+   the text cannot be read on. */
+.noct .ax-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text);
+}
+
+.noct .ax-chip-critical {
+  background: color-mix(in srgb, var(--ax-status-critical) 18%, transparent);
+  color: var(--ax-status-critical);
+}
+
+.noct .ax-chip-warning {
+  background: color-mix(in srgb, var(--ax-status-warning) 18%, transparent);
+  color: var(--ax-status-warning);
+}
+
+.noct .ax-chip-ok {
+  background: color-mix(in srgb, var(--ax-status-ok) 18%, transparent);
+  color: var(--ax-status-ok);
+}
+
+/* ── priority, encoded by shape as well as colour ────────────────────────────
+   The borrowed rule, minus the map it was written for — this codebase has none.
+   It applies to the priority indicators that DO exist: action items, KPIs and
+   notifications, and their filter chips.
+
+   Shape is the point. A reader with a colour vision deficiency, or a printed
+   menu card, or a screenshot in a grayscale report, all get the same three
+   marks: a star for high, a rounded rectangle for medium, a circle for low.
+   The colour is reinforcement (WCAG 1.4.1). */
+.noct .ax-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.noct .ax-priority-mark {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  display: inline-block;
+}
+
+.noct .ax-priority-high .ax-priority-mark {
+  background: var(--ax-status-critical);
+  /* A five-pointed star. */
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.noct .ax-priority-medium .ax-priority-mark {
+  background: var(--ax-status-warning);
+  border-radius: 3px;
+  height: 10px;
+}
+
+.noct .ax-priority-low .ax-priority-mark {
+  background: var(--ax-status-ok);
+  border-radius: 50%;
 }

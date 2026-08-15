@@ -1,6 +1,13 @@
 "use client";
 
-import { FileDrop, Tag, contrastRatio, formatContrastRatio } from "@/components/nocturne";
+import {
+  BRAND_SWATCHES,
+  FileDrop,
+  Tag,
+  contrastRatio,
+  formatContrastRatio,
+  themeGround,
+} from "@/components/nocturne";
 import type { StepProps } from "../types";
 
 /**
@@ -15,17 +22,12 @@ import type { StepProps } from "../types";
  * text — the same threshold `THEME_ROLES` applies in the design system, read
  * from one place so the wizard and the configurator cannot disagree.
  */
-const SWATCHES: readonly (readonly [string, string])[] = [
-  ["Nocturne blurple", "#9184d9"],
-  ["River teal", "#5fa8a0"],
-  ["Laterite", "#c2925c"],
-  ["Slate blue", "#7f9cc9"],
-  ["Rosewood", "#c07f92"],
-  ["Graphite", "#9397ab"],
-];
-
-/** The platform's dark ground. What the accent is read against. */
-const GROUND = "#161826";
+/**
+ * The platform's dark ground — what the accent is read against. Taken from the
+ * token layer rather than restated, so it cannot drift from what actually
+ * renders.
+ */
+const GROUND = themeGround("dark");
 
 export default function StepBranding({ draft, update }: StepProps) {
   const ratio = contrastRatio(draft.brandColor, GROUND);
@@ -46,7 +48,7 @@ export default function StepBranding({ draft, update }: StepProps) {
           Brand colour
         </legend>
         <div className="ax-wz-swatches">
-          {SWATCHES.map(([name, hex]) => (
+          {BRAND_SWATCHES.map(({ name, value: hex }) => (
             <button
               key={hex}
               type="button"

@@ -168,13 +168,12 @@ const items: NavItem[] = [
   },
 ];
 
-const badgeColors: Record<UserRole, string> = {
-  [UserRole.ACS]: "bg-[#1f3a93]",
-  [UserRole.VERTICAL_HEAD]: "bg-[#5b4fcf]",
-  [UserRole.FA]: "bg-[#1abc9c]",
-  [UserRole.TASU]: "bg-[#1abc9c]",
-  [UserRole.NODAL_OFFICER]: "bg-[#2ecc71]",
-};
+/*
+ * The role badge used to carry one of five arbitrary hues. They encoded nothing
+ * a reader could decode — two roles shared a colour, and the badge already spells
+ * the role out — so the reskin drops the mapping rather than inventing five
+ * tenant-safe equivalents for information that was never there.
+ */
 
 /** Dashboard merged from legacy `/command-centre`; keep both paths highlighting the same nav item. */
 function isTopNavActive(pathname: string, href: string) {
@@ -475,9 +474,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
   const roleBadge = useMemo(() => {
     if (!user) return null;
     return (
-      <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white rounded-full ${badgeColors[user.role]}`}>
-        {user.role.replace("_", " ")}
-      </span>
+      <span className="tag tag-accent tracking-[0.2em]">{user.role.replace("_", " ")}</span>
     );
   }, [user]);
 
@@ -535,16 +532,24 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
 
 
   return (
-    <aside className={`
-      fixed inset-y-0 left-0 z-50 flex flex-col bg-(--bg-surface) border-r border-(--sidebar-border) transition-all duration-300
+    <aside
+      /*
+       * A permanent dark island. Every Nocturne token inside resolves to its
+       * dark value whichever theme the reader chose — including the TENANT'S own
+       * dark-theme accent, which a private sidebar palette would have excluded.
+       */
+      data-theme="dark"
+      className={`
+      ax-nav fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300
       md:sticky md:h-full md:translate-x-0
       ${isCollapsed
         ? "w-64 -translate-x-full md:w-20 md:translate-x-0"
         : "w-64 translate-x-0 md:w-64"
       }
-    `}>
+    `}
+    >
       <div className={`px-4 py-3 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
-        <div className={`flex shrink-0 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm ring-1 ring-black/5 transition-all ${isCollapsed ? "size-10" : "size-14"}`}>
+        <div className={`ax-nav-brand transition-all ${isCollapsed ? "size-10" : "size-14"}`}>
           <img
             src={withNextBasePath(HUDD_LOGO_PUBLIC_PATH)}
             alt="HUDD Logo"
@@ -569,7 +574,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
           return (
             <div key={item.href}>
               <div
-                className={`group flex items-center justify-between rounded-md transition-colors text-sm font-medium ${isParentActive ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-primary)]" : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-primary)]"}`}
+                className={`ax-nav-item group ${isParentActive ? "ax-nav-item-active" : ""}`}
               >
                 <Link
                   href={item.href}
@@ -599,7 +604,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                     </span>
                   )}
                   {!isCollapsed && item.badge && (
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">
                       {item.badge}
                     </span>
                   )}

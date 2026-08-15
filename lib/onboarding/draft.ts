@@ -1,3 +1,5 @@
+import { PLATFORM_ROLE_DEFAULTS } from "@/components/nocturne/theme";
+
 /**
  * The onboarding draft — what the wizard collects, and what counts as valid.
  *
@@ -211,7 +213,8 @@ export function emptyDraft(): OnboardingDraft {
     slug: "",
     sector: "gov",
     contactEmail: "",
-    brandColor: "#9184d9",
+    // The platform accent, from the token layer rather than restated here.
+    brandColor: PLATFORM_ROLE_DEFAULTS.dark["--color-accent"],
     logoFileName: "",
     locale: "en-IN",
     timezone: "Asia/Kolkata",

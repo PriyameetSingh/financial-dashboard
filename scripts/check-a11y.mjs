@@ -116,6 +116,62 @@ const SURFACES = [
     ],
   },
   {
+    name: "sign-in (reskin A)",
+    path: "/login",
+    // Unauthenticated by design — that is the page.
+    authenticated: false,
+    readySelector: ".noct .btn-primary",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
+    name: "sign-in problem (reskin A)",
+    path: "/auth/error",
+    /*
+     * Audited SIGNED IN, which is not what this page is for.
+     *
+     * `/auth/error` is the page `auth.ts` names as NextAuth's error target, so a
+     * visitor reaches it when their sign-in FAILED — with no session, by
+     * definition. But `PUBLIC_AUTH_PATHS` lists only `/login`, so the proxy
+     * bounces an anonymous request to `/login?redirect=/auth/error` and the page
+     * never renders for the audience it was written for. That is pre-existing
+     * routing, not something the reskin introduced, and routing is explicitly
+     * out of scope here — so the audit signs in to reach the markup rather than
+     * quietly widening the public path set to make itself pass.
+     *
+     * Reported as a Gate A finding. When the path is made public, drop the flag.
+     */
+    authenticated: true,
+    readySelector: ".noct .btn-primary",
+    minMatches: 1,
+    views: [{ name: "dark · desktop", query: "?error=AccessDenied", viewport: DESKTOP }],
+  },
+  {
+    name: "app shell (reskin A)",
+    path: "/profile",
+    authenticated: true,
+    // The sidebar's nav items. Waiting for one also proves the entitlement-driven
+    // nav resolved, rather than the shell rendering an empty rail.
+    readySelector: ".noct .ax-nav .ax-nav-item",
+    minMatches: 3,
+    /**
+     * SCOPED. The frame is reskinned at this gate; the screen inside it is not
+     * until its own tranche. Auditing the whole page would report the unreskinned
+     * body's problems as this gate's, and — worse — would go green later for
+     * reasons that have nothing to do with the shell. So axe is pointed at the
+     * chrome only, and the page's own audit arrives with its tranche.
+     */
+    axeInclude: [[".noct .ax-nav"], [".noct .ax-app-topbar"]],
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -336,11 +392,14 @@ function describe(violation) {
  * one. Shared by the static surfaces and the wizard driver so both report the
  * same way and neither can quietly skip the recording step.
  */
-async function audit(page, axeSource, label, note) {
+async function audit(page, axeSource, label, note, include) {
   await page.addScriptTag({ content: axeSource });
   const result = await page.evaluate(
-    async (tags) => await window.axe.run(document, { runOnly: { type: "tag", values: tags } }),
-    TAGS,
+    async ({ tags, include }) =>
+      await window.axe.run(include ? { include } : document, {
+        runOnly: { type: "tag", values: tags },
+      }),
+    { tags: TAGS, include: include ?? null },
   );
 
   if (result.violations.length === 0) {
@@ -477,6 +536,15 @@ async function main() {
         const page = await context.newPage();
         await page.setViewportSize(view.viewport);
 
+        // The authenticated app's theme is the reader's own preference, stored
+        // per browser. Seeding it before navigation is how this leg audits both
+        // grounds without driving the toggle.
+        if (view.theme) {
+          await page.addInitScript((theme) => {
+            window.localStorage.setItem("airawat-theme", theme);
+          }, view.theme);
+        }
+
         const url = `http://${HOST}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
         // `load` rather than `networkidle`: the dev server holds a hot-reload
         // socket open for the life of the page, so "idle" is not a state it
@@ -517,7 +585,13 @@ async function main() {
           continue;
         }
 
-        await audit(page, axeSource, label, `${view.name} — ${found} elements at ${view.viewport.width}px`);
+        await audit(
+          page,
+          axeSource,
+          label,
+          `${view.name} — ${found} elements at ${view.viewport.width}px`,
+          surface.axeInclude,
+        );
         await page.close();
       }
     }

@@ -34,7 +34,13 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
-const SCAN_DIRS = ["app", "components", "lib"];
+/**
+ * `src/` is included deliberately: it holds a second UI kit
+ * (`src/components/ui/*`) that the shell and most screens import. Leaving it out
+ * would have made the lint report a clean tranche while a third of its rendered
+ * pixels came from unchecked files.
+ */
+const SCAN_DIRS = ["app", "components", "lib", "src"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 const SKIP_DIRS = new Set(["node_modules", ".next", "dist", "build"]);
 
@@ -56,6 +62,22 @@ const RESKINNED = [
   // The gallery is the design system's own specimen page: it names tokens, and
   // its two-theme comparison shows real values on purpose.
   { path: "app/design-system/", gate: "S0" },
+
+  // ── Reskin Gate A — the app shell, and the unauthenticated pages ──────────
+  { path: "components/AppShell.tsx", gate: "A" },
+  { path: "components/Sidebar.tsx", gate: "A" },
+  { path: "components/ThemeProvider.tsx", gate: "A" },
+  { path: "components/FontScaleProvider.tsx", gate: "A" },
+  { path: "components/TextSizeToolbarControl.tsx", gate: "A" },
+  { path: "components/LogoutButton.tsx", gate: "A" },
+  { path: "components/AuthSessionProvider.tsx", gate: "A" },
+  { path: "components/TenantConfigProvider.tsx", gate: "A" },
+  { path: "components/GovLoginBranding.tsx", gate: "A" },
+  { path: "components/LoginGrid.tsx", gate: "A" },
+  { path: "app/layout.tsx", gate: "A" },
+  { path: "app/login/", gate: "A" },
+  { path: "app/auth/", gate: "A" },
+  { path: "src/lib/myTasksPendingBadges.ts", gate: "A" },
 ];
 
 /**
@@ -79,6 +101,11 @@ const ALLOW = [
   {
     path: "components/nocturne/theme.ts",
     reason: "parses and validates hex colours; the test fixtures are hex by nature",
+  },
+  {
+    path: "components/NationalColourBand.tsx",
+    reason:
+      "the Indian flag's saffron and green, as the Flag Code specifies them — a statutory element, not a palette choice, and not the tenant's to theme",
   },
   {
     path: "app/design-system/Gallery.tsx",

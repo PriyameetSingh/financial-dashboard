@@ -1,0 +1,103 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   The legacy variable bridge — TRANSITIONAL.
+
+   The existing screens are ~29,000 lines that paint themselves through the
+   custom properties `app/globals.css` declares on `:root`: `--bg-primary`,
+   `--text-muted`, `--sidebar-active-bg` and two dozen others. Rewriting every
+   one of those call sites is the reskin; doing it in a single change is not
+   reviewable, and doing it screen by screen leaves the app half in one palette
+   and half in the other for the length of the migration.
+
+   So this file maps each legacy name onto the Nocturne token that replaces it,
+   inside `.noct`. The moment the authenticated subtree is wrapped in a
+   `NocturneRoot`, every existing screen resolves its colours through Nocturne —
+   including per-tenant overrides — without one of them being edited. The
+   tranches that follow then replace legacy names with real Nocturne primitives
+   screen by screen, and Gate F deletes this file along with the `:root` block
+   it shadows.
+
+   WHAT IT CANNOT DO, which is why the tranches are still necessary: a Tailwind
+   palette utility (`bg-blue-600`, `text-gray-500`) is a compiled class, not a
+   variable, so nothing here reaches it. `scripts/check-no-hardcoded-color.mjs`
+   is what finds those, per tranche, as each screen comes into scope.
+
+   COMPLETENESS MATTERS MORE THAN USUAL. Outside `.noct` an undefined custom
+   property falls back to the `:root` value; inside it, a name this file forgets
+   resolves to nothing at all and the element paints transparent. So
+   `tests/legacy-bridge.test.ts` asserts every legacy name referenced anywhere in
+   `app/` or `components/` has an entry here.
+
+   IT IS REPEATED AT EVERY THEME BOUNDARY, which is not decoration. A custom
+   property is resolved where it is DECLARED, not where it is used: declared only
+   on `.noct`, `--sidebar-text-muted: var(--ax-muted)` computes once against the
+   root theme and the resulting literal is then inherited into the sidebar's
+   `data-theme="dark"` island unchanged. The island would carry the light theme's
+   muted grey on a dark surface — 2.21:1, which is exactly what the accessibility
+   audit reported. Re-declaring the block on `[data-theme]` makes each island
+   recompute the bridge against its own tokens.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct,
+.noct [data-theme] {
+  /* — grounds and surfaces — */
+  --bg-primary: var(--color-bg);
+  --bg-document: var(--color-bg);
+  --bg-surface: var(--color-surface);
+  --bg-content-surface: var(--color-surface);
+  --bg-card: var(--color-surface);
+  --bg-hover: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  /* Was a pale yellow highlight row. Nocturne carries emphasis with the accent,
+     not with a second hue. */
+  --bg-alternate-card: color-mix(in srgb, var(--color-accent) 8%, transparent);
+
+  /* — accent — */
+  --accent: var(--color-accent);
+  /* Text ON an accent fill. Nocturne outlines rather than fills, so this is the
+     ramp step meant to sit on an accent tint. */
+  --accent-text: var(--color-accent-100);
+  --bg-accent: color-mix(in srgb, var(--color-accent) 16%, transparent);
+
+  /* — text — */
+  --text-primary: var(--color-text);
+  --text-secondary: color-mix(in srgb, var(--color-text) 78%, transparent);
+  --text-muted: var(--ax-muted);
+  /* Both of these named "on dark" because the old shell had one dark region.
+     The sidebar is now a dark island that carries its own theme, so inside it
+     these resolve dark on their own and no separate pair is needed. */
+  --text-on-dark-muted: var(--ax-muted);
+  --text-on-dark-subtle: var(--ax-muted);
+  --bg-surface-text: var(--color-text);
+
+  /* — borders — */
+  --border: var(--color-divider);
+  --bg-border: var(--color-divider);
+  --border-strong: color-mix(in srgb, var(--color-text) 34%, transparent);
+  --border-hover: var(--color-accent);
+
+  /* — sidebar —
+     Plain Nocturne tokens, because the sidebar is wrapped in `data-theme="dark"`
+     and therefore resolves them to their dark values in either theme. That is
+     what makes it dark in both modes WITHOUT a private palette — and it is why a
+     tenant's own accent still reaches the most visible chrome in the product. */
+  --sidebar-border: var(--color-divider);
+  --sidebar-text-primary: var(--color-text);
+  --sidebar-text-muted: var(--ax-muted);
+  --sidebar-active-bg: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  --sidebar-hover-bg: color-mix(in srgb, var(--color-text) 8%, transparent);
+
+  /* — status —
+     Nocturne is a mono palette and signals status with a mark and a word, which
+     is why `StatusTag` exists. These three are the bridge for screens that still
+     paint status as bare colour; they are a stopgap, and a screen that has been
+     through its tranche should be using `StatusTag` instead.
+
+     Both peers measured on their own ground: dark 5.6/6.3/6.3:1, light
+     5.7/5.2/5.5:1. The light values are much deeper than the dark ones for the
+     usual reason — the same hue that reads on a dark ground disappears on a
+     light one. */
+  --alert-critical: var(--ax-status-critical);
+  --alert-warning: var(--ax-status-warning);
+  --alert-success: var(--ax-status-ok);
+  --accent-success: var(--ax-status-ok);
+  --alert-success-bg: color-mix(in srgb, var(--ax-status-ok) 16%, transparent);
+}

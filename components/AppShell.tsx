@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bot, Menu, ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useTheme } from "@/components/ThemeProvider";
@@ -10,14 +10,42 @@ import ConversationalAI from "@/components/ConversationalAI";
 import WhatsNewNotification from "@/components/WhatsNewNotification";
 import { NotificationDropdown } from "@/src/components/ui/NotificationDropdown";
 import { tenantTimezone, tenantLocale } from "@/lib/tenant-config/format";
+import NocturneRoot from "@/components/nocturne/NocturneRoot";
+import { tenantConfig } from "@/lib/tenant-config";
 
 interface Props {
   children: React.ReactNode;
   title?: string;
 }
 
+/**
+ * The authenticated app's frame — the sidebar, the top bar and the region the
+ * screens render into.
+ *
+ * RESKIN NOTE. This component wraps everything below it in a `NocturneRoot`,
+ * which is what puts the whole authenticated product on the Nocturne token
+ * layer. Screens that have not yet been through their tranche still paint
+ * themselves through the pre-reskin custom properties, and those resolve here
+ * because `legacy-bridge.css` maps each one onto its Nocturne token. So the
+ * frame and its contents share one palette from this change onward, and each
+ * later tranche replaces bridge names with real primitives rather than
+ * introducing a second look.
+ *
+ * THE SIDEBAR IS A DARK ISLAND. It carries `data-theme="dark"` whatever the
+ * reader's preference, which is the borrowed treatment from the company design
+ * guide. Expressed as a nested theme rather than a private palette, so the
+ * tenant's own dark-theme accent still reaches the most visible chrome in the
+ * product — a hardcoded sidebar palette would have quietly excluded the one
+ * surface every officer looks at all day from white-labelling.
+ */
 export default function AppShell({ children, title }: Props) {
-  const { mounted } = useTheme();
+  const { mounted, theme, setTheme } = useTheme();
+  // Read rather than passed as a prop: this component is mounted from thirty
+  // page files, and threading the tenant's brand through every one of them
+  // would be thirty chances to forget. `tenantConfig()` reads the request-scoped
+  // holder on the server and the browser-side one after hydration — both primed
+  // by the root layout, which is the Phase 2 machinery this rides on.
+  const { themeOverrides } = tenantConfig();
   const user = useHydratedCurrentUser();
   const [chatOpen, setChatOpen] = useState(false);
   // SSR default: collapsed. Prevents a flash of the expanded sidebar overlapping
@@ -72,22 +100,26 @@ export default function AppShell({ children, title }: Props) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)]">
+    <NocturneRoot
+      theme={theme}
+      overrides={themeOverrides}
+      className="flex h-screen overflow-hidden bg-[var(--color-bg)]"
+    >
       <Sidebar isCollapsed={isSidebarCollapsed} />
       {!isSidebarCollapsed && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--color-neutral-900)_70%,transparent)] md:hidden"
           onClick={() => setIsSidebarCollapsed(true)}
         />
       )}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 md:px-6 md:py-4">
+        <header className="ax-app-topbar px-4 py-3 md:px-6 md:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
             <div className="flex items-center justify-between gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-surface)] hover:text-[var(--sidebar-text-primary)]"
+                  className="btn btn-secondary h-8 w-8 !p-0"
                   aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
                   <span className="hidden md:inline">
@@ -98,11 +130,11 @@ export default function AppShell({ children, title }: Props) {
                   </span>
                 </button>
                 <div className="min-w-0">
-                  <p className="truncate text-base font-medium text-[var(--sidebar-text-primary)] md:text-lg">
+                  <p className="truncate text-base font-medium text-[var(--color-text)] md:text-lg">
                     <span className="inline md:hidden">HUDD Odisha</span>
                     <span className="hidden md:inline">Housing & Urban Development Department</span>
                   </p>
-                  {title && <p className="truncate text-sm text-[var(--text-muted)]">{title}</p>}
+                  {title && <p className="truncate text-sm text-[var(--ax-muted)]">{title}</p>}
                 </div>
               </div>
 
@@ -111,8 +143,21 @@ export default function AppShell({ children, title }: Props) {
                 <NotificationDropdown align="right" />
               </div>
             </div>
-            <div className="hidden md:flex flex-wrap items-center gap-2 text-sm text-[var(--text-on-dark-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
-              <span className="hidden text-xs text-[var(--text-muted)] 2xl:inline">{mounted ? nowLabel : ""}</span>
+            <div className="hidden md:flex flex-wrap items-center gap-2 text-sm text-[var(--ax-muted)] sm:gap-3 lg:ml-auto lg:justify-end">
+              <span className="hidden text-xs text-[var(--ax-muted)] 2xl:inline">{mounted ? nowLabel : ""}</span>
+              {/* The reader's own choice of ground. Rendered only after mount,
+                  because before it the stored preference is not known and the
+                  button would claim the wrong state. */}
+              {mounted && (
+                <button
+                  type="button"
+                  className="btn btn-secondary h-8 w-8 !p-0"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label={theme === "dark" ? "Switch to the light theme" : "Switch to the dark theme"}
+                >
+                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              )}
               <NotificationDropdown align="right" />
             </div>
           </div>
@@ -120,7 +165,7 @@ export default function AppShell({ children, title }: Props) {
         <main className="relative flex-1 overflow-y-auto">
           {isViewer && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-              <div className="text-[80px] font-bold uppercase tracking-[0.6em] text-[var(--text-muted)] opacity-10 rotate-[-12deg]">
+              <div className="text-[80px] font-bold uppercase tracking-[0.6em] text-[var(--color-text)] opacity-10 rotate-[-12deg]">
                 Read Only
               </div>
             </div>
@@ -129,10 +174,10 @@ export default function AppShell({ children, title }: Props) {
         </main>
       </div>
       {chatOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6">
-          <div className="relative h-full w-full max-w-4xl rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl">
+        <div className="dialog-backdrop z-[70]">
+          <div className="relative h-full w-full max-w-4xl rounded-[var(--radius-lg)] bg-[var(--color-surface)] elev-lg">
             <button
-              className="absolute right-4 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]"
+              className="btn btn-secondary absolute right-4 top-4 text-[10px] uppercase tracking-[0.3em]"
               onClick={() => setChatOpen(false)}
               type="button"
             >
@@ -144,7 +189,7 @@ export default function AppShell({ children, title }: Props) {
       )}
       {/* Floating Urban Assistant button (FAB) */}
       <button
-        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-surface)] text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)] shadow-2xl transition-transform hover:scale-105 active:scale-95 border border-[var(--sidebar-border)] cursor-pointer"
+        className="ax-app-fab"
         onClick={() => setChatOpen(true)}
         type="button"
         aria-label="Urban Assistant Chatbot"
@@ -152,6 +197,6 @@ export default function AppShell({ children, title }: Props) {
         <Bot size={24} />
       </button>
       <WhatsNewNotification />
-    </div>
+    </NocturneRoot>
   );
 }

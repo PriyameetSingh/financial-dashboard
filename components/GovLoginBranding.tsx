@@ -6,7 +6,10 @@ const LOGO_SRC = withNextBasePath(HUDD_LOGO_PUBLIC_PATH);
 
 export default function GovLoginBranding() {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 border-b border-slate-200 pb-8 text-center lg:border-b-0 lg:border-r lg:pb-0 lg:pr-10">
+    <div
+      className="flex flex-col items-center justify-center gap-5 pb-8 text-center lg:pb-0 lg:pr-10"
+      style={{ boxShadow: "inset 0 -1px 0 var(--color-divider)" }}
+    >
       <div className="relative w-full max-w-[200px] sm:max-w-[240px]">
         <img
           src={LOGO_SRC}
@@ -19,8 +22,10 @@ export default function GovLoginBranding() {
         />
       </div>
       <div className="space-y-1">
-        <p className="text-[11px] font-medium text-slate-600">{tenantConfig().pdfHeaderLine}</p>
-        <p className="max-w-[16rem] text-sm font-semibold leading-snug text-slate-900">
+        <p className="text-[11px] font-medium" style={{ color: "var(--ax-muted)" }}>
+          {tenantConfig().pdfHeaderLine}
+        </p>
+        <p className="max-w-[16rem] text-sm font-semibold leading-snug">
           Housing &amp; Urban Development Department
         </p>
       </div>

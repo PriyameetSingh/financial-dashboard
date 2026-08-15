@@ -2,23 +2,27 @@
 
 import { FONT_SCALE_OPTIONS, useFontScale } from "@/components/FontScaleProvider";
 
+/**
+ * `lightBackground` is gone.
+ *
+ * It existed because the login page was pale while the app chrome was dark, so
+ * the control needed two hand-picked palettes. On Nocturne both are themed
+ * surfaces and the control reads the same tokens on either, which is one of the
+ * small simplifications the reskin buys: the caller no longer has to know what
+ * it is being rendered on top of.
+ */
 type TextSizeToolbarControlProps = {
   compact?: boolean;
-  /** Use on pale backgrounds (e.g. login page) instead of dark chrome */
-  lightBackground?: boolean;
   vertical?: boolean;
 };
 
 export default function TextSizeToolbarControl({
   compact = false,
-  lightBackground = false,
   vertical = false,
 }: TextSizeToolbarControlProps) {
   const { fontScale, setFontScale } = useFontScale();
 
-  const labelClass = lightBackground
-    ? "text-xs font-semibold uppercase tracking-[0.18em] text-slate-600"
-    : "text-xs font-semibold uppercase tracking-[0.18em] text-(--text-on-dark-subtle)";
+  const labelClass = "text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ax-muted)]";
 
   return (
     <div className={`flex ${vertical ? "flex-col items-stretch" : "items-center"} gap-2`}>
@@ -27,9 +31,7 @@ export default function TextSizeToolbarControl({
         className={[
           vertical ? "flex w-full" : "inline-flex",
           "items-center rounded-full border p-1",
-          lightBackground
-            ? "border-slate-200 bg-white shadow-sm"
-            : "border-(--border) bg-(--bg-card)",
+          "border-[var(--color-divider)] bg-[var(--color-surface)]",
         ].join(" ")}
         role="group"
         aria-label="Set text size"
@@ -50,12 +52,8 @@ export default function TextSizeToolbarControl({
                     ? "min-w-[40px]"
                     : "min-w-[74px]",
                 active
-                  ? lightBackground
-                    ? "bg-slate-800 text-white"
-                    : "bg-(--sidebar-active-bg) text-(--sidebar-text-primary)"
-                  : lightBackground
-                    ? "text-slate-600 hover:bg-slate-100"
-                    : "text-(--text-secondary) hover:bg-(--bg-content-surface)",
+                  ? "bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-[var(--color-text)]"
+                  : "text-[var(--ax-muted)] hover:bg-[color-mix(in_srgb,var(--color-text)_8%,transparent)]",
               ].join(" ")}
             >
               {compact ? option.shortLabel : option.label}
