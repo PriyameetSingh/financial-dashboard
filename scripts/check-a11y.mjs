@@ -131,20 +131,13 @@ const SURFACES = [
     name: "sign-in problem (reskin A)",
     path: "/auth/error",
     /*
-     * Audited SIGNED IN, which is not what this page is for.
-     *
-     * `/auth/error` is the page `auth.ts` names as NextAuth's error target, so a
-     * visitor reaches it when their sign-in FAILED — with no session, by
-     * definition. But `PUBLIC_AUTH_PATHS` lists only `/login`, so the proxy
-     * bounces an anonymous request to `/login?redirect=/auth/error` and the page
-     * never renders for the audience it was written for. That is pre-existing
-     * routing, not something the reskin introduced, and routing is explicitly
-     * out of scope here — so the audit signs in to reach the markup rather than
-     * quietly widening the public path set to make itself pass.
-     *
-     * Reported as a Gate A finding. When the path is made public, drop the flag.
+     * Signed out, which is the only state this page's audience is ever in: it is
+     * NextAuth's error target, so a visitor arrives having just failed to sign
+     * in. That the audit could not load it this way is what surfaced the routing
+     * bug — `/auth/error` was not in the public path set, so the catch-all sent
+     * it to `/login`. Keep the flag false; it is the assertion.
      */
-    authenticated: true,
+    authenticated: false,
     readySelector: ".noct .btn-primary",
     minMatches: 1,
     views: [{ name: "dark · desktop", query: "?error=AccessDenied", viewport: DESKTOP }],

@@ -165,7 +165,7 @@ describe("the public surface", () => {
     // Not a style rule. Every path here is one more thing served to anonymous
     // callers, so the set growing should be a decision someone makes, not a
     // diff someone skims.
-    expect([...PUBLIC_CONTENT_PATHS].sort()).toEqual(["/onboarding", "/platform"]);
+    expect([...PUBLIC_CONTENT_PATHS].sort()).toEqual(["/auth/error", "/onboarding", "/platform"]);
   });
 });
 

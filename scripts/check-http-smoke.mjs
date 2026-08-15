@@ -272,6 +272,26 @@ try {
     `got ${root.status} → ${root.location}`,
   );
 
+  /*
+   * The sign-in error page, fetched with NO cookie — the only way that matters.
+   *
+   * `auth.ts` points NextAuth's `error` page here, so every visitor arrives
+   * having just failed to sign in. Until it was listed as public the catch-all
+   * redirected it to `/login`, and the page was reachable only by people who did
+   * not need it. A signed-in check would have passed throughout.
+   */
+  const authError = await get("/auth/error?error=AccessDenied", { host: ODISHA_HOST });
+  check(
+    "the sign-in error page renders for an anonymous visitor",
+    authError.status === 200,
+    `got ${authError.status} → ${authError.location ?? "no redirect"}`,
+  );
+  check(
+    "…and carries the message for the error code it was given",
+    authError.body.includes("Access denied"),
+    "rendered without the AccessDenied copy",
+  );
+
   const odisha = await mint(ODISHA_HOST, "odisha");
   const demo = await mint(DEMO_HOST, "demo");
 
