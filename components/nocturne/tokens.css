@@ -26,31 +26,105 @@
    in this file names a tenant.
    ════════════════════════════════════════════════════════════════════════════ */
 
-.noct {
-  /* Data-viz palette — categorical set, checked against the dark ground for
-     deutan and protan vision. */
-  --dv-cat-1: #9184d9; /* blurple — follows the tenant accent */
-  --dv-cat-2: #5fa8a0; /* river teal */
-  --dv-cat-3: #c2925c; /* laterite */
-  --dv-cat-4: #7f9cc9; /* slate blue */
-  --dv-cat-5: #c07f92; /* rosewood */
-  --dv-cat-6: #9397ab; /* graphite */
+/* ── The data-viz palette ────────────────────────────────────────────────────
+   Two changes from the values this file shipped with, both made at reskin Gate B
+   and both measured rather than judged. `tests/nocturne-dataviz.test.ts` reads
+   these declarations back and re-derives every number below, so the claims here
+   are checked rather than asserted.
 
-  /* Sequential scale — one hue, lightness ramp, low → high. Order reads
-     without colour vision. */
+   1. IT WAS DARK-ONLY. Every swatch was declared once, on `.noct`, and the
+      comment said it had been checked "against the dark ground". There was no
+      light peer, so a chart on the light theme drew dark-theme fills on a light
+      surface. Both themes are now written out.
+
+   2. IT WAS NOT ACTUALLY COLOUR-BLIND SAFE. The original comment claimed a
+      deutan/protan check, but what had been verified was contrast against the
+      GROUND — each swatch against the page, never against each other. Simulating
+      the six categorical swatches (Viénot–Brettel–Mollon) and measuring CIE76 ΔE
+      pairwise put river teal and graphite 3.8 apart under deuteranopia, which is
+      indistinguishable: two series on one chart, same colour, for roughly one in
+      twelve men. The set is retuned to a floor of ΔE 16.
+
+   The retune keeps each token's HUE FAMILY and moves only lightness and
+   saturation — the palette still reads as blurple / teal / laterite / slate /
+   rosewood / graphite. That is deliberate: dichromats retain lightness
+   discrimination even where hue collapses, so laddering L* is what buys
+   separation, and it costs the least identity. `--dv-cat-1` is pinned to the
+   accent in both themes, as its name has always promised.
+
+   Floors, and why they differ. Categorical and diverging swatches are chart
+   FILLS — WCAG 1.4.11 non-text contrast, 3:1 — and every one of them clears 3.4:1
+   on both the page and a card, most far higher. Where this product paints a
+   FIGURE rather than a mark it uses `--ax-status-*` instead, which is measured
+   for text at 4.5:1. Keeping the two apart is the point: a token that has to
+   serve both ends up failing one.
+
+   Categorical, minimum pairwise ΔE across normal, deutan and protan vision:
+     dark 16.2 · light 16.5   (was 3.8 dark, and light did not exist) */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --dv-cat-1: #9184d9; /* blurple — follows the tenant accent */
+  --dv-cat-2: #78b09c; /* river teal */
+  --dv-cat-3: #c2925c; /* laterite */
+  --dv-cat-4: #88a0ce; /* slate blue */
+  --dv-cat-5: #ce7473; /* rosewood */
+  --dv-cat-6: #828da1; /* graphite */
+
+  /* Sequential scale — one hue, lightness ramp, low → high. Order reads without
+     colour vision at all, which is the property that matters: L* 17 → 27 → 39 →
+     50 → 62, monotone, smallest step 10.2. The lowest step sits close to the
+     ground on purpose; that is what "low" looks like on a scale of fills. */
   --dv-seq-1: #2b2741;
   --dv-seq-2: #423a6a;
   --dv-seq-3: #5d5294;
   --dv-seq-4: #796cbf;
   --dv-seq-5: #968ae0;
 
-  /* Diverging scale — deficit → neutral → surplus. */
-  --dv-div-neg: #c07f92;
-  --dv-div-mid: #595d6c;
-  --dv-div-pos: #5fa8a0;
+  /* Diverging scale — deficit → neutral → surplus. Laddered L* 54 → 71 → 95,
+     min pairwise ΔE 20.1. The ladder is doing the work: under deuteranopia a
+     teal collapses toward the neutral grey it is supposed to contrast with, so
+     hue alone cannot carry a three-stop diverging scale. */
+  --dv-div-neg: #b56d82;
+  --dv-div-mid: #a9aebf;
+  --dv-div-pos: #dcf5ee;
 
   /* Status roles. Mono scheme: status is carried by weight, tint and a mark —
-     never by hue alone, which is why every status tag also ships a glyph. */
+     never by hue alone, which is why every status tag also ships a glyph.
+     Restated per theme because each resolves to a ramp step that is itself
+     themed, and a `var()` chain is resolved where it is declared. */
+  --status-ok-bg: var(--color-neutral-800);
+  --status-ok-fg: var(--color-neutral-100);
+  --status-risk-bg: var(--color-accent-800);
+  --status-risk-fg: var(--color-accent-100);
+  --status-breach-border: var(--color-accent);
+  --status-breach-fg: var(--color-accent);
+}
+
+/* The light peers. Not a lightened copy: on a light ground the usable band runs
+   the other way, so the sequential ramp inverts and the diverging scale runs
+   dark → mid rather than mid → light. Same measurements, own ground. */
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --dv-cat-1: #5d5294; /* blurple — follows the tenant accent */
+  --dv-cat-2: #226d5e; /* river teal */
+  --dv-cat-3: #8a5a00; /* laterite */
+  --dv-cat-4: #4e5979; /* slate blue */
+  --dv-cat-5: #b12f3f; /* rosewood */
+  --dv-cat-6: #1b2133; /* graphite */
+
+  /* L* 90 → 74 → 57 → 39 → 20, monotone, smallest step 15.5. */
+  --dv-seq-1: #e2dff5;
+  --dv-seq-2: #b9b0e2;
+  --dv-seq-3: #8b7fcc;
+  --dv-seq-4: #5d5294;
+  --dv-seq-5: #322b57;
+
+  /* L* 19 → 31 → 51, min pairwise ΔE 16.6. */
+  --dv-div-neg: #5c0f1c;
+  --dv-div-mid: #43485a;
+  --dv-div-pos: #2f8778;
+
   --status-ok-bg: var(--color-neutral-800);
   --status-ok-fg: var(--color-neutral-100);
   --status-risk-bg: var(--color-accent-800);

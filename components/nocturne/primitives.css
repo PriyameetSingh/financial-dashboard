@@ -242,12 +242,44 @@
   overflow: hidden;
 }
 
+/* The fill defaults to the accent, so a plain meter is the tenant's colour. A
+   caller that is drawing a QUANTITY on a scale — a deficit bar, a surplus bar —
+   sets `--ax-meter-color` to a data-viz token instead, because that is a
+   different job from "this is our brand" and the two palettes are tuned
+   separately (see the data-viz block in tokens.css). */
 .noct .ax-meter > span {
   display: block;
   height: 100%;
   border-radius: 2px;
-  background: var(--color-accent);
+  background: var(--ax-meter-color, var(--color-accent));
   width: var(--ax-meter-fill, 0%);
+}
+
+/* ── data bar ────────────────────────────────────────────────────────────────
+   A named row with its figure and a proportional bar: the shape the scheme
+   league tables use. The figure is text and therefore reads an `--ax-status-*`
+   tone (measured for text at 4.5:1); the bar is a graphical object and reads a
+   `--dv-*` token (measured as a fill at 3:1). Splitting them is deliberate — a
+   single token asked to be both ends up failing one of the two floors. */
+.noct .ax-databar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: 6px;
+}
+
+.noct .ax-databar-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.noct .ax-databar-value {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 /* ── stepper ────────────────────────────────────────────────────────────── */
@@ -1381,6 +1413,25 @@
   background-size: 100% 1px;
 }
 
+/* A section whose contents were written by an agent, marked with the AI accent
+   on its inline start. Same reasoning as the assistant button below: the reader
+   is being told where the machine-written material begins, and that is a
+   property of the product rather than of the tenant, so it does not follow the
+   brand. The edge is paired with a visible label at every call site — an accent
+   alone would be saying it in colour only. */
+.noct .ax-ai-section {
+  box-shadow: inset 2px 0 0 var(--ax-ai-accent);
+  padding-inline-start: var(--space-4);
+}
+
+.noct .ax-ai-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-ai-accent);
+}
+
 /* The assistant's floating button. It carries the AI accent, which is the one
    thing on the frame that is deliberately not the tenant's brand — "a machine
    wrote this" is a property of the product, not of the organization. */
@@ -1506,7 +1557,37 @@
 
 /* The same three as a tinted chip: the borrowed ActionCard treatment, expressed
    as tokens. Never a flat grey — the guide's own instruction — and never a fill
-   the text cannot be read on. */
+   the text cannot be read on.
+
+   THE CHIP NEEDS ITS OWN FOREGROUND, which is not obvious and is why the first
+   version of these classes failed the audit. `--ax-status-critical` is measured
+   against the PAGE, where it is a comfortable 5.6:1. A chip does not put it on
+   the page: it puts it on an 18% tint of ITSELF, which lifts the background
+   toward the text and takes the pair to 3.7:1. The tint that makes the chip
+   readable as a chip is the same tint that makes its label unreadable.
+
+   So the label reads a separate token, solved against the composited chip
+   background rather than against the ground — and against BOTH chip
+   backgrounds, since a chip may sit on the page or on a card and the card is the
+   harder of the two on dark, the page on light. Worst case in each theme:
+   4.80:1 dark, 4.82:1 light.
+
+   Same rule as everywhere else in this file: a value validated against one
+   background tells you nothing about another. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-chip-critical-fg: #cd99a8;
+  --ax-chip-warning-fg: #cba274;
+  --ax-chip-ok-fg: #77b5ae;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-chip-critical-fg: #a2273c;
+  --ax-chip-warning-fg: #7b5000;
+  --ax-chip-ok-fg: #186257;
+}
 .noct .ax-chip {
   display: inline-flex;
   align-items: center;
@@ -1521,17 +1602,17 @@
 
 .noct .ax-chip-critical {
   background: color-mix(in srgb, var(--ax-status-critical) 18%, transparent);
-  color: var(--ax-status-critical);
+  color: var(--ax-chip-critical-fg);
 }
 
 .noct .ax-chip-warning {
   background: color-mix(in srgb, var(--ax-status-warning) 18%, transparent);
-  color: var(--ax-status-warning);
+  color: var(--ax-chip-warning-fg);
 }
 
 .noct .ax-chip-ok {
   background: color-mix(in srgb, var(--ax-status-ok) 18%, transparent);
-  color: var(--ax-status-ok);
+  color: var(--ax-chip-ok-fg);
 }
 
 /* ── priority, encoded by shape as well as colour ────────────────────────────

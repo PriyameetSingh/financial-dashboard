@@ -78,6 +78,11 @@ const RESKINNED = [
   { path: "app/login/", gate: "A" },
   { path: "app/auth/", gate: "A" },
   { path: "src/lib/myTasksPendingBadges.ts", gate: "A" },
+
+  // ── Reskin Gate B — the Command Centre ────────────────────────────────────
+  { path: "components/CommandCentre.tsx", gate: "B" },
+  { path: "app/dashboard/", gate: "B" },
+  { path: "app/command-centre/", gate: "B" },
 ];
 
 /**

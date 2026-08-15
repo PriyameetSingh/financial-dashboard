@@ -165,6 +165,35 @@ const SURFACES = [
     ],
   },
   {
+    name: "command centre (reskin B)",
+    path: "/dashboard",
+    authenticated: true,
+    /*
+     * Read as `demo`, the seeded tenant that HAS schemes, meetings and action
+     * items. `odisha` has none, so this screen renders its empty states there —
+     * every league table, every meter, every status tone absent. It went green
+     * on the first run for exactly that reason, having drawn nothing this gate
+     * changed. An audit of an empty screen is not an audit.
+     */
+    tenant: "demo",
+    /*
+     * The scheme league tables. Waiting for a bar rather than for the stat tiles
+     * matters: the tiles render from a skeleton before any data arrives, so a
+     * tile-based wait would audit the loading state and call the screen clean.
+     * A meter only exists once the dashboard fetch has resolved.
+     *
+     * Not scoped with `axeInclude` — unlike the Gate A shell audit, the whole
+     * page is in this tranche, and the frame around it is already green.
+     */
+    readySelector: ".noct .ax-meter",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -311,10 +340,10 @@ watchdog.unref();
  * check-http-smoke uses it: tenant resolution reads the Host header, and
  * `fetch` treats `host` as forbidden and drops it silently.
  */
-function getOnce(path) {
+function getOnce(path, host = HOST) {
   return new Promise((resolve, reject) => {
     const req = request(
-      { hostname: "127.0.0.1", port: PORT, path: `${BASE_PATH}${path}`, method: "GET", headers: { host: HOST } },
+      { hostname: "127.0.0.1", port: PORT, path: `${BASE_PATH}${path}`, method: "GET", headers: { host } },
       (res) => {
         let body = "";
         res.setEncoding("utf8");
@@ -328,11 +357,11 @@ function getOnce(path) {
   });
 }
 
-async function get(path) {
+async function get(path, host = HOST) {
   let lastError;
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
-      return await getOnce(path);
+      return await getOnce(path, host);
     } catch (error) {
       lastError = error;
       await sleep(1000 * (attempt + 1));
@@ -341,8 +370,18 @@ async function get(path) {
   throw lastError;
 }
 
-async function mintSession() {
-  const res = await get("/api/dev/session?tenant=odisha");
+/**
+ * A session for one dev tenant.
+ *
+ * Parameterised because the two seeded tenants hold different data, and an audit
+ * of an empty screen is not an audit. `odisha` carries the entitlements the
+ * admin surfaces need; `demo` is the one with schemes, meetings and action items
+ * on it, so the screens whose whole subject is data have to be read as that
+ * tenant or they render their empty states and go green having drawn nothing.
+ */
+async function mintSession(tenant = "odisha") {
+  const host = tenant === "odisha" ? HOST : `${tenant}.airawat.test`;
+  const res = await get(`/api/dev/session?tenant=${tenant}`, host);
   let body;
   try {
     body = JSON.parse(res.body);
@@ -351,7 +390,7 @@ async function mintSession() {
   }
   if (res.status !== 200 || !body.minted) {
     throw new Error(
-      `could not mint an odisha session (${res.status} ${res.body.slice(0, 160)}). ` +
+      `could not mint a ${tenant} session (${res.status} ${res.body.slice(0, 160)}). ` +
         `Is the dev database migrated and seeded?`,
     );
   }
@@ -485,7 +524,13 @@ async function auditWizard(context, axeSource, viewport) {
 
 async function main() {
   console.log(`  · booting next dev on :${PORT}`);
-  const cookie = await mintSession();
+  // One session per tenant any surface asks for, minted up front so a failure
+  // here reads as "the database is not seeded" rather than as a page fault
+  // halfway through the run.
+  const tenants = [...new Set(SURFACES.filter((s) => s.authenticated).map((s) => s.tenant ?? "odisha"))];
+  const sessions = Object.fromEntries(
+    await Promise.all(tenants.map(async (tenant) => [tenant, await mintSession(tenant)])),
+  );
 
   const axeSource = readFileSync(require.resolve("axe-core"), "utf8");
 
@@ -497,7 +542,7 @@ async function main() {
   const browser = await chromium.launch({
     executablePath: CHROMIUM,
     args: [
-      `--host-resolver-rules=MAP ${HOST} 127.0.0.1`,
+      `--host-resolver-rules=MAP *.airawat.test 127.0.0.1`,
       // This environment exports HTTPS_PROXY for outbound traffic, and Chromium
       // honours it. Without these two, requests for the tenant hostname go to
       // the proxy, which knows nothing about it: the HTML document happened to
@@ -510,19 +555,30 @@ async function main() {
     ],
   });
 
-  // Two contexts, not one. A public surface must be audited by a visitor with no
-  // session — that is who reads it — and sharing one cookie jar would quietly
-  // audit a signed-in variant of a page that is supposed to work signed-out.
-  const signedIn = await browser.newContext();
-  await signedIn.addCookies([
-    { name: cookie.name, value: cookie.value, domain: HOST, path: "/", httpOnly: true, sameSite: "Lax" },
-  ]);
+  // Separate contexts, not one. A public surface must be audited by a visitor
+  // with no session — that is who reads it — and sharing one cookie jar would
+  // quietly audit a signed-in variant of a page that is supposed to work signed
+  // out. The per-tenant split is the same argument: one jar would carry
+  // whichever tenant signed in last, and a cross-tenant cookie is the one thing
+  // this product must never treat as ordinary.
+  const contexts = new Map();
+  for (const [tenant, jar] of Object.entries(sessions)) {
+    const host = tenant === "odisha" ? HOST : `${tenant}.airawat.test`;
+    const context = await browser.newContext();
+    await context.addCookies([
+      { name: jar.name, value: jar.value, domain: host, path: "/", httpOnly: true, sameSite: "Lax" },
+    ]);
+    contexts.set(tenant, { context, host });
+  }
   const anonymous = await browser.newContext();
 
   try {
     for (const surface of SURFACES) {
       console.log(`  · ${surface.name}`);
-      const context = surface.authenticated ? signedIn : anonymous;
+      const tenant = surface.tenant ?? "odisha";
+      const signedIn = contexts.get(tenant);
+      const context = surface.authenticated ? signedIn.context : anonymous;
+      const host = surface.authenticated ? signedIn.host : HOST;
 
       for (const view of surface.views) {
         const label = `${surface.name} — ${view.name}`;
@@ -538,7 +594,7 @@ async function main() {
           }, view.theme);
         }
 
-        const url = `http://${HOST}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
+        const url = `http://${host}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
         // `load` rather than `networkidle`: the dev server holds a hot-reload
         // socket open for the life of the page, so "idle" is not a state it
         // reliably reaches. The readiness selector below is the real signal.
