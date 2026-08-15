@@ -18,6 +18,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CATEGORICAL, CHART_AXIS, CHART_GRID, CHART_REFERENCE_LINE } from "@/src/lib/chart-tokens";
 
 type SchemeFilter =
   | "all"
@@ -311,20 +312,20 @@ function tierFromScore(score: number | null): EfficiencyTier {
 function tierBarClass(tier: EfficiencyTier): string {
   switch (tier) {
     case "efficient":
-      return "bg-emerald-600 dark:bg-emerald-500";
+      return "ax-fill-ok";
     case "balanced":
-      return "bg-amber-500 dark:bg-amber-500";
+      return "ax-fill-warning";
     case "inefficient":
-      return "bg-rose-600 dark:bg-rose-500";
+      return "ax-fill-critical";
     default:
-      return "bg-rose-500/80";
+      return "ax-fill-critical opacity-80";
   }
 }
 
 function costTierValueClass(tier: CostCard["tier"]): string {
-  if (tier === "good") return "text-emerald-600 dark:text-emerald-400";
-  if (tier === "mid") return "text-amber-600 dark:text-amber-400";
-  return "text-rose-600 dark:text-rose-400";
+  if (tier === "good") return "ax-tone-ok";
+  if (tier === "mid") return "ax-tone-warning";
+  return "ax-tone-critical";
 }
 
 function formatExpenditureCr(value: number | null): string {
@@ -354,9 +355,9 @@ type ScatterPoint = {
 
 function scatterColor(score: number | null): string {
   const t = tierFromScore(score);
-  if (t === "efficient") return "#059669";
-  if (t === "balanced") return "#f59e0b";
-  return "#e11d48";
+  if (t === "efficient") return "var(--ax-status-ok)";
+  if (t === "balanced") return "var(--ax-status-warning)";
+  return "var(--ax-status-critical)";
 }
 
 export default function ExecutionEfficiencyClient() {
@@ -477,7 +478,7 @@ export default function ExecutionEfficiencyClient() {
                 className={[
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                   active
-                    ? "border-[var(--sidebar-active-bg)] bg-[var(--sidebar-active-bg)] text-[var(--bg-card)] dark:text-white"
+                    ? "ax-accent-panel"
                     : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:border-[var(--text-muted)]/40 hover:text-[var(--text-primary)]",
                 ].join(" ")}
               >
@@ -497,15 +498,15 @@ export default function ExecutionEfficiencyClient() {
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-[var(--text-muted)]">
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-600" aria-hidden />
+                <span className="ax-fill-ok size-2 rounded-full" aria-hidden />
                 Efficient (Score ≥ 1.2)
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-amber-500" aria-hidden />
+                <span className="ax-fill-warning size-2 rounded-full" aria-hidden />
                 Balanced (Score 0.8 – 1.2)
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-rose-600" aria-hidden />
+                <span className="ax-fill-critical size-2 rounded-full" aria-hidden />
                 Inefficient (Score &lt; 0.8)
               </span>
             </div>
@@ -515,25 +516,25 @@ export default function ExecutionEfficiencyClient() {
             <div className="pointer-events-none absolute left-12 right-4 top-10 z-10 grid h-[calc(100%-4.5rem)] grid-cols-2 grid-rows-2 gap-0 text-[10px] font-medium leading-snug text-[var(--text-muted)]">
               <div className="flex items-start justify-start pr-2 pt-0">
                 <span className="inline-flex max-w-[9rem] items-start gap-1">
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0 text-amber-600" aria-hidden />
+                  <TriangleAlert className="ax-tone-warning mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>High Spend Low Progress</span>
                 </span>
               </div>
               <div className="flex items-start justify-end pl-2 pt-0 text-right">
                 <span className="inline-flex max-w-[9rem] flex-row-reverse items-start gap-1">
-                  <Star className="mt-0.5 size-3 shrink-0 text-emerald-600" aria-hidden />
+                  <Star className="ax-tone-ok mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>High Spend High Progress</span>
                 </span>
               </div>
               <div className="flex items-end justify-start pr-2 pb-0">
                 <span className="inline-flex max-w-[9rem] items-start gap-1">
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0 text-amber-600" aria-hidden />
+                  <TriangleAlert className="ax-tone-warning mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>Low Spend Low Progress</span>
                 </span>
               </div>
               <div className="flex items-end justify-end pl-2 pb-0 text-right">
                 <span className="inline-flex max-w-[9rem] flex-row-reverse items-start gap-1">
-                  <Star className="mt-0.5 size-3 shrink-0 text-emerald-600" aria-hidden />
+                  <Star className="ax-tone-ok mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>Low Spend High Progress</span>
                 </span>
               </div>
@@ -541,7 +542,7 @@ export default function ExecutionEfficiencyClient() {
 
             <ResponsiveContainer width="100%" height={380}>
               <ScatterChart margin={{ top: 16, right: 24, bottom: 36, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.6} />
                 <XAxis
                   type="number"
                   dataKey="physicalPct"
@@ -549,8 +550,8 @@ export default function ExecutionEfficiencyClient() {
                   unit="%"
                   domain={[0, 105]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-                  label={{ value: "Physical Progress (%)", position: "bottom", offset: 18, fill: "var(--text-muted)", fontSize: 12 }}
+                  tick={{ fontSize: 11, fill: CHART_AXIS }}
+                  label={{ value: "Physical Progress (%)", position: "bottom", offset: 18, fill: CHART_AXIS, fontSize: 12 }}
                 />
                 <YAxis
                   type="number"
@@ -559,18 +560,18 @@ export default function ExecutionEfficiencyClient() {
                   unit="%"
                   domain={[0, 105]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 11, fill: CHART_AXIS }}
                   label={{
                     value: "Financial (%)",
                     angle: -90,
                     position: "insideLeft",
                     offset: 10,
-                    fill: "var(--text-muted)",
+                    fill: CHART_AXIS,
                     fontSize: 12,
                   }}
                 />
-                <ReferenceLine x={50} stroke="#94a3b8" strokeDasharray="4 4" strokeOpacity={0.7} />
-                <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="4 4" strokeOpacity={0.7} />
+                <ReferenceLine x={50} stroke={CHART_REFERENCE_LINE} strokeDasharray="4 4" strokeOpacity={0.7} />
+                <ReferenceLine y={50} stroke={CHART_REFERENCE_LINE} strokeDasharray="4 4" strokeOpacity={0.7} />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
@@ -590,7 +591,7 @@ export default function ExecutionEfficiencyClient() {
                     );
                   }}
                 />
-                <Scatter data={scatterData} fill="#8884d8">
+                <Scatter data={scatterData} fill={CATEGORICAL[0]}>
                   {scatterData.map((entry) => (
                     <Cell key={entry.key} fill={entry.fill} />
                   ))}
@@ -678,7 +679,7 @@ export default function ExecutionEfficiencyClient() {
                         <div className="flex min-w-[140px] flex-col gap-1">
                           <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--bg-primary)]">
                             <div
-                              className="h-full rounded-full bg-zinc-600 dark:bg-zinc-400"
+                              className="ax-fill-muted h-full rounded-full"
                               style={{ width: `${Math.min(100, row.financialPct)}%` }}
                             />
                           </div>
@@ -707,9 +708,9 @@ export default function ExecutionEfficiencyClient() {
                           <span
                             className={[
                               "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums",
-                              row.tier === "efficient" && "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
-                              row.tier === "balanced" && "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-                              row.tier === "inefficient" && "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200",
+                              row.tier === "efficient" && "ax-chip ax-chip-ok",
+                              row.tier === "balanced" && "ax-chip ax-chip-warning",
+                              row.tier === "inefficient" && "ax-chip ax-chip-critical",
                             ]
                               .filter(Boolean)
                               .join(" ")}
@@ -746,20 +747,20 @@ export default function ExecutionEfficiencyClient() {
 
         <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg ax-chip ax-chip-warning">
               <Lightbulb className="size-5" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Execution Risk Insights</h2>
+              <h2 className="text-sm font-bold">Execution Risk Insights</h2>
               <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-[var(--text-muted)]">
                 {RISK_INSIGHTS.map((item) => (
                   <li key={item.id} className="flex gap-3">
                     <span
                       className={[
                         "mt-2 size-2 shrink-0 rounded-full",
-                        item.tier === "risk" && "bg-rose-500",
-                        item.tier === "good" && "bg-emerald-500",
-                        item.tier === "watch" && "bg-amber-400",
+                        item.tier === "risk" && "ax-fill-critical",
+                        item.tier === "good" && "ax-fill-ok",
+                        item.tier === "watch" && "ax-fill-warning",
                       ]
                         .filter(Boolean)
                         .join(" ")}

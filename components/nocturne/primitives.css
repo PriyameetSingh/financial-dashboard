@@ -1654,3 +1654,65 @@
   background: var(--ax-status-ok);
   border-radius: 50%;
 }
+
+/* ── the modal scrim ─────────────────────────────────────────────────────────
+   The dim behind a drawer or dialog. `bg-black/40` is wrong in one theme by
+   construction: on a light page a black wash is what you want, on a dark one it
+   barely reads and the panel above it floats on nothing. Mixing the GROUND with
+   black instead means the scrim deepens whichever ground it is covering.
+
+   Not `opacity` on a wrapper — that composites everything nested inside it, which
+   is how a card body once dimmed its own buttons to 3.54:1. */
+.noct .ax-scrim {
+  background: color-mix(in srgb, var(--color-bg) 35%, rgba(0, 0, 0, 0.55));
+}
+
+/* ── data-viz and status as FILLS ────────────────────────────────────────────
+   Class forms of the two palettes, for the places that paint a swatch rather
+   than text: a legend dot, a category stripe, a progress bar.
+
+   They exist because the alternative is an inline `style` at every one of the
+   forty-odd call sites the board screens have, and an inline style is where a
+   raw colour goes to hide from the lint. A class is greppable.
+
+   `ax-dv-*` is categorical — for values with no order, like a sponsorship type.
+   `ax-fill-*` is status — for values that mean good/bad, and which therefore also
+   carry a word wherever they appear. */
+.noct .ax-dv-bg-1 { background: var(--dv-cat-1); }
+.noct .ax-dv-bg-2 { background: var(--dv-cat-2); }
+.noct .ax-dv-bg-3 { background: var(--dv-cat-3); }
+.noct .ax-dv-bg-4 { background: var(--dv-cat-4); }
+.noct .ax-dv-bg-5 { background: var(--dv-cat-5); }
+.noct .ax-dv-bg-6 { background: var(--dv-cat-6); }
+
+.noct .ax-fill-critical { background: var(--ax-status-critical); }
+.noct .ax-fill-warning { background: var(--ax-status-warning); }
+.noct .ax-fill-ok { background: var(--ax-status-ok); }
+.noct .ax-fill-muted { background: var(--ax-muted); }
+
+/* A tinted panel in the accent, for the one card on a screen that is the answer
+   rather than one of the options. Text stays `--color-text`, so the emphasis is
+   the ground rather than a coloured foreground that has to be re-measured. */
+.noct .ax-accent-panel {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  border-radius: var(--radius-md);
+}
+
+/* Quiet text as a class, so a call site that already composes classNames does
+   not have to reach for an inline style to get the one token every quiet label
+   on the product uses. */
+.noct .ax-tone-muted { color: var(--ax-muted); }
+
+.noct .ax-tone-accent { color: var(--ax-accent-text); }
+.noct .ax-fill-accent { background: var(--color-accent); }
+
+/* Outlined status buttons, following the design system's own button treatment
+   rather than the solid green/red fills these screens used. A solid status fill
+   forces white text onto a mid-tone hue, which is where "save" buttons at 3:1
+   come from; outlining keeps the label on the page's own foreground and lets the
+   tone do its job on the border. */
+.noct .btn-success { color: var(--ax-status-ok); border-color: var(--ax-status-ok); }
+.noct .btn-success:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-ok) 12%, transparent); }
+.noct .btn-danger { color: var(--ax-status-critical); border-color: var(--ax-status-critical); }
+.noct .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-critical) 12%, transparent); }

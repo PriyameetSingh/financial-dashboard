@@ -138,42 +138,42 @@ const COLUMN_UI: Record<
     range: ">15% behind Q target",
     // Clean header with only top accent border
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-red-700 dark:text-red-300",
-    countBg: "bg-red-800 text-white dark:bg-red-700",
-    barFill: "bg-red-600",
+    headerText: "ax-tone-critical",
+    countBg: "ax-chip ax-chip-critical",
+    barFill: "ax-fill-critical",
     // High-contrast badge
-    badgeBg: "bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-200",
+    badgeBg: "ax-chip ax-chip-critical",
     badgeText: "", // uses combined with badgeBg
     // Neutral column border, cards get left accent
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-red-600 dark:border-l-red-500",
+    accentBorder: "border-l-[var(--ax-status-critical)]",
   },
   at_risk: {
     title: "AT RISK",
     range: "5-15% behind Q target",
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-amber-700 dark:text-amber-300",
-    countBg: "bg-amber-700 text-white dark:bg-amber-600",
-    barFill: "bg-amber-600",
-    badgeBg: "bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-200",
+    headerText: "ax-tone-warning",
+    countBg: "ax-chip ax-chip-warning",
+    barFill: "ax-fill-warning",
+    badgeBg: "ax-chip ax-chip-warning",
     badgeText: "",
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-amber-600 dark:border-l-amber-500",
+    accentBorder: "border-l-[var(--ax-status-warning)]",
   },
   on_track: {
     title: "ON TRACK",
     range: "Within 5% of Q target",
     headerBg: "bg-[var(--bg-card)]",
-    headerText: "text-emerald-700 dark:text-emerald-300",
-    countBg: "bg-emerald-800 text-white dark:bg-emerald-700",
-    barFill: "bg-emerald-600",
-    badgeBg: "bg-emerald-100 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-200",
+    headerText: "ax-tone-ok",
+    countBg: "ax-chip ax-chip-ok",
+    barFill: "ax-fill-ok",
+    badgeBg: "ax-chip ax-chip-ok",
     badgeText: "",
     border: "border-[var(--border)]",
     cardBorder: "border-[var(--border)]",
-    accentBorder: "border-l-emerald-600 dark:border-l-emerald-500",
+    accentBorder: "border-l-[var(--ax-status-ok)]",
   },
 };
 
@@ -412,7 +412,7 @@ export default function SchemesBoardClient() {
 
           <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-sm sm:gap-6 sm:px-6">
             <div className="flex items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -430,7 +430,7 @@ export default function SchemesBoardClient() {
             <div className="hidden h-8 w-px bg-[var(--border)] sm:block" />
 
             <div className="flex items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -448,7 +448,7 @@ export default function SchemesBoardClient() {
             <div className="hidden h-8 w-px bg-[var(--border)] sm:block" />
 
             <div className="flex items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
@@ -488,13 +488,13 @@ export default function SchemesBoardClient() {
                   <div
                     key={q.label}
                     className={`flex flex-col items-center rounded-lg py-2 transition-all ${isCurrent
-                      ? "bg-blue-600 text-white shadow-lg ring-2 ring-blue-400"
-                      : "bg-white dark:bg-slate-800 border border-[var(--border)] text-slate-900 dark:text-slate-100"
+                      ? "ax-accent-panel shadow-lg"
+                      : "card"
                       }`}
                   >
                     <span className="text-[10px] font-bold uppercase">{q.label}</span>
                     <span className="text-sm font-black">{q.pct}%</span>
-                    <span className={`text-[9px] font-bold ${isCurrent ? "text-blue-100" : "text-slate-600 dark:text-slate-300"}`}>
+                    <span className={`text-[9px] font-bold ${isCurrent ? "" : "ax-tone-muted"}`}>
                       Σ {q.cum}%
                     </span>
                   </div>
@@ -510,15 +510,15 @@ export default function SchemesBoardClient() {
             </h3>
             <div className="mt-3 space-y-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-emerald-500 shadow-sm" />
+                <span className="size-2.5 rounded-full ax-fill-ok shadow-sm" />
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">On Track: &lt;5% behind target</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-amber-500 shadow-sm" />
+                <span className="size-2.5 rounded-full ax-fill-warning shadow-sm" />
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">At Risk: 5–15% behind target</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <span className="size-2.5 rounded-full bg-red-500 shadow-sm" />
+                <span className="size-2.5 rounded-full ax-fill-critical shadow-sm" />
                 <span className="text-[11px] font-bold text-[var(--text-primary)]">Critical: &gt;15% behind target</span>
               </div>
             </div>
@@ -532,7 +532,7 @@ export default function SchemesBoardClient() {
             <div className="mt-3 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="size-2.5 rounded-full bg-sky-500 shadow-sm" />
+                  <span className="size-2.5 rounded-full ax-dv-bg-1 shadow-sm" />
                   <span className="text-[11px] font-bold text-[var(--text-primary)]">State Sector (SS)</span>
                 </div>
                 <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
@@ -541,7 +541,7 @@ export default function SchemesBoardClient() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="size-2.5 rounded-full bg-orange-500 shadow-sm" />
+                  <span className="size-2.5 rounded-full ax-dv-bg-3 shadow-sm" />
                   <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
                 </div>
                 <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
@@ -550,7 +550,7 @@ export default function SchemesBoardClient() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="size-2.5 rounded-full bg-purple-500 shadow-sm" />
+                  <span className="size-2.5 rounded-full ax-dv-bg-2 shadow-sm" />
                   <span className="text-[11px] font-bold text-[var(--text-primary)]">Central Sector (CS)</span>
                 </div>
                 <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
@@ -561,8 +561,8 @@ export default function SchemesBoardClient() {
           </div>
 
           {/* Current Status Card */}
-          <div className="rounded-xl border-2 border-blue-500 bg-blue-700 p-4 shadow-lg">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white">
+          <div className="ax-accent-panel p-4 shadow-lg">
+            <h3 className="ax-stat-kicker font-bold tracking-widest">
               Current Target Status
             </h3>
             {(() => {
@@ -570,10 +570,10 @@ export default function SchemesBoardClient() {
               const cumulative = getCumulativeTargetUpToQuarter(q) * 100;
               return (
                 <div className="mt-2">
-                  <p className="text-2xl font-black text-white">
+                  <p className="text-2xl font-black">
                     Q{q} Target: {cumulative}%
                   </p>
-                  <p className="mt-1 text-[11px] font-bold text-blue-100">
+                  <p className="ax-stat-foot mt-1 font-bold">
                     Cumulative utilization target as of today.
                   </p>
                 </div>
@@ -632,6 +632,7 @@ export default function SchemesBoardClient() {
               </div>
 
               <select
+                aria-label="Filter schemes by sponsorship type"
                 value={selectedSponsorship}
                 onChange={(e) => setSelectedSponsorship(e.target.value as any)}
                 className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-all shadow-sm focus:outline-none cursor-pointer"
@@ -783,6 +784,8 @@ export default function SchemesBoardClient() {
                               </span>
                               <button
                                 type="button"
+                                aria-expanded={expanded}
+                                aria-label={`${expanded ? "Hide" : "Show"} quarterly progress for ${entry.scheme}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleExpand(entry.id);
@@ -808,7 +811,7 @@ export default function SchemesBoardClient() {
 
                             <div className="mt-2 flex items-center gap-2">
                               <span
-                                className={`mt-0.5 size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
+                                className={`mt-0.5 size-2 shrink-0 rounded-full ${kind === "SS" ? "ax-dv-bg-1" : kind === "CS" ? "ax-dv-bg-2" : "ax-dv-bg-3"
                                   }`}
                                 title={
                                   kind === "SS"
@@ -843,14 +846,14 @@ export default function SchemesBoardClient() {
 
                                 const accentColors = isBehind
                                   ? isOnTrack
-                                    ? { border: "border-l-amber-600 dark:border-l-amber-500", text: "text-amber-950 dark:text-amber-200" }
-                                    : { border: "border-l-red-600 dark:border-l-red-500", text: "text-red-900 dark:text-red-200" }
-                                  : { border: "border-l-emerald-600 dark:border-l-emerald-500", text: "text-emerald-900 dark:text-emerald-200" };
+                                    ? { border: "border-l-[var(--ax-status-warning)]", text: "ax-tone-warning" }
+                                    : { border: "border-l-[var(--ax-status-critical)]", text: "ax-tone-critical" }
+                                  : { border: "border-l-[var(--ax-status-ok)]", text: "ax-tone-ok" };
                                 const barColor = isBehind
-                                  ? isOnTrack ? "bg-amber-500" : "bg-red-500"
-                                  : "bg-emerald-500";
+                                  ? isOnTrack ? "ax-fill-warning" : "ax-fill-critical"
+                                  : "ax-fill-ok";
                                 const varianceColor = qp.variancePct >= 0
-                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  ? "ax-tone-ok"
                                   : accentColors.text;
 
                                 return (
@@ -901,10 +904,10 @@ export default function SchemesBoardClient() {
                                         >
                                           <span
                                             className={`mt-1 size-1.5 shrink-0 rounded-full ${kind === "SS"
-                                              ? "bg-sky-400"
+                                              ? "ax-dv-bg-1"
                                               : kind === "CS"
-                                                ? "bg-purple-400"
-                                                : "bg-orange-400"
+                                                ? "ax-dv-bg-2"
+                                                : "ax-dv-bg-3"
                                               }`}
                                           />
                                           <div className="min-w-0 flex-1">
@@ -1007,10 +1010,10 @@ export default function SchemesBoardClient() {
 
                     const barFill =
                       bucket === "critical"
-                        ? "bg-red-500"
+                        ? "ax-fill-critical"
                         : bucket === "at_risk"
-                          ? "bg-amber-500"
-                          : "bg-emerald-500";
+                          ? "ax-fill-warning"
+                          : "ax-fill-ok";
 
                     return (
                       <Fragment key={entry.id}>
@@ -1033,7 +1036,7 @@ export default function SchemesBoardClient() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "bg-sky-500" : kind === "CS" ? "bg-purple-500" : "bg-orange-500"
+                                className={`size-2 shrink-0 rounded-full ${kind === "SS" ? "ax-dv-bg-1" : kind === "CS" ? "ax-dv-bg-2" : "ax-dv-bg-3"
                                   }`}
                                 title={
                                   kind === "SS"
@@ -1100,14 +1103,14 @@ export default function SchemesBoardClient() {
 
                                     const accentColors = isBehind
                                       ? isOnTrack
-                                        ? { border: "border-l-amber-600 dark:border-l-amber-500", text: "text-amber-950 dark:text-amber-200" }
-                                        : { border: "border-l-red-600 dark:border-l-red-500", text: "text-red-900 dark:text-red-200" }
-                                      : { border: "border-l-emerald-600 dark:border-l-emerald-500", text: "text-emerald-900 dark:text-emerald-200" };
+                                        ? { border: "border-l-[var(--ax-status-warning)]", text: "ax-tone-warning" }
+                                        : { border: "border-l-[var(--ax-status-critical)]", text: "ax-tone-critical" }
+                                      : { border: "border-l-[var(--ax-status-ok)]", text: "ax-tone-ok" };
                                     const barColor = isBehind
-                                      ? isOnTrack ? "bg-amber-500" : "bg-red-500"
-                                      : "bg-emerald-500";
+                                      ? isOnTrack ? "ax-fill-warning" : "ax-fill-critical"
+                                      : "ax-fill-ok";
                                     const varianceColor = qp.variancePct >= 0
-                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      ? "ax-tone-ok"
                                       : accentColors.text;
 
                                     return (
@@ -1159,10 +1162,10 @@ export default function SchemesBoardClient() {
                                           >
                                             <span
                                               className={`mt-1.5 size-1.5 shrink-0 rounded-full ${kind === "SS"
-                                                ? "bg-sky-400"
+                                                ? "ax-dv-bg-1"
                                                 : kind === "CS"
-                                                  ? "bg-purple-400"
-                                                  : "bg-orange-400"
+                                                  ? "ax-dv-bg-2"
+                                                  : "ax-dv-bg-3"
                                                 }`}
                                             />
                                             <div className="min-w-0 flex-1">

@@ -54,7 +54,7 @@ const horizontalLinePlugin = {
         ctx.beginPath();
         ctx.setLineDash([5, 5]);
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#95a5a6"; // gray dashed line
+        ctx.strokeStyle = "var(--ax-muted)"; // gray dashed line
         ctx.moveTo(chartArea.left, yPixel);
         ctx.lineTo(chartArea.right, yPixel);
         ctx.stroke();
@@ -107,11 +107,11 @@ function appendSupplementToEntry(
 type SubmitIntent = "draft" | "submitted" | "supplement" | "revise" | "so";
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted_this_week: "#2ecc71",
-  submitted_pending: "#2ecc71",
-  draft: "#3498db",
-  overdue: "#e74c3c",
-  not_started: "#95a5a6",
+  submitted_this_week: "var(--ax-status-ok)",
+  submitted_pending: "var(--ax-status-ok)",
+  draft: "var(--color-accent)",
+  overdue: "var(--ax-status-critical)",
+  not_started: "var(--ax-muted)",
 };
 
 /** IFMS vs effective budget — same basis as main-panel utilisation; used for sidebar bars. */
@@ -123,15 +123,15 @@ function getSubschemeBudgetProgress(sub: {
   const eff = sub.effectiveBudgetCr ?? sub.annualBudget ?? 0;
   const ifms = sub.ifms ?? 0;
   if (eff <= 0) {
-    return { fillPct: 0, color: "#95a5a6" };
+    return { fillPct: 0, color: "var(--ax-muted)" };
   }
   const ratio = ifms / eff;
   const fillPct = Math.min(100, ratio * 100);
   let color: string;
-  if (ratio > 1) color = "#e74c3c";
-  else if (ratio >= 0.85) color = "#f39c12";
-  else if (ratio >= 0.5) color = "#2ecc71";
-  else color = "#3498db";
+  if (ratio > 1) color = "var(--ax-status-critical)";
+  else if (ratio >= 0.85) color = "var(--ax-status-warning)";
+  else if (ratio >= 0.5) color = "var(--ax-status-ok)";
+  else color = "var(--color-accent)";
   return { fillPct, color };
 }
 
@@ -686,7 +686,7 @@ export default function SchemeEntryPage() {
       {
         label: "IFMS Actual",
         data: activeHistory.map(h => h.ifms),
-        backgroundColor: "rgba(46, 204, 113, 0.8)",
+        backgroundColor: "color-mix(in srgb, var(--ax-status-ok) 80%, transparent)",
         borderRadius: 4,
       }
     ]
@@ -741,7 +741,7 @@ export default function SchemeEntryPage() {
                     <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{entry.scheme}</span>
                     <span
                       className="flex-shrink-0 w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: STATUS_COLORS[entry.status] || '#95a5a6' }}
+                      style={{ backgroundColor: STATUS_COLORS[entry.status] || 'var(--ax-muted)' }}
                     />
                   </button>
                   {isActive && hasSubs && (
@@ -786,8 +786,8 @@ export default function SchemeEntryPage() {
           {/* ALERTS */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
             {alertInfo && (
-              <div className={`px-4 py-3 rounded-lg shadow-lg border text-sm flex items-center gap-2 transition-all ${alertInfo.type === 'error' ? 'bg-[rgba(200,30,30,0.1)] border-[#f8b4b4] text-[#e74c3c]' :
-                alertInfo.type === 'success' ? 'bg-[rgba(46,204,113,0.1)] border-[#b0e8ce] text-[#2ecc71]' :
+              <div className={`px-4 py-3 rounded-lg shadow-lg border text-sm flex items-center gap-2 transition-all ${alertInfo.type === 'error' ? 'bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] border-[var(--ax-status-critical)] ax-tone-critical' :
+                alertInfo.type === 'success' ? 'bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] border-[var(--ax-status-ok)] ax-tone-ok' :
                   'bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-primary)]'
                 }`}>
                 <span>{alertInfo.message}</span>
@@ -817,7 +817,7 @@ export default function SchemeEntryPage() {
                           <button
                             key={sub.code}
                             onClick={() => applySubscheme(sub.code, selected)}
-                            className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition ${sub.code === selectedSubschemeCode ? 'bg-[var(--bg-hover)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border)]'}`}
+                            className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition ${sub.code === selectedSubschemeCode ? 'bg-[var(--bg-hover)]' : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border)]'}`}
                           >
                             {sub.code}
                           </button>
@@ -859,7 +859,7 @@ export default function SchemeEntryPage() {
 
                     {/* Revise Form */}
                     {revisingBudget && (
-                      <div className="mb-5 p-4 rounded-lg bg-[rgba(0,0,0,0.02)] border border-[var(--border)]">
+                      <div className="mb-5 p-4 rounded-lg bg-[color-mix(in_srgb,var(--color-text)_4%,transparent)] border border-[var(--border)]">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Revise Budget Estimate</h3>
                           <button onClick={() => setRevisingBudget(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">Cancel</button>
@@ -897,14 +897,14 @@ export default function SchemeEntryPage() {
                       </div>
                       <div>
                         <div className="text-xs text-[var(--text-muted)] mb-1">Supplementary</div>
-                        <div className={`text-2xl font-semibold ${activeTotalSupplementCr > 0 ? 'text-[#2ecc71]' : activeTotalSupplementCr < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-primary)]'}`}>
+                        <div className={`text-2xl font-semibold ${activeTotalSupplementCr > 0 ? 'ax-tone-ok' : activeTotalSupplementCr < 0 ? 'ax-tone-critical' : 'text-[var(--text-primary)]'}`}>
                           {activeTotalSupplementCr > 0 ? '+' : ''}{activeTotalSupplementCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                         </div>
                         <div className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">{supCountText}</div>
                       </div>
                       <div className="bg-[var(--bg-content-surface)] border border-[var(--border)] p-3 rounded-lg flex flex-col justify-center shadow-sm">
-                        <div className="text-[11px] text-[#3498db] font-semibold mb-1 uppercase tracking-wider">Effective</div>
-                        <div className="text-2xl font-bold text-[#3498db]">₹ {activeEffectiveBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                        <div className="text-[11px] ax-tone-accent font-semibold mb-1 uppercase tracking-wider">Effective</div>
+                        <div className="text-2xl font-bold ax-tone-accent">₹ {activeEffectiveBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                       </div>
                     </div>
 
@@ -925,7 +925,7 @@ export default function SchemeEntryPage() {
                                   )}
                                 </div>
                               </div>
-                              <div className={`text-sm font-bold ${sup.amountCr > 0 ? 'text-[#2ecc71]' : 'text-[#e74c3c]'}`}>
+                              <div className={`text-sm font-bold ${sup.amountCr > 0 ? 'ax-tone-ok' : 'ax-tone-critical'}`}>
                                 {sup.amountCr > 0 ? '+' : ''}{sup.amountCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                               </div>
                             </div>
@@ -968,7 +968,7 @@ export default function SchemeEntryPage() {
                             type="button"
                             disabled={isSubmitting}
                             onClick={handleAddSupplement}
-                            className="inline-flex items-center justify-center gap-2 min-h-9 min-w-[7rem] bg-[#2ecc71] hover:bg-[#27ae60] text-white font-semibold text-sm px-6 rounded-md shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#2ecc71]"
+                            className="btn btn-success min-h-9 min-w-[7rem] px-6 text-sm font-semibold disabled:cursor-not-allowed"
                           >
                             {pendingSubmit === "supplement" ? (
                               <>
@@ -1006,26 +1006,26 @@ export default function SchemeEntryPage() {
                             )}
                           </div>
                         ) : (
-                          <div className="bg-[rgba(52,152,219,0.05)] border border-[rgba(52,152,219,0.2)] p-4 rounded-lg mb-8">
-                            <div className="text-xs font-semibold text-[#2980b9] uppercase tracking-wider mb-1">Add to Sanction Amount</div>
-                            <div className="text-[10px] text-[#2980b9] mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString(tenantLocale())} Cr</div>
+                          <div className="bg-[color-mix(in_srgb,_var(--color-accent)_5%,_transparent)] border border-[color-mix(in_srgb,_var(--color-accent)_20%,_transparent)] p-4 rounded-lg mb-8">
+                            <div className="text-xs font-semibold ax-tone-accent uppercase tracking-wider mb-1">Add to Sanction Amount</div>
+                            <div className="text-[10px] ax-tone-accent mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString(tenantLocale())} Cr</div>
                             <div className="space-y-3">
                               <div className="relative">
-                                <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
+                                <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[var(--color-accent)] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
                                 {editSoValue !== "" && Number(editSoValue) !== 0 && (
-                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#2980b9]">
+                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold ax-tone-accent">
                                     → Total: ₹ {(currentSO + Number(editSoValue)).toFixed(2)} Cr
                                   </div>
                                 )}
                               </div>
-                              <input type="text" placeholder="Remarks or Reference" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoRemarks} onChange={e => setEditSoRemarks(e.target.value)} />
+                              <input type="text" placeholder="Remarks or Reference" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[var(--color-accent)] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoRemarks} onChange={e => setEditSoRemarks(e.target.value)} />
                               <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={() => setIsEditingSO(false)} className="text-xs font-medium text-[#2980b9] px-3 py-1.5 hover:bg-[rgba(52,152,219,0.1)] rounded">Cancel</button>
+                                <button onClick={() => setIsEditingSO(false)} className="text-xs font-medium ax-tone-accent px-3 py-1.5 hover:bg-[color-mix(in_srgb,_var(--color-accent)_10%,_transparent)] rounded">Cancel</button>
                                 <button
                                   type="button"
                                   onClick={handleUpdateSO}
                                   disabled={isSubmitting || !ifmsMeetingId.trim()}
-                                  className="inline-flex items-center justify-center gap-1.5 min-w-[5.25rem] text-xs font-semibold text-white bg-[#3498db] px-4 py-1.5 rounded shadow-sm hover:bg-[#2980b9] transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3498db]"
+                                  className="btn btn-primary min-w-[5.25rem] px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed"
                                 >
                                   {pendingSubmit === "so" ? (
                                     <>
@@ -1049,7 +1049,7 @@ export default function SchemeEntryPage() {
                                 <span className="font-semibold text-[var(--text-primary)]">{soPercent}% of Effective Budget</span>
                               </div>
                               <div className="h-1.5 w-full bg-[var(--bg-content-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#3498db] transition-all" style={{ width: `${Math.min(100, Number(soPercent))}%` }} />
+                                <div className="h-full ax-fill-accent transition-all" style={{ width: `${Math.min(100, Number(soPercent))}%` }} />
                               </div>
                             </div>
                             <div className="space-y-2">
@@ -1058,7 +1058,7 @@ export default function SchemeEntryPage() {
                                 <span className="font-semibold text-[var(--text-primary)]">{utilisation}% of Effective Budget</span>
                               </div>
                               <div className="h-1.5 w-full bg-[var(--bg-content-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#2ecc71] transition-all" style={{ width: `${Math.min(100, Number(utilisation))}%` }} />
+                                <div className="h-full ax-fill-ok transition-all" style={{ width: `${Math.min(100, Number(utilisation))}%` }} />
                               </div>
                             </div>
                           </div>
@@ -1070,8 +1070,8 @@ export default function SchemeEntryPage() {
                         <div className="mb-4 flex items-center justify-between">
                           <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">IFMS Spending History</h3>
                           <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded bg-[rgba(46,204,113,0.8)]" /> IFMS</span>
-                            <span className="flex items-center gap-1.5"><div className="w-3 h-0 border-t-2 border-dashed border-[#95a5a6]" /> Current SO</span>
+                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded bg-[color-mix(in_srgb,_var(--ax-status-ok)_80%,_transparent)]" /> IFMS</span>
+                            <span className="flex items-center gap-1.5"><div className="w-3 h-0 border-t-2 border-dashed border-[var(--ax-muted)]" /> Current SO</span>
                           </div>
                         </div>
                         <div className="flex-1 relative min-h-[160px]">
@@ -1088,14 +1088,14 @@ export default function SchemeEntryPage() {
                   {/* Bottom strip */}
                   <div className="bg-[var(--bg-content-surface)] border-t border-[var(--border)] p-4 flex items-center gap-6">
                     <div className="flex-1 flex items-center gap-4 bg-[var(--bg-primary)] p-2 border border-[var(--border)] rounded-lg">
-                      <div className="w-12 h-12 rounded-full border-4 border-[#2ecc71] flex items-center justify-center font-bold text-sm text-[#2ecc71]">{utilisation}%</div>
+                      <div className="w-12 h-12 rounded-full border-4 border-[var(--ax-status-ok)] flex items-center justify-center font-bold text-sm ax-tone-ok">{utilisation}%</div>
                       <div>
                         <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Utilisation</div>
                         <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{currentIFMS.toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> / ₹{activeEffectiveBudgetCr.toLocaleString(tenantLocale())}</div>
                       </div>
                     </div>
                     <div className="flex-1 flex items-center gap-4 bg-[var(--bg-primary)] p-2 border border-[var(--border)] rounded-lg">
-                      <div className="w-12 h-12 rounded-full border-4 border-[#e74c3c] flex items-center justify-center font-bold text-sm text-[#e74c3c]">{lapseRisk}%</div>
+                      <div className="w-12 h-12 rounded-full border-4 border-[var(--ax-status-critical)] flex items-center justify-center font-bold text-sm ax-tone-critical">{lapseRisk}%</div>
                       <div>
                         <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Lapse Risk</div>
                         <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{(activeEffectiveBudgetCr - currentIFMS).toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> remaining</div>
@@ -1135,7 +1135,7 @@ export default function SchemeEntryPage() {
                         <label className="block text-xs font-medium text-[var(--text-muted)] mb-2 flex justify-between items-center">
                           <span>Add IFMS Expenditure (₹ Cr)</span>
                           {ifmsValue !== "" && Number(ifmsValue) !== 0 && (
-                            <span className="text-[10px] font-bold text-[#2ecc71]">
+                            <span className="text-[10px] font-bold ax-tone-ok">
                               New Total: ₹ {(currentIFMS + Number(ifmsValue)).toFixed(2)} Cr
                             </span>
                           )}
@@ -1186,13 +1186,13 @@ export default function SchemeEntryPage() {
                             return (
                               <Fragment key={`${h.id}-${h.asOfDate}-${idx}`}>
                                 <tr
-                                  className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[rgba(46,204,113,0.04)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
+                                  className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[color-mix(in_srgb,_var(--ax-status-ok)_4%,_transparent)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
                                 >
                                   <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
                                   <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
                                     {new Date(h.asOfDate).toLocaleDateString(tenantLocale(), { day: '2-digit', month: 'short', year: 'numeric' })}
                                     {isLatest && (
-                                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
+                                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider ax-tone-ok bg-[color-mix(in_srgb,_var(--ax-status-ok)_12%,_transparent)] px-1.5 py-0.5 rounded">Latest</span>
                                     )}
                                   </td>
                                   <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
@@ -1205,7 +1205,7 @@ export default function SchemeEntryPage() {
                                     {delta === null ? (
                                       <span className="text-[var(--text-muted)] text-xs">—</span>
                                     ) : (
-                                      <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
+                                      <span className={`text-xs font-semibold ${delta > 0 ? 'ax-tone-ok' : delta < 0 ? 'ax-tone-critical' : 'text-[var(--text-muted)]'}`}>
                                         {delta > 0 ? '+' : ''}{delta.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                       </span>
                                     )}
@@ -1227,7 +1227,7 @@ export default function SchemeEntryPage() {
                                           onClick={() => requestDeleteSnapshot(h)}
                                           disabled={isSubmitting || isEditing}
                                           title="Remove entry"
-                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] text-[#e74c3c] hover:bg-[rgba(231,76,60,0.08)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] ax-tone-critical hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                                         </button>
@@ -1310,7 +1310,7 @@ export default function SchemeEntryPage() {
               </div>
 
               {/* FOOTER BAR */}
-              <div className="h-16 border-t border-[var(--border)] bg-[var(--bg-content-surface)] px-8 flex items-center justify-between shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] z-10 relative">
+              <div className="h-16 border-t border-[var(--border)] bg-[var(--bg-content-surface)] px-8 flex items-center justify-between shrink-0 z-10 relative">
                 <div className="text-xs text-[var(--text-muted)]">
                   Last updated {selected.lastUpdated} by <span className="font-medium text-[var(--text-primary)]">{selected.submitter || "Finance Desk"}</span>
                 </div>
@@ -1320,7 +1320,7 @@ export default function SchemeEntryPage() {
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting || !ifmsMeetingId.trim()}
-                    className="inline-flex items-center justify-center gap-2 min-w-[7.5rem] px-5 py-2 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-primary)] hover:bg-[rgba(0,0,0,0.02)] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 min-w-[7.5rem] px-5 py-2 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--color-text)_4%,transparent)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {pendingSubmit === "draft" ? (
                       <>
@@ -1364,8 +1364,8 @@ export default function SchemeEntryPage() {
           )}
           {!loading && loadError && !selected && (
             <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-[var(--bg-document)]">
-              <div className="max-w-md w-full bg-[var(--bg-surface)] border border-[#f8b4b4] rounded-xl p-6 shadow-sm">
-                <h3 className="text-[#c81e1e] font-semibold mb-2">Initialization Error</h3>
+              <div className="max-w-md w-full bg-[var(--bg-surface)] border border-[var(--ax-status-critical)] rounded-xl p-6 shadow-sm">
+                <h3 className="ax-tone-critical font-semibold mb-2">Initialization Error</h3>
                 <p className="text-sm text-[var(--text-muted)]">{loadError}</p>
                 <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded text-sm font-medium hover:bg-[var(--bg-surface)] transition">Retry</button>
               </div>

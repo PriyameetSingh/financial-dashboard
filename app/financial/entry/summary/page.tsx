@@ -148,12 +148,12 @@ export default function SummaryEntryPage() {
       <div className="px-4 py-6 sm:px-6 sm:py-8">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6 shadow-lg space-y-6">
           {success && (
-            <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+            <div className="rounded-xl border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-success)]">
               FY budget summary saved.
             </div>
           )}
           {error && (
-            <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.1)] px-4 py-3 text-sm text-[var(--alert-critical)]">
+            <div className="rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-critical)]">
               {error}
             </div>
           )}
@@ -265,7 +265,7 @@ export default function SummaryEntryPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded-xl bg-[var(--text-primary)] px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              className="btn btn-primary px-6 py-2.5 text-sm font-semibold"
               disabled={isSubmitting || loading}
               onClick={handleSave}
             >

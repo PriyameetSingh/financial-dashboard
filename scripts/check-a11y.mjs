@@ -46,7 +46,7 @@
  */
 import { spawn } from "node:child_process";
 import { request } from "node:http";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdirSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -194,6 +194,49 @@ const SURFACES = [
     ],
   },
   {
+    name: "financial overview (reskin C)",
+    path: "/financial",
+    authenticated: true,
+    // `demo` for the same reason the command centre uses it: this screen is a
+    // chart and two tables, and odisha has nothing to draw.
+    tenant: "demo",
+    // A rendered chart, not a card: the surface is server-rendered, so a card
+    // selector would match before Recharts had laid anything out and the audit
+    // would measure an empty box where the series are.
+    readySelector: ".recharts-surface",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
+    name: "kpi monitoring (reskin C)",
+    path: "/kpis",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct .ax-chip",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
+    name: "scheme board (reskin C)",
+    path: "/financial/schemes-board",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct .ax-chip",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -278,6 +321,8 @@ const createdTenantIds = [];
 const createdTokenHashes = [];
 
 const failures = [];
+/** Screenshot paths, reported at the end so a reviewer knows where to look. */
+const shots = [];
 
 // `detached` so the whole process group can be signalled. `npx next dev` is a
 // shim that forks the real server; killing only the shim leaves the server
@@ -424,7 +469,39 @@ function describe(violation) {
  * one. Shared by the static surfaces and the wizard driver so both report the
  * same way and neither can quietly skip the recording step.
  */
+/**
+ * Where the screenshots land. Gitignored: they are a review artefact, not source,
+ * and a binary per view per commit is not something a repository should carry.
+ *
+ * Taken from the SAME run that does the audit, deliberately. A screenshot from a
+ * separate pass proves the page looked like that in some other browser at some
+ * other moment; taken here, it is a picture of exactly the document axe just
+ * measured, in the theme and viewport it was measured in.
+ */
+const SHOT_DIR = process.env.A11Y_SHOT_DIR ?? ".a11y-screenshots";
+
+function shotPath(label) {
+  const slug = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `${SHOT_DIR}/${slug}.png`;
+}
+
 async function audit(page, axeSource, label, note, include) {
+  // Before the axe script tag goes in, so the picture is of the page rather than
+  // of the page plus an injected library.
+  try {
+    mkdirSync(SHOT_DIR, { recursive: true });
+    // label + note, not label alone: the wizard audits nine steps under one
+    // label, and naming by label collapsed all nine onto a single file.
+    const path = shotPath(`${label} ${note}`);
+    await page.screenshot({ path, fullPage: true });
+    shots.push(path);
+  } catch (error) {
+    // A screenshot failure must not fail the audit — it is evidence, not a check.
+    console.log(`    · (screenshot failed: ${error.message})`);
+  }
   await page.addScriptTag({ content: axeSource });
   const result = await page.evaluate(
     async ({ tags, include }) =>
@@ -681,7 +758,8 @@ main()
       SURFACES.reduce((sum, surface) => sum + surface.views.length, 0) + WIZARD_STEPS.length + 1;
     console.log(
       `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — ` +
-        `${SURFACES.length + 1} surfaces, ${views} views, wizard driven end to end)`,
+        `${SURFACES.length + 1} surfaces, ${views} views, wizard driven end to end; ` +
+        `${shots.length} screenshots in ${SHOT_DIR}/)`,
     );
     process.exit(0);
   })

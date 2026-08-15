@@ -8,15 +8,15 @@ import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement, requestKp
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const ESCALATION_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  on_track: { label: "On track", color: "var(--alert-success)", bg: "rgba(0,200,83,0.08)", border: "rgba(0,200,83,0.35)" },
-  needs_coordination: { label: "Needs coordination", color: "var(--alert-warning)", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.35)" },
-  needs_acs_decision: { label: "Needs ACS decision", color: "var(--alert-critical)", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.4)" },
+  on_track: { label: "On track", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 35%, transparent)" },
+  needs_coordination: { label: "Needs coordination", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 35%, transparent)" },
+  needs_acs_decision: { label: "Needs ACS decision", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 10%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
 };
 
 const COMPLETION_LABEL: Record<KpiCompletionStatus, { label: string; color: string; bg: string; border: string }> = {
-  completed: { label: "Completed", color: "var(--alert-success)", bg: "rgba(0,200,83,0.12)", border: "rgba(0,200,83,0.4)" },
-  pending_review: { label: "Completion Pending", color: "var(--alert-warning)", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.4)" },
-  rejected: { label: "Completion Rejected", color: "var(--alert-critical)", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.4)" },
+  completed: { label: "Completed", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
+  pending_review: { label: "Completion Pending", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
+  rejected: { label: "Completion Rejected", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
 };
 
 function isKpiBelowTarget(s: KPISubmission): boolean {
@@ -37,10 +37,10 @@ type Props = {
 
 function WorkflowBadge({ status }: { status: KpiMeasurementHistory["workflowStatus"] }) {
   const config: Record<KpiMeasurementHistory["workflowStatus"], { label: string; color: string; bg: string; border: string }> = {
-    draft: { label: "Draft", color: "var(--text-muted)", bg: "rgba(136,136,136,0.16)", border: "rgba(136,136,136,0.32)" },
-    submitted_pending: { label: "Pending Review", color: "var(--alert-warning)", bg: "rgba(255,184,0,0.12)", border: "rgba(255,184,0,0.4)" },
-    approved: { label: "Approved", color: "var(--alert-success)", bg: "rgba(0,200,83,0.12)", border: "rgba(0,200,83,0.4)" },
-    rejected: { label: "Rejected", color: "var(--alert-critical)", bg: "rgba(255,59,59,0.12)", border: "rgba(255,59,59,0.4)" },
+    draft: { label: "Draft", color: "var(--ax-muted)", bg: "color-mix(in srgb, var(--color-text) 12%, transparent)", border: "color-mix(in srgb, var(--color-text) 26%, transparent)" },
+    submitted_pending: { label: "Pending Review", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
+    approved: { label: "Approved", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
+    rejected: { label: "Rejected", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
   };
   const c = config[status];
   return (
@@ -224,7 +224,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+      className="ax-scrim fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
@@ -310,7 +310,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
         <div className="flex-1 overflow-y-auto p-6">
           {/* Reviewer approval panel */}
           {canReview && (
-            <div className="mb-6 rounded-2xl border border-[rgba(255,184,0,0.4)] bg-[rgba(255,184,0,0.06)] p-4">
+            <div className="mb-6 rounded-2xl border border-[color-mix(in_srgb,_var(--ax-status-warning)_40%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_6%,_transparent)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--alert-warning)]">Awaiting Your Review</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Submitted on {latestPending.measuredAt}
@@ -378,7 +378,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                       type="button"
                       disabled={reviewBusy || !rejectNote.trim()}
                       onClick={handleReject}
-                      className="rounded-xl border border-[rgba(255,59,59,0.5)] bg-[rgba(255,59,59,0.1)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
                     >
                       {reviewBusy ? "Working..." : "Confirm Reject"}
                     </button>
@@ -494,7 +494,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                           setCompleteBusy(false);
                         }
                       }}
-                      className="rounded-xl border border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.08)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
                     >
                       Reject Completion
                     </button>
@@ -597,7 +597,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     </div>
 
                     {m.reviewNote && (
-                      <div className="mt-2 rounded-xl border border-[rgba(255,59,59,0.3)] bg-[rgba(255,59,59,0.06)] px-3 py-2 text-xs text-[var(--alert-critical)]">
+                      <div className="mt-2 rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_30%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] px-3 py-2 text-xs text-[var(--alert-critical)]">
                         <span className="font-semibold uppercase tracking-[0.2em]">Rejection note: </span>
                         {m.reviewNote}
                       </div>

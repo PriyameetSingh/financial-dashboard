@@ -83,6 +83,12 @@ const RESKINNED = [
   { path: "components/CommandCentre.tsx", gate: "B" },
   { path: "app/dashboard/", gate: "B" },
   { path: "app/command-centre/", gate: "B" },
+
+  // ── Reskin Gate C — financial and KPI screens, the first real charts ───────
+  { path: "app/financial/", gate: "C" },
+  { path: "app/kpis/", gate: "C" },
+  { path: "components/kpis/", gate: "C" },
+  { path: "src/lib/chart-tokens.ts", gate: "C" },
 ];
 
 /**
@@ -101,7 +107,7 @@ const ALLOW = [
   {
     path: "components/nocturne/primitives.css",
     reason:
-      "extension tokens and the two literals documented in place: the section band's fixed foreground, and the ::backdrop tint that cannot inherit a custom property",
+      "extension tokens, plus the literals documented in place: the section band's fixed foreground, the ::backdrop tint that cannot inherit a custom property, and the black the scrim mixes the ground into",
   },
   {
     path: "components/nocturne/theme.ts",

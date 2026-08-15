@@ -24,15 +24,31 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  CATEGORICAL,
+  CHART_AXIS,
+  CHART_GRID,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+} from "@/src/lib/chart-tokens";
 
 function formatCurrency(value: number) {
   const { currencySymbol, currencyUnit } = tenantConfig();
   return `${currencySymbol}${value.toFixed(1)} ${currencyUnit}`;
 }
 
-const CHART_BUDGET = "#1e3a8a";
-const CHART_IFMS = "#0d9488";
-const CHART_SO = "#ea580c";
+/*
+ * The three series are taken from the front of the categorical palette, in
+ * order, because that is where the measured separation is: the set is tuned so
+ * adjacent entries are the furthest apart under protanopia and deuteranopia.
+ * The literals these replace (#1e3a8a, #0d9488, #ea580c) were a navy, a teal and
+ * an orange picked to look right on a white page — none of them followed the
+ * tenant's palette, and the teal and orange sat close enough under deuteranopia
+ * to be worth checking, which nobody had.
+ */
+const CHART_BUDGET = CATEGORICAL[0];
+const CHART_IFMS = CATEGORICAL[1];
+const CHART_SO = CATEGORICAL[2];
 
 type FundingBarRow = {
   name: string;
@@ -366,13 +382,15 @@ export default function FinancialOverviewClient({
     if (!activeHeadSummary?.rows.length) return [];
     const byCode = new Map(activeHeadSummary.rows.map((r) => [r.headCode, r]));
     const codes = ["STATE_FINANCE_COMMISSION", "UNION_FINANCE_COMMISSION", "OTHER_TRANSFER_STAMP_DUTY"] as const;
-    const dotClass = ["bg-emerald-500", "bg-orange-500", "bg-amber-400"] as const;
+    // Three legend dots for three transfer heads — a categorical set, so it
+    // reads the categorical palette rather than three Tailwind greens.
+    const dotStyle = [CATEGORICAL[0], CATEGORICAL[1], CATEGORICAL[2]] as const;
     return codes.map((code, idx) => {
       const r = byCode.get(code);
       return {
         label: r?.label ?? code,
         ifmsCr: r?.ifmsExpenditureCr ?? 0,
-        dotClass: dotClass[idx],
+        dotColor: dotStyle[idx],
       };
     });
   }, [activeHeadSummary]);
@@ -554,10 +572,10 @@ export default function FinancialOverviewClient({
                     margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
                     barCategoryGap="18%"
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
                     <XAxis
                       type="number"
-                      tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                      tick={{ fontSize: 11, fill: CHART_AXIS }}
                       tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                     />
                     <YAxis
@@ -568,11 +586,8 @@ export default function FinancialOverviewClient({
                       tick={{ fontSize: 11, fill: "var(--text-primary)" }}
                     />
                     <Tooltip
-                      contentStyle={{
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                        fontSize: 12,
-                      }}
+                      contentStyle={CHART_TOOLTIP_STYLE}
+                      labelStyle={CHART_TOOLTIP_LABEL_STYLE}
                       formatter={(value, name) => [`${Number(value ?? 0).toFixed(1)} Cr`, String(name ?? "")]}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -620,7 +635,7 @@ export default function FinancialOverviewClient({
                   {schemeGaugeRows.map((row) => (
                     <li key={row.shortLabel} className="flex items-center justify-between gap-2">
                       <span className="truncate text-[var(--text-muted)]">{row.shortLabel}</span>
-                      <span className="shrink-0 font-medium tabular-nums text-rose-600 dark:text-rose-400">
+                      <span className="ax-tone-critical shrink-0 font-medium tabular-nums">
                         {row.pct.toFixed(1)}%
                       </span>
                     </li>
@@ -635,7 +650,10 @@ export default function FinancialOverviewClient({
                   {transferDistributionRows.map((row) => (
                     <li key={row.label} className="flex items-center justify-between gap-3 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${row.dotClass}`} />
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: row.dotColor }}
+                        />
                         <span className="truncate text-[var(--text-primary)]">{row.label}</span>
                       </span>
                       <span className="shrink-0 tabular-nums text-[var(--text-secondary)]">{formatCurrency(row.ifmsCr)}</span>
@@ -651,20 +669,20 @@ export default function FinancialOverviewClient({
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-secondary)]">
             <span className="font-medium text-[var(--text-primary)]">Summary heads (FA) movement</span> vs baseline{" "}
             <span className="font-mono">{resolvedDates.baseline}</span>: IFMS{" "}
-            <span className={totalsDelta.ifms >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+            <span className={totalsDelta.ifms >= 0 ? "ax-tone-ok" : "ax-tone-critical"}>
               {totalsDelta.ifms >= 0 ? "+" : ""}
               {totalsDelta.ifms.toFixed(1)} Cr
             </span>
             {" · "}
             SO{" "}
-            <span className={totalsDelta.so >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+            <span className={totalsDelta.so >= 0 ? "ax-tone-ok" : "ax-tone-critical"}>
               {totalsDelta.so >= 0 ? "+" : ""}
               {totalsDelta.so.toFixed(1)} Cr
             </span>
             {" · "}
             Budget{" "}
             <span
-              className={totalsDelta.budget >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}
+              className={totalsDelta.budget >= 0 ? "ax-tone-ok" : "ax-tone-critical"}
             >
               {totalsDelta.budget >= 0 ? "+" : ""}
               {totalsDelta.budget.toFixed(1)} Cr
@@ -685,21 +703,18 @@ export default function FinancialOverviewClient({
             <div className="mt-3 h-56 w-full">
               <ResponsiveContainer width="100%" height={224}>
                 <LineChart data={ifmsMeetingTrendChartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tick={{ fontSize: 10, fill: CHART_AXIS }}
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tick={{ fontSize: 10, fill: CHART_AXIS }}
                     tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                   />
                   <Tooltip
-                    contentStyle={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                      fontSize: 12,
-                    }}
+                    contentStyle={CHART_TOOLTIP_STYLE}
+                    labelStyle={CHART_TOOLTIP_LABEL_STYLE}
                     labelFormatter={(label, payload) => {
                       const fullDate = (payload?.[0]?.payload as { fullDate?: string } | undefined)?.fullDate;
                       return `Date: ${fullDate ?? label}`;
@@ -723,21 +738,18 @@ export default function FinancialOverviewClient({
             <div className="mt-3 h-64 w-full">
               <ResponsiveContainer width="100%" height={256}>
                 <BarChart data={headChartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tick={{ fontSize: 10, fill: CHART_AXIS }}
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tick={{ fontSize: 10, fill: CHART_AXIS }}
                     tickFormatter={(v) => formatCurrencyCfg(Number(v), { maximumFractionDigits: 0, withUnit: false })}
                   />
                   <Tooltip
-                    contentStyle={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                      fontSize: 12,
-                    }}
+                    contentStyle={CHART_TOOLTIP_STYLE}
+                    labelStyle={CHART_TOOLTIP_LABEL_STYLE}
                     formatter={(v, name) => [`₹${Number(v ?? 0).toFixed(1)} Cr`, String(name ?? "")]}
                   />
                   <Legend />
@@ -778,7 +790,12 @@ export default function FinancialOverviewClient({
               </div>
             </div>
             {activeHeadSummary.rows.length > 0 ? (
-              <div className="mt-4 overflow-x-auto">
+              <div
+                className="mt-4 overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label="Budget head breakdown — scrolls horizontally"
+              >
                 <table className="w-full text-left text-sm">
                   <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                     <tr className="border-b border-[var(--border)]">
@@ -802,8 +819,7 @@ export default function FinancialOverviewClient({
                             <td
                               className={`py-3 pr-4 font-medium ${
                                 (cmp?.deltaIfms ?? 0) >= 0
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : "text-rose-600 dark:text-rose-400"
+                                  ? "ax-tone-ok" : "ax-tone-critical"
                               }`}
                             >
                               {cmp?.deltaIfms == null ? "—" : `${cmp.deltaIfms >= 0 ? "+" : ""}${cmp.deltaIfms.toFixed(1)}`}
@@ -819,7 +835,7 @@ export default function FinancialOverviewClient({
                       <td className="py-3 pr-4">{activeHeadSummary.totals.ifmsExpenditureCr.toFixed(1)}</td>
                       {totalsDelta && (
                         <td
-                          className={`py-3 pr-4 ${totalsDelta.ifms >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+                          className={`py-3 pr-4 ${totalsDelta.ifms >= 0 ? "ax-tone-ok" : "ax-tone-critical"}`}
                         >
                           {totalsDelta.ifms >= 0 ? "+" : ""}
                           {totalsDelta.ifms.toFixed(1)}

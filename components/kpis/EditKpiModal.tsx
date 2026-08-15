@@ -81,7 +81,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4 py-8"
+      className="ax-scrim fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-kpi-modal-title"

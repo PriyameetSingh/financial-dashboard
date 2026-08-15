@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local file uploads
 /data/
+
+# Accessibility-leg screenshots — a review artefact, regenerated on every run.
+.a11y-screenshots/

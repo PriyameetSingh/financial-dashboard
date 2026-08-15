@@ -61,10 +61,10 @@ function fmtCr(n: number): string {
 }
 
 function utilizationColor(pct: number): string {
-  if (pct > 100) return "#e74c3c";
-  if (pct >= 85) return "#f39c12";
-  if (pct >= 50) return "#2ecc71";
-  return "#3498db";
+  if (pct > 100) return "var(--ax-status-critical)";
+  if (pct >= 85) return "var(--ax-status-warning)";
+  if (pct >= 50) return "var(--ax-status-ok)";
+  return "var(--color-accent)";
 }
 
 function formatMeetingLabel(m: MeetingListItem): string {
@@ -409,8 +409,8 @@ export default function BulkEntryPage() {
     return (
       <AppShell title="Bulk Financial Entry">
         <div className="flex h-64 items-center justify-center p-8">
-          <div className="max-w-sm rounded-xl border border-[#f8b4b4] bg-[var(--bg-card)] p-6 text-center shadow-sm">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-[#e74c3c]" />
+          <div className="max-w-sm rounded-xl border border-[var(--ax-status-critical)] bg-[var(--bg-card)] p-6 text-center shadow-sm">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 ax-tone-critical" />
             <p className="text-sm text-[var(--text-muted)]">{loadError}</p>
             <button
               onClick={() => { setLoading(true); load(); }}
@@ -550,8 +550,8 @@ export default function BulkEntryPage() {
           <div
             className={`shrink-0 flex items-center gap-2 px-4 py-1.5 text-sm border-b ${
               globalMsg.type === "success"
-                ? "bg-[rgba(46,204,113,0.07)] border-[rgba(46,204,113,0.2)] text-[#27ae60]"
-                : "bg-[rgba(231,76,60,0.07)] border-[rgba(231,76,60,0.2)] text-[#c0392b]"
+                ? "bg-[color-mix(in_srgb,_var(--ax-status-ok)_7%,_transparent)] border-[color-mix(in_srgb,_var(--ax-status-ok)_20%,_transparent)] ax-tone-ok"
+                : "bg-[color-mix(in_srgb,_var(--ax-status-critical)_7%,_transparent)] border-[color-mix(in_srgb,_var(--ax-status-critical)_20%,_transparent)] ax-tone-critical"
             }`}
           >
             {globalMsg.type === "success" ? (
@@ -586,13 +586,13 @@ export default function BulkEntryPage() {
                     <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current SO (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#3498db]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-accent">
                       Add to SO (₹ Cr)
                     </th>
                     <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current IFMS (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-ok">
                       Add to IFMS (₹ Cr)
                     </th>
                     <th className="w-[90px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
@@ -604,7 +604,7 @@ export default function BulkEntryPage() {
                     <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                       Current Budget (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-warning">
                       Supplement (₹ Cr)
                     </th>
                     <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
@@ -633,11 +633,11 @@ export default function BulkEntryPage() {
                     key={row.key}
                     className={`border-b border-[var(--border)] transition-colors ${
                       isRowSuccess
-                        ? "bg-[rgba(46,204,113,0.04)]"
+                        ? "bg-[color-mix(in_srgb,_var(--ax-status-ok)_4%,_transparent)]"
                         : isRowError
-                          ? "bg-[rgba(231,76,60,0.04)]"
+                          ? "bg-[color-mix(in_srgb,_var(--ax-status-critical)_4%,_transparent)]"
                           : dirty
-                            ? "bg-[rgba(52,152,219,0.03)]"
+                            ? "bg-[color-mix(in_srgb,_var(--color-accent)_3%,_transparent)]"
                             : "hover:bg-[var(--bg-content-surface)]"
                     }`}
                   >
@@ -707,14 +707,14 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure)
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.so !== ""
-                                  ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
+                                  ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,_var(--color-accent)_6%,_transparent)] ax-tone-accent"
                                   : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure) && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error.includes("and") ? `Invalid ${tenantConfig().labels.soExpenditure} value` : status.error}
                             </p>
                           )}
@@ -738,14 +738,14 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure)
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.ifms !== ""
-                                  ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
+                                  ? "border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_6%,_transparent)] ax-tone-ok"
                                   : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure) && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error.includes("and") ? `Invalid ${tenantConfig().labels.ifmsExpenditure} value` : status.error}
                             </p>
                           )}
@@ -784,16 +784,16 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes("Supplement")
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.supplement !== ""
                                   ? Number(draft.supplement) >= 0
-                                    ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
-                                    : "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                    ? "border-[var(--ax-status-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_6%,_transparent)] ax-tone-warning"
+                                    : "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                   : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes("Supplement") && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error}
                             </p>
                           )}
@@ -811,7 +811,7 @@ export default function BulkEntryPage() {
                             className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           />
                           {isRowError && status?.error && !status.error.includes("Supplement") && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c]">{status.error}</p>
+                            <p className="mt-0.5 text-[10px] ax-tone-critical">{status.error}</p>
                           )}
                         </td>
                       </>
@@ -839,12 +839,12 @@ export default function BulkEntryPage() {
           <div className="text-xs text-[var(--text-muted)] md:max-w-2xl">
             {mode === "snapshot" ? (
               <>
-                Enter amounts to <span className="font-medium text-[#3498db]">add to SO</span> and/or{" "}
-                <span className="font-medium text-[#2ecc71]">add to IFMS</span>. Values will be added to current amounts.
+                Enter amounts to <span className="font-medium ax-tone-accent">add to SO</span> and/or{" "}
+                <span className="font-medium ax-tone-ok">add to IFMS</span>. Values will be added to current amounts.
               </>
             ) : (
               <>
-                Enter a <span className="font-medium text-[#e67e22]">supplementary amount</span>{" "}
+                Enter a <span className="font-medium ax-tone-warning">supplementary amount</span>{" "}
                 (positive or negative) to record a budget supplement for this FY. The base budget
                 remains unchanged; only the supplement is added.
               </>
@@ -853,7 +853,7 @@ export default function BulkEntryPage() {
 
           <div className="flex items-center justify-end gap-3 w-full md:w-auto">
             {dirtyRows.length > 0 && (
-              <span className="rounded-full bg-[rgba(52,152,219,0.1)] px-2.5 py-1 text-xs font-semibold text-[#2980b9]">
+              <span className="rounded-full bg-[color-mix(in_srgb,_var(--color-accent)_10%,_transparent)] px-2.5 py-1 text-xs font-semibold ax-tone-accent">
                 {dirtyRows.length} pending
               </span>
             )}

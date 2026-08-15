@@ -303,7 +303,7 @@ export default function KPIEntryPage() {
 
   const statusDot = (status: KPISubmission["status"]) => {
     if (status === "approved") return "bg-[var(--alert-success)]";
-    if (status === "submitted" || status === "submitted_pending") return "bg-[var(--alert-warning,#f59e0b)]";
+    if (status === "submitted" || status === "submitted_pending") return "ax-fill-warning";
     if (status === "draft") return "bg-[var(--text-muted)]";
     return "bg-[var(--border)]";
   };
@@ -486,7 +486,7 @@ export default function KPIEntryPage() {
                   <div className="shrink-0 flex items-center gap-2">
                     <StatusBadge status={item.status} />
                     {item.isSelfApproved && (
-                      <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                      <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_8%,_transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
                         Self-Approved
                       </span>
                     )}
@@ -495,7 +495,7 @@ export default function KPIEntryPage() {
 
                 {/* Approved-decrease warning
                 {isApproved && approvedNum != null && (
-                  <div className="rounded-xl border border-[var(--alert-warning,#f59e0b)] bg-[rgba(245,158,11,0.08)] px-4 py-3 text-xs text-[var(--alert-warning,#f59e0b)]">
+                  <div className="rounded-xl ax-chip ax-chip-warning w-full px-4 py-3 text-xs">
                     Last approved value: <strong>{approvedNum} {item.numeratorUnit || item.unit}</strong>. New numerator cannot be set lower than this.
                   </div>
                 )} */}
@@ -705,10 +705,10 @@ export default function KPIEntryPage() {
                                 className={`rounded-lg border px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] transition ${
                                   active
                                     ? value === "needs_acs_decision"
-                                      ? "border-[var(--alert-critical)] bg-[rgba(239,68,68,0.1)] text-[var(--alert-critical)]"
+                                      ? "border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] text-[var(--alert-critical)]"
                                       : value === "needs_coordination"
-                                        ? "border-[var(--alert-warning)] bg-[rgba(245,158,11,0.1)] text-[var(--alert-warning)]"
-                                        : "border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] text-[var(--alert-success)]"
+                                        ? "border-[var(--alert-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_10%,_transparent)] text-[var(--alert-warning)]"
+                                        : "border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] text-[var(--alert-success)]"
                                     : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
                                 } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
                               >
@@ -741,7 +741,7 @@ export default function KPIEntryPage() {
 
                   {/* Error message */}
                   {row.error && (
-                    <div className="mt-4 rounded-xl border border-[var(--alert-critical)] bg-[rgba(239,68,68,0.08)] px-4 py-2.5 text-xs text-[var(--alert-critical)]">
+                    <div className="mt-4 rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-2.5 text-xs text-[var(--alert-critical)]">
                       {row.error}
                     </div>
                   )}
@@ -772,14 +772,14 @@ export default function KPIEntryPage() {
                             <button
                               disabled={row.saving}
                               onClick={() => handleReviewAction(item.id, "approve")}
-                              className="rounded-xl bg-[var(--alert-success)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="btn btn-success px-5 py-2 text-xs uppercase tracking-[0.25em] disabled:cursor-not-allowed"
                             >
                               {row.saving ? "Processing…" : row.submitted ? "Approved ✓" : "Approve"}
                             </button>
                             <button
                               disabled={row.saving}
                               onClick={() => setShowRejectDialog(true)}
-                              className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Reject with Comment
                             </button>
@@ -787,7 +787,7 @@ export default function KPIEntryPage() {
                         )}
 
                         {showRejectDialog && (
-                          <div className="mt-6 space-y-3 rounded-xl border border-[var(--alert-critical)] bg-[rgba(239,68,68,0.04)] p-4">
+                          <div className="mt-6 space-y-3 rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_4%,_transparent)] p-4">
                             <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
                               Rejection note <span className="text-[var(--alert-critical)]">*</span>
                               <textarea
@@ -803,7 +803,7 @@ export default function KPIEntryPage() {
                               <button
                                 disabled={row.saving || !rejectNote.trim()}
                                 onClick={() => handleReviewAction(item.id, "reject", rejectNote.trim())}
-                                className="rounded-xl bg-[var(--alert-critical)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="btn btn-danger px-5 py-2 text-xs uppercase tracking-[0.25em] disabled:cursor-not-allowed"
                               >
                                 {row.saving ? "Processing…" : "Confirm Reject"}
                               </button>

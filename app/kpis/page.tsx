@@ -17,38 +17,43 @@ import ViewKpiModal from "@/components/kpis/ViewKpiModal";
 import EditKpiModal from "@/components/kpis/EditKpiModal";
 import { AlertTriangle, CheckCircle2, Clock, Inbox, Menu, Pencil, Search, TrendingUp, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CATEGORICAL, CHART_AXIS, CHART_GRID, CHART_TOOLTIP_LABEL_STYLE, CHART_TOOLTIP_STYLE } from "@/src/lib/chart-tokens";
 
-const CHART_KPI_PROGRESS_FILL = "#0d9488";
+/*
+ * Reskin Gate C.
+ *
+ * The two badge configs below used to carry a colour, a background and a border
+ * each, as `rgba()` literals — a fixed green, amber and red that ignored the
+ * tenant palette and, being tuned for a white page, sat at roughly 3.5:1 on a
+ * dark one. They are now `ax-chip` tones, which is the borrowed ActionCard
+ * treatment: a tint, a foreground measured against that tint, and the same
+ * label and icon as before. Nothing about which badge appears when has changed.
+ */
+const CHART_KPI_PROGRESS_FILL = CATEGORICAL[1];
 
 const MEASUREMENT_PACE_BAR: Record<string, string> = {
-  on_track: "var(--alert-success)",
-  delayed: "var(--alert-warning)",
-  overdue: "var(--alert-critical)",
-  none: "var(--text-muted)",
+  on_track: "var(--ax-status-ok)",
+  delayed: "var(--ax-status-warning)",
+  overdue: "var(--ax-status-critical)",
+  none: "var(--ax-muted)",
 };
 
 const ESCALATION_CONFIG: Record<
   KpiEscalationFlag,
-  { label: string; color: string; bg: string; border: string; icon?: boolean }
+  { label: string; chip: string; icon?: boolean }
 > = {
   on_track: {
     label: "On track",
-    color: "var(--alert-success)",
-    bg: "rgba(0,200,83,0.08)",
-    border: "rgba(0,200,83,0.35)",
+    chip: "ax-chip-ok",
   },
   needs_coordination: {
     label: "Needs coordination",
-    color: "var(--alert-warning)",
-    bg: "rgba(245,158,11,0.08)",
-    border: "rgba(245,158,11,0.35)",
+    chip: "ax-chip-warning",
     icon: true,
   },
   needs_acs_decision: {
     label: "Needs ACS decision",
-    color: "var(--alert-critical)",
-    bg: "rgba(239,68,68,0.1)",
-    border: "rgba(239,68,68,0.4)",
+    chip: "ax-chip-critical",
     icon: true,
   },
 };
@@ -58,8 +63,7 @@ function EscalationBadge({ flag }: { flag: KpiEscalationFlag | null | undefined 
   const cfg = ESCALATION_CONFIG[flag];
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.25em]"
-      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+      className={`ax-chip ${cfg.chip} text-[9px] font-semibold uppercase tracking-[0.25em]`}
     >
       {cfg.icon && <AlertTriangle className="h-2.5 w-2.5" />}
       {cfg.label}
@@ -172,37 +176,16 @@ function kpiProgressScore(s: KPISubmission): number | null {
   return null;
 }
 
-const COMPLETION_BADGE_CONFIG: Record<
-  KpiCompletionStatus,
-  { label: string; color: string; bg: string; border: string }
-> = {
-  completed: {
-    label: "Completed",
-    color: "var(--alert-success)",
-    bg: "rgba(0,200,83,0.12)",
-    border: "rgba(0,200,83,0.4)",
-  },
-  pending_review: {
-    label: "Completion Pending",
-    color: "var(--alert-warning)",
-    bg: "rgba(245,158,11,0.12)",
-    border: "rgba(245,158,11,0.4)",
-  },
-  rejected: {
-    label: "Completion Rejected",
-    color: "var(--alert-critical)",
-    bg: "rgba(239,68,68,0.12)",
-    border: "rgba(239,68,68,0.4)",
-  },
+const COMPLETION_BADGE_CONFIG: Record<KpiCompletionStatus, { label: string; chip: string }> = {
+  completed: { label: "Completed", chip: "ax-chip-ok" },
+  pending_review: { label: "Completion Pending", chip: "ax-chip-warning" },
+  rejected: { label: "Completion Rejected", chip: "ax-chip-critical" },
 };
 
 function CompletionBadge({ status }: { status: KpiCompletionStatus }) {
   const cfg = COMPLETION_BADGE_CONFIG[status];
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
-      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
-    >
+    <span className={`ax-chip ${cfg.chip} text-[9px] font-bold uppercase tracking-[0.2em]`}>
       {status === "completed" && <CheckCircle2 className="h-2.5 w-2.5" />}
       {status === "pending_review" && <Clock className="h-2.5 w-2.5" />}
       {status === "rejected" && <AlertTriangle className="h-2.5 w-2.5" />}
@@ -276,7 +259,7 @@ function KpiStatusCell({
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={item.status} />
         {item.isSelfApproved && (
-          <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+          <span className="ax-chip ax-chip-ok text-[9px] font-bold uppercase tracking-[0.2em]">
             Self-Approved
           </span>
         )}
@@ -302,7 +285,7 @@ function KpiStatusCell({
                 title="Reject completion request (note required)"
                 disabled={completeBusyId === item.id}
                 onClick={(e) => { e.stopPropagation(); onRejectCompletion(item); }}
-                className="rounded-lg border border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.08)] px-2 py-1 text-[11px] font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                className="ax-chip ax-chip-critical text-[11px] font-semibold disabled:opacity-50"
               >
                 Reject Completion
               </button>
@@ -313,7 +296,7 @@ function KpiStatusCell({
               type="button"
               title="Edit KPI"
               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-              className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[rgba(93,129,205,0.07)] hover:text-[var(--text-primary)]"
+              className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] hover:text-[var(--text-primary)]"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -522,7 +505,7 @@ function KPIsPageContent() {
   const compareBarData = useMemo(() => {
     if (!schemeAnalytics) return [];
     return [
-      { name: "Budget utilisation", pct: schemeAnalytics.budgetU, fill: "var(--accent)" },
+      { name: "Budget utilisation", pct: schemeAnalytics.budgetU, fill: CATEGORICAL[0] },
       { name: "KPI progress (est.)", pct: schemeAnalytics.kpiAvg ?? 0, fill: CHART_KPI_PROGRESS_FILL },
     ];
   }, [schemeAnalytics]);
@@ -582,7 +565,7 @@ function KPIsPageContent() {
         {/* Mobile overlay backdrop */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            className="ax-scrim fixed inset-0 z-30 md:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-hidden
           />
@@ -663,12 +646,12 @@ function KPIsPageContent() {
                     {(pendingCount > 0 || escalatedCount > 0) && (
                       <span className="flex shrink-0 items-center gap-1">
                         {pendingCount > 0 && (
-                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[rgba(245,158,11,0.15)] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--alert-warning)]">
+                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full ax-chip ax-chip-warning px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
                             {pendingCount}
                           </span>
                         )}
                         {escalatedCount > 0 && (
-                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[rgba(239,68,68,0.15)] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--alert-critical)]">
+                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full ax-chip ax-chip-critical px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
                             {escalatedCount}
                           </span>
                         )}
@@ -771,12 +754,13 @@ function KPIsPageContent() {
                   <div className="mt-4 h-52 w-full">
                     <ResponsiveContainer width="100%" height={208}>
                       <BarChart data={compareBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--text-muted)" }} unit="%" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_AXIS }} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_AXIS }} unit="%" />
                         <Tooltip
                           formatter={(v) => [`${Number(v ?? 0).toFixed(1)}%`, ""]}
-                          contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: 12 }}
+                          contentStyle={CHART_TOOLTIP_STYLE}
+                          labelStyle={CHART_TOOLTIP_LABEL_STYLE}
                         />
                         <Bar dataKey="pct" name="Value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
                           {compareBarData.map((entry, i) => (
@@ -834,7 +818,7 @@ function KPIsPageContent() {
                             className="h-full rounded-full transition-[width]"
                             style={{
                               width: `${submissionsForFocus.length ? (count / submissionsForFocus.length) * 100 : 0}%`,
-                              backgroundColor: MEASUREMENT_PACE_BAR[key] ?? "var(--text-muted)",
+                              backgroundColor: MEASUREMENT_PACE_BAR[key] ?? "var(--ax-muted)",
                             }}
                           />
                         </div>
@@ -865,7 +849,7 @@ function KPIsPageContent() {
             {/* Main content */}
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
               {actionMessage && (
-                <div className="mb-4 rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-2 text-sm text-[var(--alert-success)]">
+                <div className="ax-chip ax-chip-ok mb-4 w-full px-4 py-2 text-sm">
                   {actionMessage}
                 </div>
               )}
@@ -914,7 +898,7 @@ function KPIsPageContent() {
                           <div className="flex items-center gap-2">
                             <StatusBadge status={item.status} />
                             {item.isSelfApproved && (
-                              <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                              <span className="ax-chip ax-chip-ok text-[9px] font-bold uppercase tracking-[0.2em]">
                                 Self-Approved
                               </span>
                             )}
@@ -1030,7 +1014,7 @@ function KPIsPageContent() {
                       {filtered.map((item, index) => (
                         <tr
                           key={item.id}
-                          className={`cursor-pointer border-b border-[var(--border)] text-[var(--text-primary)] transition hover:bg-[rgba(93,129,205,0.07)] ${
+                          className={`cursor-pointer border-b border-[var(--border)] text-[var(--text-primary)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] ${
                             index % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
                           }`}
                           onClick={() => setViewKpi(item)}
