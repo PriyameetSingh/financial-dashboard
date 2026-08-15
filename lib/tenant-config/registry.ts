@@ -18,8 +18,13 @@
  * Any config write path MUST call `assertStorableKey` before persisting.
  */
 import type { TenantConfig, TenantLabels } from "./index";
+import { sanitizeRoleValues, THEME_ROLES, type ThemeOverrides } from "@/components/nocturne/theme";
+
+/** Role names a tenant may set, for telling "wrong value" from "wrong key". */
+const THEME_ROLE_NAMES: ReadonlySet<string> = new Set(THEME_ROLES.map((role) => role.token));
 
 type StorableKey =
+  | "themeOverrides"
   | "logoPublicPath"
   | "timezone"
   | "locale"
@@ -41,7 +46,23 @@ const STRING_KEYS: readonly Exclude<StorableKey, "labels">[] = [
   "reportFilenamePrefix",
 ];
 
-export const STORABLE_KEYS: readonly StorableKey[] = [...STRING_KEYS, "labels"];
+export const STORABLE_KEYS: readonly StorableKey[] = [...STRING_KEYS, "labels", "themeOverrides"];
+
+/**
+ * Storable keys whose default is "nothing stored", so an unconfigured tenant
+ * has NO row for them.
+ *
+ * Every other storable key is seeded from `ODISHA_DEFAULTS` by migration, which
+ * is what makes the seeded config a byte-identical reproduction of the
+ * defaults object. `themeOverrides` is the first key where that would be wrong:
+ * its default is the empty object, and writing an empty row would both add
+ * noise and destroy the one useful signal the row carries — whether this
+ * tenant has chosen its own colours at all.
+ *
+ * `tests/tenant-config-db-roundtrip.test.ts` reads this, so a future key of the
+ * same kind is a deliberate entry here rather than a test edited to go green.
+ */
+export const UNSET_BY_DEFAULT_KEYS: readonly StorableKey[] = ["themeOverrides"];
 
 const ENV_ONLY_KEYS = ["basePath", "keycloakRealm", "keycloakClientId", "seedAdminEmail"] as const;
 
@@ -123,6 +144,7 @@ export function validateConfigValue(key: string, value: unknown): string | null 
   }
 
   if (key === "labels") return validateLabels(value);
+  if (key === "themeOverrides") return validateThemeOverrides(value);
 
   if (typeof value !== "string") return `"${key}" must be a string`;
   if (value.trim().length === 0) return `"${key}" must not be empty`;
@@ -150,6 +172,76 @@ export function validateConfigValue(key: string, value: unknown): string | null 
     default:
       return null;
   }
+}
+
+/**
+ * The design-system configurator's write path — the live end of the injection
+ * boundary built at Gate A.
+ *
+ * These values are chosen by a tenant administrator, stored, and emitted inside
+ * a `<style>` element on every page that tenant renders. That is the whole
+ * attack surface in one sentence, and it is why validation happens HERE, on the
+ * way in, rather than at render time: a value that reaches the database is a
+ * value some future renderer may trust.
+ *
+ * The rule is allowlist-and-reject, not escape. `sanitizeRoleValues` keeps only
+ * known role names carrying plain hex colours and silently drops the rest —
+ * which is right for the generator, whose job is to never emit something
+ * dangerous. It is wrong for a write path, because an administrator who typed
+ * something wrong deserves to be told rather than to save a theme that quietly
+ * lost half its values. So: sanitize, then compare, and reject if anything was
+ * dropped, naming what.
+ *
+ * Kept in this file rather than in `components/nocturne/theme.ts` so that every
+ * config key is validated in one place, and so `validateConfigValue` remains
+ * the single answer to "may this be stored?".
+ */
+/** Keeps only known roles carrying plain hex, per theme. Never throws. */
+function sanitizeThemeOverrides(value: unknown): ThemeOverrides {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return {};
+  const record = value as Record<string, unknown>;
+  const clean: ThemeOverrides = {};
+  for (const theme of ["dark", "light"] as const) {
+    const roles = record[theme];
+    if (roles === null || typeof roles !== "object" || Array.isArray(roles)) continue;
+    const kept = sanitizeRoleValues(roles as never);
+    if (Object.keys(kept).length > 0) clean[theme] = kept;
+  }
+  return clean;
+}
+
+function validateThemeOverrides(value: unknown): string | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return `"themeOverrides" must be an object with optional "dark" and "light" keys`;
+  }
+
+  const record = value as Record<string, unknown>;
+  const themes = Object.keys(record);
+  const unexpected = themes.filter((theme) => theme !== "dark" && theme !== "light");
+  if (unexpected.length > 0) {
+    return `"themeOverrides" only accepts "dark" and "light" (got ${unexpected.map((t) => JSON.stringify(t)).join(", ")})`;
+  }
+
+  for (const theme of themes) {
+    const roles = record[theme];
+    if (roles === undefined) continue;
+    if (roles === null || typeof roles !== "object" || Array.isArray(roles)) {
+      return `"themeOverrides.${theme}" must be an object of role names to hex colours`;
+    }
+    const asRecord = roles as Record<string, unknown>;
+    const kept = sanitizeRoleValues(asRecord as never);
+    for (const role of Object.keys(asRecord)) {
+      if (!(role in kept)) {
+        const supplied = asRecord[role];
+        const reason = THEME_ROLE_NAMES.has(role)
+          ? `must be a hex colour like "#5fa8a0" (got ${JSON.stringify(supplied)})`
+          : "is not a colour a tenant may set";
+        return `"themeOverrides.${theme}.${role}" ${reason}`;
+      }
+    }
+  }
+
+  return null;
 }
 
 function isValidLocale(value: string): boolean {
@@ -238,8 +330,18 @@ export function overlayConfigEntries(
       config.labels = mergeLabels(defaults.labels, row.value);
       continue;
     }
+    if (row.key === "themeOverrides") {
+      // Re-sanitised on the way OUT as well as on the way in. The write path is
+      // the boundary that matters, but a row can also arrive from a migration,
+      // a restored backup, or a direct database edit — none of which passed
+      // through `validateConfigValue`. Sanitising here costs a few object
+      // allocations per request and removes "the database is trusted" from the
+      // list of things this has to be true for.
+      config.themeOverrides = sanitizeThemeOverrides(row.value);
+      continue;
+    }
     if (typeof row.value === "string") {
-      config[row.key] = row.value;
+      config[row.key] = row.value as TenantConfig[typeof row.key] & string;
     }
   }
   return config;

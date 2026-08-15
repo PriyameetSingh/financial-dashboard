@@ -12,6 +12,7 @@
  * Hard rule: never branch on tenant identity in code. Branch on config keys /
  * capability flags only. This file is the single source of truth for those keys.
  */
+import type { ThemeOverrides } from "@/components/nocturne/theme";
 import { activeHolder } from "./request-store";
 
 export type TenantLabels = {
@@ -54,6 +55,19 @@ export type TenantConfig = {
   reportFilenamePrefix: string;
   /** Domain labels hardwired in UI copy. */
   labels: TenantLabels;
+  /**
+   * The tenant's brand colours, as role-name → hex, per theme.
+   *
+   * Written by the design-system configurator, validated on the way in by
+   * `validateConfigValue`, and emitted by `NocturneRoot` as a scoped style
+   * block. Empty by default, which is what makes an unconfigured tenant render
+   * the platform's own palette.
+   *
+   * Not secret: these are colours, they are visible on every page the tenant
+   * renders, and they travel to the client provider like the rest of this
+   * object.
+   */
+  themeOverrides: ThemeOverrides;
   /** Keycloak realm (default mirrors KEYCLOAK_REALM env). */
   keycloakRealm: string;
   /** Keycloak client id (default mirrors KEYCLOAK_CLIENT_ID env). */
@@ -85,6 +99,9 @@ export const ODISHA_DEFAULTS: TenantConfig = {
   keycloakRealm: "",
   keycloakClientId: "",
   seedAdminEmail: "",
+  // Odisha renders the platform palette. An empty object here is what makes
+  // "unconfigured" and "byte-identical to the signed-off build" the same thing.
+  themeOverrides: {},
 };
 
 /**

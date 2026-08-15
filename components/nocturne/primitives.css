@@ -1180,3 +1180,167 @@
     flex: 1 1 auto;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Configurators (S3)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct .ax-cfg {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 28px 72px;
+  display: grid;
+  gap: var(--space-8);
+}
+
+/* Two columns: the thing being edited, and the effect of editing it. The
+   preview is sticky because the point of a live preview is to be visible while
+   you change the value it reflects. */
+.noct .ax-cfg-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 28px;
+  align-items: start;
+}
+
+.noct .ax-cfg-aside {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-cfg-group {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-cfg-group-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  background: linear-gradient(to right, var(--color-divider), transparent) no-repeat bottom / 100% 1px;
+}
+
+.noct .ax-cfg-badge {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-accent);
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  font-family: var(--font-heading);
+  font-size: 13px;
+}
+
+/* Capability rows. Presentational — the toggle is on the group, not on these. */
+.noct .ax-cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(255px, 100%), 1fr));
+  gap: 8px;
+}
+
+.noct .ax-cap {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+
+.noct .ax-cap-included {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.noct .ax-cap-id {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ax-muted);
+}
+
+.noct .ax-cap-name {
+  font-size: 12px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  margin: 4px 0;
+}
+
+.noct .ax-cap-desc {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ax-muted);
+  margin: 0;
+}
+
+/* The lifecycle dot. Always paired with a word — the legend names each state,
+   and every dot carries its status as text for assistive technology, because a
+   dot that means something only by its fill is a 1.4.1 failure. */
+.noct .ax-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.noct .ax-dot-live { background: var(--color-accent); }
+.noct .ax-dot-dev { background: var(--color-accent-300); }
+.noct .ax-dot-plan { border: 1px solid var(--color-neutral-500); }
+
+.noct .ax-legend {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+  padding: 10px 0;
+}
+
+.noct .ax-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* The theme preview pane. Its own scope root, so it renders in the tenant's
+   proposed colours while the page around it stays in the current ones. */
+.noct .ax-preview {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.noct .ax-preview-body {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.noct .ax-cfg-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .noct .ax-cfg-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .noct .ax-cfg-aside {
+    position: static;
+  }
+  .noct .ax-cfg {
+    padding: 24px 18px 56px;
+  }
+}

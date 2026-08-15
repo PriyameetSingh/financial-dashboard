@@ -1,5 +1,6 @@
 import { prismaUnscoped } from "@/lib/prisma";
 import { MODULE_CATALOG, type ModuleTier } from "@/lib/entitlements/catalog";
+import { resolveGrants, tiersReachedBy } from "@/lib/entitlements/plan";
 import { validateConfigValue } from "@/lib/tenant-config/registry";
 import { hashToken, judgeToken, looksLikeToken } from "./token";
 import {
@@ -40,21 +41,13 @@ import {
  * lists them and the wizard's launch screen says so.
  */
 
-/** The tier ladder, low to high. A token authorizes its tier and everything below. */
-const TIER_ORDER: readonly ModuleTier[] = ["core", "standard", "premium", "addon"];
-
 /**
- * Which catalog tiers a token's tier reaches.
- *
- * Mirrors `PLANS` in `lib/platform/landing.ts` — the landing page's plan table
- * and this ceiling are two views of one commercial decision, and
- * `tests/onboarding.test.ts` asserts they agree. If they drifted, a customer
- * would be sold a plan and provisioned a different one.
+ * Re-exported so the onboarding endpoints have one import site. The ceiling
+ * itself lives in `lib/entitlements/plan.ts`, shared with the menu-card
+ * configurator — the two must never be able to disagree about what a tier
+ * reaches.
  */
-export function tiersReachedBy(tier: ModuleTier): readonly ModuleTier[] {
-  const index = TIER_ORDER.indexOf(tier);
-  return index < 0 ? ["core"] : TIER_ORDER.slice(0, index + 1);
-}
+export { tiersReachedBy };
 
 export type ProvisionInput = {
   token: string;
@@ -134,28 +127,12 @@ export async function provisionTenant(input: ProvisionInput): Promise<ProvisionO
   }
 
   const tier = verdict.tier as ModuleTier;
-  const reachable = tiersReachedBy(tier);
 
-  // The tier ceiling. The client sends module codes; the server decides which
-  // of them this token is allowed to enable. A payload naming every module in
-  // the catalog gets exactly the ones its tier reaches.
-  const requested = new Set(input.draft.moduleCodes);
-  const enabled: string[] = [];
-  const denied: string[] = [];
-  for (const mod of MODULE_CATALOG) {
-    if (mod.enforcement === "roadmap") continue;
-    const withinTier = mod.tier !== null && reachable.includes(mod.tier);
-    // Core modules are always on: gating them would make the workspace
-    // unadministrable, which is the same reason the entitlement guard ignores
-    // them at request time.
-    if (mod.enforcement === "core") {
-      enabled.push(mod.code);
-      continue;
-    }
-    if (!requested.has(mod.code)) continue;
-    if (withinTier) enabled.push(mod.code);
-    else denied.push(mod.code);
-  }
+  // The tier ceiling. The client sends module codes; the server decides which of
+  // them this token is allowed to enable. The same function the menu-card
+  // configurator calls, so a tenant cannot reach through one door what the other
+  // refuses.
+  const { enabled, denied } = resolveGrants(input.draft.moduleCodes, tier);
 
   const config = configFromDraft(input.draft);
   for (const [key, value] of Object.entries(config)) {
@@ -169,7 +146,7 @@ export async function provisionTenant(input: ProvisionInput): Promise<ProvisionO
 
   const moduleRows = await prismaUnscoped.module.findMany({
     where: { code: { in: enabled } },
-    select: { id: true, code: true },
+    select: { id: true, code: true, tier: true },
   });
   if (moduleRows.length !== enabled.length) {
     // The catalog and the seeded `modules` table have drifted. Fail rather than
@@ -192,7 +169,14 @@ export async function provisionTenant(input: ProvisionInput): Promise<ProvisionO
       if (consumed.count !== 1) throw new ProvisionConflict("token");
 
       const tenant = await tx.tenant.create({
-        data: { slug: input.draft.slug, name: input.draft.orgName, status: "active" },
+        data: {
+          slug: input.draft.slug,
+          name: input.draft.orgName,
+          status: "active",
+          // The ceiling, recorded once and for good. Without this the menu-card
+          // configurator would have nothing to measure a later toggle against.
+          planTier: tier,
+        },
         select: { id: true, slug: true, name: true },
       });
 
@@ -202,11 +186,15 @@ export async function provisionTenant(input: ProvisionInput): Promise<ProvisionO
       });
 
       await tx.tenantEntitlement.createMany({
+        // `tier` on an entitlement row is the MODULE's tier, matching how the
+        // seeded tenants were written. It is not the plan — the plan is on the
+        // tenant. Writing the token's tier here would have made every row claim
+        // the same tier and quietly redefined a column other code reads.
         data: moduleRows.map((m) => ({
           tenantId: tenant.id,
           moduleId: m.id,
           enabled: true,
-          tier,
+          tier: m.tier,
         })),
       });
 

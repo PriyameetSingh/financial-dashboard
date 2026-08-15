@@ -1321,6 +1321,23 @@ model Tenant {
   slug      String       @unique
   name      String
   status    TenantStatus @default(active)
+
+  /// The commercial tier this organization bought — the CEILING on what its own
+  /// administrators may switch on.
+  ///
+  /// Phase 4 / S3. Before this column the ceiling existed only on the onboarding
+  /// token, which is spent the moment the workspace is created: a tenant admin
+  /// opening the menu card afterwards had nothing to be measured against, so
+  /// "cannot self-upgrade past the purchased tier" was unenforceable by
+  /// construction. `TenantEntitlement.tier` is NOT the ceiling and never was —
+  /// it records which tier each MODULE belongs to, so every tenant carries rows
+  /// at every tier.
+  ///
+  /// Nullable so the migration is additive; the same migration backfills every
+  /// existing row, and `planCeiling()` reads null as `core`, which is the
+  /// fail-closed direction. Set from the onboarding token at provisioning.
+  planTier ModuleTier?
+
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 

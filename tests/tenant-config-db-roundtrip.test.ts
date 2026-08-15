@@ -21,7 +21,12 @@ import {
   ODISHA_TENANT_ID,
   tenantConfig,
 } from "@/lib/tenant-config";
-import { overlayConfigEntries, STORABLE_KEYS, assertStorableKey } from "@/lib/tenant-config/registry";
+import {
+  overlayConfigEntries,
+  STORABLE_KEYS,
+  UNSET_BY_DEFAULT_KEYS,
+  assertStorableKey,
+} from "@/lib/tenant-config/registry";
 import { loadTenantConfigFromDb, withTenantContext } from "@/lib/tenant-context";
 import { formatCurrency, formatNumber, tenantLocale, tenantTimezone } from "@/lib/tenant-config/format";
 
@@ -37,12 +42,28 @@ describe("Odisha tenant row and config entries (from migration M2)", () => {
     expect(tenant!.status).toBe("active");
   });
 
-  it("every storable key has a DB row — none missing, none unknown", async () => {
+  it("every seeded storable key has a DB row — none missing, none unknown", async () => {
     const rows = await prisma.tenantConfigEntry.findMany({
       where: { tenantId: ODISHA_TENANT_ID },
       select: { key: true },
     });
-    expect(new Set(rows.map((r) => r.key))).toEqual(new Set(STORABLE_KEYS));
+    // `UNSET_BY_DEFAULT_KEYS` are storable but not seeded: their default is
+    // "nothing stored", so a row would be noise and would destroy the signal
+    // the row's absence carries. Everything else must be present, and nothing
+    // unknown may be.
+    const expected = STORABLE_KEYS.filter((key) => !UNSET_BY_DEFAULT_KEYS.includes(key));
+    expect(new Set(rows.map((r) => r.key))).toEqual(new Set(expected));
+  });
+
+  it("stores no row for a key that is unset by default", async () => {
+    // The other half of the same rule, asserted rather than implied: an
+    // unconfigured tenant has not chosen its own colours, and the absence of
+    // the row is how anything downstream knows that.
+    const rows = await prisma.tenantConfigEntry.findMany({
+      where: { tenantId: ODISHA_TENANT_ID, key: { in: [...UNSET_BY_DEFAULT_KEYS] } },
+      select: { key: true },
+    });
+    expect(rows).toEqual([]);
   });
 });
 

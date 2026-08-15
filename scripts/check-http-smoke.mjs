@@ -79,6 +79,22 @@ const SMOKE_API_KEY = "sk-smoke-do-not-echo-0123456789";
 const createdTenantIds = [];
 const createdTokenHashes = [];
 
+/** A recognisable colour, so "did it render?" is a substring search. */
+const THEME_PROBE = "#5fa8a0";
+
+/**
+ * Everything leg G mutates on the SEEDED odisha tenant, captured before the
+ * change and put back in the cleanup block. Restoring is not optional: the
+ * golden's other assertions — and the next run of this leg — depend on odisha
+ * being exactly as the seed left it.
+ */
+let odishaTenantId = null;
+let originalOdishaPlanTier = null;
+let originalOdishaEntitlements = null;
+let planTierLowered = false;
+let themeWritten = false;
+let secretWritten = false;
+
 const failures = [];
 function check(name, ok, detail) {
   if (ok) console.log(`  ✓ ${name}`);
@@ -203,6 +219,14 @@ function getOnce(path, { host, cookie, method = "GET", json } = {}) {
 /** POST helper. Onboarding is the only part of this leg that writes. */
 async function post(path, json, opts = {}) {
   return get(path, { ...opts, method: "POST", json });
+}
+
+/** PUT/DELETE helpers, for the configurator assertions. */
+async function put(path, json, opts = {}) {
+  return get(path, { ...opts, method: "PUT", json });
+}
+async function del(path, opts = {}) {
+  return get(path, { ...opts, method: "DELETE" });
 }
 
 /** Mint a session and return the Cookie header value. */
@@ -499,6 +523,185 @@ try {
     );
   }
 
+
+  // ── G. Configurators: the tenant-admin write paths ────────────────────────
+  //
+  // These are the first surfaces where a TENANT ADMINISTRATOR writes values the
+  // product then renders and enforces. Both are tested through HTTP, against the
+  // real database, because the unit tests prove the validators and these prove
+  // the path — that what a configurator writes is what a page renders, and that
+  // what it refuses never reaches one.
+  //
+  // Odisha is the only seeded tenant whose user holds MANAGE_TENANT_CONFIG, so
+  // it is the tenant driven here. Everything mutated below is captured first and
+  // restored in the cleanup block, and the restoration is itself asserted —
+  // leaving the golden tenant altered would break later runs of this very leg.
+  const odishaTenant = await db.tenant.findUnique({
+    where: { slug: "odisha" },
+    select: { id: true, planTier: true },
+  });
+  originalOdishaPlanTier = odishaTenant?.planTier ?? null;
+  odishaTenantId = odishaTenant?.id ?? null;
+
+  const beforeEntitlements = await db.tenantEntitlement.findMany({
+    where: { tenantId: odishaTenantId ?? "" },
+    select: { moduleId: true, enabled: true },
+  });
+  originalOdishaEntitlements = beforeEntitlements;
+
+  // — the design-system configurator —
+  const themeRead = await get("/api/v1/admin/tenant-config", { cookie: odisha });
+  check(
+    "a tenant admin can read the config surface",
+    themeRead.status === 200,
+    `got ${themeRead.status}`,
+  );
+
+  const savedTheme = await put(
+    "/api/v1/admin/tenant-config",
+    { key: "themeOverrides", value: { dark: { "--color-accent": THEME_PROBE } } },
+    { cookie: odisha },
+  );
+  check(
+    "a theme value written through the real API is accepted",
+    savedTheme.status === 200,
+    `got ${savedTheme.status} ${savedTheme.body.slice(0, 160)}`,
+  );
+  themeWritten = savedTheme.status === 200;
+
+  // THE RENDER PROOF. Not "the API returned 200" — the page actually paints it.
+  const themedPage = await get("/admin/design-system", { cookie: odisha });
+  check(
+    "the saved theme reaches the rendered page",
+    themedPage.status === 200 && themedPage.body.includes(`--color-accent:${THEME_PROBE}`),
+    `status ${themedPage.status}; probe ${themedPage.body.includes(THEME_PROBE) ? "present but not as a declaration" : "absent"}`,
+  );
+
+  // ATTACKS, through the same endpoint an administrator uses. Each must be
+  // refused, and — the part that matters — must not reach the rendered page.
+  const attacks = [
+    ["css breakout", { dark: { "--color-accent": "red; } body { display: none } .x {" } }],
+    ["style element escape", { dark: { "--color-accent": "</style><script>alert(1)</script>" } }],
+    ["non-role property", { dark: { "--radius-md": "#5fa8a0" } }],
+    ["unknown theme name", { sepia: { "--color-accent": "#5fa8a0" } }],
+    ["prototype pollution", JSON.parse('{"__proto__":{"polluted":true},"dark":{"--color-accent":"#5fa8a0"}}')],
+    ["url value", { dark: { "--color-bg": "url(https://evil.test/x)" } }],
+    ["non-object container", "#5fa8a0"],
+  ];
+  let refused = 0;
+  for (const [name, value] of attacks) {
+    const response = await put(
+      "/api/v1/admin/tenant-config",
+      { key: "themeOverrides", value },
+      { cookie: odisha },
+    );
+    if (response.status === 400) refused += 1;
+    else check(`theme write path refuses: ${name}`, false, `got ${response.status}`);
+  }
+  check(
+    `theme write path refuses all ${attacks.length} injection attempts`,
+    refused === attacks.length,
+    `${attacks.length - refused} were accepted`,
+  );
+
+  // After the attacks, the page still carries only the value that was legitimately
+  // saved — nothing leaked in through a rejected write.
+  const afterAttacks = await get("/admin/design-system", { cookie: odisha });
+  check(
+    "no rejected value reaches the rendered page",
+    afterAttacks.status === 200 &&
+      afterAttacks.body.includes(`--color-accent:${THEME_PROBE}`) &&
+      !afterAttacks.body.includes("display: none }") &&
+      !afterAttacks.body.includes("evil.test"),
+    "a rejected payload appeared in the rendered HTML",
+  );
+
+  // — secret keys read as presence only —
+  const savedKey = await put(
+    "/api/v1/admin/tenant-config",
+    { key: "llmApiKey", value: SMOKE_API_KEY },
+    { cookie: odisha },
+  );
+  secretWritten = savedKey.status === 200;
+  check(
+    "a secret key can be written and is not echoed by the write",
+    savedKey.status === 200 && !savedKey.body.includes(SMOKE_API_KEY),
+    savedKey.status !== 200 ? `got ${savedKey.status}` : "the key came back in the write response",
+  );
+
+  const configAfterKey = await get("/api/v1/admin/tenant-config", { cookie: odisha });
+  const keyEntry = (configAfterKey.json()?.entries ?? []).find((e) => e.key === "llmApiKey");
+  check(
+    "a secret key reads as isSet only, never as material",
+    keyEntry?.isSet === true &&
+      keyEntry?.value === null &&
+      !configAfterKey.body.includes(SMOKE_API_KEY),
+    `entry=${JSON.stringify(keyEntry)}`,
+  );
+
+  const keyOnPage = await get("/admin/design-system", { cookie: odisha });
+  check(
+    "a secret key never reaches a rendered page",
+    !keyOnPage.body.includes(SMOKE_API_KEY),
+    "the key appeared in the configurator's HTML",
+  );
+
+  // — the menu-card configurator —
+  const menuRead = await get("/api/v1/admin/entitlements", { cookie: odisha });
+  const menuBody = menuRead.json() ?? {};
+  check(
+    "the menu card reports the tenant's plan and modules",
+    menuRead.status === 200 && typeof menuBody.planTier === "string" && Array.isArray(menuBody.modules),
+    `got ${menuRead.status} ${menuRead.body.slice(0, 160)}`,
+  );
+
+  // Lower the ceiling for the duration of the next assertion. Odisha is on the
+  // top tier, so there is otherwise nothing it could be refused.
+  if (odishaTenantId) {
+    await db.tenant.update({ where: { id: odishaTenantId }, data: { planTier: "standard" } });
+    planTierLowered = true;
+  }
+
+  const overreach = await put(
+    "/api/v1/admin/entitlements",
+    // Every module in the catalog, which is the attack: a tenant admin editing
+    // the request body to ask for more than they bought.
+    { modules: menuBody.modules.map((m) => m.code) },
+    { cookie: odisha },
+  );
+  const overreachBody = overreach.json() ?? {};
+  check(
+    "a tenant admin cannot self-upgrade past their purchased tier",
+    overreach.status === 200 &&
+      Array.isArray(overreachBody.denied) &&
+      overreachBody.denied.includes("MOD-AI") &&
+      !(overreachBody.enabled ?? []).includes("MOD-AI"),
+    `enabled=${JSON.stringify(overreachBody.enabled)} denied=${JSON.stringify(overreachBody.denied)}`,
+  );
+
+  // THE ENFORCEMENT PROOF: the module the ceiling refused is not merely absent
+  // from a JSON response, it is unreachable.
+  const refusedModule = await get("/api/v1/assistant", { cookie: odisha });
+  check(
+    "a module the ceiling refused is not reachable afterwards",
+    refusedModule.status === 404,
+    `got ${refusedModule.status}`,
+  );
+
+  // And the toggle in the other direction actually changes what renders: a
+  // module that IS within the plan comes back on and its route stops 404ing.
+  const restoredWithin = await put(
+    "/api/v1/admin/entitlements",
+    { modules: ["MOD-FIN", "MOD-KPI", "MOD-SR", "MOD-MTG", "MOD-RPT", "MOD-ACT", "MOD-NOTIF", "MOD-CHLOG"] },
+    { cookie: odisha },
+  );
+  const kpiReachable = await get("/api/v1/kpis/definitions", { cookie: odisha });
+  check(
+    "a module switched on inside the plan becomes reachable",
+    restoredWithin.status === 200 && kpiReachable.status === 200,
+    `put ${restoredWithin.status}, kpis ${kpiReachable.status}`,
+  );
+
   const bled = interleaved.filter((r) =>
     r.want === "odisha" ? r.id !== meOdisha.user.dbId : r.id !== meDemo.user.dbId,
   );
@@ -515,6 +718,46 @@ try {
   // cleanup that deletes by anything broader eventually deletes a row somebody
   // else's test depends on.
   try {
+    // Put the seeded tenant back exactly as it was, before anything else.
+    if (odishaTenantId && (planTierLowered || originalOdishaPlanTier !== null)) {
+      await db.tenant.update({
+        where: { id: odishaTenantId },
+        data: { planTier: originalOdishaPlanTier },
+      });
+    }
+    if (odishaTenantId && originalOdishaEntitlements) {
+      for (const row of originalOdishaEntitlements) {
+        await db.tenantEntitlement.updateMany({
+          where: { tenantId: odishaTenantId, moduleId: row.moduleId },
+          data: { enabled: row.enabled },
+        });
+      }
+    }
+    if (odishaTenantId && themeWritten) {
+      await db.tenantConfigEntry.deleteMany({ where: { tenantId: odishaTenantId, key: "themeOverrides" } });
+    }
+    if (odishaTenantId && secretWritten) {
+      await db.tenantConfigEntry.deleteMany({ where: { tenantId: odishaTenantId, key: "llmApiKey" } });
+    }
+
+    // Assert the restoration rather than hoping for it — a silent failure here
+    // is a golden that passes today and fails tomorrow for no visible reason.
+    if (odishaTenantId) {
+      const after = await db.tenant.findUnique({
+        where: { id: odishaTenantId },
+        select: { planTier: true },
+      });
+      if (after?.planTier !== originalOdishaPlanTier) {
+        failures.push(
+          `odisha planTier was not restored (${after?.planTier} vs ${originalOdishaPlanTier})`,
+        );
+      }
+      const leftovers = await db.tenantConfigEntry.count({
+        where: { tenantId: odishaTenantId, key: { in: ["themeOverrides", "llmApiKey"] } },
+      });
+      if (leftovers > 0) failures.push(`${leftovers} configurator config row(s) left on odisha`);
+    }
+
     for (const tenantId of createdTenantIds) {
       await db.tenantConfigEntry.deleteMany({ where: { tenantId } });
       await db.tenantEntitlement.deleteMany({ where: { tenantId } });
@@ -539,5 +782,6 @@ if (failures.length > 0) {
 }
 console.log(
   "check-http-smoke: ok (proxy reached, request scope primed, entitlement gate enforced, " +
-    "no cross-tenant bleed, onboarding gated and the code single-use)",
+    "no cross-tenant bleed, onboarding gated and the code single-use, configurator " +
+    "writes render and the tier ceiling holds)",
 );

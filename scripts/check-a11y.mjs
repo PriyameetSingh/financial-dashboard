@@ -116,6 +116,33 @@ const SURFACES = [
     ],
   },
   {
+    name: "design-system configurator (S3)",
+    path: "/admin/design-system",
+    // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
+    // the odisha dev-auth user holds.
+    authenticated: true,
+    readySelector: ".noct .ax-cfg-group",
+    minMatches: 4,
+    views: [
+      { name: "desktop", query: "", viewport: DESKTOP },
+      { name: "phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
+    name: "menu-card configurator (S3)",
+    path: "/admin/menu-card",
+    authenticated: true,
+    // Its content arrives from the entitlements API after mount, so waiting for
+    // a capability card also proves the fetch resolved — a screen stuck on its
+    // loading row would otherwise audit clean.
+    readySelector: ".noct .ax-cap",
+    minMatches: 20,
+    views: [
+      { name: "desktop", query: "", viewport: DESKTOP },
+      { name: "phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
     name: "onboarding code gate (S2)",
     path: "/onboarding",
     authenticated: false,
