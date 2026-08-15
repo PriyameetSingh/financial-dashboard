@@ -1,47 +1,44 @@
 import type { Metadata } from "next";
 import NocturneRoot from "@/components/nocturne/NocturneRoot";
 import { landingLinks } from "@/lib/platform/links";
+import OnboardingWizard from "./OnboardingWizard";
 
 /**
- * S2 onboarding — PLACEHOLDER.
+ * S2 — the onboarding wizard's route.
  *
- * The wizard itself is Gate C's work and nothing of it is built yet. This route
- * exists at Gate B for one reason: the landing page's second call to action is
- * "Onboard your organization", and a public page shipping a link to a 404 is a
- * defect, not a staging step.
+ * Public, like the landing, and for the same reason: an organization that does
+ * not have a workspace yet cannot sign in to ask for one. That makes the page
+ * reachable by anyone, which is exactly why the privileged part of it — creating
+ * the tenant — is gated by an onboarding code rather than by the page being
+ * hard to find. See `lib/onboarding/token.ts` for that decision in full.
  *
- * So this is deliberately the smallest honest thing — it says what it is and
- * offers the two routes that do work. It does not sketch the wizard, does not
- * invent step names, and does not pre-empt any decision Gate C has to make: it
- * will be replaced wholesale rather than built on.
- *
- * Public, like the landing, and for the same reason — an organization that does
- * not have a workspace yet cannot sign in to ask for one.
+ * The page itself is a thin server component. It reads no session, no tenant and
+ * no database; everything the wizard needs comes from the code the visitor
+ * enters, checked over the API.
  */
 export const metadata: Metadata = {
-  title: "Onboard your organization — Airawat",
+  title: "Set up your organization — Airawat",
 };
 
-export default function OnboardingPlaceholderPage() {
+export default function OnboardingPage() {
   const links = landingLinks();
   return (
     <NocturneRoot>
       <div className="ax-lp-root">
-        <main className="ax-lp-shell" style={{ paddingBlock: 96, maxWidth: 640 }}>
-          <p className="ax-section-title">Onboarding</p>
-          <h1 className="ax-lp-h2">Guided setup is not open yet</h1>
-          <p className="ax-lp-lede">
-            The guided setup that takes an organization from its profile to a launched workspace is
-            being built. Until it opens, get in touch and we will run the configuration with you.
-          </p>
-          <div className="ax-lp-actions">
-            <a className="btn btn-primary" href={links.signIn}>
-              Sign in to an existing workspace
-            </a>
-            <a className="btn btn-secondary" href={links.platform}>
-              Back to the platform overview
+        <a href="#wizard" className="btn btn-secondary ax-skip">
+          Skip to setup
+        </a>
+        <header className="ax-lp-header">
+          <div className="ax-lp-shell ax-lp-bar">
+            <a href={links.platform} className="ax-lp-brand">
+              <span className="ax-lp-mark" aria-hidden="true" />
+              <span className="ax-lp-wordmark">Airawat</span>
+              <span className="ax-lp-suffix">Set-up</span>
             </a>
           </div>
+        </header>
+        <main id="wizard">
+          <OnboardingWizard platformHref={links.platform} />
         </main>
       </div>
     </NocturneRoot>

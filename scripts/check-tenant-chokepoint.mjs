@@ -32,6 +32,15 @@ const UNSCOPED_ALLOWLIST = [
   /^lib\/entitlements\/lookup\.ts$/, // proxy-time entitlement read (pre-scope), explicit tenantId
   /^lib\/cached-financial-metadata\.ts$/, // cross-request cache: explicit tenantId in key + where
   /^proxy\.ts$/,                     // middleware: runs before any scope exists
+  // Onboarding runs BEFORE the tenant it creates exists, so there is no scope
+  // for the chokepoint to apply and it would (correctly) refuse every query.
+  // The safety argument is different in kind from the usual one: this code
+  // never reads across tenants and never writes to an existing tenant — it
+  // writes rows whose tenantId it minted itself, in the same transaction.
+  /^lib\/onboarding\/provision\.ts$/,
+  // Reads one onboarding token by hash. No tenant exists yet; nothing tenant-
+  // scoped is touched.
+  /^app\/api\/onboarding\/check\/route\.ts$/,
   /^scripts\//,
   /^prisma\//,
   /^tests\//,
@@ -60,6 +69,15 @@ const RAW_SQL_RE = /\$(?:query|execute)Raw(?:Unsafe)?\b/;
 const CONFIG_ENTRY_RE = /\btenantConfigEntry\b/;
 const CONFIG_ENTRY_ALLOWLIST = [
   /^lib\/tenant-config\/store\.ts$/,  // the sanctioned accessor
+  // Provisioning writes the new tenant's first config rows inside the same
+  // transaction that creates the tenant, so it cannot go through `store.ts` —
+  // those functions use the scoped client, which has no scope to use yet, and
+  // routing through them would also put the writes outside the transaction,
+  // which is the one thing this operation must not do. It uses the SAME
+  // validator the admin API uses (`validateConfigValue`), so a value the wizard
+  // can write is a value the admin API would accept on a later edit, and every
+  // row it writes carries the tenantId it just created.
+  /^lib\/onboarding\/provision\.ts$/,
   /^scripts\//,
   /^prisma\//,
   /^tests\//,

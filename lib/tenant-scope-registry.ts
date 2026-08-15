@@ -24,6 +24,10 @@ import { Prisma } from "@prisma/client";
  *  - Tenant              platform infrastructure; reachable only through the resolver.
  *  - TenantConfigEntry   read only as "the resolved tenant's rows"; secret-class
  *                        keys are barred from the table by the registry guard.
+ *  - OnboardingToken     exists BEFORE any tenant does — it is the authorization
+ *                        to create one. Scoping it to a tenant is circular. It
+ *                        carries no tenant data: a hash, a tier, an expiry, and
+ *                        (after use) the id of the tenant it produced.
  *  - Module              Phase 3 catalog: closed registry of module codes
  *                        referenced literally in source (lib/entitlements/
  *                        catalog.ts); written only by migration/seed. The grants
@@ -40,6 +44,7 @@ export const GLOBAL_MODELS: ReadonlySet<string> = new Set([
   "Tenant",
   "TenantConfigEntry",
   "Module",
+  "OnboardingToken",
 ]);
 
 export const TENANT_ID_FIELD = "tenantId";

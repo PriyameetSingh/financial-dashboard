@@ -47,9 +47,11 @@
 import { spawn } from "node:child_process";
 import { request } from "node:http";
 import { readFileSync } from "node:fs";
+import { createHash, randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import { setTimeout as sleep } from "node:timers/promises";
 import { chromium } from "playwright-core";
+import { PrismaClient } from "@prisma/client";
 
 const require = createRequire(import.meta.url);
 
@@ -114,17 +116,61 @@ const SURFACES = [
     ],
   },
   {
-    name: "onboarding entry (S2 placeholder)",
+    name: "onboarding code gate (S2)",
     path: "/onboarding",
     authenticated: false,
-    readySelector: ".noct .ax-lp-root main",
+    readySelector: ".noct #onboarding-code",
     minMatches: 1,
     views: [
-      { name: "dark · desktop", query: "", viewport: DESKTOP },
-      { name: "dark · phone", query: "", viewport: PHONE },
+      { name: "desktop", query: "", viewport: DESKTOP },
+      { name: "phone", query: "", viewport: PHONE },
     ],
   },
 ];
+
+/**
+ * The wizard's eight steps, audited one at a time.
+ *
+ * Loading `/onboarding` and running axe once would audit the code gate and
+ * nothing else — the steps do not exist in the DOM until a code is accepted,
+ * and each step replaces the last. So this drives the real thing: a real code,
+ * real typing, real Continue clicks, and a real launch at the end so the
+ * confirmation screen is audited too.
+ *
+ * Every step is worth its own pass because each introduces markup the others do
+ * not have: choice cards, a colour picker, module switches, a password field, a
+ * native select, a review table.
+ */
+const WIZARD_STEPS = [
+  { name: "1 org profile", ready: "#wz-org-name" },
+  { name: "2 branding", ready: "#wz-brand-custom" },
+  { name: "3 localization", ready: "#wz-locale" },
+  { name: "4 modules", ready: "[id^=\"wz-mod-\"]" },
+  // The choice cards hide their radio visually and paint the label, so the
+  // readiness selector has to name the label — a hidden input never becomes
+  // "visible" and the wait would run to its timeout on a page that is fine.
+  { name: "5 AI setup", ready: 'label:has(input[name="wz-ai-mode"])' },
+  { name: "6 starter data", ready: 'label:has(input[name="wz-starter"])' },
+  { name: "7 people", ready: "#wz-invite-email-0" },
+  { name: "8 review", ready: ".ax-wz-review-row" },
+];
+
+/**
+ * Database access, for the onboarding wizard only.
+ *
+ * The wizard is eight screens behind an authorization gate, and auditing only
+ * the gate would leave the eight unchecked. So this leg mints a real onboarding
+ * code, drives the wizard through every step, and launches a real workspace so
+ * the final screen can be audited too — then removes what it created.
+ *
+ * Requires DATABASE_URL, which is why run-golden invokes this leg with
+ * `--env-file=.env.local`.
+ */
+const db = new PrismaClient();
+
+/** Removed in `finally`, whatever happens in between. */
+const createdTenantIds = [];
+const createdTokenHashes = [];
 
 const failures = [];
 
@@ -258,6 +304,106 @@ function describe(violation) {
   return `    [${violation.impact ?? "unknown"}] ${violation.id} — ${violation.help}\n${where}${more}\n      ${violation.helpUrl}`;
 }
 
+/**
+ * Injects axe, runs it, prints the outcome and records a failure if there is
+ * one. Shared by the static surfaces and the wizard driver so both report the
+ * same way and neither can quietly skip the recording step.
+ */
+async function audit(page, axeSource, label, note) {
+  await page.addScriptTag({ content: axeSource });
+  const result = await page.evaluate(
+    async (tags) => await window.axe.run(document, { runOnly: { type: "tag", values: tags } }),
+    TAGS,
+  );
+
+  if (result.violations.length === 0) {
+    console.log(`    ✓ ${note} — ${result.passes.length} rule checks passed, 0 violations`);
+    return true;
+  }
+  const total = result.violations.reduce((sum, v) => sum + v.nodes.length, 0);
+  console.log(`    ✗ ${note} — ${result.violations.length} violations across ${total} elements`);
+  for (const violation of result.violations) console.log(describe(violation));
+  failures.push(`${label}: ${result.violations.map((v) => v.id).join(", ")}`);
+  return false;
+}
+
+/** Mints a real onboarding code. Only the hash is stored, as in production. */
+async function mintOnboardingCode() {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token, "utf8").digest("hex");
+  createdTokenHashes.push(tokenHash);
+  await db.onboardingToken.create({
+    data: {
+      tokenHash,
+      tier: "standard",
+      label: "a11y audit",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    },
+  });
+  return token;
+}
+
+/**
+ * Walks the wizard, auditing every step and the launch screen.
+ *
+ * Runs at the phone viewport, which is the harder of the two: the step rail
+ * moves above the body, the person rows collapse to one column, and anything
+ * that overlaps only at a narrow width overlaps here.
+ */
+async function auditWizard(context, axeSource, viewport) {
+  const label = `onboarding wizard (S2) — ${viewport.width}px`;
+  const page = await context.newPage();
+  await page.setViewportSize(viewport);
+
+  const token = await mintOnboardingCode();
+  const slug = `a11y-${randomBytes(4).toString("hex")}`;
+
+  await page.goto(`http://${HOST}:${PORT}${BASE_PATH}/onboarding`, { waitUntil: "load", timeout: 120_000 });
+  // The wizard sets `data-hydrated` on mount. Before that the form is server
+  // markup: clicking "Continue" performs a native submit and reloads the page.
+  await page.locator('[data-hydrated="1"]').waitFor({ timeout: 60_000 });
+  await page.fill("#onboarding-code", token);
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  for (const [index, step] of WIZARD_STEPS.entries()) {
+    await page.locator(step.ready).first().waitFor({ timeout: 30_000 });
+
+    // Fill what the step needs before auditing, so the audit sees the screen in
+    // the state a person actually leaves it in — including an error message,
+    // which is markup nothing else on the page produces.
+    if (index === 0) {
+      await page.fill("#wz-org-name", "Accessibility Test Authority");
+      await page.fill("#wz-slug", slug);
+    }
+    if (index === 4) {
+      // Click the label, not the input: the input is visually hidden, and
+      // clicking a hidden element is exactly what a real user cannot do either.
+      await page.locator('label:has(input[name="wz-ai-mode"][value="byok"])').click();
+      await page.fill("#wz-ai-key", "sk-a11y-not-a-real-key");
+    }
+    if (index === 6) {
+      await page.fill("#wz-invite-email-0", "admin@example.test");
+    }
+
+    await audit(page, axeSource, label, `${step.name} at ${viewport.width}px`);
+
+    if (index < WIZARD_STEPS.length - 1) {
+      await page.getByRole("button", { name: "Continue" }).click();
+    }
+  }
+
+  // Launch for real, so the confirmation screen is audited rather than assumed.
+  await page.getByRole("button", { name: "Launch the workspace" }).click();
+  await page.getByText("is live").first().waitFor({ timeout: 60_000 });
+
+  const tenant = await db.tenant.findUnique({ where: { slug }, select: { id: true } });
+  if (tenant) createdTenantIds.push(tenant.id);
+  else failures.push(`${label}: the wizard reported a launch but no tenant row exists`);
+
+  await audit(page, axeSource, label, `9 launched at ${viewport.width}px`);
+  await page.close();
+}
+
 async function main() {
   console.log(`  · booting next dev on :${PORT}`);
   const cookie = await mintSession();
@@ -271,7 +417,18 @@ async function main() {
   // browser on that domain would.
   const browser = await chromium.launch({
     executablePath: CHROMIUM,
-    args: [`--host-resolver-rules=MAP ${HOST} 127.0.0.1`],
+    args: [
+      `--host-resolver-rules=MAP ${HOST} 127.0.0.1`,
+      // This environment exports HTTPS_PROXY for outbound traffic, and Chromium
+      // honours it. Without these two, requests for the tenant hostname go to
+      // the proxy, which knows nothing about it: the HTML document happened to
+      // arrive anyway, but the JavaScript chunks did not, so every page audited
+      // as server-rendered markup with no client behaviour attached. That is a
+      // silent way to audit the wrong thing — the wizard could not be driven at
+      // all, which is how it was noticed.
+      "--proxy-server=direct://",
+      "--proxy-bypass-list=*",
+    ],
   });
 
   // Two contexts, not one. A public surface must be audited by a visitor with no
@@ -333,33 +490,36 @@ async function main() {
           continue;
         }
 
-        await page.addScriptTag({ content: axeSource });
-        const result = await page.evaluate(
-          async (tags) => await window.axe.run(document, { runOnly: { type: "tag", values: tags } }),
-          TAGS,
-        );
-
-        if (result.violations.length === 0) {
-          console.log(
-            `    ✓ ${view.name} — ${result.passes.length} rule checks passed, ` +
-              `${found} elements at ${view.viewport.width}px, 0 violations`,
-          );
-        } else {
-          const total = result.violations.reduce((sum, v) => sum + v.nodes.length, 0);
-          console.log(`    ✗ ${view.name} — ${result.violations.length} violations across ${total} elements`);
-          for (const violation of result.violations) console.log(describe(violation));
-          failures.push(`${label}: ${result.violations.map((v) => v.id).join(", ")}`);
-        }
-
+        await audit(page, axeSource, label, `${view.name} — ${found} elements at ${view.viewport.width}px`);
         await page.close();
       }
     }
+
+    console.log("  · onboarding wizard (S2)");
+    await auditWizard(anonymous, axeSource, PHONE);
   } finally {
     await browser.close();
   }
 }
 
+async function cleanup() {
+  try {
+    for (const tenantId of createdTenantIds) {
+      await db.tenantConfigEntry.deleteMany({ where: { tenantId } });
+      await db.tenantEntitlement.deleteMany({ where: { tenantId } });
+      await db.tenant.delete({ where: { id: tenantId } });
+    }
+    for (const tokenHash of createdTokenHashes) {
+      await db.onboardingToken.deleteMany({ where: { tokenHash } });
+    }
+  } catch (error) {
+    failures.push(`cleanup failed: ${error?.message ?? error}`);
+  }
+  await db.$disconnect().catch(() => {});
+}
+
 main()
+  .then(cleanup)
   .then(() => {
     clearTimeout(watchdog);
     shutdown();
@@ -367,13 +527,16 @@ main()
       console.error(`\ncheck-a11y: FAILED\n${failures.map((f) => `  - ${f}`).join("\n")}`);
       process.exit(1);
     }
-    const views = SURFACES.reduce((sum, surface) => sum + surface.views.length, 0);
+    const views =
+      SURFACES.reduce((sum, surface) => sum + surface.views.length, 0) + WIZARD_STEPS.length + 1;
     console.log(
-      `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — ${SURFACES.length} surfaces, ${views} views)`,
+      `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — ` +
+        `${SURFACES.length + 1} surfaces, ${views} views, wizard driven end to end)`,
     );
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(async (error) => {
+    await cleanup();
     clearTimeout(watchdog);
     shutdown();
     console.error(`\ncheck-a11y: ${error.message}\n${serverLog.slice(-2000)}`);

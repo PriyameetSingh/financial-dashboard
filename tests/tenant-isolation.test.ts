@@ -391,12 +391,21 @@ describe("Chokepoint invariants", () => {
     expect({ unclassified, both }).toEqual({ unclassified: [], both: [] });
   });
 
-  // Phase 3 added TenantEntitlement (tenant-scoped, auto-classified by its
-  // tenantId column) and Module (global — a closed code registry, same argument
-  // as Permission), taking these from 46/5 to 47/6.
-  it("47 models are tenant-scoped and 6 are deliberately global", () => {
+  // These numbers are a ratchet, not a fact about the schema: the point is that
+  // adding a GLOBAL model — a model the chokepoint will not scope — cannot
+  // happen without someone editing this line and saying why.
+  //
+  //   Phase 3: +TenantEntitlement (scoped, by its tenantId column) and +Module
+  //            (global — a closed code registry, same argument as Permission).
+  //            46/5 → 47/6.
+  //   Phase 4: +OnboardingToken (global — it authorizes the CREATION of a
+  //            tenant, so it necessarily exists before one does; scoping it
+  //            would be circular. It holds a hash, a tier, an expiry and, once
+  //            spent, the id of the tenant it produced — no tenant data).
+  //            47/6 → 47/7.
+  it("47 models are tenant-scoped and 7 are deliberately global", () => {
     expect(TENANT_SCOPED_MODELS.size).toBe(47);
-    expect(GLOBAL_MODELS.size).toBe(6);
+    expect(GLOBAL_MODELS.size).toBe(7);
   });
 
   it("a tenant-scoped query with NO resolved scope fails closed", async () => {

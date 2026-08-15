@@ -51,10 +51,23 @@ const legs = [
   },
   // Last: boots the app and drives it over a real socket. Slowest leg, and the
   // only one that can see the middleware/priming layer between socket and query.
-  { name: "check-http-smoke", cmd: "node", args: ["scripts/check-http-smoke.mjs"] },
+  {
+    name: "check-http-smoke",
+    // `--env-file`: the onboarding assertions need DATABASE_URL to mint a token
+    // (only its hash is stored, so it cannot be created over HTTP) and to remove
+    // the tenant they create.
+    cmd: "node",
+    args: ["--env-file=.env.local", "scripts/check-http-smoke.mjs"],
+  },
   // Also boots the app, so it runs after the smoke leg rather than beside it:
   // Next 16 refuses to start a second dev server while one is running.
-  { name: "check-a11y", cmd: "node", args: ["scripts/check-a11y.mjs"] },
+  {
+    name: "check-a11y",
+    // `--env-file`: the wizard audit mints a real onboarding code and launches a
+    // real workspace, so the confirmation screen is audited rather than assumed.
+    cmd: "node",
+    args: ["--env-file=.env.local", "scripts/check-a11y.mjs"],
+  },
 ];
 
 let failed = null;

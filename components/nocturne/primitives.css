@@ -913,3 +913,270 @@
   flex-wrap: wrap;
   margin-top: var(--space-2);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Onboarding wizard (S2)
+   ─────────────────────────────────────────────────────────────────────────────
+   A two-column shell — step rail beside step body — that becomes one column on
+   a phone. The rail moves above the body rather than disappearing: an officer
+   working through an eight-step setup on a handset still needs to know which
+   step they are on and how many are left.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct .ax-wz {
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr);
+  gap: 40px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 28px 72px;
+  align-items: start;
+}
+
+.noct .ax-wz-rail {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.noct .ax-wz-rail-head {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 10px 10px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: inherit;
+  background: transparent;
+}
+
+.noct .ax-wz-step:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.noct .ax-wz-step[aria-current="step"] {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+/* Not `opacity`, which would dim the marker's border below the 3:1 that
+   non-text contrast asks for. A step you cannot reach yet still has to be
+   readable — that is how you know what is coming. */
+.noct .ax-wz-step:disabled {
+  cursor: default;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-marker {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  border: 1px solid var(--color-divider);
+}
+
+.noct .ax-wz-step[aria-current="step"] .ax-wz-marker,
+.noct .ax-wz-step-done .ax-wz-marker {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.noct .ax-wz-step-label {
+  display: grid;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.noct .ax-wz-step-sub {
+  font-size: 11px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-body {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.noct .ax-wz-hint {
+  font-size: 14px;
+  color: var(--ax-muted);
+  max-width: 40rem;
+  margin: 0;
+}
+
+/* The step's own fields. A single column at any width: a two-column form is
+   where "which label belongs to which box" goes wrong. */
+.noct .ax-wz-fields {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 34rem;
+}
+
+.noct .ax-wz-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: var(--space-4);
+}
+
+/* A choice rendered as a card. Built on a real radio, so it is one arrow-key
+   group and announces as one — the visual is a card, the control is not. */
+.noct .ax-wz-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.noct .ax-wz-choice {
+  display: block;
+  cursor: pointer;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 50%, transparent), var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:has(input:checked) {
+  box-shadow: inset 0 0 0 1px var(--color-accent), var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.noct .ax-wz-choice input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.noct .ax-wz-choice-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  display: block;
+}
+
+.noct .ax-wz-choice-body {
+  font-size: 13px;
+  display: block;
+  margin-top: 6px;
+  color: var(--ax-muted);
+}
+
+/* Brand swatches. Buttons, not divs — picking a colour is an action. */
+.noct .ax-wz-swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.noct .ax-wz-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-wz-swatch[aria-pressed="true"] {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.noct .ax-wz-review {
+  display: grid;
+  gap: 1px;
+  background: var(--color-divider);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.noct .ax-wz-review-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  background: var(--color-bg);
+  padding: 12px 14px;
+}
+
+.noct .ax-wz-review-label {
+  font-size: 12px;
+  color: var(--ax-muted);
+  flex: none;
+  width: 9rem;
+}
+
+.noct .ax-wz-review-value {
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.noct .ax-wz-people {
+  display: grid;
+  gap: 10px;
+}
+
+.noct .ax-wz-person {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .noct .ax-wz {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px 18px 56px;
+  }
+  .noct .ax-wz-rail {
+    position: static;
+  }
+  .noct .ax-wz-person {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .noct .ax-wz-nav .btn {
+    flex: 1 1 auto;
+  }
+}

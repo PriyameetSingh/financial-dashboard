@@ -1446,6 +1446,57 @@ model Module {
 /// Absence of a row means NOT entitled (fail closed). The Phase 3 migration
 /// backfills an explicit row per existing tenant per provisionable module so no
 /// tenant loses a module on deploy; onboarding writes rows for new tenants.
+/// Phase 4 / S2 — the authorization gate on tenant creation.
+///
+/// Onboarding is a privileged write reachable from a public page: it creates a
+/// Tenant, its entitlements, its configuration and its permanent address. Open
+/// self-serve is not survivable for this product — the sharpest risk is not
+/// resource abuse but impersonation, since anyone could mint a plausible
+/// `<something-official>` workspace and phish the real body it names.
+///
+/// So provisioning requires a token Airawat issues out of band, at contract
+/// signature. Government procurement already has that step; the token rides on
+/// it rather than adding friction.
+///
+/// Three properties make it a real control rather than a speed bump:
+///
+///   - only the SHA-256 hash is stored, so a database read does not yield a
+///     usable token and neither does a log line;
+///   - `consumedAt` is set in the same transaction that creates the tenant, so
+///     two concurrent launches cannot both succeed;
+///   - `tier` lives here rather than in the request, so a customer cannot
+///     self-elevate by editing the payload. The wizard's module choices are
+///     intersected with this tier on the server.
+///
+/// Issuing tokens is the control plane's job (S4, out of scope here). Until it
+/// exists they are minted by `scripts/mint-onboarding-token.mjs`.
+model OnboardingToken {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// SHA-256 of the token, hex. The token itself is shown once, at issue, and
+  /// never stored.
+  tokenHash String @unique
+
+  /// Commercial tier this token authorizes. The ceiling on what it can enable.
+  tier ModuleTier
+
+  /// Who it was issued to. Operational bookkeeping; never shown to the visitor.
+  label String?
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  /// The tenant this token created, once it has. No relation: the token
+  /// outlives nothing and deleting a tenant must not delete the audit of how it
+  /// came to exist.
+  tenantId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("onboarding_tokens")
+}
+
 model TenantEntitlement {
   id        String      @id @default(uuid()) @db.Uuid
   tenantId  String      @db.Uuid

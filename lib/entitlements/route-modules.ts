@@ -52,6 +52,13 @@ export const ROUTE_MODULE_RULES: readonly RouteRule[] = [
   { path: "/platform", module: "MOD-AUTH" },
   { path: "/onboarding", module: "MOD-AUTH" },
 
+  // Onboarding's two API endpoints. Core for the same reason as the pages they
+  // serve: they run BEFORE a tenant exists, so there are no entitlements to
+  // consult. Their gate is the onboarding token, not this map — see
+  // `lib/onboarding/token.ts`, and `scripts/check-api-guards.mjs`, which names
+  // both as unauthenticated by design with the control that replaces a session.
+  { path: "/api/onboarding", module: "MOD-AUTH" },
+
   { path: "/profile", module: "MOD-PROF" },
   { path: "/api/v1/profile", module: "MOD-PROF" },
 
