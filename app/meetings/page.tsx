@@ -173,7 +173,7 @@ export default function MeetingsPage() {
               id="btn-schedule-meeting"
               type="button"
               onClick={() => setShowSchedule(true)}
-              className="group flex items-center gap-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-5 py-2.5 text-sm font-medium text-[var(--accent)] transition-all hover:bg-[var(--accent)]/20 hover:shadow-lg hover:shadow-[var(--accent)]/10 active:scale-[0.97]"
+              className="btn btn-primary group px-5 py-2.5 text-sm font-medium"
             >
               <CalendarPlus size={16} className="transition-transform group-hover:rotate-6" />
               Schedule Meeting
@@ -211,7 +211,7 @@ export default function MeetingsPage() {
             <h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">
               <Sparkles size={14} /> Today&apos;s Meetings
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="ax-meeting-grid grid gap-4 md:grid-cols-2" role="group" aria-label="Today's meetings">
               {todayMeetings.map((m) => (
                 <MeetingCard 
                   key={m.id} 
@@ -235,7 +235,7 @@ export default function MeetingsPage() {
                 Upcoming &amp; Past
               </h2>
             )}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="ax-meeting-grid grid gap-4 md:grid-cols-2" role="group" aria-label="Upcoming and past meetings">
               {otherMeetings.map((m) => (
                 <MeetingCard 
                   key={m.id} 
@@ -428,7 +428,7 @@ function MeetingCard({
               e.stopPropagation();
               onClick();
             }}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98]"
+            className="btn btn-primary mt-5 w-full px-4 py-2.5 text-sm font-semibold"
           >
             <Play size={16} fill="white" />
             Start Meeting

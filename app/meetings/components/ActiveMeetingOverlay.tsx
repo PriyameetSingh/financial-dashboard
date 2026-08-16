@@ -306,6 +306,14 @@ export default function ActiveMeetingOverlay({
           {PANELS.map(({ id, label, icon: Icon }) => {
             if (id === "presentations" && materials.length === 0) return null;
             const active = effectivePanel === id;
+            /*
+             * The assistant tab carries the AI accent rather than the tenant's.
+             * "A machine is answering here" is a property of the product, not of
+             * the organization, so it is the one colour on this bar a tenant
+             * cannot rebrand — and it is never the only signal: the tab is
+             * labelled "Urban Assistant" and carries the bot glyph.
+             */
+            const isAi = id === "assistant";
             return (
               <button
                 key={id}
@@ -313,8 +321,12 @@ export default function ActiveMeetingOverlay({
                 onClick={() => setPanel(id)}
                 className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                   active
-                    ? "bg-[var(--accent)] text-[var(--accent-text)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
+                    ? isAi
+                      ? "ax-ai-tab-active"
+                      : "ax-accent-panel"
+                    : isAi
+                      ? "ax-ai-kicker hover:bg-[var(--bg-primary)]"
+                      : "ax-tone-muted hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 <Icon size={14} className="shrink-0 opacity-90" aria-hidden />
@@ -375,7 +387,7 @@ export default function ActiveMeetingOverlay({
 
             {effectivePanel === "assistant" && (
               <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-                <div className="flex min-h-[min(70vh,560px)] flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-sm sm:p-4">
+                <div className="ax-ai-section card elev-sm flex min-h-[min(70vh,560px)] flex-1 flex-col overflow-hidden p-3 sm:p-4">
                   <ConversationalAI
                     variant="meeting"
                     embedded

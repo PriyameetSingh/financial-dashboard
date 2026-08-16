@@ -36,7 +36,7 @@ export default function DeleteMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
@@ -85,7 +85,7 @@ export default function DeleteMeetingModal({
                     className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/30 px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <span className="truncate pr-2">{ai.title}</span>
-                    <span className="shrink-0 rounded-md bg-yellow-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-yellow-700">
+                    <span className="ax-chip ax-chip-warning shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase">
                       {ai.status}
                     </span>
                   </li>

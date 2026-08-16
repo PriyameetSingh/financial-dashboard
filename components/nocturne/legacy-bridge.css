@@ -52,9 +52,11 @@
 
   /* — accent — */
   --accent: var(--color-accent);
-  /* Text ON an accent fill. Nocturne outlines rather than fills, so this is the
-     ramp step meant to sit on an accent tint. */
-  --accent-text: var(--color-accent-100);
+  /* Text ON a solid accent fill. This mapped to the ramp's light step, which is
+     correct for accent text on the PAGE and badly wrong for text on the accent
+     itself — 2.96:1 dark, 1.51:1 light, caught by the audit on the decision
+     tracker. `--ax-on-accent` is the opposite ground, measured for the job. */
+  --accent-text: var(--ax-on-accent);
   --bg-accent: color-mix(in srgb, var(--color-accent) 16%, transparent);
 
   /* — text — */

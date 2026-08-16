@@ -89,6 +89,15 @@ const RESKINNED = [
   { path: "app/kpis/", gate: "C" },
   { path: "components/kpis/", gate: "C" },
   { path: "src/lib/chart-tokens.ts", gate: "C" },
+
+  // ── Reskin Gate D1 — schemes, meetings, action items, my tasks ────────────
+  { path: "app/action-items/", gate: "D1" },
+  { path: "app/meetings/", gate: "D1" },
+  { path: "app/my-tasks/", gate: "D1" },
+  { path: "app/schemes/", gate: "D1" },
+  { path: "components/schemes/", gate: "D1" },
+  { path: "src/components/ui/PriorityBadge.tsx", gate: "D1" },
+  { path: "src/components/ui/StatusBadge.tsx", gate: "D1" },
 ];
 
 /**

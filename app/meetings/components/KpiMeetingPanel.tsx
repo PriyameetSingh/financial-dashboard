@@ -17,7 +17,7 @@ import {
 import { fetchKPISubmissions } from "@/src/lib/services/kpiService";
 import type { KPISubmission } from "@/types";
 
-const PIE_COLORS = ["#22c55e", "#f59e0b", "#eab308", "#94a3b8", "#64748b"];
+const PIE_COLORS = ["var(--ax-status-ok)", "var(--ax-status-warning)", "var(--ax-status-warning)", "var(--ax-muted)", "var(--ax-muted)"];
 
 const PROGRESS_LABELS: Record<string, string> = {
   on_track: "On track",
@@ -130,7 +130,7 @@ export default function KpiMeetingPanel() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Approved", value: approved, tone: "text-[var(--alert-success)]" },
-          { label: "Pending review / submitted", value: pending, tone: "text-amber-600 dark:text-amber-400" },
+          { label: "Pending review / submitted", value: pending, tone: "ax-tone-warning" },
           { label: "Draft", value: draft, tone: "text-[var(--text-muted)]" },
           { label: "Not submitted", value: notSubmitted, tone: "text-[var(--text-muted)]" },
         ].map((row) => (
@@ -260,7 +260,7 @@ export default function KpiMeetingPanel() {
                         ? "text-[var(--alert-success)]"
                         : s.status === "not_submitted"
                           ? "text-[var(--text-muted)]"
-                          : "text-amber-600 dark:text-amber-400"
+                          : "ax-tone-warning"
                     }
                   >
                     {s.status.replace(/_/g, " ")}

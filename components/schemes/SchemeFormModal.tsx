@@ -354,7 +354,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="scheme-modal-title"

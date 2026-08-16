@@ -24,7 +24,7 @@ export default function ViewMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
@@ -106,7 +106,7 @@ export default function ViewMeetingModal({
                   <li key={ai.id} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/30 px-3 py-2 text-xs text-[var(--text-primary)]">
                     <span className="truncate">{ai.title}</span>
                     <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase ${
-                      ai.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      ai.status === 'COMPLETED' ? 'ax-chip ax-chip-ok' : 'ax-chip ax-chip-warning'
                     }`}>
                       {ai.status}
                     </span>
@@ -121,7 +121,7 @@ export default function ViewMeetingModal({
           <button
             type="button"
             onClick={onStartMeeting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 active:scale-[0.98]"
+            className="btn btn-primary w-full py-3.5 text-sm font-semibold"
           >
             <Play size={16} fill="white" />
             Enter Meeting Dashboard

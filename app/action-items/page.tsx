@@ -93,10 +93,10 @@ const STATUS_FILTERS: { id: string; label: string; match: (status: ActionItemSta
 const STATUS_STEPS: ActionItemStatus[] = ["OPEN", "IN_PROGRESS", "PROOF_UPLOADED", "UNDER_REVIEW", "COMPLETED"];
 
 const PRIORITY_COLORS: Record<string, string> = {
-  Critical: "bg-[var(--alert-critical)]",
-  High: "bg-[var(--alert-warning)]",
-  Medium: "bg-blue-500",
-  Low: "bg-[var(--text-muted)]",
+  Critical: "ax-fill-critical",
+  High: "ax-fill-warning",
+  Medium: "ax-fill-accent",
+  Low: "ax-fill-muted",
 };
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -591,43 +591,43 @@ function ActionItemsContent() {
               const count = getFilterCount(entry.id);
               const isActive = filter === entry.id;
 
-              // Base button classes
-              let btnClasses = "rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-200 flex items-center gap-2 shrink-0 ";
+              /*
+               * The status filter chips — the second target of the borrowed
+               * encoding, after the badges themselves.
+               *
+               * The tone follows what the filter MEANS, so "Overdue" is the
+               * critical chip whether or not it is the one selected. Selection
+               * is a ring plus `aria-pressed`, not a colour change: the old
+               * markup swapped the whole chip to a solid fill when active, which
+               * meant the overdue filter looked like an ordinary filter when
+               * selected and the selected filter looked like a status when not.
+               * Two meanings on one channel, and neither survived greyscale.
+               */
+              const toneChip =
+                entry.id === "overdue"
+                  ? "ax-chip-critical"
+                  : entry.id === "due_this_week"
+                    ? "ax-chip-warning"
+                    : entry.id === "completed"
+                      ? "ax-chip-ok"
+                      : "";
+              const btnClasses = [
+                "ax-chip",
+                toneChip,
+                isActive ? "ax-chip-selected" : "",
+                "px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold shrink-0",
+              ].join(" ");
 
-              if (isActive) {
-                if (entry.id === "overdue") {
-                  btnClasses += "border-red-600 bg-red-600 text-white shadow-sm";
-                } else {
-                  btnClasses += "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm";
-                }
-              } else {
-                if (entry.id === "overdue") {
-                  btnClasses += "border-red-200 bg-red-50/80 text-red-700 hover:bg-red-100";
-                } else {
-                  btnClasses += "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)]";
-                }
-              }
-
-              // Badge classes
-              let badgeClasses = "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-bold tracking-normal ";
-              if (isActive) {
-                badgeClasses += "bg-[rgba(255,255,255,0.2)] text-white";
-              } else {
-                if (entry.id === "overdue") {
-                  badgeClasses += "bg-red-600 text-white";
-                } else if (entry.id === "due_this_week") {
-                  badgeClasses += "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/50";
-                } else if (entry.id === "completed") {
-                  badgeClasses += "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50";
-                } else {
-                  badgeClasses += "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
-                }
-              }
+              // The count rides inside the chip, so it inherits the chip's tone
+              // rather than carrying a second, unrelated one.
+              const badgeClasses =
+                "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[9px] font-bold tracking-normal ax-chip-count";
 
               return (
                 <button
                   key={entry.id}
                   type="button"
+                  aria-pressed={isActive}
                   onClick={() => {
                     setFilter(entry.id);
                     setTrackerStatus("all");
@@ -661,7 +661,7 @@ function ActionItemsContent() {
           <div className="block md:hidden w-full">
             <Link
               href="/action-items/create"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[rgba(93,129,205,0.2)] bg-[rgba(93,129,205,0.08)] hover:bg-[rgba(93,129,205,0.15)] px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)] transition-all duration-200"
+              className="btn btn-primary w-full px-5 py-3 text-xs font-bold uppercase tracking-[0.2em]"
             >
               + Create Item
             </Link>
@@ -678,6 +678,8 @@ function ActionItemsContent() {
           />
           <button
             type="button"
+            aria-expanded={showMobileFilters}
+            aria-label={showMobileFilters ? "Hide filters" : "Show filters"}
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all ${
               showMobileFilters
@@ -801,7 +803,7 @@ function ActionItemsContent() {
                         {overdue && (
                           <span
                             title="Overdue: The due date has passed and the item is still not completed."
-                            className="inline-flex items-center rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide text-[var(--alert-critical)]"
+                            className="ax-chip ax-chip-critical px-2.5 py-1 text-[10px] font-semibold leading-none tracking-wide"
                           >
                             {daysOv} {daysOv === 1 ? "day" : "days"} overdue
                           </span>
@@ -914,7 +916,7 @@ function ActionItemsContent() {
                           <button
                             type="button"
                             title="Reject: Send the item back to the assignee for rework, with mandatory remarks."
-                            className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+                            className="btn btn-danger px-3 py-1.5 text-sm font-medium"
                             onClick={() => {
                               setSelectedItem(item);
                               setRejectComment("");
@@ -931,7 +933,7 @@ function ActionItemsContent() {
                       <button
                         type="button"
                         title="Delete: Permanently remove this action item. This cannot be undone."
-                        className="rounded-lg border border-red-500 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+                        className="btn btn-danger px-3 py-1.5 text-sm font-medium"
                         onClick={() => {
                           setSelectedItem(item);
                           setDeleteError(null);
@@ -1060,7 +1062,7 @@ function ActionItemsContent() {
       </div>
 
       {reassignItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             role="dialog"
             aria-modal="true"
@@ -1242,7 +1244,7 @@ function ActionItemsContent() {
         </div>
       )}
       {confirmApprove && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
               Confirm Approval
@@ -1273,7 +1275,7 @@ function ActionItemsContent() {
 
               <button
                 type="button"
-                className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="btn btn-success px-4 py-2 text-sm font-semibold"
                 disabled={actionBusy}
                 onClick={async () => {
                   if (!selectedItem) return;
@@ -1310,7 +1312,7 @@ function ActionItemsContent() {
         </div>
       )}
       {confirmReject && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
               Reject Action Item
@@ -1327,7 +1329,7 @@ function ActionItemsContent() {
               onChange={(e) => setRejectComment(e.target.value)}
               rows={4}
               placeholder="Enter rejection remarks..."
-              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-red-500"
+              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--ax-status-critical)]"
             />
 
             {actionError && (
@@ -1352,7 +1354,7 @@ function ActionItemsContent() {
 
               <button
                 type="button"
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="btn btn-danger px-4 py-2 text-sm font-semibold"
                 disabled={actionBusy || !rejectComment.trim()}
                 onClick={async () => {
                   if (!selectedItem) return;
@@ -1392,7 +1394,7 @@ function ActionItemsContent() {
       )}
 
       {confirmDelete && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
               Confirm Delete
@@ -1423,7 +1425,7 @@ function ActionItemsContent() {
 
               <button
                 type="button"
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="btn btn-danger px-4 py-2 text-sm font-semibold"
                 disabled={deleteBusy}
                 onClick={async () => {
                   if (!selectedItem) return;
@@ -1457,7 +1459,7 @@ function ActionItemsContent() {
       )}
 
       {confirmArchive && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
               {selectedItem.archived ? "Confirm Unarchive" : "Confirm Archive"}

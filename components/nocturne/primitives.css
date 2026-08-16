@@ -84,6 +84,30 @@
   --ax-accent-text: var(--color-accent-300);
 }
 
+/* Text sitting ON a solid accent fill — the inverse problem to `--ax-accent-text`,
+   which is accent text on the page.
+   
+   The accent is tuned to 3:1 against the ground, so it is a MID tone by
+   construction, and anything from the same end of the ramp laid on top of it is
+   unreadable. The legacy `--accent-text` mapped to the ramp's light step, which
+   measured 2.96:1 on the dark theme and 1.51:1 on the light one — the worst
+   contrast anywhere in this reskin, and invisible until the audit reached a
+   screen that used the pair.
+   
+   The answer is the opposite ground, not a ramp step: on dark the accent is
+   light, so the text on it is the page; on light the accent is deep, so the text
+   on it is the surface. Dark 5.45:1, light 6.44:1. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-on-accent: var(--color-bg);
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-on-accent: var(--color-surface);
+}
+
 /* ── accessibility utilities ─────────────────────────────────────────────────
    Two things every full-page surface needs and no design system ships, because
    they are about the page rather than about any component. */
@@ -1568,26 +1592,43 @@
 
    So the label reads a separate token, solved against the composited chip
    background rather than against the ground — and against BOTH chip
-   backgrounds, since a chip may sit on the page or on a card and the card is the
-   harder of the two on dark, the page on light. Worst case in each theme:
-   4.80:1 dark, 4.82:1 light.
+   background. Since Gate D1 that ground is OPAQUE — the tint is mixed into the
+   surface rather than into transparency — so there is exactly one ground to solve
+   against instead of one per container the chip might land in. Worst case in each
+   theme: 4.90:1 dark, 4.92:1 light, with the margin deliberate so a later tint
+   adjustment cannot quietly drop it under 4.5.
 
    Same rule as everywhere else in this file: a value validated against one
    background tells you nothing about another. */
 .noct,
 .noct[data-theme="dark"],
 .noct [data-theme="dark"] {
-  --ax-chip-critical-fg: #cd99a8;
-  --ax-chip-warning-fg: #cba274;
-  --ax-chip-ok-fg: #77b5ae;
+  --ax-chip-critical-fg: #d09fad;
+  --ax-chip-warning-fg: #cca476;
+  --ax-chip-ok-fg: #7ab7b0;
 }
 
 .noct[data-theme="light"],
 .noct [data-theme="light"] {
-  --ax-chip-critical-fg: #a2273c;
-  --ax-chip-warning-fg: #7b5000;
-  --ax-chip-ok-fg: #186257;
+  --ax-chip-critical-fg: #a8283e;
+  --ax-chip-warning-fg: #7f5300;
+  --ax-chip-ok-fg: #19665b;
 }
+/*
+ * The chip's ground is OPAQUE — mixed into `--color-surface`, not into
+ * `transparent`.
+ *
+ * With a transparent tint the chip's real background is whatever it happens to
+ * land on, so the foreground has to be legible against every one of them. That
+ * held while chips sat on the page and on cards, and broke the moment one landed
+ * on a tinted table row: the row's tint composited under the chip's tint and
+ * took a measured 4.84:1 down to 4.35:1. Enumerating grounds does not converge —
+ * the next screen invents another one.
+ *
+ * Mixing into the surface instead makes the chip's ground a constant, so the
+ * foreground solved against it is correct wherever the chip is placed. It costs
+ * the chip its translucency, which nothing here was relying on.
+ */
 .noct .ax-chip {
   display: inline-flex;
   align-items: center;
@@ -1596,22 +1637,22 @@
   letter-spacing: 0.02em;
   padding: 3px 10px;
   border-radius: calc(var(--radius-md) * 0.75);
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  background: color-mix(in srgb, var(--color-text) 10%, var(--color-surface));
   color: var(--color-text);
 }
 
 .noct .ax-chip-critical {
-  background: color-mix(in srgb, var(--ax-status-critical) 18%, transparent);
+  background: color-mix(in srgb, var(--ax-status-critical) 18%, var(--color-surface));
   color: var(--ax-chip-critical-fg);
 }
 
 .noct .ax-chip-warning {
-  background: color-mix(in srgb, var(--ax-status-warning) 18%, transparent);
+  background: color-mix(in srgb, var(--ax-status-warning) 18%, var(--color-surface));
   color: var(--ax-chip-warning-fg);
 }
 
 .noct .ax-chip-ok {
-  background: color-mix(in srgb, var(--ax-status-ok) 18%, transparent);
+  background: color-mix(in srgb, var(--ax-status-ok) 18%, var(--color-surface));
   color: var(--ax-chip-ok-fg);
 }
 
@@ -1631,27 +1672,44 @@
   font-size: 11px;
 }
 
+/*
+ * The mark takes `currentColor`, so SHAPE and TONE compose instead of being
+ * welded together.
+ *
+ * They were welded at Gate A — each shape class also set its own background —
+ * and Gate D1 is where that stopped working. The action-item scale has four
+ * levels, not three, and its existing tone mapping puts two of them (Medium and
+ * Low) on the SAME neutral tone. Under the old classes those two were forced
+ * apart in colour or not at all; with `currentColor` they share the tone the
+ * product already assigns them and are told apart by shape, which is exactly
+ * what the borrowed encoding is for.
+ */
 .noct .ax-priority-mark {
   width: 12px;
   height: 12px;
   flex: none;
   display: inline-block;
+  background: currentColor;
+}
+
+/* Four shapes, most urgent first. A triangle reads as a warning sign, a star as
+   a flag, and the rounded rectangle and circle as the quiet end of the scale —
+   an order that survives greyscale, a printout and a photocopier. */
+.noct .ax-priority-critical .ax-priority-mark {
+  clip-path: polygon(50% 2%, 100% 92%, 0% 92%);
 }
 
 .noct .ax-priority-high .ax-priority-mark {
-  background: var(--ax-status-critical);
   /* A five-pointed star. */
   clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
 }
 
 .noct .ax-priority-medium .ax-priority-mark {
-  background: var(--ax-status-warning);
   border-radius: 3px;
   height: 10px;
 }
 
 .noct .ax-priority-low .ax-priority-mark {
-  background: var(--ax-status-ok);
   border-radius: 50%;
 }
 
@@ -1716,3 +1774,40 @@
 .noct .btn-success:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-ok) 12%, transparent); }
 .noct .btn-danger { color: var(--ax-status-critical); border-color: var(--ax-status-critical); }
 .noct .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-critical) 12%, transparent); }
+
+/* The selected assistant tab. A tint of the AI accent with the page's own
+   foreground on top, rather than the accent as text on a fill — the fill is what
+   marks it, and keeping the label on `--color-text` means the contrast does not
+   have to be re-solved for a hue the tenant cannot change. */
+.noct .ax-ai-tab-active {
+  background: color-mix(in srgb, var(--ax-ai-accent) 22%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ax-ai-accent);
+  color: var(--color-text);
+}
+
+/* A chip that is also a control, in its selected state. The ring is added to
+   whatever tone the chip already has rather than replacing it, so a filter chip
+   can say "this is the overdue filter" and "you have it selected" at the same
+   time without the two meanings fighting over one channel. Paired with
+   `aria-pressed` at every call site. */
+.noct .ax-chip-selected {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* The count riding inside a chip.
+ *
+ * It has NO ground of its own, and that is the point. The first version gave it
+ * an 18% tint of `currentColor`, which sounds harmless and is not: the chip is
+ * already a tint, so the count's ground composited tint-on-tint and lifted the
+ * background back toward the foreground — 3.7:1 in every tone, on both themes.
+ * A nested tint always costs contrast, because both layers are moving the same
+ * two colours together.
+ *
+ * Weight and a divider carry the separation instead, and the count inherits the
+ * chip's foreground, which is already measured against the chip's ground. */
+.noct .ax-chip-count {
+  font-variant-numeric: tabular-nums;
+  padding-inline-start: 7px;
+  margin-inline-start: 1px;
+  box-shadow: inset 1px 0 0 color-mix(in srgb, currentColor 40%, transparent);
+}

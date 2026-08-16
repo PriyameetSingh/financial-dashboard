@@ -143,12 +143,22 @@
    deeper than the dark ones, for the reason this file keeps running into: a hue
    that reads against a dark ground washes out against a light one.
 
-   Dark:  critical 5.56:1 · warning 6.28:1 · ok 6.32:1  (on --color-bg)
+   MEASURED AGAINST THREE GROUNDS, not two. The page and a card were the obvious
+   pair, and they were the only ones checked until the audit reached a KPI table
+   whose rows carry an accent tint: a status figure on a tinted row measured
+   4.09:1 where the same token measured 5.56:1 on the page. A tint lightens the
+   ground toward the text, so every tinted container is a ground of its own, and
+   a token used as bare text has to clear the WORST of them.
+   
+   The dark values are lifted accordingly — the change is small, because the
+   binding ground is only a few percent off the surface.
+   
+   Dark:  worst-case 4.72:1 · 4.72:1 · 4.70:1   (page: 6.48 · 6.47 · 6.45)
    Light: critical 5.67:1 · warning 5.21:1 · ok 5.51:1  (on --color-bg) */
 .noct {
-  --ax-status-critical: #c07f92;
-  --ax-status-warning: #c2925c;
-  --ax-status-ok: #5fa8a0;
+  --ax-status-critical: #c78d9e;
+  --ax-status-warning: #c3945f;
+  --ax-status-ok: #61a9a1;
 }
 
 .noct[data-theme="light"],
@@ -163,9 +173,9 @@
    than inheriting the deep light ones. */
 .noct[data-theme="dark"],
 .noct [data-theme="dark"] {
-  --ax-status-critical: #c07f92;
-  --ax-status-warning: #c2925c;
-  --ax-status-ok: #5fa8a0;
+  --ax-status-critical: #c78d9e;
+  --ax-status-warning: #c3945f;
+  --ax-status-ok: #61a9a1;
 }
 
 /* ── The AI accent ───────────────────────────────────────────────────────────

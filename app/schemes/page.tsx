@@ -328,7 +328,7 @@ export default function SchemesPage() {
                               <button
                                 type="button"
                                 onClick={() => deleteScheme(s.id, s.name)}
-                                className="rounded-lg border border-[var(--alert-critical)] px-2 py-1 text-[11px] text-[var(--alert-critical)] hover:bg-[var(--alert-critical)] hover:text-white"
+                                className="btn btn-danger px-2 py-1 text-[11px]"
                                 title="Delete scheme"
                               >
                                 Delete
@@ -405,7 +405,7 @@ export default function SchemesPage() {
                                                     type="button"
                                                     title="Delete KPI"
                                                     onClick={() => deleteKpi(k.id, k.description, s.id)}
-                                                    className="rounded p-1 text-[var(--alert-critical)] transition hover:bg-[var(--alert-critical)] hover:text-white"
+                                                    className="btn btn-danger p-1"
                                                   >
                                                     <Trash2 className="h-3 w-3" />
                                                   </button>

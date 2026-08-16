@@ -146,7 +146,7 @@ export default function CreateActionItemMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[110] flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && !submitting && onClose()}
     >
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl sm:p-8">

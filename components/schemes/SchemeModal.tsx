@@ -300,7 +300,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="scheme-modal-title"
@@ -496,7 +496,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                           type="monotone"
                           dataKey="util"
                           name="Budget utilisation"
-                          stroke="#94a3b8"
+                          stroke="var(--ax-muted)"
                           strokeWidth={2}
                           dot={false}
                         />
@@ -609,7 +609,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                             return [`${Number.isFinite(n) ? n.toFixed(1) : "—"}%`, "Avg achievement"];
                           }}
                         />
-                        <Line type="monotone" dataKey="avg" name="Avg achievement" stroke="#22c55e" strokeWidth={2} dot />
+                        <Line type="monotone" dataKey="avg" name="Avg achievement" stroke="var(--ax-status-ok)" strokeWidth={2} dot />
                       </LineChart>
                     </ResponsiveContainer>
                   )}

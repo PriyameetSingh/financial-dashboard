@@ -138,7 +138,7 @@ export default function ScheduleMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
@@ -286,7 +286,7 @@ export default function ScheduleMeetingModal({
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
-            className="w-full rounded-xl bg-[var(--bg-surface)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98] disabled:opacity-60"
+            className="btn btn-primary w-full px-4 py-3 text-sm font-semibold"
           >
             {submitting ? "Scheduling…" : "Schedule Meeting"}
           </button>

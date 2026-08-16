@@ -573,9 +573,9 @@ function CommandCentreContent({ setActive }: Props) {
                     it takes the high-priority mark: a star, readable in
                     greyscale and on a printout, beside the days count that says
                     the same thing in words. */}
-                <div className="ax-priority ax-priority-high mb-1 flex items-start gap-2">
+                <div className="ax-priority ax-priority-high ax-tone-critical mb-1 flex items-start gap-2">
                   <span className="ax-priority-mark mt-0.5" aria-hidden />
-                  <span className="text-[11px] leading-snug">
+                  <span className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>
                     {a.title.length > 50 ? `${a.title.slice(0, 50)}…` : a.title}
                   </span>
                 </div>

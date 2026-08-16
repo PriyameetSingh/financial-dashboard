@@ -294,7 +294,7 @@ function ActionItemDetailContent() {
         </button>
 
         {actionSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-success)]">
             {actionSuccess}
           </div>
         )}

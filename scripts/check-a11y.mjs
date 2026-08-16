@@ -237,6 +237,48 @@ const SURFACES = [
     ],
   },
   {
+    name: "decision tracker (reskin D1)",
+    path: "/action-items",
+    authenticated: true,
+    tenant: "demo",
+    // A priority badge: proves the list rendered AND that the borrowed shape
+    // encoding is on the page being measured.
+    readySelector: ".noct .ax-priority-mark",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
+    ],
+  },
+  {
+    name: "meetings (reskin D1)",
+    path: "/meetings",
+    authenticated: true,
+    tenant: "demo",
+    // The meeting card grid. Not the schedule button — that is behind a
+    // permission the audit user may not hold, so waiting on it would make this
+    // surface fail for a reason that has nothing to do with rendering.
+    readySelector: ".noct .ax-meeting-grid",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "my tasks (reskin D1)",
+    path: "/my-tasks",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct .ax-chip",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -665,11 +707,22 @@ async function main() {
         // The authenticated app's theme is the reader's own preference, stored
         // per browser. Seeding it before navigation is how this leg audits both
         // grounds without driving the toggle.
-        if (view.theme) {
-          await page.addInitScript((theme) => {
-            window.localStorage.setItem("airawat-theme", theme);
-          }, view.theme);
-        }
+        /*
+         * ALWAYS seeded, never left to the default.
+         *
+         * The theme is a per-browser preference in `localStorage`, and a browser
+         * context outlives the page — so once any view seeded "light", every
+         * later view in that context that did NOT seed inherited it. Views named
+         * "dark · …" were rendering light and being reported as dark, silently,
+         * from the second light view onwards. Found at Gate D1 when a chip failed
+         * with light-theme colour values in a view labelled dark.
+         *
+         * Defaulting here rather than trusting the app's default also makes the
+         * audit independent of what that default happens to be.
+         */
+        await page.addInitScript((theme) => {
+          window.localStorage.setItem("airawat-theme", theme);
+        }, view.theme ?? "dark");
 
         const url = `http://${host}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
         // `load` rather than `networkidle`: the dev server holds a hot-reload
