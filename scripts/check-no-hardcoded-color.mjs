@@ -9,14 +9,20 @@
  * that bought their own. White-label failures are invisible to the person who
  * causes them, which is exactly the shape of bug a lint is for.
  *
- * SCOPE GROWS PER TRANCHE. The reskin migrates screens in gated batches, so this
- * check is enforced only over the files that have been migrated — listed in
- * `RESKINNED` below with the gate that brought them in. A file outside that list
- * is not checked, and adding one is how a tranche declares itself done.
+ * SCOPE IS THE WHOLE REPOSITORY, as of reskin Gate F.
  *
- * Run `node scripts/check-no-hardcoded-color.mjs --all` for a survey of the WHOLE
- * repository — every file, in or out of scope, with its counts. That mode never
- * fails; it is the baseline that says how much work is left.
+ * For the length of the reskin this check ran against a `RESKINNED` allow-list
+ * that grew one tranche at a time, so a screen came under enforcement on the gate
+ * that migrated it. That list is gone. It had a real weakness as a permanent
+ * design — a NEW file was unchecked until somebody remembered to add it, which is
+ * the opposite of what a guard should do — and it exists in the git history if
+ * anyone needs to see which gate brought which screen in.
+ *
+ * Everything under `SCAN_DIRS` is checked. `ALLOW` below is the complete set of
+ * exceptions, each with the reason it is one.
+ *
+ * Run `node scripts/check-no-hardcoded-color.mjs --all` for a survey that lists
+ * every file with a colour, allowed or not, and never fails.
  *
  * WHAT COUNTS AS A COLOUR
  *   - a hex literal (`#2563EB`, `#fff`)
@@ -43,77 +49,6 @@ const ROOT = process.cwd();
 const SCAN_DIRS = ["app", "components", "lib", "src"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 const SKIP_DIRS = new Set(["node_modules", ".next", "dist", "build"]);
-
-/**
- * Files the reskin has migrated, and which must therefore be token-only.
- *
- * Prefixes, matched against the repo-relative path. Each entry records the gate
- * that added it, so the list doubles as the reskin's progress ledger.
- */
-const RESKINNED = [
-  // Phase 4 — the net-new surfaces. Token-driven from the day they were written.
-  { path: "app/platform/", gate: "S1" },
-  { path: "app/onboarding/", gate: "S2" },
-  { path: "app/admin/design-system/", gate: "S3" },
-  { path: "app/admin/menu-card/", gate: "S3" },
-  { path: "lib/platform/", gate: "S1" },
-  { path: "lib/onboarding/", gate: "S2" },
-  { path: "lib/menu-card/", gate: "S3" },
-  // The gallery is the design system's own specimen page: it names tokens, and
-  // its two-theme comparison shows real values on purpose.
-  { path: "app/design-system/", gate: "S0" },
-
-  // ── Reskin Gate A — the app shell, and the unauthenticated pages ──────────
-  { path: "components/AppShell.tsx", gate: "A" },
-  { path: "components/Sidebar.tsx", gate: "A" },
-  { path: "components/ThemeProvider.tsx", gate: "A" },
-  { path: "components/FontScaleProvider.tsx", gate: "A" },
-  { path: "components/TextSizeToolbarControl.tsx", gate: "A" },
-  { path: "components/LogoutButton.tsx", gate: "A" },
-  { path: "components/AuthSessionProvider.tsx", gate: "A" },
-  { path: "components/TenantConfigProvider.tsx", gate: "A" },
-  { path: "components/GovLoginBranding.tsx", gate: "A" },
-  { path: "components/LoginGrid.tsx", gate: "A" },
-  { path: "app/layout.tsx", gate: "A" },
-  { path: "app/login/", gate: "A" },
-  { path: "app/auth/", gate: "A" },
-  { path: "src/lib/myTasksPendingBadges.ts", gate: "A" },
-
-  // ── Reskin Gate B — the Command Centre ────────────────────────────────────
-  { path: "components/CommandCentre.tsx", gate: "B" },
-  { path: "app/dashboard/", gate: "B" },
-  { path: "app/command-centre/", gate: "B" },
-
-  // ── Reskin Gate C — financial and KPI screens, the first real charts ───────
-  { path: "app/financial/", gate: "C" },
-  { path: "app/kpis/", gate: "C" },
-  { path: "components/kpis/", gate: "C" },
-  { path: "src/lib/chart-tokens.ts", gate: "C" },
-
-  // ── Reskin Gate D1 — schemes, meetings, action items, my tasks ────────────
-  { path: "app/action-items/", gate: "D1" },
-  { path: "app/meetings/", gate: "D1" },
-  { path: "app/my-tasks/", gate: "D1" },
-  { path: "app/schemes/", gate: "D1" },
-  { path: "components/schemes/", gate: "D1" },
-  { path: "src/components/ui/PriorityBadge.tsx", gate: "D1" },
-  { path: "src/components/ui/StatusBadge.tsx", gate: "D1" },
-
-  // ── Reskin Gate D2 — the on-screen report previews ────────────────────────
-  // NOT lib/*-pdf-server.tsx: those generate the server-side PDF and are out of
-  // this phase's scope.
-  { path: "app/reports/", gate: "D2" },
-  { path: "components/meeting-report/", gate: "D2" },
-  { path: "components/pendance-report/", gate: "D2" },
-  { path: "components/nocturne/TableScroll.tsx", gate: "D2" },
-
-  // ── Reskin Gate E — admin surfaces, profile, changelog ────────────────────
-  // `app/admin/` as a whole: the two Phase-4 configurators under it were already
-  // in scope individually, and a prefix entry now covers every sibling.
-  { path: "app/admin/", gate: "E" },
-  { path: "app/profile/", gate: "E" },
-  { path: "app/changelog/", gate: "E" },
-];
 
 /**
  * Exceptions, each with the reason it is one. An entry here should be arguable
@@ -145,6 +80,33 @@ const ALLOW = [
   {
     path: "app/design-system/Gallery.tsx",
     reason: "the specimen page: an example tenant brand shown as data, to prove role values swap",
+  },
+  {
+    path: "lib/meeting-report-pdf-server.tsx",
+    reason:
+      "the server-side PDF generator: it renders through @react-pdf, which has no CSS custom properties, so a token cannot reach it. Out of the reskin's scope by instruction; the ON-SCREEN report it mirrors is on the document palette (see --ax-doc-* in tokens.css)",
+  },
+  {
+    path: "lib/pendance-report-pdf-server.tsx",
+    reason: "same as the meeting-report generator above",
+  },
+  {
+    path: "lib/meeting-report-pdf.ts",
+    reason: "one white, in the PDF generator's shared page setup",
+  },
+  {
+    path: "lib/tenant-config/registry.ts",
+    reason:
+      "a hex inside a VALIDATION MESSAGE — `must be a hex colour like \"#5fa8a0\"` — not a colour this file paints with. Nothing renders from it",
+  },
+  {
+    path: "components/AgentPanel.tsx",
+    reason:
+      "orphaned: nothing imports it. Preserved unchanged pending product triage, along with AiAlertsCard below — deleting either is a product decision, not a reskin one",
+  },
+  {
+    path: "components/command-centre/AiAlertsCard.tsx",
+    reason: "orphaned: nothing imports it. Preserved unchanged pending product triage",
   },
 ];
 
@@ -235,10 +197,6 @@ const files = SCAN_DIRS.flatMap((dir) => {
   }
 }).map((file) => relative(ROOT, file)).sort();
 
-function isReskinned(path) {
-  return RESKINNED.some((entry) => path.startsWith(entry.path));
-}
-
 function allowance(path) {
   return ALLOW.find((entry) => path === entry.path || path.startsWith(entry.path));
 }
@@ -248,28 +206,24 @@ function allowance(path) {
 if (surveyAll) {
   const rows = [];
   let inScopeTotal = 0;
-  let outOfScopeTotal = 0;
 
   for (const file of files) {
     const hits = findings(readFileSync(join(ROOT, file), "utf8"));
     if (hits.length === 0) continue;
     const allowed = allowance(file);
-    const scoped = isReskinned(file);
     if (allowed) continue;
-    if (scoped) inScopeTotal += hits.length;
-    else outOfScopeTotal += hits.length;
-    rows.push({ file, count: hits.length, scoped });
+    inScopeTotal += hits.length;
+    rows.push({ file, count: hits.length });
   }
 
   rows.sort((a, b) => b.count - a.count);
   console.log("check-no-hardcoded-color: survey (--all does not fail)\n");
   console.log(`  files scanned            ${files.length}`);
   console.log(`  files with colours       ${rows.length}`);
-  console.log(`  occurrences IN scope     ${inScopeTotal}   (these would fail today)`);
-  console.log(`  occurrences OUT of scope ${outOfScopeTotal}   (the reskin's remaining work)\n`);
+  console.log(`  occurrences              ${inScopeTotal}   (these would fail today)\n`);
   console.log("  Largest, worst first:\n");
   for (const row of rows.slice(0, 30)) {
-    console.log(`    ${String(row.count).padStart(5)}  ${row.scoped ? "IN " : "out"}  ${row.file}`);
+    console.log(`    ${String(row.count).padStart(5)}  ${row.file}`);
   }
   if (rows.length > 30) console.log(`    …and ${rows.length - 30} more files`);
   process.exit(0);
@@ -279,7 +233,6 @@ const offenders = [];
 let checked = 0;
 
 for (const file of files) {
-  if (!isReskinned(file)) continue;
   if (allowance(file)) continue;
   checked += 1;
   const hits = findings(readFileSync(join(ROOT, file), "utf8"));
@@ -305,6 +258,6 @@ if (offenders.length > 0) {
 }
 
 console.log(
-  `check-no-hardcoded-color: ok (${checked} reskinned file(s) checked, ` +
-    `${ALLOW.length} allowlisted with reasons, ${files.length} scanned in total)`,
+  `check-no-hardcoded-color: ok (${checked} file(s) checked repo-wide, ` +
+    `${ALLOW.length} allowlisted with reasons)`,
 );

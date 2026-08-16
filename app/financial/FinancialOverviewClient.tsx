@@ -400,23 +400,23 @@ export default function FinancialOverviewClient({
     <AppShell title="Financial Overview">
       <div className="relative space-y-6 px-6 py-6">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Read-only
           </div>
         )}
 
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">{fyDisplay}</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Schemes wise Financial Progress</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">{fyDisplay}</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">Schemes wise Financial Progress</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Live SO vs IFMS from finance budgets and expenditure snapshots (database). Use comparison mode for summary-head
             deltas (same basis as FA summary entries).
           </p>
         </div>
 
         {/* Comparison toolbar */}
-        {/* <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Comparison</p>
+        {/* <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Comparison</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {(
               [
@@ -433,8 +433,8 @@ export default function FinancialOverviewClient({
                 onClick={() => setPreset(id)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   preset === id
-                    ? "border-[var(--text-primary)] bg-[var(--bg-hover)] text-[var(--text-primary)]"
-                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-muted)]"
+                    ? "border-[var(--color-text)] bg-[var(--ax-hover)] text-[var(--color-text)]"
+                    : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--ax-muted)]"
                 }`}
               >
                 {label}
@@ -444,10 +444,10 @@ export default function FinancialOverviewClient({
 
           {preset === "meeting_pair" && (
             <div className="mt-3 flex flex-wrap gap-3">
-              <label className="flex flex-col text-[11px] text-[var(--text-muted)]">
+              <label className="flex flex-col text-[11px] text-[var(--ax-muted)]">
                 Earlier meeting
                 <select
-                  className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                  className="mt-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
                   value={meetingA}
                   onChange={(e) => setMeetingA(e.target.value)}
                 >
@@ -459,10 +459,10 @@ export default function FinancialOverviewClient({
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col text-[11px] text-[var(--text-muted)]">
+              <label className="flex flex-col text-[11px] text-[var(--ax-muted)]">
                 Later meeting
                 <select
-                  className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                  className="mt-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
                   value={meetingB}
                   onChange={(e) => setMeetingB(e.target.value)}
                 >
@@ -479,10 +479,10 @@ export default function FinancialOverviewClient({
 
           {preset === "custom" && (
             <div className="mt-3 flex flex-wrap gap-3">
-              <label className="flex flex-col text-[11px] text-[var(--text-muted)]">
+              <label className="flex flex-col text-[11px] text-[var(--ax-muted)]">
                 Baseline as-of
                 <select
-                  className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                  className="mt-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
                   value={customBaseline}
                   onChange={(e) => setCustomBaseline(e.target.value)}
                 >
@@ -494,10 +494,10 @@ export default function FinancialOverviewClient({
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col text-[11px] text-[var(--text-muted)]">
+              <label className="flex flex-col text-[11px] text-[var(--ax-muted)]">
                 Current as-of
                 <select
-                  className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                  className="mt-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
                   value={customCurrent}
                   onChange={(e) => setCustomCurrent(e.target.value)}
                 >
@@ -512,9 +512,9 @@ export default function FinancialOverviewClient({
             </div>
           )}
 
-          {compareHint && <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">{compareHint}</p>}
+          {compareHint && <p className="mt-3 text-xs leading-relaxed text-[var(--ax-muted)]">{compareHint}</p>}
           {preset !== "none" && resolvedDates.baseline && resolvedDates.current && (
-            <p className="mt-2 text-xs text-[var(--text-secondary)]">
+            <p className="mt-2 text-xs text-[var(--ax-text-secondary)]">
               Baseline <span className="font-mono">{resolvedDates.baseline}</span> → Current{" "}
               <span className="font-mono">{resolvedDates.current}</span>
               {loadingCompare ? " · Loading…" : ""}
@@ -546,24 +546,24 @@ export default function FinancialOverviewClient({
                 : "Scheme entries only (no FA summary yet)",
             },
           ].map((card) => (
-            <div key={card.label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{card.label}</p>
-              <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{card.value}</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">{card.sub}</p>
+            <div key={card.label} className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">{card.label}</p>
+              <p className="mt-3 text-2xl font-semibold text-[var(--color-text)]">{card.value}</p>
+              <p className="mt-1 text-xs text-[var(--ax-muted)]">{card.sub}</p>
             </div>
           ))}
         </div>
 
         {fundingBarData.length > 0 && (
           <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 lg:col-span-2">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 lg:col-span-2">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                 Budget estimate vs S.O. order vs expenditure (IFMS)
               </p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">All funding sources • ₹ in Crores</p>
-              <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
-                <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> Funding source</span>
-                <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Amount (₹ Crores)</span>
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">All funding sources • ₹ in Crores</p>
+              <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--ax-muted)]">
+                <span><span className="font-medium text-[var(--ax-text-secondary)]">Y-axis:</span> Funding source</span>
+                <span><span className="font-medium text-[var(--ax-text-secondary)]">X-axis:</span> Amount (₹ Crores)</span>
               </div>
               <div className="mt-3 h-[340px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height={340}>
@@ -584,7 +584,7 @@ export default function FinancialOverviewClient({
                       dataKey="name"
                       width={148}
                       reversed
-                      tick={{ fontSize: 11, fill: "var(--text-primary)" }}
+                      tick={{ fontSize: 11, fill: "var(--color-text)" }}
                     />
                     <Tooltip
                       contentStyle={CHART_TOOLTIP_STYLE}
@@ -601,15 +601,15 @@ export default function FinancialOverviewClient({
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Utilisation</p>
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Utilisation</p>
                 <div className="relative mx-auto mt-2 h-[168px] w-full max-w-[260px]">
                   <ResponsiveContainer width="100%" height={168}>
                     <PieChart margin={{ top: 4, right: 0, bottom: 8, left: 0 }}>
                       <Pie
                         data={[
                           { key: "used", value: Math.min(100, totalBudgetUtilisationPct), fill: CHART_BUDGET },
-                          { key: "rest", value: Math.max(0, 100 - Math.min(100, totalBudgetUtilisationPct)), fill: "var(--border)" },
+                          { key: "rest", value: Math.max(0, 100 - Math.min(100, totalBudgetUtilisationPct)), fill: "var(--color-divider)" },
                         ]}
                         cx="50%"
                         cy="100%"
@@ -624,18 +624,18 @@ export default function FinancialOverviewClient({
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-x-0 bottom-2 top-0 flex flex-col items-center justify-center px-2 pb-10 text-center">
-                    <p className="text-3xl font-semibold tabular-nums leading-none text-[var(--text-primary)]">
+                    <p className="text-3xl font-semibold tabular-nums leading-none text-[var(--color-text)]">
                       {totalBudgetUtilisationPct.toFixed(1)}%
                     </p>
-                    <p className="mt-1.5 max-w-[12rem] text-[11px] leading-snug text-[var(--text-muted)]">
+                    <p className="mt-1.5 max-w-[12rem] text-[11px] leading-snug text-[var(--ax-muted)]">
                       Total budget utilisation
                     </p>
                   </div>
                 </div>
-                <ul className="mt-2 space-y-2 border-t border-[var(--border)] pt-3 text-sm">
+                <ul className="mt-2 space-y-2 border-t border-[var(--color-divider)] pt-3 text-sm">
                   {schemeGaugeRows.map((row) => (
                     <li key={row.shortLabel} className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[var(--text-muted)]">{row.shortLabel}</span>
+                      <span className="truncate text-[var(--ax-muted)]">{row.shortLabel}</span>
                       <span className="ax-tone-critical shrink-0 font-medium tabular-nums">
                         {row.pct.toFixed(1)}%
                       </span>
@@ -644,9 +644,9 @@ export default function FinancialOverviewClient({
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Transfer from state</p>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">Expenditure distribution</p>
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Transfer from state</p>
+                <p className="mt-1 text-sm text-[var(--ax-muted)]">Expenditure distribution</p>
                 <ul className="mt-4 space-y-3">
                   {transferDistributionRows.map((row) => (
                     <li key={row.label} className="flex items-center justify-between gap-3 text-sm">
@@ -655,9 +655,9 @@ export default function FinancialOverviewClient({
                           className="h-2.5 w-2.5 shrink-0 rounded-full"
                           style={{ background: row.dotColor }}
                         />
-                        <span className="truncate text-[var(--text-primary)]">{row.label}</span>
+                        <span className="truncate text-[var(--color-text)]">{row.label}</span>
                       </span>
-                      <span className="shrink-0 tabular-nums text-[var(--text-secondary)]">{formatCurrency(row.ifmsCr)}</span>
+                      <span className="shrink-0 tabular-nums text-[var(--ax-text-secondary)]">{formatCurrency(row.ifmsCr)}</span>
                     </li>
                   ))}
                 </ul>
@@ -667,8 +667,8 @@ export default function FinancialOverviewClient({
         )}
 
         {totalsDelta && preset !== "none" && (
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-            <span className="font-medium text-[var(--text-primary)]">Summary heads (FA) movement</span> vs baseline{" "}
+          <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-text-secondary)]">
+            <span className="font-medium text-[var(--color-text)]">Summary heads (FA) movement</span> vs baseline{" "}
             <span className="font-mono">{resolvedDates.baseline}</span>: IFMS{" "}
             <span className={totalsDelta.ifms >= 0 ? "ax-tone-ok" : "ax-tone-critical"}>
               {totalsDelta.ifms >= 0 ? "+" : ""}
@@ -692,14 +692,14 @@ export default function FinancialOverviewClient({
         )}
 
         {ifmsMeetingTrendChartData.length > 0 && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Department IFMS trend</p>
-            <p className="text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Department IFMS trend</p>
+            <p className="text-sm text-[var(--ax-muted)]">
               Cumulative IFMS expenditure by snapshot date (₹ Crores) — {fyDisplay}
             </p>
-            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
-              <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Snapshot date (MM-DD)</span>
-              <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--ax-muted)]">
+              <span><span className="font-medium text-[var(--ax-text-secondary)]">X-axis:</span> Snapshot date (MM-DD)</span>
+              <span><span className="font-medium text-[var(--ax-text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
             </div>
             <div className="mt-3 h-56 w-full">
               <ResponsiveContainer width="100%" height={224}>
@@ -730,11 +730,11 @@ export default function FinancialOverviewClient({
         )}
 
         {headChartData.length > 0 && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Summary heads — IFMS baseline vs current</p>
-            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
-              <span><span className="font-medium text-[var(--text-secondary)]">X-axis:</span> Finance head</span>
-              <span><span className="font-medium text-[var(--text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Summary heads — IFMS baseline vs current</p>
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--ax-muted)]">
+              <span><span className="font-medium text-[var(--ax-text-secondary)]">X-axis:</span> Finance head</span>
+              <span><span className="font-medium text-[var(--ax-text-secondary)]">Y-axis:</span> IFMS expenditure (₹ Crores)</span>
             </div>
             <div className="mt-3 h-64 w-full">
               <ResponsiveContainer width="100%" height={256}>
@@ -754,8 +754,8 @@ export default function FinancialOverviewClient({
                     formatter={(v, name) => [`₹${Number(v ?? 0).toFixed(1)} Cr`, String(name ?? "")]}
                   />
                   <Legend />
-                  <Bar dataKey="baseline" name="Baseline IFMS (₹ Cr)" fill="var(--text-muted)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="current" name="Current IFMS (₹ Cr)" fill="var(--text-primary)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="baseline" name="Baseline IFMS (₹ Cr)" fill="var(--ax-muted)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="current" name="Current IFMS (₹ Cr)" fill="var(--color-text)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -763,27 +763,27 @@ export default function FinancialOverviewClient({
         )}
 
         {preset !== "none" && loadingCompare && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Budget breakdown (summary heads)</p>
-            <p className="mt-3 text-sm text-[var(--text-muted)]">Loading summary comparison…</p>
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Budget breakdown (summary heads)</p>
+            <p className="mt-3 text-sm text-[var(--ax-muted)]">Loading summary comparison…</p>
           </div>
         )}
 
         {preset !== "none" && !loadingCompare && !activeHeadSummary && resolvedDates.baseline && resolvedDates.current && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Budget breakdown (summary heads)</p>
-            <p className="mt-3 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Budget breakdown (summary heads)</p>
+            <p className="mt-3 text-sm text-[var(--ax-muted)]">
               Could not load finance summary for the selected dates. Check that FA summary data exists for both as-of dates.
             </p>
           </div>
         )}
 
         {activeHeadSummary && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Budget breakdown (summary heads)</p>
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Budget breakdown (summary heads)</p>
+                <p className="text-sm text-[var(--ax-muted)]">
                   Plan type, transfer, and admin
                   {activeHeadSummary.asOfDate ? ` · as of ${activeHeadSummary.asOfDate}` : ""}.
                   {preset !== "none" && resolvedDates.current ? ` Current column uses snapshot ${resolvedDates.current}.` : ""}
@@ -793,8 +793,8 @@ export default function FinancialOverviewClient({
             {activeHeadSummary.rows.length > 0 ? (
               <TableScroll label="Budget head breakdown" className="mt-4 overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                    <tr className="border-b border-[var(--border)]">
+                  <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
+                    <tr className="border-b border-[var(--color-divider)]">
                       <th className="py-3 pr-4">Head</th>
                       <th className="py-3 pr-4">Budget (₹ Cr)</th>
                       <th className="py-3 pr-4">SO (₹ Cr)</th>
@@ -806,7 +806,7 @@ export default function FinancialOverviewClient({
                     {activeHeadSummary.rows.map((row) => {
                       const cmp = compareSummaryRows?.find((r) => r.headCode === row.headCode);
                       return (
-                        <tr key={row.headCode} className="border-b border-[var(--border)] text-[var(--text-primary)]">
+                        <tr key={row.headCode} className="border-b border-[var(--color-divider)] text-[var(--color-text)]">
                           <td className="py-3 pr-4 font-medium">{row.label}</td>
                           <td className="py-3 pr-4">{row.budgetEstimateCr.toFixed(1)}</td>
                           <td className="py-3 pr-4">{row.soExpenditureCr.toFixed(1)}</td>
@@ -824,7 +824,7 @@ export default function FinancialOverviewClient({
                         </tr>
                       );
                     })}
-                    <tr className="font-semibold text-[var(--text-primary)]">
+                    <tr className="font-semibold text-[var(--color-text)]">
                       <td className="py-3 pr-4">Total</td>
                       <td className="py-3 pr-4">{activeHeadSummary.totals.budgetEstimateCr.toFixed(1)}</td>
                       <td className="py-3 pr-4">{activeHeadSummary.totals.soExpenditureCr.toFixed(1)}</td>
@@ -842,7 +842,7 @@ export default function FinancialOverviewClient({
                 </table>
               </TableScroll>
             ) : (
-              <p className="mt-4 text-sm text-[var(--text-muted)]">No finance summary heads recorded for this year yet.</p>
+              <p className="mt-4 text-sm text-[var(--ax-muted)]">No finance summary heads recorded for this year yet.</p>
             )}
           </div>
         )}

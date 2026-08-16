@@ -64,22 +64,22 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
       <button
         type="button"
         onClick={handleClick}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.15em] text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-all focus:outline-none"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.15em] text-[var(--color-text)] hover:border-[var(--color-text)] transition-all focus:outline-none"
       >
         <span
           className={clsx(
             "w-2 h-2 rounded-full animate-pulse",
             item.status === "COMPLETED"
-              ? "bg-[var(--alert-success)]"
+              ? "bg-[var(--ax-status-ok)]"
               : item.status === "OVERDUE"
-              ? "bg-[var(--alert-critical)]"
-              : "bg-[var(--alert-warning)]"
+              ? "bg-[var(--ax-status-critical)]"
+              : "bg-[var(--ax-status-warning)]"
           )}
         />
         <span>{item.status.replace(/_/g, " ")}</span>
         <svg
           className={clsx(
-            "w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform duration-200",
+            "w-3.5 h-3.5 text-[var(--ax-text-secondary)] transition-transform duration-200",
             isOpen && "rotate-180"
           )}
           fill="none"
@@ -93,7 +93,7 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
       {isOpen && (
         <div
           className={clsx(
-            "absolute right-0 bottom-full mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 shadow-xl z-50 transition-all w-max max-w-[85vw] sm:max-w-[400px]"
+            "absolute right-0 bottom-full mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] p-3 shadow-xl z-50 transition-all w-max max-w-[85vw] sm:max-w-[400px]"
           )}
         >
           {STATUS_STEPS.map((step, idx) => {
@@ -105,10 +105,10 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
                   className={clsx(
                     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none whitespace-nowrap",
                     isCurrent
-                      ? "border-[var(--alert-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_12%,_transparent)] text-[var(--alert-warning)]"
+                      ? "border-[var(--ax-status-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_12%,_transparent)] text-[var(--ax-status-warning)]"
                       : isDone
-                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
-                      : "border-[var(--border)] text-[var(--text-muted)]"
+                      ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-surface)]"
+                      : "border-[var(--color-divider)] text-[var(--ax-muted)]"
                   )}
                 >
                   {step.replace(/_/g, " ")}
@@ -117,7 +117,7 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
                   <svg
                     className={clsx(
                       "mx-1 w-3 h-3 shrink-0",
-                      isDone ? "text-[var(--text-primary)]" : "text-[var(--border)]"
+                      isDone ? "text-[var(--color-text)]" : "text-[var(--color-divider)]"
                     )}
                     fill="none"
                     viewBox="0 0 24 24"

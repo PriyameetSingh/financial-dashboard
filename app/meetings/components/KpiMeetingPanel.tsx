@@ -105,7 +105,7 @@ export default function KpiMeetingPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center gap-2 py-12 text-sm text-[var(--ax-muted)]">
         <Loader2 className="animate-spin" size={18} />
         Loading KPI submissions…
       </div>
@@ -113,7 +113,7 @@ export default function KpiMeetingPanel() {
   }
 
   if (err) {
-    return <p className="text-sm text-[var(--alert-critical)]">{err}</p>;
+    return <p className="text-sm text-[var(--ax-status-critical)]">{err}</p>;
   }
 
   const approved = statusCounts.approved ?? 0;
@@ -123,19 +123,19 @@ export default function KpiMeetingPanel() {
 
   return (
     <div className="space-y-6">
-      <p className="text-xs text-[var(--text-muted)]">
+      <p className="text-xs text-[var(--ax-muted)]">
         FY {fy ?? "—"} · {total} KPI row{total !== 1 ? "s" : ""} (latest measurement per definition)
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Approved", value: approved, tone: "text-[var(--alert-success)]" },
+          { label: "Approved", value: approved, tone: "text-[var(--ax-status-ok)]" },
           { label: "Pending review / submitted", value: pending, tone: "ax-tone-warning" },
-          { label: "Draft", value: draft, tone: "text-[var(--text-muted)]" },
-          { label: "Not submitted", value: notSubmitted, tone: "text-[var(--text-muted)]" },
+          { label: "Draft", value: draft, tone: "text-[var(--ax-muted)]" },
+          { label: "Not submitted", value: notSubmitted, tone: "text-[var(--ax-muted)]" },
         ].map((row) => (
-          <div key={row.label} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{row.label}</p>
+          <div key={row.label} className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-4">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">{row.label}</p>
             <p className={`mt-1 text-2xl font-semibold tabular-nums ${row.tone}`}>{row.value}</p>
           </div>
         ))}
@@ -144,10 +144,10 @@ export default function KpiMeetingPanel() {
       <div className="grid gap-6 lg:grid-cols-2">
         {pieData.length > 0 && (
           <div>
-            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
               Workflow status mix
             </p>
-            <div className="h-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+            <div className="h-[220px] rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-2">
               <ResponsiveContainer width="100%" height={204}>
                 <PieChart>
                   <Pie
@@ -166,8 +166,8 @@ export default function KpiMeetingPanel() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
+                      background: "var(--color-surface)",
+                      border: "1px solid var(--color-divider)",
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
@@ -180,29 +180,29 @@ export default function KpiMeetingPanel() {
 
         {progressData.length > 0 && (
           <div>
-            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
               Delivery progress (latest measurement)
             </p>
-            <div className="h-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+            <div className="h-[220px] rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-2">
               <ResponsiveContainer width="100%" height={204}>
                 <BarChart data={progressData} layout="vertical" margin={{ left: 8, right: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)] opacity-50" />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "var(--text-muted)" }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--color-divider)] opacity-50" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "var(--ax-muted)" }} allowDecimals={false} />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={100}
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    tick={{ fontSize: 10, fill: "var(--ax-muted)" }}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
+                      background: "var(--color-surface)",
+                      border: "1px solid var(--color-divider)",
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
                   />
-                  <Bar dataKey="count" fill="var(--accent)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="var(--color-accent)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -212,31 +212,31 @@ export default function KpiMeetingPanel() {
 
       {verticalData.length > 0 && (
         <div>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
             KPI rows by vertical (top 10)
           </p>
-          <div className="h-[240px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+          <div className="h-[240px] rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-2">
             <ResponsiveContainer width="100%" height={224}>
               <BarChart data={verticalData} margin={{ top: 8, right: 8, left: 4, bottom: 48 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)] opacity-50" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--color-divider)] opacity-50" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 9, fill: "var(--ax-muted)" }}
                   interval={0}
                   angle={-32}
                   textAnchor="end"
                   height={64}
                 />
-                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} allowDecimals={false} width={32} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--ax-muted)" }} allowDecimals={false} width={32} />
                 <Tooltip
                   contentStyle={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-divider)",
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
                 />
-                <Bar dataKey="count" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -245,21 +245,21 @@ export default function KpiMeetingPanel() {
 
       {submissions.length > 0 && (
         <div>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
             Sample KPIs (first 8)
           </p>
-          <ul className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-3 text-sm">
+          <ul className="space-y-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-3 text-sm">
             {submissions.slice(0, 8).map((s) => (
-              <li key={s.id} className="flex flex-col gap-0.5 border-b border-[var(--border)]/60 pb-2 last:border-0 last:pb-0">
-                <span className="font-medium text-[var(--text-primary)]">{s.description}</span>
-                <span className="text-xs text-[var(--text-muted)]">
+              <li key={s.id} className="flex flex-col gap-0.5 border-b border-[var(--color-divider)]/60 pb-2 last:border-0 last:pb-0">
+                <span className="font-medium text-[var(--color-text)]">{s.description}</span>
+                <span className="text-xs text-[var(--ax-muted)]">
                   {s.scheme} · {s.vertical} ·{" "}
                   <span
                     className={
                       s.status === "approved"
-                        ? "text-[var(--alert-success)]"
+                        ? "text-[var(--ax-status-ok)]"
                         : s.status === "not_submitted"
-                          ? "text-[var(--text-muted)]"
+                          ? "text-[var(--ax-muted)]"
                           : "ax-tone-warning"
                     }
                   >

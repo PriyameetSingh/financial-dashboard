@@ -8,15 +8,15 @@ import { KpiMeasurementHistory, fetchKpiHistory, reviewKpiMeasurement, requestKp
 import ConfirmModal from "@/src/components/ui/ConfirmModal";
 
 const ESCALATION_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  on_track: { label: "On track", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 35%, transparent)" },
-  needs_coordination: { label: "Needs coordination", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 35%, transparent)" },
-  needs_acs_decision: { label: "Needs ACS decision", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 10%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
+  on_track: { label: "On track", color: "var(--ax-status-ok)", bg: "color-mix(in srgb, var(--ax-status-ok) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 35%, transparent)" },
+  needs_coordination: { label: "Needs coordination", color: "var(--ax-status-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 8%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 35%, transparent)" },
+  needs_acs_decision: { label: "Needs ACS decision", color: "var(--ax-status-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 10%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
 };
 
 const COMPLETION_LABEL: Record<KpiCompletionStatus, { label: string; color: string; bg: string; border: string }> = {
-  completed: { label: "Completed", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
-  pending_review: { label: "Completion Pending", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
-  rejected: { label: "Completion Rejected", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
+  completed: { label: "Completed", color: "var(--ax-status-ok)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
+  pending_review: { label: "Completion Pending", color: "var(--ax-status-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
+  rejected: { label: "Completion Rejected", color: "var(--ax-status-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
 };
 
 function isKpiBelowTarget(s: KPISubmission): boolean {
@@ -38,9 +38,9 @@ type Props = {
 function WorkflowBadge({ status }: { status: KpiMeasurementHistory["workflowStatus"] }) {
   const config: Record<KpiMeasurementHistory["workflowStatus"], { label: string; color: string; bg: string; border: string }> = {
     draft: { label: "Draft", color: "var(--ax-muted)", bg: "color-mix(in srgb, var(--color-text) 12%, transparent)", border: "color-mix(in srgb, var(--color-text) 26%, transparent)" },
-    submitted_pending: { label: "Pending Review", color: "var(--alert-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
-    approved: { label: "Approved", color: "var(--alert-success)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
-    rejected: { label: "Rejected", color: "var(--alert-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
+    submitted_pending: { label: "Pending Review", color: "var(--ax-status-warning)", bg: "color-mix(in srgb, var(--ax-status-warning) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-warning) 40%, transparent)" },
+    approved: { label: "Approved", color: "var(--ax-status-ok)", bg: "color-mix(in srgb, var(--ax-status-ok) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-ok) 40%, transparent)" },
+    rejected: { label: "Rejected", color: "var(--ax-status-critical)", bg: "color-mix(in srgb, var(--ax-status-critical) 12%, transparent)", border: "color-mix(in srgb, var(--ax-status-critical) 40%, transparent)" },
   };
   const c = config[status];
   return (
@@ -85,10 +85,10 @@ function ValueDisplay({
   if (hasDiffUnits) {
     return (
       <span>
-        {num} <span className="text-[var(--text-muted)] font-normal text-xs">{numeratorUnit}</span>
+        {num} <span className="text-[var(--ax-muted)] font-normal text-xs">{numeratorUnit}</span>
         {den !== null ? (
           <>
-            {" / "}{den} <span className="text-[var(--text-muted)] font-normal text-xs">{denominatorUnit}</span>
+            {" / "}{den} <span className="text-[var(--ax-muted)] font-normal text-xs">{denominatorUnit}</span>
           </>
         ) : ""}
       </span>
@@ -98,7 +98,7 @@ function ValueDisplay({
   return (
     <span>
       {num}
-      {den !== null ? ` / ${den}` : ""} <span className="text-[var(--text-muted)]">{unit}</span>
+      {den !== null ? ` / ${den}` : ""} <span className="text-[var(--ax-muted)]">{unit}</span>
     </span>
   );
 }
@@ -232,24 +232,24 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
       }}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] p-6 pb-5">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--color-divider)] p-6 pb-5">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--text-muted)]">
+            <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--ax-muted)]">
               {kpiMeta?.scheme ?? submission.scheme} · {kpiMeta?.vertical ?? submission.vertical}
             </p>
-            <h2 className="mt-1 text-lg font-semibold leading-snug text-[var(--text-primary)]">{submission.description}</h2>
-            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
-              <span className="rounded-full border border-[var(--border)] px-2 py-0.5 uppercase tracking-[0.2em]">
+            <h2 className="mt-1 text-lg font-semibold leading-snug text-[var(--color-text)]">{submission.description}</h2>
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--ax-muted)]">
+              <span className="rounded-full border border-[var(--color-divider)] px-2 py-0.5 uppercase tracking-[0.2em]">
                 {kpiMeta?.type ?? submission.type}
               </span>
-              <span className="rounded-full border border-[var(--border)] px-2 py-0.5 uppercase tracking-[0.2em]">
+              <span className="rounded-full border border-[var(--color-divider)] px-2 py-0.5 uppercase tracking-[0.2em]">
                 {submission.category}
               </span>
-              <span className="rounded-full border border-[var(--border)] px-2 py-0.5">
+              <span className="rounded-full border border-[var(--color-divider)] px-2 py-0.5">
                 {kpiMeta?.numeratorUnit && kpiMeta?.denominatorUnit && kpiMeta.numeratorUnit !== kpiMeta.denominatorUnit ? (
                   <span>Units: {kpiMeta.numeratorUnit} (Num) / {kpiMeta.denominatorUnit} (Den)</span>
                 ) : (
@@ -275,20 +275,20 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-surface)]"
+            className="shrink-0 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] transition hover:bg-[var(--color-surface)]"
           >
             Close
           </button>
         </div>
 
-        <div className="border-b border-[var(--border)] px-6 pb-5">
+        <div className="border-b border-[var(--color-divider)] px-6 pb-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--text-muted)]">Ownership</p>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--ax-muted)]">Ownership</p>
             {submission.currentUserCanReassignOwners && (
               <button
                 type="button"
                 onClick={() => setReassignOpen(true)}
-                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)]"
+                className="rounded-lg border border-[var(--color-divider)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition hover:bg-[var(--ax-hover)]"
               >
                 Reassign
               </button>
@@ -296,12 +296,12 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
           </div>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Action owner</p>
-              <p className="mt-1 text-sm text-[var(--text-primary)]">{submission.assignedToName?.trim() || "—"}</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Action owner</p>
+              <p className="mt-1 text-sm text-[var(--color-text)]">{submission.assignedToName?.trim() || "—"}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Reviewer</p>
-              <p className="mt-1 text-sm text-[var(--text-primary)]">{submission.reviewerName?.trim() || "—"}</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Reviewer</p>
+              <p className="mt-1 text-sm text-[var(--color-text)]">{submission.reviewerName?.trim() || "—"}</p>
             </div>
           </div>
         </div>
@@ -311,12 +311,12 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
           {/* Reviewer approval panel */}
           {canReview && (
             <div className="mb-6 rounded-2xl border border-[color-mix(in_srgb,_var(--ax-status-warning)_40%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_6%,_transparent)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--alert-warning)]">Awaiting Your Review</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--ax-status-warning)]">Awaiting Your Review</p>
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">
                 Submitted on {latestPending.measuredAt}
                 {latestPending.submittedBy ? ` by ${latestPending.submittedBy}` : ""} · FY {latestPending.financialYear}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--text-primary)]">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--color-text)]">
                 <span className="font-medium">
                   <ValueDisplay
                     type={kpiMeta?.type ?? submission.type}
@@ -329,12 +329,12 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                   />
                 </span>
                 {latestPending.remarks && (
-                  <span className="text-[var(--text-muted)]">· "{latestPending.remarks}"</span>
+                  <span className="text-[var(--ax-muted)]">· "{latestPending.remarks}"</span>
                 )}
               </div>
 
               {actionMsg && (
-                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-muted)]">
+                <div className="mt-3 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--ax-muted)]">
                   {actionMsg}
                 </div>
               )}
@@ -345,7 +345,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     type="button"
                     disabled={reviewBusy}
                     onClick={handleApprove}
-                    className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                    className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-xs font-semibold text-[var(--color-bg)] disabled:opacity-50"
                   >
                     {reviewBusy ? "Working..." : "Approve"}
                   </button>
@@ -353,7 +353,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     type="button"
                     disabled={reviewBusy}
                     onClick={() => setShowRejectInput(true)}
-                    className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                    className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-xs text-[var(--ax-muted)] disabled:opacity-50"
                   >
                     Reject with Comment
                   </button>
@@ -362,14 +362,14 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
 
               {showRejectInput && (
                 <div className="mt-4 space-y-3">
-                  <label className="block text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  <label className="block text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                     Rejection note (required)
                     <textarea
                       ref={rejectRef}
                       value={rejectNote}
                       onChange={(e) => setRejectNote(e.target.value)}
                       rows={3}
-                      className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--border)]"
+                      className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-divider)]"
                       placeholder="Explain why this submission is being rejected..."
                     />
                   </label>
@@ -378,7 +378,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                       type="button"
                       disabled={reviewBusy || !rejectNote.trim()}
                       onClick={handleReject}
-                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--ax-status-critical)] disabled:opacity-50"
                     >
                       {reviewBusy ? "Working..." : "Confirm Reject"}
                     </button>
@@ -386,7 +386,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                       type="button"
                       disabled={reviewBusy}
                       onClick={() => { setShowRejectInput(false); setRejectNote(""); }}
-                      className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs text-[var(--text-muted)]"
+                      className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-xs text-[var(--ax-muted)]"
                     >
                       Cancel
                     </button>
@@ -398,11 +398,11 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
 
           {/* Completion workflow panel */}
           {(submission.currentUserCanRequestCompletion || submission.currentUserCanReviewCompletion || submission.completionStatus) && (
-            <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI Completion</p>
+            <div className="mb-6 rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--ax-muted)]">KPI Completion</p>
 
               {submission.completionStatus && (
-                <div className="mt-3 text-sm text-[var(--text-primary)]">
+                <div className="mt-3 text-sm text-[var(--color-text)]">
                   {(() => {
                     const cfg = COMPLETION_LABEL[submission.completionStatus];
                     return (
@@ -417,24 +417,24 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     );
                   })()}
                   {submission.completionRequestedAt && (
-                    <p className="mt-2 text-xs text-[var(--text-muted)]">
+                    <p className="mt-2 text-xs text-[var(--ax-muted)]">
                       Requested on {submission.completionRequestedAt.slice(0, 10)}
                     </p>
                   )}
                   {submission.completionNote && (
-                    <p className="mt-1 text-xs italic text-[var(--text-muted)]">&ldquo;{submission.completionNote}&rdquo;</p>
+                    <p className="mt-1 text-xs italic text-[var(--ax-muted)]">&ldquo;{submission.completionNote}&rdquo;</p>
                   )}
                   {submission.completionReviewedAt && submission.completionReviewNote && (
-                    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-xs">
-                      <span className="font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Review note: </span>
-                      <span className="text-[var(--text-primary)]">{submission.completionReviewNote}</span>
+                    <div className="mt-3 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs">
+                      <span className="font-semibold uppercase tracking-[0.2em] text-[var(--ax-muted)]">Review note: </span>
+                      <span className="text-[var(--color-text)]">{submission.completionReviewNote}</span>
                     </div>
                   )}
                 </div>
               )}
 
               {actionMsg && (
-                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-muted)]">
+                <div className="mt-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--ax-muted)]">
                   {actionMsg}
                 </div>
               )}
@@ -445,7 +445,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     type="button"
                     disabled={completeBusy}
                     onClick={onRequestComplete}
-                    className="inline-flex items-center gap-1 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-xl bg-[var(--color-text)] px-4 py-2 text-xs font-semibold text-[var(--color-bg)] disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {completeBusy ? "Working…" : "Mark Complete"}
@@ -469,7 +469,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                           setCompleteBusy(false);
                         }
                       }}
-                      className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                      className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-xs font-semibold text-[var(--color-bg)] disabled:opacity-50"
                     >
                       Approve Completion
                     </button>
@@ -494,7 +494,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                           setCompleteBusy(false);
                         }
                       }}
-                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--alert-critical)] disabled:opacity-50"
+                      className="rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_50%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-2 text-xs font-semibold text-[var(--ax-status-critical)] disabled:opacity-50"
                     >
                       Reject Completion
                     </button>
@@ -506,16 +506,16 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
 
           {/* History section */}
           <div>
-            <p className="mb-4 text-[10px] uppercase tracking-[0.4em] text-[var(--text-muted)]">Update History</p>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.4em] text-[var(--ax-muted)]">Update History</p>
 
             {loading && (
-              <div className="text-sm text-[var(--text-muted)]">Loading history...</div>
+              <div className="text-sm text-[var(--ax-muted)]">Loading history...</div>
             )}
             {error && (
-              <div className="text-sm text-[var(--alert-critical)]">{error}</div>
+              <div className="text-sm text-[var(--ax-status-critical)]">{error}</div>
             )}
             {!loading && !error && measurements.length === 0 && (
-              <div className="text-sm text-[var(--text-muted)]">No measurements recorded yet.</div>
+              <div className="text-sm text-[var(--ax-muted)]">No measurements recorded yet.</div>
             )}
 
             {!loading && !error && measurements.length > 0 && (
@@ -523,15 +523,15 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                 {measurements.map((m, i) => (
                   <div
                     key={m.id}
-                    className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                    className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-[var(--text-muted)]">
+                        <span className="text-[10px] font-medium text-[var(--ax-muted)]">
                           FY {m.financialYear} · {m.measuredAt}
                         </span>
                         {i === 0 && (
-                          <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[8px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                          <span className="rounded-full border border-[var(--color-divider)] px-2 py-0.5 text-[8px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                             Latest
                           </span>
                         )}
@@ -539,7 +539,7 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                       <WorkflowBadge status={m.workflowStatus} />
                     </div>
 
-                    <div className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+                    <div className="mt-2 text-sm font-semibold text-[var(--color-text)]">
                       <ValueDisplay
                         type={kpiMeta?.type ?? submission.type}
                         numerator={m.numeratorValue}
@@ -552,14 +552,14 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                     </div>
 
                     {m.remarks && (
-                      <p className="mt-1 text-xs italic text-[var(--text-muted)]">"{m.remarks}"</p>
+                      <p className="mt-1 text-xs italic text-[var(--ax-muted)]">"{m.remarks}"</p>
                     )}
 
                     {/* Bottleneck reason */}
                     {m.bottleneckReason && (
-                      <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)]">Bottleneck</p>
-                        <p className="mt-0.5 text-xs text-[var(--text-primary)]">{m.bottleneckReason}</p>
+                      <div className="mt-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--ax-muted)]">Bottleneck</p>
+                        <p className="mt-0.5 text-xs text-[var(--color-text)]">{m.bottleneckReason}</p>
                       </div>
                     )}
 
@@ -578,11 +578,11 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                       );
                     })()}
 
-                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--text-muted)]">
+                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--ax-muted)]">
                       {m.submittedBy && (
                         <span>
                           <span className="uppercase tracking-[0.2em]">Submitted by</span>{" "}
-                          <span className="text-[var(--text-primary)]">{m.submittedBy}</span>
+                          <span className="text-[var(--color-text)]">{m.submittedBy}</span>
                         </span>
                       )}
                       {m.reviewedBy && (
@@ -590,14 +590,14 @@ export default function ViewKpiModal({ open, submission, isReviewer, onClose, on
                           <span className="uppercase tracking-[0.2em]">
                             {m.workflowStatus === "approved" ? "Approved" : "Rejected"} by
                           </span>{" "}
-                          <span className="text-[var(--text-primary)]">{m.reviewedBy}</span>
+                          <span className="text-[var(--color-text)]">{m.reviewedBy}</span>
                           {m.reviewedAt && <span> on {m.reviewedAt}</span>}
                         </span>
                       )}
                     </div>
 
                     {m.reviewNote && (
-                      <div className="mt-2 rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_30%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] px-3 py-2 text-xs text-[var(--alert-critical)]">
+                      <div className="mt-2 rounded-xl border border-[color-mix(in_srgb,_var(--ax-status-critical)_30%,_transparent)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] px-3 py-2 text-xs text-[var(--ax-status-critical)]">
                         <span className="font-semibold uppercase tracking-[0.2em]">Rejection note: </span>
                         {m.reviewNote}
                       </div>

@@ -309,25 +309,25 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
       }}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border)] p-6 pb-4">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--color-divider)] p-6 pb-4">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
+            <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--ax-muted)]">
               {scheme.verticalName} · {data?.financialYearLabel ?? "FY"}
             </p>
-            <h2 id="scheme-modal-title" className="mt-1 text-lg font-semibold leading-snug text-[var(--text-primary)]">
+            <h2 id="scheme-modal-title" className="mt-1 text-lg font-semibold leading-snug text-[var(--color-text)]">
               {scheme.code} — {scheme.name}
             </h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               Financial progress, KPIs by component, recent updates, and trend charts (week-on-week and meeting comparisons).
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-surface)]"
+            className="shrink-0 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] transition hover:bg-[var(--color-surface)]"
           >
             Close
           </button>
@@ -335,14 +335,14 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {loading && (
-            <div className="flex items-center gap-2 py-10 text-sm text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 py-10 text-sm text-[var(--ax-muted)]">
               <Loader2 className="animate-spin" size={18} />
               Loading scheme analytics…
             </div>
           )}
 
           {error && !loading && (
-            <div className="rounded-xl border border-[var(--alert-critical)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--alert-critical)]">
+            <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-status-critical)]">
               {error}
             </div>
           )}
@@ -351,42 +351,42 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
             <div className="space-y-8">
               {/* Financial */}
               <section>
-                <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial progress</h3>
+                <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Financial progress</h3>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--accent)] px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--sidebar-text-primary)]">Annual budget</p>
-                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-accent)] px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--color-text)]">Annual budget</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
                       {exp ? formatCurrency(exp.annualBudgetCr) : "—"}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--accent)] px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--sidebar-text-primary)]">IFMS (latest)</p>
-                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-accent)] px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--color-text)]">IFMS (latest)</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
                       {exp ? formatCurrency(exp.ifmsExpenditureCr) : "—"}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--accent)] px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--sidebar-text-primary)]">SO (latest)</p>
-                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-accent)] px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--color-text)]">SO (latest)</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
                       {exp ? formatCurrency(exp.soExpenditureCr) : "—"}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--accent)] px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--sidebar-text-primary)]">IFMS utilisation</p>
-                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-accent)] px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--color-text)]">IFMS utilisation</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
                       {exp && exp.annualBudgetCr > 0
                         ? `${((exp.ifmsExpenditureCr / exp.annualBudgetCr) * 100).toFixed(1)}%`
                         : "—"}
                     </p>
                     {exp?.asOfDate && (
-                      <p className="mt-1 text-[10px] text-[var(--text-muted)]">As of {exp.asOfDate}</p>
+                      <p className="mt-1 text-[10px] text-[var(--ax-muted)]">As of {exp.asOfDate}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Trend comparison</p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                <div className="mt-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Trend comparison</p>
+                  <p className="mt-1 text-xs text-[var(--ax-muted)]">
                     Same mode is used for IFMS vs budget utilisation and for average KPI achievement. Week = one snapshot per ISO week;
                     month = month-end view; meeting = value on or before each meeting date.
                   </p>
@@ -408,8 +408,8 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                         onClick={() => setChartGranularity(opt.id)}
                         className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                           chartGranularity === opt.id
-                            ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--sidebar-text-primary)]"
-                            : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-text)]"
+                            : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:bg-[var(--color-surface)]"
                         }`}
                       >
                         {opt.label}
@@ -419,7 +419,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                 </div>
 
                 {ifmsWow && (
-                  <p className="mt-3 text-xs text-[var(--text-muted)]">
+                  <p className="mt-3 text-xs text-[var(--ax-muted)]">
                     Latest step (IFMS): {ifmsWow.deltaIfms >= 0 ? "+" : ""}
                     {ifmsWow.deltaIfms.toFixed(2)} Cr from {ifmsWow.prevDate} → {ifmsWow.curDate}
                     {ifmsWow.deltaUtil !== null && (
@@ -433,7 +433,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
 
                 <div className="mt-4 w-full min-h-[224px] min-w-0 shrink-0">
                   {ifmsChartData.length === 0 ? (
-                    <p className="text-sm text-[var(--text-muted)]">
+                    <p className="text-sm text-[var(--ax-muted)]">
                       {chartGranularity === "meeting" && meetingsChrono.length === 0
                         ? "No meetings found. Create meetings to compare IFMS by meeting day."
                         : chartGranularity === "meeting" && ifmsSeriesRaw.length === 0
@@ -448,28 +448,28 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                         data={ifmsChartData}
                         margin={{ top: 8, right: 12, left: 4, bottom: chartGranularity === "meeting" ? 28 : 4 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-divider)" />
                         <XAxis
                           dataKey="label"
                           tick={{ fontSize: 10 }}
-                          stroke="var(--text-muted)"
+                          stroke="var(--ax-muted)"
                           angle={chartGranularity === "meeting" ? -25 : 0}
                           textAnchor={chartGranularity === "meeting" ? "end" : "middle"}
                           height={chartGranularity === "meeting" ? 48 : 30}
                         />
-                        <YAxis yAxisId="l" tick={{ fontSize: 10 }} stroke="var(--text-muted)" />
+                        <YAxis yAxisId="l" tick={{ fontSize: 10 }} stroke="var(--ax-muted)" />
                         <YAxis
                           yAxisId="r"
                           orientation="right"
                           domain={[0, "auto"]}
                           tick={{ fontSize: 10 }}
-                          stroke="var(--text-muted)"
+                          stroke="var(--ax-muted)"
                           tickFormatter={(v) => `${v}%`}
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "var(--bg-card)",
-                            border: "1px solid var(--border)",
+                            background: "var(--color-surface)",
+                            border: "1px solid var(--color-divider)",
                             borderRadius: 8,
                             fontSize: 12,
                           }}
@@ -487,7 +487,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                           type="monotone"
                           dataKey="ifms"
                           name="IFMS (₹ Cr)"
-                          stroke="var(--accent)"
+                          stroke="var(--color-accent)"
                           strokeWidth={2}
                           dot={false}
                         />
@@ -506,24 +506,24 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                 </div>
 
                 <div className="mt-6">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">By component (latest)</p>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">By component (latest)</p>
                   <div className="mt-2 space-y-2">
                     {data.subschemeFinancial.length === 0 ? (
-                      <p className="text-sm text-[var(--text-muted)]">No budget lines for this scheme.</p>
+                      <p className="text-sm text-[var(--ax-muted)]">No budget lines for this scheme.</p>
                     ) : (
                       data.subschemeFinancial.map((row) => (
-                        <div key={row.id} className="flex flex-col gap-1 rounded-lg border border-[var(--border)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div key={row.id} className="flex flex-col gap-1 rounded-lg border border-[var(--color-divider)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <span className="text-sm font-medium text-[var(--text-primary)]">{row.code}</span>
-                            <span className="text-sm text-[var(--text-muted)]"> — {row.name}</span>
+                            <span className="text-sm font-medium text-[var(--color-text)]">{row.code}</span>
+                            <span className="text-sm text-[var(--ax-muted)]"> — {row.name}</span>
                             {row.asOfDate && (
-                              <span className="ml-2 text-[10px] text-[var(--text-muted)]">· {row.asOfDate}</span>
+                              <span className="ml-2 text-[10px] text-[var(--ax-muted)]">· {row.asOfDate}</span>
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs tabular-nums text-[var(--text-muted)]">
+                          <div className="flex flex-wrap items-center gap-3 text-xs tabular-nums text-[var(--ax-muted)]">
                             <span>Budget {formatCurrency(row.budgetCr)}</span>
                             <span>IFMS {formatCurrency(row.ifmsCr)}</span>
-                            <span className="font-medium text-[var(--text-primary)]">{formatPct(row.utilisationPct)}</span>
+                            <span className="font-medium text-[var(--color-text)]">{formatPct(row.utilisationPct)}</span>
                           </div>
                         </div>
                       ))
@@ -536,16 +536,16 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
               <section>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI progress</h3>
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">KPI progress</h3>
+                    <p className="mt-1 text-xs text-[var(--ax-muted)]">
                       Scope filters the table and counts. Trend comparison (week / month / meeting) is set under Financial progress
                       above.
                     </p>
                   </div>
-                  <label className="flex flex-col text-[11px] text-[var(--text-muted)]">
+                  <label className="flex flex-col text-[11px] text-[var(--ax-muted)]">
                     Scope
                     <select
-                      className="mt-1 min-w-[220px] rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                      className="mt-1 min-w-[220px] rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
                       value={kpiScope}
                       onChange={(e) => setKpiScope(e.target.value)}
                     >
@@ -562,10 +562,10 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                   {(["on_track", "delayed", "overdue"] as const).map((k) => (
                     <div
                       key={k}
-                      className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-center"
+                      className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-center"
                     >
-                      <p className="text-2xl font-semibold text-[var(--text-primary)]">{filteredProgress[k]}</p>
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                      <p className="text-2xl font-semibold text-[var(--color-text)]">{filteredProgress[k]}</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">
                         {PROGRESS_LABEL[k] ?? k}
                       </p>
                     </div>
@@ -574,7 +574,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
 
                 <div className="mt-4 w-full min-h-[208px] min-w-0 shrink-0">
                   {kpiChartData.length === 0 ? (
-                    <p className="text-sm text-[var(--text-muted)]">
+                    <p className="text-sm text-[var(--ax-muted)]">
                       {chartGranularity === "meeting" && meetingsChrono.length === 0
                         ? "No meetings found. Add meetings to chart KPI snapshots by meeting day."
                         : chartGranularity === "meeting"
@@ -587,20 +587,20 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                         data={kpiChartData}
                         margin={{ top: 8, right: 12, left: 4, bottom: chartGranularity === "meeting" ? 28 : 4 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-divider)" />
                         <XAxis
                           dataKey="label"
                           tick={{ fontSize: 10 }}
-                          stroke="var(--text-muted)"
+                          stroke="var(--ax-muted)"
                           angle={chartGranularity === "meeting" ? -25 : 0}
                           textAnchor={chartGranularity === "meeting" ? "end" : "middle"}
                           height={chartGranularity === "meeting" ? 48 : 30}
                         />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="var(--text-muted)" tickFormatter={(v) => `${v}%`} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="var(--ax-muted)" tickFormatter={(v) => `${v}%`} />
                         <Tooltip
                           contentStyle={{
-                            background: "var(--bg-card)",
-                            border: "1px solid var(--border)",
+                            background: "var(--color-surface)",
+                            border: "1px solid var(--color-divider)",
                             borderRadius: 8,
                             fontSize: 12,
                           }}
@@ -618,7 +618,7 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                 <div className="mt-6 overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                      <tr className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">
                         <th className="pb-2 pr-3">KPI</th>
                         <th className="pb-2 pr-3">Component</th>
                         <th className="pb-2 pr-3">Achievement</th>
@@ -627,9 +627,9 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                     </thead>
                     <tbody>
                       {filteredKpiRows.map((r) => (
-                        <tr key={r.id} className="border-t border-[var(--border)] text-[var(--text-primary)]">
+                        <tr key={r.id} className="border-t border-[var(--color-divider)] text-[var(--color-text)]">
                           <td className="py-2 pr-3 align-top">{r.description}</td>
-                          <td className="py-2 pr-3 align-top text-[var(--text-muted)]">
+                          <td className="py-2 pr-3 align-top text-[var(--ax-muted)]">
                             {r.subschemeCode ? `${r.subschemeCode}` : "—"}
                           </td>
                           <td className="py-2 pr-3 align-top tabular-nums">{formatPct(r.latest?.achievementPct ?? null)}</td>
@@ -641,31 +641,31 @@ export default function SchemeModal({ open, onClose, scheme }: Props) {
                     </tbody>
                   </table>
                   {filteredKpiRows.length === 0 && (
-                    <p className="mt-2 text-sm text-[var(--text-muted)]">No KPIs in this scope.</p>
+                    <p className="mt-2 text-sm text-[var(--ax-muted)]">No KPIs in this scope.</p>
                   )}
                 </div>
               </section>
 
               {/* Updates */}
               <section>
-                <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Updates</h3>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">Recent KPI measurements and financial data entries for this scheme.</p>
+                <h3 className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Updates</h3>
+                <p className="mt-1 text-xs text-[var(--ax-muted)]">Recent KPI measurements and financial data entries for this scheme.</p>
                 <ul className="mt-3 space-y-2">
                   {data.updates.length === 0 ? (
-                    <li className="text-sm text-[var(--text-muted)]">No updates yet.</li>
+                    <li className="text-sm text-[var(--ax-muted)]">No updates yet.</li>
                   ) : (
                     data.updates.map((u, i) => (
                       <li
                         key={`${u.at}-${u.kind}-${i}`}
-                        className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+                        className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <span className="font-medium text-[var(--text-primary)]">{u.title}</span>
-                          <span className="text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                          <span className="font-medium text-[var(--color-text)]">{u.title}</span>
+                          <span className="text-[10px] uppercase tracking-[0.15em] text-[var(--ax-muted)]">
                             {u.kind === "kpi" ? "KPI" : "Financial"} · {new Date(u.at).toLocaleString()}
                           </span>
                         </div>
-                        {u.detail && <p className="mt-1 text-xs text-[var(--text-muted)]">{u.detail}</p>}
+                        {u.detail && <p className="mt-1 text-xs text-[var(--ax-muted)]">{u.detail}</p>}
                       </li>
                     ))
                   )}

@@ -74,7 +74,7 @@ function EscalationBadge({ flag }: { flag: KpiEscalationFlag | null | undefined 
 function StalenessChip({ staleDays }: { staleDays: number | null | undefined }) {
   if (staleDays == null) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
+      <span className="inline-flex items-center gap-1 text-[11px] text-[var(--ax-muted)]">
         <Clock className="h-3 w-3" />
         Never updated
       </span>
@@ -85,7 +85,7 @@ function StalenessChip({ staleDays }: { staleDays: number | null | undefined }) 
   return (
     <span
       className="inline-flex items-center gap-1 text-[11px]"
-      style={{ color: urgent ? "var(--alert-critical)" : warn ? "var(--alert-warning)" : "var(--text-muted)" }}
+      style={{ color: urgent ? "var(--ax-status-critical)" : warn ? "var(--ax-status-warning)" : "var(--ax-muted)" }}
     >
       <Clock className="h-3 w-3" />
       {staleDays === 0 ? "Today" : staleDays === 1 ? "1d ago" : `${staleDays}d ago`}
@@ -102,7 +102,7 @@ function VelocityTrail({
   type: string;
   denominator: number | null | undefined;
 }) {
-  if (!trail || trail.length === 0) return <span className="text-[11px] text-[var(--text-muted)]">—</span>;
+  if (!trail || trail.length === 0) return <span className="text-[11px] text-[var(--ax-muted)]">—</span>;
   const pts = [...trail].reverse().slice(-4);
   if (type === "BINARY") {
     return (
@@ -111,7 +111,7 @@ function VelocityTrail({
           <span
             key={i}
             className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: p.yesValue === true ? "var(--alert-success)" : p.yesValue === false ? "var(--alert-critical)" : "var(--border)" }}
+            style={{ backgroundColor: p.yesValue === true ? "var(--ax-status-ok)" : p.yesValue === false ? "var(--ax-status-critical)" : "var(--color-divider)" }}
             title={p.measuredAt}
           />
         ))}
@@ -123,12 +123,12 @@ function VelocityTrail({
   const isFlat = values.length > 1 && values.every((v) => v === values[0]);
   const isGrowing = values.length > 1 && values[values.length - 1] > values[0];
   const color = isFlat && values[0] === 0
-    ? "var(--alert-critical)"
+    ? "var(--ax-status-critical)"
     : isFlat
-      ? "var(--alert-warning)"
+      ? "var(--ax-status-warning)"
       : isGrowing
-        ? "var(--alert-success)"
-        : "var(--text-muted)";
+        ? "var(--ax-status-ok)"
+        : "var(--ax-muted)";
   return (
     <span className="flex items-end gap-0.5" title={pts.map((p) => `${p.measuredAt}: ${p.numeratorValue ?? "—"}`).join(" → ")}>
       {pts.map((v, i) => (
@@ -137,7 +137,7 @@ function VelocityTrail({
           className="w-2 rounded-sm transition-[height]"
           style={{
             height: `${Math.max(4, Math.round((v.numeratorValue ?? 0) / max * 16))}px`,
-            backgroundColor: i === pts.length - 1 ? color : "var(--border)",
+            backgroundColor: i === pts.length - 1 ? color : "var(--color-divider)",
           }}
         />
       ))}
@@ -197,28 +197,28 @@ function CompletionBadge({ status }: { status: KpiCompletionStatus }) {
 function TrajectoryValue({ item }: { item: KPISubmission }) {
   if (item.type === "BINARY") {
     return (
-      <span className="text-base font-bold text-[var(--text-primary)]">
+      <span className="text-base font-bold text-[var(--color-text)]">
         {item.yes === true ? "Yes" : item.yes === false ? "No" : "—"}
       </span>
     );
   }
   if (item.type === "OUTCOME") {
     return (
-      <p className="max-w-xs text-xs font-medium text-[var(--text-primary)]">
+      <p className="max-w-xs text-xs font-medium text-[var(--color-text)]">
         {item.remarks?.trim() || "—"}
       </p>
     );
   }
   if (item.numerator != null || item.denominator != null) {
     return (
-      <p className="text-base font-bold tabular-nums text-[var(--text-primary)]">
+      <p className="text-base font-bold tabular-nums text-[var(--color-text)]">
         {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
           <>
-            {item.numerator ?? 0} <span className="text-xs font-normal text-[var(--text-muted)]">{item.numeratorUnit}</span>
+            {item.numerator ?? 0} <span className="text-xs font-normal text-[var(--ax-muted)]">{item.numeratorUnit}</span>
             {item.denominator != null && (
               <>
                 <span className="font-bold"> / </span>
-                {item.denominator} <span className="text-xs font-normal text-[var(--text-muted)]">{item.denominatorUnit}</span>
+                {item.denominator} <span className="text-xs font-normal text-[var(--ax-muted)]">{item.denominatorUnit}</span>
               </>
             )}
           </>
@@ -226,13 +226,13 @@ function TrajectoryValue({ item }: { item: KPISubmission }) {
           <>
             {item.numerator ?? 0}
             {item.denominator != null && <span className="font-bold"> / {item.denominator}</span>}
-            {item.unit && <span className="ml-1 text-sm font-normal text-[var(--text-muted)]">{item.unit}</span>}
+            {item.unit && <span className="ml-1 text-sm font-normal text-[var(--ax-muted)]">{item.unit}</span>}
           </>
         )}
       </p>
     );
   }
-  return <span className="text-[var(--text-muted)]">—</span>;
+  return <span className="text-[var(--ax-muted)]">—</span>;
 }
 
 interface KpiStatusCellProps {
@@ -276,7 +276,7 @@ function KpiStatusCell({
                 title="Approve completion request"
                 disabled={completeBusyId === item.id}
                 onClick={(e) => { e.stopPropagation(); onApproveCompletion(item); }}
-                className="rounded-lg bg-[var(--text-primary)] px-2 py-1 text-[11px] font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                className="rounded-lg bg-[var(--color-text)] px-2 py-1 text-[11px] font-semibold text-[var(--color-bg)] disabled:opacity-50"
               >
                 Approve Completion
               </button>
@@ -296,7 +296,7 @@ function KpiStatusCell({
               type="button"
               title="Edit KPI"
               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-              className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] hover:text-[var(--text-primary)]"
+              className="rounded-lg border border-[var(--color-divider)] p-1.5 text-[var(--ax-muted)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] hover:text-[var(--color-text)]"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -561,7 +561,7 @@ function KPIsPageContent() {
 
   return (
     <AppShell title="KPI Tracker">
-      <div className="flex h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[var(--bg-document)]">
+      <div className="flex h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[var(--color-bg)]">
         {/* Mobile overlay backdrop */}
         {sidebarOpen && (
           <div
@@ -571,16 +571,16 @@ function KPIsPageContent() {
           />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-card)] transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[var(--color-divider)] bg-[var(--color-surface)] transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="border-b border-[var(--border)] p-4">
+          <div className="border-b border-[var(--color-divider)] p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Schemes</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Schemes</p>
               <button
                 type="button"
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
+                className="text-[var(--ax-muted)] hover:text-[var(--color-text)] md:hidden"
                 onClick={() => setSidebarOpen(false)}
                 aria-label="Close schemes panel"
               >
@@ -588,12 +588,12 @@ function KPIsPageContent() {
               </button>
             </div>
             <div className="relative mt-2">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-muted)]" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--ax-muted)]" />
               <input
                 value={sidebarQuery}
                 onChange={(e) => setSidebarQuery(e.target.value)}
                 placeholder="Search scheme..."
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-document)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] py-2 pl-9 pr-3 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-accent)] focus:outline-none"
               />
             </div>
           </div>
@@ -603,14 +603,14 @@ function KPIsPageContent() {
               onClick={() => { setFocusScheme(null); setSidebarOpen(false); }}
               className={`mb-1 w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
                 focusScheme === null
-                  ? "border-[var(--accent)] bg-[var(--bg-content-surface)] shadow-sm"
-                  : "border-transparent bg-[var(--bg-content-surface)] text-[var(--text-primary)] hover:brightness-[0.98]"
+                  ? "border-[var(--color-accent)] bg-[var(--color-surface)] shadow-sm"
+                  : "border-transparent bg-[var(--color-surface)] text-[var(--color-text)] hover:brightness-[0.98]"
               }`}
             >
               <span className="flex items-center justify-between gap-2">
                 <span className="min-w-0">
                   <span className="block font-medium">Full registry</span>
-                  <span className="mt-0.5 block text-[11px] text-[var(--text-muted)]">All KPIs · table & reviews</span>
+                  <span className="mt-0.5 block text-[11px] text-[var(--ax-muted)]">All KPIs · table & reviews</span>
                 </span>
               </span>
             </button>
@@ -629,18 +629,18 @@ function KPIsPageContent() {
                   onClick={() => { setFocusScheme(name); setSidebarOpen(false); }}
                   className={`mb-1 w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
                     focusScheme === name
-                      ? "border-[var(--accent)] bg-[var(--bg-content-surface)] shadow-sm"
-                      : `border-transparent text-[var(--text-primary)] hover:brightness-[0.98] ${
-                          (schemeIndex + 1) % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
+                      ? "border-[var(--color-accent)] bg-[var(--color-surface)] shadow-sm"
+                      : `border-transparent text-[var(--color-text)] hover:brightness-[0.98] ${
+                          (schemeIndex + 1) % 2 === 0 ? "bg-[var(--color-surface)]" : "bg-[var(--ax-row-alt)]"
                         }`
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
                     {hasEscalated && (
-                      <AlertTriangle className="h-3 w-3 shrink-0 text-[var(--alert-critical)]" />
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-[var(--ax-status-critical)]" />
                     )}
                     {!hasEscalated && hasCoordination && (
-                      <AlertTriangle className="h-3 w-3 shrink-0 text-[var(--alert-warning)]" />
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-[var(--ax-status-warning)]" />
                     )}
                     <span className="min-w-0 flex-1 truncate">{name}</span>
                     {(pendingCount > 0 || escalatedCount > 0) && (
@@ -667,7 +667,7 @@ function KPIsPageContent() {
         <div className="relative min-w-0 flex-1 overflow-y-auto">
           <div className="space-y-6 px-6 py-6">
             {isViewer && (
-              <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                 Read-only
               </div>
             )}
@@ -677,17 +677,17 @@ function KPIsPageContent() {
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(true)}
-                  className="mt-0.5 inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2 text-[var(--text-primary)] transition hover:bg-[var(--bg-content-surface)] md:hidden"
+                  className="mt-0.5 inline-flex items-center justify-center rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-2 text-[var(--color-text)] transition hover:bg-[var(--color-surface)] md:hidden"
                   aria-label="Open schemes panel"
                 >
                   <Menu className="h-4 w-4" />
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">HUDD</p>
-                  <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
+                  <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">HUDD</p>
+                  <h1 className="text-2xl font-semibold text-[var(--color-text)]">
                     {focusScheme ? focusScheme : "KPI Performance Monitor"}
                   </h1>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  <p className="mt-1 text-sm text-[var(--ax-muted)]">
                     {focusScheme
                       ? `${schemeAnalytics?.vertical ?? "—"} · Velocity, staleness & escalation signals.`
                       : "Velocity, staleness & escalation signals across priority schemes."}
@@ -697,7 +697,7 @@ function KPIsPageContent() {
               {user?.role === UserRole.NODAL_OFFICER && (
                 <Link
                   href="/kpis/entry"
-                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)]"
+                  className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)]"
                 >
                   Enter KPIs
                 </Link>
@@ -724,15 +724,15 @@ function KPIsPageContent() {
               ).map((card) => (
                 <div
                   key={card.label}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                  className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4"
                 >
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">{card.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">{card.label}</p>
                   <p
                     className="mt-3 text-2xl font-semibold"
                     style={{
                       color: card.muted && (card.value as number) > 0
-                        ? "var(--alert-warning)"
-                        : "var(--text-primary)",
+                        ? "var(--ax-status-warning)"
+                        : "var(--color-text)",
                     }}
                   >
                     {card.value}
@@ -744,11 +744,11 @@ function KPIsPageContent() {
             {/* Scheme analytics */}
             {focusScheme && schemeAnalytics && (
               <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                     Budget utilisation vs KPI progress
                   </p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  <p className="mt-1 text-xs text-[var(--ax-muted)]">
                     Budget from finance snapshots (effective budget vs IFMS). KPI progress is an average of measurable submissions.
                   </p>
                   <div className="mt-4 h-52 w-full">
@@ -770,9 +770,9 @@ function KPIsPageContent() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-[var(--text-secondary)]">
+                  <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-[var(--ax-text-secondary)]">
                     <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--accent)]" aria-hidden />
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--color-accent)]" aria-hidden />
                       Budget utilisation
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -780,25 +780,25 @@ function KPIsPageContent() {
                       KPI progress (est.)
                     </span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-[var(--text-secondary)]">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-[var(--ax-text-secondary)]">
                     <div>
-                      <span className="text-[var(--text-muted)]">IFMS utilisation</span>
-                      <p className="font-semibold tabular-nums text-[var(--accent)]">
+                      <span className="text-[var(--ax-muted)]">IFMS utilisation</span>
+                      <p className="font-semibold tabular-nums text-[var(--color-accent)]">
                         {schemeAnalytics.budgetU.toFixed(1)}%
-                        {!financialForFocus && <span className="ml-1 font-normal text-[var(--text-muted)]">(no finance row)</span>}
+                        {!financialForFocus && <span className="ml-1 font-normal text-[var(--ax-muted)]">(no finance row)</span>}
                       </p>
                     </div>
                     <div>
-                      <span className="text-[var(--text-muted)]">Avg. KPI score (est.)</span>
+                      <span className="text-[var(--ax-muted)]">Avg. KPI score (est.)</span>
                       <p className="font-semibold tabular-nums" style={{ color: CHART_KPI_PROGRESS_FILL }}>
                         {schemeAnalytics.kpiAvg != null ? `${schemeAnalytics.kpiAvg.toFixed(1)}%` : "—"}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Measurement pace</p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">Latest measurement status across KPIs for this scheme.</p>
+                <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Measurement pace</p>
+                  <p className="mt-1 text-xs text-[var(--ax-muted)]">Latest measurement status across KPIs for this scheme.</p>
                   <div className="mt-6 space-y-3">
                     {(
                       [
@@ -810,10 +810,10 @@ function KPIsPageContent() {
                     ).map(([key, label, count]) => (
                       <div key={key}>
                         <div className="mb-1 flex justify-between text-xs">
-                          <span className="text-[var(--text-primary)]">{label}</span>
-                          <span className="tabular-nums text-[var(--text-muted)]">{count}</span>
+                          <span className="text-[var(--color-text)]">{label}</span>
+                          <span className="tabular-nums text-[var(--ax-muted)]">{count}</span>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-[var(--border)]">
+                        <div className="h-2 overflow-hidden rounded-full bg-[var(--color-divider)]">
                           <div
                             className="h-full rounded-full transition-[width]"
                             style={{
@@ -837,8 +837,8 @@ function KPIsPageContent() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`rounded-full border px-4 py-1 text-[11px] uppercase tracking-[0.3em] transition ${
                     activeTab === tab.id
-                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                      : "border-[var(--border)] text-[var(--text-primary)]"
+                      ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                      : "border-[var(--color-divider)] text-[var(--color-text)]"
                   }`}
                 >
                   {tab.label}
@@ -847,20 +847,20 @@ function KPIsPageContent() {
             </div>
 
             {/* Main content */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
               {actionMessage && (
                 <div className="ax-chip ax-chip-ok mb-4 w-full px-4 py-2 text-sm">
                   {actionMessage}
                 </div>
               )}
-              {loading && <div className="text-sm text-[var(--text-muted)]">Loading KPI submissions...</div>}
+              {loading && <div className="text-sm text-[var(--ax-muted)]">Loading KPI submissions...</div>}
               {!loading && filtered.length === 0 && (
                 <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-document)] text-[var(--text-muted)]">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--ax-muted)]">
                     <Inbox className="h-5 w-5" />
                   </span>
-                  <p className="mt-4 text-sm font-medium text-[var(--text-primary)]">No KPI submissions match this filter</p>
-                  <p className="mt-1 max-w-sm text-xs text-[var(--text-muted)]">
+                  <p className="mt-4 text-sm font-medium text-[var(--color-text)]">No KPI submissions match this filter</p>
+                  <p className="mt-1 max-w-sm text-xs text-[var(--ax-muted)]">
                     Try switching to a different tab, clearing the scheme filter, or check back after the next reporting cycle.
                   </p>
                 </div>
@@ -871,11 +871,11 @@ function KPIsPageContent() {
                 <div className="space-y-4">
                   {pendingQueue.length === 0 && (
                     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-document)] text-[var(--text-muted)]">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--ax-muted)]">
                         <CheckCircle2 className="h-5 w-5" />
                       </span>
-                      <p className="mt-4 text-sm font-medium text-[var(--text-primary)]">No KPI submissions awaiting your review</p>
-                      <p className="mt-1 max-w-sm text-xs text-[var(--text-muted)]">
+                      <p className="mt-4 text-sm font-medium text-[var(--color-text)]">No KPI submissions awaiting your review</p>
+                      <p className="mt-1 max-w-sm text-xs text-[var(--ax-muted)]">
                         You're all caught up. New submissions from nodal officers will appear here for approval.
                       </p>
                     </div>
@@ -883,16 +883,16 @@ function KPIsPageContent() {
                   {pendingQueue.map((item, index) => (
                     <div
                       key={item.id}
-                      className={`cursor-pointer rounded-2xl border border-[var(--border)] p-4 transition hover:brightness-[0.98] ${
-                        index % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
+                      className={`cursor-pointer rounded-2xl border border-[var(--color-divider)] p-4 transition hover:brightness-[0.98] ${
+                        index % 2 === 0 ? "bg-[var(--color-surface)]" : "bg-[var(--ax-row-alt)]"
                       }`}
                       onClick={() => setViewKpi(item)}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{item.scheme}</p>
-                          <h3 className="mt-1.5 text-base font-semibold text-[var(--text-primary)]">{item.description}</h3>
-                          <p className="mt-1 text-xs text-[var(--text-muted)]">{item.vertical} · {item.category}</p>
+                          <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">{item.scheme}</p>
+                          <h3 className="mt-1.5 text-base font-semibold text-[var(--color-text)]">{item.description}</h3>
+                          <p className="mt-1 text-xs text-[var(--ax-muted)]">{item.vertical} · {item.category}</p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
                           <div className="flex items-center gap-2">
@@ -908,37 +908,37 @@ function KPIsPageContent() {
                       </div>
 
                       {/* Signal row */}
-                      <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-[var(--border)] pt-3">
+                      <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-[var(--color-divider)] pt-3">
                         <div className="flex items-center gap-2">
                           <StalenessChip staleDays={item.staleDays} />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <TrendingUp className="h-3 w-3 text-[var(--text-muted)]" />
+                          <TrendingUp className="h-3 w-3 text-[var(--ax-muted)]" />
                           <VelocityTrail trail={item.velocityTrail} type={item.type} denominator={item.denominator} />
                         </div>
                         {item.bottleneckReason && (
-                          <p className="min-w-0 flex-1 text-xs italic text-[var(--text-muted)]">
+                          <p className="min-w-0 flex-1 text-xs italic text-[var(--ax-muted)]">
                             &ldquo;{item.bottleneckReason}&rdquo;
                           </p>
                         )}
                       </div>
 
-                      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5 text-sm text-[var(--text-muted)]">
+                      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5 text-sm text-[var(--ax-muted)]">
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Owner (Reviewer)</p>
-                          <p className="mt-1 text-sm text-[var(--text-primary)]">{item.reviewerName?.trim() || "—"}</p>
+                          <p className="mt-1 text-sm text-[var(--color-text)]">{item.reviewerName?.trim() || "—"}</p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Action owner</p>
-                          <p className="mt-1 text-sm text-[var(--text-primary)]">{item.assignedToName?.trim() || "—"}</p>
+                          <p className="mt-1 text-sm text-[var(--color-text)]">{item.assignedToName?.trim() || "—"}</p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Submitted</p>
-                          <p className="mt-1 text-sm text-[var(--text-primary)]">{item.lastUpdated}</p>
+                          <p className="mt-1 text-sm text-[var(--color-text)]">{item.lastUpdated}</p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Values</p>
-                          <p className="mt-1 text-sm font-medium tabular-nums text-[var(--text-primary)]">
+                          <p className="mt-1 text-sm font-medium tabular-nums text-[var(--color-text)]">
                             {item.type === "BINARY" ? (
                               item.yes ? "Yes" : "No"
                             ) : item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
@@ -950,7 +950,7 @@ function KPIsPageContent() {
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.3em]">Unit</p>
-                          <p className="mt-1 text-sm text-[var(--text-primary)]">
+                          <p className="mt-1 text-sm text-[var(--color-text)]">
                             {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
                               `${item.numeratorUnit} (Num) / ${item.denominatorUnit} (Den)`
                             ) : (
@@ -962,7 +962,7 @@ function KPIsPageContent() {
                       {!isViewer && item.latestMeasurementId && item.currentUserCanReview && (
                         <div className="mt-4 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
-                            className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                            className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] disabled:opacity-50"
                             disabled={reviewBusyId === item.id}
                             onClick={async () => {
                               if (!item.latestMeasurementId) return;
@@ -981,7 +981,7 @@ function KPIsPageContent() {
                             {reviewBusyId === item.id ? "Working..." : "Approve"}
                           </button>
                           <button
-                            className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                            className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] disabled:opacity-50"
                             disabled={reviewBusyId === item.id}
                             onClick={() => {
                               if (!item.latestMeasurementId) return;
@@ -1001,8 +1001,8 @@ function KPIsPageContent() {
               {!loading && activeTab !== "pending_review" && filtered.length > 0 && (
                 <div className="hidden md:block">
                   <table className="w-full text-left text-sm">
-                    <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                      <tr className="border-b border-[var(--border)]">
+                    <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
+                      <tr className="border-b border-[var(--color-divider)]">
                         <th className="py-3 pr-6">Metric</th>
                         <th className="py-3 pr-6">Last update</th>
                         <th className="py-3 pr-6">Trajectory</th>
@@ -1014,16 +1014,16 @@ function KPIsPageContent() {
                       {filtered.map((item, index) => (
                         <tr
                           key={item.id}
-                          className={`cursor-pointer border-b border-[var(--border)] text-[var(--text-primary)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] ${
-                            index % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
+                          className={`cursor-pointer border-b border-[var(--color-divider)] text-[var(--color-text)] transition hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] ${
+                            index % 2 === 0 ? "bg-[var(--color-surface)]" : "bg-[var(--ax-row-alt)]"
                           }`}
                           onClick={() => setViewKpi(item)}
                         >
                           <td className="py-3 pr-6">
                             <p className="font-medium leading-snug">{item.description}</p>
-                            <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.scheme} · {item.vertical}</p>
+                            <p className="mt-0.5 text-xs text-[var(--ax-muted)]">{item.scheme} · {item.vertical}</p>
                             {item.monitoringLevel && (
-                              <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--bg-accent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--text-primary)]">
+                              <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--color-divider)] bg-[var(--ax-accent-tint)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--color-text)]">
                                 {item.monitoringLevel}
                               </span>
                             )}
@@ -1031,13 +1031,13 @@ function KPIsPageContent() {
                           <td className="py-3 pr-6">
                             <StalenessChip staleDays={item.staleDays} />
                             {item.staleDays != null && (
-                              <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{item.lastUpdated}</p>
+                              <p className="mt-0.5 text-[11px] text-[var(--ax-muted)]">{item.lastUpdated}</p>
                             )}
                           </td>
                           <td className="py-3 pr-6">
                             <TrajectoryValue item={item} />
                           </td>
-                          <td className="py-3 pr-6 text-sm text-[var(--text-muted)]">{item.reviewerName?.trim() || "—"}</td>
+                          <td className="py-3 pr-6 text-sm text-[var(--ax-muted)]">{item.reviewerName?.trim() || "—"}</td>
                           <td className="py-3">
                             <KpiStatusCell
                               item={item}
@@ -1062,43 +1062,43 @@ function KPIsPageContent() {
                   {filtered.map((item, index) => (
                     <div
                       key={item.id}
-                      className={`cursor-pointer rounded-2xl border border-[var(--border)] p-4 transition hover:brightness-[0.98] ${
-                        index % 2 === 0 ? "bg-[var(--bg-content-surface)]" : "bg-[var(--bg-alternate-card)]"
+                      className={`cursor-pointer rounded-2xl border border-[var(--color-divider)] p-4 transition hover:brightness-[0.98] ${
+                        index % 2 === 0 ? "bg-[var(--color-surface)]" : "bg-[var(--ax-row-alt)]"
                       }`}
                       onClick={() => setViewKpi(item)}
                     >
-                      <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{item.scheme} · {item.vertical}</p>
-                      <h3 className="mt-1 text-base font-semibold leading-snug text-[var(--text-primary)]">{item.description}</h3>
+                      <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">{item.scheme} · {item.vertical}</p>
+                      <h3 className="mt-1 text-base font-semibold leading-snug text-[var(--color-text)]">{item.description}</h3>
                       {item.monitoringLevel && (
-                        <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--bg-accent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--text-primary)]">
+                        <span className="mt-1.5 inline-flex items-center rounded-full border border-[var(--color-divider)] bg-[var(--ax-accent-tint)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--color-text)]">
                           {item.monitoringLevel}
                         </span>
                       )}
 
-                      <dl className="mt-3 space-y-2 border-t border-[var(--border)] pt-3 text-sm">
+                      <dl className="mt-3 space-y-2 border-t border-[var(--color-divider)] pt-3 text-sm">
                         <div className="flex items-start justify-between gap-3">
-                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Last update</dt>
+                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Last update</dt>
                           <dd className="flex flex-col items-end text-right">
                             <StalenessChip staleDays={item.staleDays} />
                             {item.staleDays != null && (
-                              <span className="mt-0.5 text-[11px] text-[var(--text-muted)]">{item.lastUpdated}</span>
+                              <span className="mt-0.5 text-[11px] text-[var(--ax-muted)]">{item.lastUpdated}</span>
                             )}
                           </dd>
                         </div>
                         <div className="flex items-start justify-between gap-3">
-                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Trajectory</dt>
+                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Trajectory</dt>
                           <dd className="text-right">
                             <TrajectoryValue item={item} />
                           </dd>
                         </div>
                         <div className="flex items-start justify-between gap-3">
-                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Owner</dt>
-                          <dd className="text-sm text-[var(--text-primary)]">{item.reviewerName?.trim() || "—"}</dd>
+                          <dt className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Owner</dt>
+                          <dd className="text-sm text-[var(--color-text)]">{item.reviewerName?.trim() || "—"}</dd>
                         </div>
                       </dl>
 
-                      <div className="mt-3 border-t border-[var(--border)] pt-3">
-                        <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Status</p>
+                      <div className="mt-3 border-t border-[var(--color-divider)] pt-3">
+                        <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Status</p>
                         <KpiStatusCell
                           item={item}
                           isViewer={isViewer}
@@ -1167,8 +1167,8 @@ export default function KPIsPage() {
   return (
     <Suspense fallback={
       <AppShell title="KPI Tracker">
-        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-[var(--bg-document)]">
-          <div className="text-sm text-[var(--text-muted)]">Loading KPI Performance Monitor...</div>
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-[var(--color-bg)]">
+          <div className="text-sm text-[var(--ax-muted)]">Loading KPI Performance Monitor...</div>
         </div>
       </AppShell>
     }>

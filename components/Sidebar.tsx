@@ -298,13 +298,13 @@ function MeetingScopeSelectInner() {
 
   if (!loaded) {
     return (
-      <div className="mx-3 mb-3 h-[72px] animate-pulse rounded-lg bg-[var(--sidebar-border)]/25" aria-hidden />
+      <div className="mx-3 mb-3 h-[72px] animate-pulse rounded-lg bg-[var(--color-divider)]/25" aria-hidden />
     );
   }
 
   if (sorted.length === 0) {
     return (
-      <div className="mx-3 mb-3 rounded-lg border border-dashed border-[var(--sidebar-border)] px-2.5 py-2 text-[10px] leading-snug text-[var(--sidebar-text-muted)]">
+      <div className="mx-3 mb-3 rounded-lg border border-dashed border-[var(--color-divider)] px-2.5 py-2 text-[10px] leading-snug text-[var(--ax-muted)]">
         No meetings yet. Schedule one under Meetings to scope the dashboard.
       </div>
     );
@@ -314,7 +314,7 @@ function MeetingScopeSelectInner() {
     <div className="mx-3 mb-3 flex flex-col gap-1.5">
       {/* Financial year selector */}
       <select
-        className="w-full rounded-md border border-(--sidebar-border) bg-(--bg-surface) px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--sidebar-text-muted)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--sidebar-active-bg)]/40"
+        className="w-full rounded-md border border-(--color-divider) bg-(--color-surface) px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--ax-muted)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--ax-nav-active)]/40"
         value={selectedFY}
         onChange={(e) => onFYChange(e.target.value)}
         title="Filter meetings by financial year"
@@ -328,7 +328,7 @@ function MeetingScopeSelectInner() {
 
       {/* Meeting selector */}
       <select
-        className="w-full rounded-md border border-(--sidebar-border) bg-(--bg-surface) px-2 py-1.5 text-[12px] font-medium text-[var(--sidebar-text-primary)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--sidebar-active-bg)]/40"
+        className="w-full rounded-md border border-(--color-divider) bg-(--color-surface) px-2 py-1.5 text-[12px] font-medium text-[var(--color-text)] shadow-sm outline-none focus:ring-2 focus:ring-[var(--ax-nav-active)]/40"
         value={selectedId}
         onChange={(e) => onSelect(e.target.value)}
         title="Topics, presentations, and meeting context on the dashboard follow this meeting (latest by default)."
@@ -346,7 +346,7 @@ function MeetingScopeSelectInner() {
 function MeetingScopeSelect() {
   return (
     <Suspense
-      fallback={<div className="mx-3 mb-3 h-[72px] animate-pulse rounded-lg bg-[var(--sidebar-border)]/25" aria-hidden />}
+      fallback={<div className="mx-3 mb-3 h-[72px] animate-pulse rounded-lg bg-[var(--color-divider)]/25" aria-hidden />}
     >
       <MeetingScopeSelectInner />
     </Suspense>
@@ -548,7 +548,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
       }
     `}
     >
-      <div className={`px-4 py-3 border-b border-(--sidebar-border) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
+      <div className={`px-4 py-3 border-b border-(--color-divider) items-center justify-center flex ${isCollapsed ? "px-2" : "px-6"}`}>
         <div className={`ax-nav-brand transition-all ${isCollapsed ? "size-10" : "size-14"}`}>
           <img
             src={withNextBasePath(HUDD_LOGO_PUBLIC_PATH)}
@@ -604,7 +604,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                     </span>
                   )}
                   {!isCollapsed && item.badge && (
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] bg-[var(--sidebar-active-bg)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.3em] bg-[var(--ax-nav-active)] px-2 py-0.5 rounded-full ml-auto shrink-0 opacity-80">
                       {item.badge}
                     </span>
                   )}
@@ -613,7 +613,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                   <button
                     type="button"
                     title={isOpen ? "Collapse menu" : "Expand menu"}
-                    className="p-1 rounded-r-md text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-all flex items-center justify-center cursor-pointer pr-3 pl-1 py-2 select-none focus:outline-none"
+                    className="p-1 rounded-r-md text-[var(--ax-muted)] hover:text-[var(--color-text)] transition-all flex items-center justify-center cursor-pointer pr-3 pl-1 py-2 select-none focus:outline-none"
                     onClick={() => toggleSubmenu(item.label)}
                   >
                     <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
@@ -624,7 +624,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 pointer-events-none"}`}>
                   <div className="overflow-hidden">
                     <ul
-                      className="ml-3 flex list-none flex-col gap-0.5 border-l-2 border-[var(--sidebar-text-muted)]/30 py-0.5 pl-3"
+                      className="ml-3 flex list-none flex-col gap-0.5 border-l-2 border-[var(--ax-muted)]/30 py-0.5 pl-3"
                       aria-label={`${item.label} — related links`}
                     >
                       {childLinks.map(child => {
@@ -667,11 +667,11 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
         })}
       </nav>
 
-      <div className="space-y-3 border-t border-[var(--sidebar-border)] px-3 py-3">
+      <div className="space-y-3 border-t border-[var(--color-divider)] px-3 py-3">
         <div className="relative z-10" ref={userMenuRef}>
           <button
             className={[
-              "group flex w-full items-center gap-2 overflow-hidden border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-left transition hover:bg-[var(--bg-surface)] hover:text-[var(--sidebar-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-text-muted)]/40",
+              "group flex w-full items-center gap-2 overflow-hidden border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-left transition hover:bg-[var(--color-surface)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ax-muted)]/40",
               userMenuOpen ? "rounded-b-full rounded-t-none border-t-0" : "rounded-full",
               isCollapsed ? "justify-center p-1" : "px-2",
             ].join(" ")}
@@ -680,27 +680,27 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
             aria-expanded={userMenuOpen}
             onClick={() => setUserMenuOpen((open) => !open)}
           >
-            <div className={`flex shrink-0 items-center justify-center rounded-full bg-[var(--border)] group-hover:bg-[var(--sidebar-hover-bg)] ${isCollapsed ? "h-10 w-10" : "h-8 w-8"}`}>
-              <User size={isCollapsed ? 20 : 16} className="text-[var(--text-secondary)] group-hover:text-[var(--sidebar-text-primary)]" />
+            <div className={`flex shrink-0 items-center justify-center rounded-full bg-[var(--color-divider)] group-hover:bg-[var(--ax-nav-hover)] ${isCollapsed ? "h-10 w-10" : "h-8 w-8"}`}>
+              <User size={isCollapsed ? 20 : 16} className="text-[var(--ax-text-secondary)] group-hover:text-[var(--color-text)]" />
             </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1 pr-2">
-                <p className="truncate text-xs font-semibold text-[var(--text-primary)] group-hover:text-[var(--sidebar-text-primary)]">
+                <p className="truncate text-xs font-semibold text-[var(--color-text)] group-hover:text-[var(--color-text)]">
                   {user?.name ?? roleLabel ?? "User"}
                 </p>
               </div>
             )}
           </button>
           {userMenuOpen && (
-            <div className={`absolute bottom-full z-40 rounded-t-xl rounded-b-none border border-b-0 border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl ${isCollapsed ? "left-0 w-64" : "left-0 w-full"}`}>
-              <div className="space-y-1 border-b border-[var(--border)] pb-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">{user?.name ?? "Signed in user"}</p>
-                <p className="text-xs text-[var(--text-muted)]">{user?.email ?? "Email unavailable"}</p>
-                <p className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">{roleLabel ?? "Member"}</p>
-                <p className="text-xs text-[var(--text-muted)]">{user?.department ?? "Housing & Urban Development Department"}</p>
+            <div className={`absolute bottom-full z-40 rounded-t-xl rounded-b-none border border-b-0 border-[var(--color-divider)] bg-[var(--color-surface)] p-3 shadow-xl ${isCollapsed ? "left-0 w-64" : "left-0 w-full"}`}>
+              <div className="space-y-1 border-b border-[var(--color-divider)] pb-3">
+                <p className="text-sm font-semibold text-[var(--color-text)]">{user?.name ?? "Signed in user"}</p>
+                <p className="text-xs text-[var(--ax-muted)]">{user?.email ?? "Email unavailable"}</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--ax-muted)]">{roleLabel ?? "Member"}</p>
+                <p className="text-xs text-[var(--ax-muted)]">{user?.department ?? "Housing & Urban Development Department"}</p>
               </div>
-              <div className="pt-3 pb-3 border-b border-[var(--border)]">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] mb-2">Preferences</p>
+              <div className="pt-3 pb-3 border-b border-[var(--color-divider)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ax-muted)] mb-2">Preferences</p>
                 <TextSizeToolbarControl vertical />
               </div>
               <div className="pt-3">
@@ -708,10 +708,10 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
               </div>
               <div>
                 {!isCollapsed && version && (
-                  <div className="text-center pt-1 border-t border-[var(--sidebar-border)]/20 mt-2">
+                  <div className="text-center pt-1 border-t border-[var(--color-divider)]/20 mt-2">
                     <Link
                       href="/changelog"
-                      className="text-[10px] font-semibold tracking-wider text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-primary)] transition-colors hover:underline"
+                      className="text-[10px] font-semibold tracking-wider text-[var(--ax-muted)] hover:text-[var(--color-text)] transition-colors hover:underline"
                     >
                       System Version {version}
                     </Link>

@@ -9,10 +9,6 @@ import {
 import "./nocturne.css";
 import "./tokens.css";
 import "./primitives.css";
-// Transitional: maps the pre-reskin custom properties onto Nocturne tokens, so
-// screens that have not yet been through their tranche still resolve their
-// colours through the token layer. Deleted at Gate F. See the file's header.
-import "./legacy-bridge.css";
 
 /**
  * The scope root for every Nocturne surface.

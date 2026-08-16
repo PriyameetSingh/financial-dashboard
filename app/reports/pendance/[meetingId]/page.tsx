@@ -75,12 +75,12 @@ export default function PendanceReportPage() {
   return (
     <AppShell title="Pendance report">
       <div className="print:px-4 print:py-4">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] px-6 py-4 print:hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-divider)] px-6 py-4 print:hidden">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Reports</p>
-            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Pendance Report</h1>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Reports</p>
+            <h1 className="text-xl font-semibold text-[var(--color-text)]">Pendance Report</h1>
             {data && (
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">
                 Meeting date {data.meeting.meetingDate}
                 {data.meeting.title ? ` · ${data.meeting.title}` : ""}
               </p>
@@ -89,13 +89,13 @@ export default function PendanceReportPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/reports"
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text-primary)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm font-medium text-[var(--color-text)]"
             >
               Back
             </Link>
             <button
               type="button"
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm font-semibold text-[var(--color-text)]"
               disabled={!data}
               onClick={() => window.print()}
             >
@@ -103,7 +103,7 @@ export default function PendanceReportPage() {
             </button>
             <button
               type="button"
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50"
               disabled={!data || pdfLoading}
               onClick={() => void handleDownloadPdf()}
             >
@@ -113,9 +113,9 @@ export default function PendanceReportPage() {
         </div>
 
         <div className="space-y-8 px-6 py-6">
-          {loading && <p className="text-sm text-[var(--text-muted)]">Building report…</p>}
+          {loading && <p className="text-sm text-[var(--ax-muted)]">Building report…</p>}
           {error && (
-            <p className="rounded-lg border border-[var(--alert-critical)] bg-[var(--alert-critical)]/10 px-4 py-3 text-sm text-[var(--alert-critical)]">
+            <p className="rounded-lg border border-[var(--ax-status-critical)] bg-[var(--ax-status-critical)]/10 px-4 py-3 text-sm text-[var(--ax-status-critical)]">
               {error}
             </p>
           )}

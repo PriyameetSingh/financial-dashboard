@@ -1,34 +1,20 @@
 @import "tailwindcss";
 
-/* Light mode (default) */
-:root {
-  --bg-primary: #f0f4f8;
-  --bg-document: #f5f7fa;
-  --bg-surface: #100252;
-  --bg-content-surface: #e8edf3;
-  --accent: #5d81cd;
-  --accent-text: #ffffff;
-  --bg-surface-text: #ffffff;
-  --bg-card: #ffffff;
-  --border: #d1dae6;
-  --border-strong: #9aafc5;
-  --sidebar-border: #021027;
-  --text-primary: #0d1b2a;
-  --text-secondary: #3a4f65;
-  --text-muted: #6b7f94;
-  --text-on-dark-muted: #c7d8ea;
-  --text-on-dark-subtle: #a1bed9;
-  --sidebar-text-primary: #ffffff;
-  --sidebar-text-muted: #a8c6df;
-  --sidebar-active-bg: #244d79;
-  --sidebar-hover-bg: #1d3d61;
-  --alert-critical: #cc0000;
-  --alert-warning: #b87700;
-  --alert-success: #007700;
-  --border-hover: #9aafc5;
-  --bg-hover: #88aacc;
-  --bg-alternate-card: #faf7db;
-}
+/* ════════════════════════════════════════════════════════════════════════════
+   Document-level rules only.
+
+   This file used to open with a `:root` block declaring thirty colours — the
+   palette every screen in the product painted itself from. That block is gone:
+   as of reskin Gate F every colour resolves through the Nocturne token layer in
+   `components/nocturne/`, which is scoped to `.noct` and swappable per tenant.
+   Nothing here names a colour any more, and `check-no-hardcoded-color` enforces
+   that over this file along with the rest.
+
+   What is left is the handful of things that genuinely belong to the document
+   rather than to a design system: the box model, the root font size that the
+   text-size control drives, and a ground for the fraction of a second before the
+   app paints its own.
+   ════════════════════════════════════════════════════════════════════════════ */
 
 * {
   box-sizing: border-box;
@@ -39,6 +25,8 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The reader's text-size preference, applied at the root so every `rem` in the
+   product follows it. Driven by `FontScaleProvider`. */
 html[data-text-scale="lg"] {
   font-size: 112.5%;
 }
@@ -47,25 +35,20 @@ html[data-text-scale="xl"] {
   font-size: 125%;
 }
 
+/*
+ * The system's own ground, not the product's.
+ *
+ * Every surface in the app wraps itself in a `NocturneRoot` that fills the
+ * viewport and paints `--color-bg`, so this is only ever visible in the moment
+ * before that happens. `Canvas` and `CanvasText` are the CSS system colours:
+ * they follow the reader's OS setting, which is a better guess than either of
+ * the product's two grounds and — unlike a literal — cannot be wrong for the
+ * theme that is about to load.
+ */
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: Canvas;
+  color: CanvasText;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 3px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

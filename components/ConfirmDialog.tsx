@@ -27,19 +27,19 @@ export default function ConfirmDialog({
 
   const confirmButtonClass =
     confirmVariant === "danger"
-      ? "rounded-xl bg-[var(--alert-critical)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--alert-critical)] focus:ring-offset-2"
-      : "rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)] focus:ring-offset-2";
+      ? "btn btn-danger px-4 py-2.5 text-sm font-semibold"
+      : "rounded-xl bg-[var(--color-text)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-text)] focus:ring-offset-2";
 
   return (
     <Fragment>
       <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+        className="ax-scrim fixed inset-0 z-50 backdrop-blur-sm"
         onClick={onCancel}
         aria-hidden="true"
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
+          className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-xl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
@@ -47,13 +47,13 @@ export default function ConfirmDialog({
         >
           <h2
             id="confirm-dialog-title"
-            className="text-xl font-semibold text-[var(--text-primary)]"
+            className="text-xl font-semibold text-[var(--color-text)]"
           >
             {title}
           </h2>
           <p
             id="confirm-dialog-description"
-            className="mt-3 text-sm text-[var(--text-muted)]"
+            className="mt-3 text-sm text-[var(--ax-muted)]"
           >
             {message}
           </p>
@@ -61,7 +61,7 @@ export default function ConfirmDialog({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--border)] focus:ring-offset-2"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2.5 text-sm font-semibold text-[var(--ax-muted)] hover:bg-[var(--color-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--color-divider)] focus:ring-offset-2"
             >
               {cancelLabel}
             </button>

@@ -90,15 +90,15 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
       }}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 id="edit-kpi-modal-title" className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 id="edit-kpi-modal-title" className="text-lg font-semibold text-[var(--color-text)]">
               Edit KPI
             </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               {submission.scheme} · {submission.vertical}
             </p>
           </div>
@@ -106,34 +106,34 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="shrink-0 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-hover)] disabled:opacity-50"
+            className="shrink-0 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] transition hover:bg-[var(--ax-hover)] disabled:opacity-50"
           >
             Close
           </button>
         </div>
 
         <div className="mt-6 space-y-4">
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Description
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               disabled={busy}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--color-text)] disabled:opacity-50"
             />
           </label>
 
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Monitoring Level
-            <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+            <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--ax-muted)] opacity-80">
               Which level will monitor this KPI
             </span>
             <select
               value={monitoringLevel}
               onChange={(e) => setMonitoringLevel(e.target.value as "CS" | "ACS" | "CM" | "")}
               disabled={busy}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--color-text)] disabled:opacity-50"
             >
               {MONITORING_LEVELS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -144,9 +144,9 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
           </label>
 
           {submission.type !== "BINARY" && (
-            <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+            <label className="block text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">
               Target Denominator
-              <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+              <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--ax-muted)] opacity-80">
                 Annual target or total possible value
               </span>
               <input
@@ -155,13 +155,13 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
                 onChange={(e) => setDenominatorValue(e.target.value)}
                 disabled={busy}
                 placeholder="e.g. 100"
-                className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+                className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--color-text)] disabled:opacity-50"
               />
             </label>
           )}
 
           {submission.type === "OUTPUT" && (
-            <div className="space-y-4 pt-2 border-t border-[var(--border)]">
+            <div className="space-y-4 pt-2 border-t border-[var(--color-divider)]">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -174,17 +174,17 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
                     }
                   }}
                   disabled={busy}
-                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                  className="h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] focus:ring-[var(--color-accent)]"
                 />
-                <label htmlFor="different-units-checkbox-edit" className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)] cursor-pointer select-none">
+                <label htmlFor="different-units-checkbox-edit" className="text-xs uppercase tracking-[0.15em] text-[var(--ax-muted)] cursor-pointer select-none">
                   Use different numerator from denominator units
                 </label>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                <label className="block text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                   {differentUnits ? "Numerator Unit" : "Unit"}
-                  <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                  <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--ax-muted)] opacity-80">
                     {differentUnits ? "Unit of the numerator value" : "What is being measured"}
                   </span>
                   <input
@@ -192,13 +192,13 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
                     onChange={(e) => setUnit(e.target.value)}
                     disabled={busy}
                     placeholder={differentUnits ? "e.g. households target reached" : "e.g. households"}
-                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+                    className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--color-text)] disabled:opacity-50"
                   />
                 </label>
                 {differentUnits && (
-                  <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                  <label className="block text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                     Denominator Unit
-                    <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--text-muted)] opacity-80">
+                    <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[var(--ax-muted)] opacity-80">
                       Unit of the denominator value
                     </span>
                     <input
@@ -206,7 +206,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
                       onChange={(e) => setDenominatorUnit(e.target.value)}
                       disabled={busy}
                       placeholder="e.g. total households planned"
-                      className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] disabled:opacity-50"
+                      className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--color-text)] disabled:opacity-50"
                     />
                   </label>
                 )}
@@ -221,15 +221,15 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
               checked={archived}
               onChange={(e) => setArchived(e.target.checked)}
               disabled={busy}
-              className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+              className="h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] focus:ring-[var(--color-accent)]"
             />
-            <label htmlFor="archive-kpi-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] cursor-pointer select-none">
+            <label htmlFor="archive-kpi-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--ax-muted)] cursor-pointer select-none">
               Archive this KPI
             </label>
           </div>
 
           {msg && (
-            <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            <p className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-muted)]">
               {msg}
             </p>
           )}
@@ -239,7 +239,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
               type="button"
               disabled={busy}
               onClick={handleSave}
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-60"
             >
               {busy ? "Saving…" : "Save changes"}
             </button>
@@ -247,7 +247,7 @@ export default function EditKpiModal({ open, submission, onClose, onSaved }: Pro
               type="button"
               disabled={busy}
               onClick={onClose}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-muted)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--ax-muted)]"
             >
               Cancel
             </button>

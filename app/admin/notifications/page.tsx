@@ -12,6 +12,7 @@ import {
 import type { SessionUser } from '@/types';
 import { withNextBasePath } from '@/lib/next-base-path';
 import { fetchDirectoryUsers } from '@/src/lib/directory-users';
+import ToggleSwitch from "@/src/components/ui/ToggleSwitch";
 
 export default function AdminNotificationsPage() {
   // Route Guard: requires MANAGE_NOTIFICATION_CONFIG
@@ -217,7 +218,7 @@ export default function AdminNotificationsPage() {
   // Helper to check if system is currently paused/disabled
   const getSystemStatus = () => {
     if (configs.SYSTEM_NOTIFICATIONS_ENABLED === 'false') {
-      return { label: 'Globally Disabled', color: 'text-[var(--alert-critical)] ax-fill-critical/10 border-[var(--ax-status-critical)]/20' };
+      return { label: 'Globally Disabled', color: 'text-[var(--ax-status-critical)] ax-fill-critical/10 border-[var(--ax-status-critical)]/20' };
     }
     const disabledUntilStr = configs.SYSTEM_NOTIFICATIONS_DISABLED_UNTIL;
     if (disabledUntilStr) {
@@ -238,17 +239,17 @@ export default function AdminNotificationsPage() {
     <AppShell title="Notification Controls">
       {loadingConfig ? (
         <div className="flex h-[60vh] flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
-          <span className="text-sm text-[var(--text-muted)] mt-2">Loading configuration settings...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--ax-muted)]" />
+          <span className="text-sm text-[var(--ax-muted)] mt-2">Loading configuration settings...</span>
         </div>
       ) : (
         <div className="space-y-6 px-6 py-6 max-w-7xl mx-auto">
           {/* Header section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-              <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Notification Center</h1>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-text)]">Notification Center</h1>
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">
                 Manage global notification toggles, quiet hour schedules, and custom alerts.
               </p>
             </div>
@@ -266,12 +267,12 @@ export default function AdminNotificationsPage() {
             <div className="space-y-6">
 
               {/* Master Control Panel */}
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+                <h3 className="text-base font-semibold text-[var(--color-text)] flex items-center gap-2">
                   <ShieldAlert className="h-5 w-5 ax-tone-warning" />
                   Service Master Controls
                 </h3>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-[var(--ax-muted)]">
                   Deactivate or pause notifications globally during high-load operations or system testing.
                 </p>
 
@@ -285,8 +286,8 @@ export default function AdminNotificationsPage() {
                       }));
                     }}
                     className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition outline-none ${configs.SYSTEM_NOTIFICATIONS_ENABLED === 'true'
-                      ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
-                      : 'ax-fill-critical/10 border-[var(--ax-status-critical)]/20 text-[var(--alert-critical)]'
+                      ? 'bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]'
+                      : 'ax-fill-critical/10 border-[var(--ax-status-critical)]/20 text-[var(--ax-status-critical)]'
                       }`}
                     type="button"
                   >
@@ -309,7 +310,7 @@ export default function AdminNotificationsPage() {
                       {configs.SYSTEM_NOTIFICATIONS_DISABLED_UNTIL ? (
                         <button
                           onClick={handleResumeNotifications}
-                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--border)] transition outline-none"
+                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--color-divider)] text-[var(--color-text)] bg-[var(--color-surface)] hover:bg-[var(--color-divider)] transition outline-none"
                           type="button"
                         >
                           <Play className="h-3.5 w-3.5 ax-tone-ok" />
@@ -319,21 +320,21 @@ export default function AdminNotificationsPage() {
                         <>
                           <button
                             onClick={() => handlePauseNotifications(1)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--color-divider)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-surface)] transition outline-none"
                             type="button"
                           >
                             Pause 1 Hr
                           </button>
                           <button
                             onClick={() => handlePauseNotifications(4)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--color-divider)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-surface)] transition outline-none"
                             type="button"
                           >
                             Pause 4 Hrs
                           </button>
                           <button
                             onClick={() => handlePauseNotifications(24)}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition outline-none"
+                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--color-divider)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-surface)] transition outline-none"
                             type="button"
                           >
                             Pause 24 Hrs
@@ -346,35 +347,36 @@ export default function AdminNotificationsPage() {
               </div>
 
               {/* Quiet Hours Settings */}
-              <form onSubmit={handleSaveConfig} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <form onSubmit={handleSaveConfig} className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+                <h3 className="text-base font-semibold text-[var(--color-text)] flex items-center gap-2">
                   <Clock className="h-5 w-5 ax-tone-accent" />
                   Quiet Hours (Sleep Mode)
                 </h3>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-[var(--ax-muted)]">
                   Route non-urgent alerts to storage during quiet hours. High-priority and Critical alerts bypass sleep mode.
                 </p>
 
-                <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)]">
+                <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
                   <div>
-                    <div className="text-xs font-medium text-[var(--text-primary)]">Enable Sleep Mode</div>
-                    <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Enforce sleep hours for channels</div>
+                    <div className="text-xs font-medium text-[var(--color-text)]">Enable Sleep Mode</div>
+                    <div className="text-[10px] text-[var(--ax-muted)] mt-0.5">Enforce sleep hours for channels</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggle('QUIET_HOURS_ENABLED')}
-                    className={`w-10 h-5 rounded-full border-none cursor-pointer relative transition ${configs.QUIET_HOURS_ENABLED === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
-                      }`}
-                  >
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--bg-primary)] transition ${configs.QUIET_HOURS_ENABLED === 'true' ? 'left-5' : 'left-0.5'
-                      }`} />
-                  </button>
+                  {/* The shared switch, not a hand-rolled one. Both of the
+                      toggles on this screen were bare `<button>`s: no
+                      `role="switch"`, no `aria-checked`, and a visible label in
+                      a sibling div that nothing associated them with — so a
+                      screen reader announced twelve identical unnamed buttons. */}
+                  <ToggleSwitch
+                    checked={configs.QUIET_HOURS_ENABLED === 'true'}
+                    onChange={() => handleToggle('QUIET_HOURS_ENABLED')}
+                    label="Enable Sleep Mode"
+                  />
                 </div>
 
                 {configs.QUIET_HOURS_ENABLED === 'true' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                      <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                         Quiet Hours Start
                       </label>
                       <input
@@ -382,11 +384,11 @@ export default function AdminNotificationsPage() {
                         value={configs.QUIET_HOURS_START || ''}
                         onChange={e => handleTextChange('QUIET_HOURS_START', e.target.value)}
                         placeholder="17:30"
-                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none"
+                        className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                      <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                         Quiet Hours End
                       </label>
                       <input
@@ -394,7 +396,7 @@ export default function AdminNotificationsPage() {
                         value={configs.QUIET_HOURS_END || ''}
                         onChange={e => handleTextChange('QUIET_HOURS_END', e.target.value)}
                         placeholder="10:00"
-                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none"
+                        className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] outline-none"
                       />
                     </div>
                   </div>
@@ -404,7 +406,7 @@ export default function AdminNotificationsPage() {
                   <button
                     type="submit"
                     disabled={savingConfig}
-                    className="flex items-center gap-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
                   >
                     {savingConfig ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -423,12 +425,12 @@ export default function AdminNotificationsPage() {
               </form>
 
               {/* Event Trigger Toggles */}
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+                <h3 className="text-base font-semibold text-[var(--color-text)] flex items-center gap-2">
                   <Settings className="h-5 w-5 ax-tone-accent" />
                   Automated Event Triggers
                 </h3>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-[var(--ax-muted)]">
                   Toggle which system workflows trigger automated alerts to performers and reviewers.
                 </p>
 
@@ -446,20 +448,16 @@ export default function AdminNotificationsPage() {
                     { key: 'TRIGGER_KPI_SUBMITTED', label: 'KPI: Submission', desc: 'When data is submitted' },
                     { key: 'TRIGGER_KPI_REVIEW_DECISION', label: 'KPI: Review Decision', desc: 'When approved/rejected' }
                   ].map(trigger => (
-                    <div key={trigger.key} className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)]">
+                    <div key={trigger.key} className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)]">
                       <div>
-                        <div className="text-xs font-medium text-[var(--text-primary)]">{trigger.label}</div>
-                        <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{trigger.desc}</div>
+                        <div className="text-xs font-medium text-[var(--color-text)]">{trigger.label}</div>
+                        <div className="text-[10px] text-[var(--ax-muted)] mt-0.5">{trigger.desc}</div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleToggle(trigger.key)}
-                        className={`w-9 h-4.5 rounded-full border-none cursor-pointer relative transition ${configs[trigger.key] === 'true' ? 'bg-[var(--text-primary)]' : 'bg-[var(--border)]'
-                          }`}
-                      >
-                        <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-[var(--bg-primary)] transition ${configs[trigger.key] === 'true' ? 'left-4.5' : 'left-0.5'
-                          }`} />
-                      </button>
+                      <ToggleSwitch
+                        checked={configs[trigger.key] === 'true'}
+                        onChange={() => handleToggle(trigger.key)}
+                        label={trigger.label}
+                      />
                     </div>
                   ))}
                 </div>
@@ -467,7 +465,7 @@ export default function AdminNotificationsPage() {
                 <button
                   onClick={handleSaveConfig}
                   disabled={savingConfig}
-                  className="flex items-center gap-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
                   type="button"
                 >
                   {savingConfig ? (
@@ -483,17 +481,17 @@ export default function AdminNotificationsPage() {
 
             {/* Column 2: Manual Notification Sender */}
             <div>
-              <form onSubmit={handleSendManual} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <form onSubmit={handleSendManual} className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+                <h3 className="text-base font-semibold text-[var(--color-text)] flex items-center gap-2">
                   <Send className="h-5 w-5 ax-tone-ok" />
                   Manual Notification Dispatcher
                 </h3>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-[var(--ax-muted)]">
                   Send a custom dashboard alert to a specific officer immediately.
                 </p>
 
                 {manualError && (
-                  <div className="p-3 text-xs text-[var(--alert-critical)] ax-fill-critical/10 border border-[var(--ax-status-critical)]/20 rounded-lg flex items-center gap-2">
+                  <div className="p-3 text-xs text-[var(--ax-status-critical)] ax-fill-critical/10 border border-[var(--ax-status-critical)]/20 rounded-lg flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     {manualError}
                   </div>
@@ -513,7 +511,7 @@ export default function AdminNotificationsPage() {
 
                 {/* Title */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                     Notification Title
                   </label>
                   <input
@@ -521,14 +519,14 @@ export default function AdminNotificationsPage() {
                     value={manualForm.title}
                     onChange={e => setManualForm(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter short title..."
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] outline-none"
                     required
                   />
                 </div>
 
                 {/* Content Message Body */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                     Message Body
                   </label>
                   <textarea
@@ -536,14 +534,14 @@ export default function AdminNotificationsPage() {
                     onChange={e => setManualForm(prev => ({ ...prev, content: e.target.value }))}
                     placeholder="Write details of the alert..."
                     rows={4}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none resize-none"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] outline-none resize-none"
                     required
                   />
                 </div>
 
                 {/* Priority Selection */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                     Alert Priority
                   </label>
                   <div className="grid grid-cols-4 gap-2">
@@ -553,8 +551,8 @@ export default function AdminNotificationsPage() {
                         type="button"
                         onClick={() => setManualForm(prev => ({ ...prev, priority: level }))}
                         className={`py-2 text-xs rounded-lg border font-semibold outline-none transition ${manualForm.priority === level
-                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
-                          : 'border-[var(--border)] text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--border)]'
+                          ? 'bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]'
+                          : 'border-[var(--color-divider)] text-[var(--ax-text-secondary)] bg-[var(--color-surface)] hover:bg-[var(--color-divider)]'
                           }`}
                       >
                         {level}
@@ -565,7 +563,7 @@ export default function AdminNotificationsPage() {
 
                 {/* Target Navigation Link */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-1">
                     Action Link (Optional Relative URL)
                   </label>
                   <input
@@ -573,7 +571,7 @@ export default function AdminNotificationsPage() {
                     value={manualForm.link}
                     onChange={e => setManualForm(prev => ({ ...prev, link: e.target.value }))}
                     placeholder="e.g. /my-tasks"
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] outline-none"
                   />
                 </div>
 
@@ -582,7 +580,7 @@ export default function AdminNotificationsPage() {
                   <button
                     type="submit"
                     disabled={sendingManual}
-                    className="flex items-center gap-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] px-4 py-2 text-xs font-semibold hover:opacity-95 transition disabled:opacity-50 outline-none"
                   >
                     {sendingManual ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

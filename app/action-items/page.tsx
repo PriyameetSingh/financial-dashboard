@@ -538,21 +538,21 @@ function ActionItemsContent() {
     <AppShell title="Action Items">
       <div className="relative space-y-6 px-6 py-6">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-document)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Read-only
           </div>
         )}
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Priority Actions</p>
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Key Decisions from last dashboard Meetings </h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Priority Actions</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)]">Key Decisions from last dashboard Meetings </h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               Follow up on critical directives, approvals, and escalations across HUDD schemes.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
+            <div className="flex rounded-xl bg-[var(--color-surface)] border border-[var(--color-divider)] p-1">
               <button
                 type="button"
                 onClick={() => {
@@ -561,8 +561,8 @@ function ActionItemsContent() {
                   updateTabInUrl("list");
                 }}
                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "list"
-                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--color-text)] text-[var(--color-bg)] shadow-sm"
+                    : "text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                   }`}
               >
                 List View
@@ -575,8 +575,8 @@ function ActionItemsContent() {
                   updateTabInUrl("tracker");
                 }}
                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${pageTab === "tracker"
-                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--color-text)] text-[var(--color-bg)] shadow-sm"
+                    : "text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                   }`}
               >
                 Action Tracker
@@ -648,7 +648,7 @@ function ActionItemsContent() {
             <div className="hidden md:block shrink-0">
               <Link
                 href="/action-items/create"
-                className="flex items-center gap-2 rounded-xl border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)] transition-all duration-200"
+                className="flex items-center gap-2 rounded-xl border border-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text)] transition-all duration-200"
               >
                 + Create Item
               </Link>
@@ -674,7 +674,7 @@ function ActionItemsContent() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by scheme or title"
-            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] min-w-0"
+            className="flex-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] min-w-0"
           />
           <button
             type="button"
@@ -683,8 +683,8 @@ function ActionItemsContent() {
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all ${
               showMobileFilters
-                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)]"
+                ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                : "border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-muted)]"
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -694,7 +694,7 @@ function ActionItemsContent() {
         </div>
 
         {/* Filters Select Container */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)] w-full ${
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-3 rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-sm text-[var(--ax-muted)] w-full ${
           showMobileFilters ? "grid" : "hidden md:flex"
         }`}>
           {/* On desktop, search input is part of the selectors block. On mobile, we hide it here since it's already shown above in the toggle row */}
@@ -702,7 +702,7 @@ function ActionItemsContent() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by scheme or title"
-            className="hidden md:block md:flex-1 min-w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            className="hidden md:block md:flex-1 min-w-[220px] rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
           />
           <CustomSelect
             value={verticalFilter}
@@ -755,13 +755,13 @@ function ActionItemsContent() {
         </div>
 
         {loading && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-sm text-[var(--ax-muted)]">
             Loading action items...
           </div>
         )}
 
         {pageTab === "list" && !loading && filtered.length === 0 && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-sm text-[var(--ax-muted)]">
             No action items match your current filters.
           </div>
         )}
@@ -775,14 +775,14 @@ function ActionItemsContent() {
               const daysOv = daysOverdueFor(item);
               const cardToneClasses =
                 index % 2 === 0
-                  ? "border-[var(--border)] bg-[var(--bg-card)]"
-                  : "border-[var(--border)] bg-[var(--bg-alternate-card)]";
+                  ? "border-[var(--color-divider)] bg-[var(--color-surface)]"
+                  : "border-[var(--color-divider)] bg-[var(--ax-row-alt)]";
               return (
                 <div
                   key={item.id}
-                  className={`relative rounded-2xl border p-5 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
+                  className={`relative rounded-2xl border p-5 transition hover:border-[var(--ax-divider-strong)] ${cardToneClasses}`}
                 >
-                  {/* <div className={`absolute left-0 top-0 h-full w-1 ${PRIORITY_COLORS[item.priority] ?? "bg-[var(--border)]"}`} /> */}
+                  {/* <div className={`absolute left-0 top-0 h-full w-1 ${PRIORITY_COLORS[item.priority] ?? "bg-[var(--color-divider)]"}`} /> */}
 
                   <div className="flex flex-nowrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
@@ -795,7 +795,7 @@ function ActionItemsContent() {
                         {item.vertical?.trim() && (
                           <span
                             title="Vertical: The HUDD scheme or department area this action item belongs to."
-                            className="inline-flex max-w-full items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--accent-text)]"
+                            className="inline-flex max-w-full items-center rounded-full border border-[var(--color-divider)] bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-[var(--ax-on-accent)]"
                           >
                             {item.vertical}
                           </span>
@@ -809,22 +809,22 @@ function ActionItemsContent() {
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-3 text-lg font-semibold leading-snug text-[var(--text-primary)]">{item.title}</h3>
+                      <h3 className="mt-3 text-lg font-semibold leading-snug text-[var(--color-text)]">{item.title}</h3>
                       {item.description?.trim() && item.description.trim() !== item.title.trim() && (
-                        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--ax-text-secondary)]">{item.description}</p>
                       )}
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <StatusStepper item={item} />
                       <span
                         title="Scheme ID: The identifier of the HUDD scheme this action item is tracked under."
-                        className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-secondary)]"
+                        className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--ax-text-secondary)]"
                       >
                         {item.schemeId}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal text-[var(--text-secondary)]">
+                  <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal text-[var(--ax-text-secondary)]">
                     <span title="Assignee: The officer responsible for completing this action item, and the date it was assigned.">
                       Assigned to {item.assignedTo} on {item.createdAt.slice(0, 10)}
                     </span>
@@ -849,7 +849,7 @@ function ActionItemsContent() {
                     <span>·</span>
                     <span
                       title="Due date: The deadline by which this action item must be completed."
-                      className={overdue ? "font-semibold text-[var(--alert-critical)]" : ""}
+                      className={overdue ? "font-semibold text-[var(--ax-status-critical)]" : ""}
                     >
                       Due {item.dueDate}
                     </span>
@@ -861,7 +861,7 @@ function ActionItemsContent() {
                     <Link
                       href={detailHref(item.id)}
                       title="View Details: Open the full action item page with updates, proof, and history."
-                      className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                      className="rounded-lg border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-text)]"
                     >
                       View Details
                     </Link>
@@ -869,7 +869,7 @@ function ActionItemsContent() {
                       <button
                         type="button"
                         title={item.archived ? "Unarchive: Move this completed item back into the active list." : "Archive: Move this completed item out of the active list without deleting it."}
-                        className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                        className="rounded-lg border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-text)]"
                         onClick={() => {
                           setSelectedItem(item);
                           setActionError(null);
@@ -881,15 +881,15 @@ function ActionItemsContent() {
                     )}
                     {/* {user?.role === UserRole.NODAL_OFFICER && !isViewer && (
                       <>
-                        <button className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]">Update Status</button>
-                        <button className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]">Upload Proof</button>
+                        <button className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]">Update Status</button>
+                        <button className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]">Upload Proof</button>
                       </>
                     )} */}
                     {canReassignActionItems && (
                       <button
                         type="button"
                         title="Reassign: Change the performer(s) and reviewer(s) responsible for this action item."
-                        className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                        className="rounded-lg border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-text)]"
                         onClick={() => openReassignModal(item)}
                       >
                         Reassign
@@ -904,7 +904,7 @@ function ActionItemsContent() {
                           <button
                             type="button"
                             title="Approve: Accept the submitted proof and mark this action item as completed."
-                            className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-primary)]"
+                            className="rounded-lg border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-text)]"
                             onClick={() => {
                               setSelectedItem(item);
                               setActionError(null);
@@ -951,7 +951,7 @@ function ActionItemsContent() {
         )}
 
         {pageTab === "tracker" && !loading && trackerFiltered.length === 0 && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-sm text-[var(--ax-muted)]">
             No items match the tracker filters.
           </div>
         )}
@@ -961,8 +961,8 @@ function ActionItemsContent() {
             {trackerFiltered.map((item, index) => {
               const cardToneClasses =
                 index % 2 === 0
-                  ? "border-[var(--border)] bg-[var(--bg-card)]"
-                  : "border-[var(--border)] bg-[var(--bg-alternate-card)]";
+                  ? "border-[var(--color-divider)] bg-[var(--color-surface)]"
+                  : "border-[var(--color-divider)] bg-[var(--ax-row-alt)]";
               const sorted = [...(item.updates ?? [])]
                 .filter((u) => {
                   const note = u.note?.trim() ?? "";
@@ -979,48 +979,48 @@ function ActionItemsContent() {
               return (
                 <div
                   key={item.id}
-                  className={`rounded-2xl border p-6 transition hover:border-[var(--border-strong)] ${cardToneClasses}`}
+                  className={`rounded-2xl border p-6 transition hover:border-[var(--ax-divider-strong)] ${cardToneClasses}`}
                 >
-                  <div className="flex flex-nowrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
+                  <div className="flex flex-nowrap items-start justify-between gap-4 border-b border-[var(--color-divider)] pb-4">
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-xl font-bold leading-tight text-[var(--text-primary)]">{item.title}</h3>
+                        <h3 className="text-xl font-bold leading-tight text-[var(--color-text)]">{item.title}</h3>
                       </div>
                       <p
                         title="Item summary: The vertical (scheme area), scheme ID, and due date for this action item."
-                        className="text-sm font-medium text-[var(--text-muted)]"
+                        className="text-sm font-medium text-[var(--ax-muted)]"
                       >
-                        {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--text-primary)]">Due {item.dueDate}</span>
+                        {item.vertical} <span className="mx-1.5 opacity-40">|</span> {item.schemeId} <span className="mx-1.5 opacity-40">|</span> <span className="text-[var(--color-text)]">Due {item.dueDate}</span>
                       </p>
                     </div>
                     <StatusStepper item={item} className="shrink-0" />
                   </div>
                   <div className="mt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Latest status updates</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-[var(--ax-muted)]">Latest status updates</p>
                       {sorted.length > 2 && (
-                        <span className="text-[11px] font-medium text-[var(--text-muted)] bg-[var(--bg-document)] px-2 py-0.5 rounded-full border border-[var(--border)]">
+                        <span className="text-[11px] font-medium text-[var(--ax-muted)] bg-[var(--color-bg)] px-2 py-0.5 rounded-full border border-[var(--color-divider)]">
                           Showing 2 of {sorted.length}
                         </span>
                       )}
                     </div>
                     {sorted.length === 0 ? (
-                      <p className="mt-2 text-sm text-[var(--text-muted)] italic">No recorded updates yet.</p>
+                      <p className="mt-2 text-sm text-[var(--ax-muted)] italic">No recorded updates yet.</p>
                     ) : (
-                      <ul className="space-y-5 border-l-2 border-[var(--border)] ml-1 pl-6">
+                      <ul className="space-y-5 border-l-2 border-[var(--color-divider)] ml-1 pl-6">
                         {sorted.slice(0, 2).map((u, idx) => (
                           <li key={u.id ?? `${item.id}-u-${idx}`} className="relative">
-                            <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full border-2 border-[var(--bg-card)] bg-[var(--text-primary)] ring-2 ring-[var(--border)]" />
+                            <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full border-2 border-[var(--color-surface)] bg-[var(--color-text)] ring-2 ring-[var(--color-divider)]" />
                             <div className="space-y-1.5">
-                              <p className="text-sm font-bold text-[var(--text-primary)]">
+                              <p className="text-sm font-bold text-[var(--color-text)]">
                                 {formatDateTime(u.timestamp)}
                                 {u.actor ? ` · ${u.actor}` : ""}
-                                <span className="ml-2 inline-flex items-center rounded-md bg-[var(--bg-document)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[var(--border)]">
+                                <span className="ml-2 inline-flex items-center rounded-md bg-[var(--color-bg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[var(--color-divider)]">
                                   {u.status.replace(/_/g, " ")}
                                 </span>
                               </p>
                               {u.note ? (
-                                <p className="text-sm leading-relaxed text-[var(--text-secondary)] bg-[var(--bg-document)] p-3 rounded-xl border border-[var(--border)]/50">
+                                <p className="text-sm leading-relaxed text-[var(--ax-text-secondary)] bg-[var(--color-bg)] p-3 rounded-xl border border-[var(--color-divider)]/50">
                                   {u.note}
                                 </p>
                               ) : null}
@@ -1030,11 +1030,11 @@ function ActionItemsContent() {
                       </ul>
                     )}
                   </div>
-                  <div className="mt-6 pt-4 border-t border-[var(--border)]/50 flex items-center justify-between">
+                  <div className="mt-6 pt-4 border-t border-[var(--color-divider)]/50 flex items-center justify-between">
                     <Link
                       href={detailHref(item.id)}
                       title="View full details: Open the complete action item page with all updates and proof."
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] hover:underline underline-offset-4"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[var(--color-text)] hover:underline underline-offset-4"
                     >
                       View full details
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
@@ -1043,7 +1043,7 @@ function ActionItemsContent() {
                       <button
                         type="button"
                         title={item.archived ? "Unarchive: Move this completed item back into the active list." : "Archive: Move this completed item out of the active list without deleting it."}
-                        className="rounded-lg border border-[var(--border-strong)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] transition"
+                        className="rounded-lg border border-[var(--ax-divider-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-text)] transition"
                         onClick={() => {
                           setSelectedItem(item);
                           setActionError(null);
@@ -1067,24 +1067,24 @@ function ActionItemsContent() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="reassign-title"
-            className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl"
           >
-            <h3 id="reassign-title" className="text-lg font-semibold text-[var(--text-primary)]">
+            <h3 id="reassign-title" className="text-lg font-semibold text-[var(--color-text)]">
               Reassign
             </h3>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-2 text-sm text-[var(--ax-muted)]">
               Update performers and reviewers for &ldquo;{reassignItem.title}&rdquo;.
             </p>
             {reassignError && (
-              <p className="mt-3 text-sm text-[var(--alert-critical)]">{reassignError}</p>
+              <p className="mt-3 text-sm text-[var(--ax-status-critical)]">{reassignError}</p>
             )}
             <div className="mt-4 max-h-[60vh] space-y-6 overflow-y-auto">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Performers</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--ax-muted)]">Performers</p>
                 <button
                   type="button"
                   disabled={reassignBusy}
-                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                  className="mt-2 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
                   onClick={() => setReassignPerformers((prev) => [...prev, ""])}
                 >
                   Add performer
@@ -1108,7 +1108,7 @@ function ActionItemsContent() {
                         <button
                           type="button"
                           disabled={reassignBusy}
-                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                          className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)]"
                           onClick={() => setReassignPerformers((prev) => prev.filter((_, i) => i !== index))}
                         >
                           Remove
@@ -1118,31 +1118,31 @@ function ActionItemsContent() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-divider)]">
                 <input
                   type="checkbox"
                   id="reassign-self-approve-checkbox"
                   checked={reassignIsSelfApproved}
                   disabled={reassignBusy}
                   onChange={(e) => handleReassignSelfApproveChange(e.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                  className="h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] focus:ring-[var(--color-accent)]"
                 />
-                <label htmlFor="reassign-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                <label htmlFor="reassign-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--ax-muted)] cursor-pointer select-none">
                   No separate review needed — owner will self-approve
                 </label>
               </div>
               {reassignIsSelfApproved && (
-                <p className="text-xs text-[var(--alert-success)]">
+                <p className="text-xs text-[var(--ax-status-ok)]">
                   ✓ Marked approved immediately upon owner submission.
                 </p>
               )}
               {!reassignIsSelfApproved && (
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Reviewers</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--ax-muted)]">Reviewers</p>
                   <button
                     type="button"
                     disabled={reassignBusy}
-                    className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                    className="mt-2 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
                     onClick={() => setReassignReviewers((prev) => [...prev, ""])}
                   >
                     Add reviewer
@@ -1168,7 +1168,7 @@ function ActionItemsContent() {
                           <button
                             type="button"
                             disabled={reassignBusy}
-                            className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                            className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)]"
                             onClick={() => setReassignReviewers((prev) => prev.filter((_, i) => i !== index))}
                           >
                             Remove
@@ -1183,7 +1183,7 @@ function ActionItemsContent() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--color-text)]"
                 disabled={reassignBusy}
                 onClick={() => setReassignItem(null)}
               >
@@ -1191,7 +1191,7 @@ function ActionItemsContent() {
               </button>
               <button
                 type="button"
-                className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50"
                 disabled={reassignBusy}
                 onClick={async () => {
                   const perf = reassignPerformers.map((c) => c.trim()).filter(Boolean);
@@ -1245,17 +1245,17 @@ function ActionItemsContent() {
       )}
       {confirmApprove && selectedItem && (
         <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">
               Confirm Approval
             </h3>
 
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-2 text-sm text-[var(--ax-muted)]">
               Are you sure you want to approve &ldquo;{selectedItem.title}&rdquo;?
             </p>
 
             {actionError && (
-              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+              <p className="mt-3 text-sm text-[var(--ax-status-critical)]">
                 {actionError}
               </p>
             )}
@@ -1263,7 +1263,7 @@ function ActionItemsContent() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--color-text)]"
                 disabled={actionBusy}
                 onClick={() => {
                   setConfirmApprove(false);
@@ -1313,12 +1313,12 @@ function ActionItemsContent() {
       )}
       {confirmReject && selectedItem && (
         <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">
               Reject Action Item
             </h3>
 
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-2 text-sm text-[var(--ax-muted)]">
               Please provide rejection remarks for
               {" "}
               &ldquo;{selectedItem.title}&rdquo;.
@@ -1329,11 +1329,11 @@ function ActionItemsContent() {
               onChange={(e) => setRejectComment(e.target.value)}
               rows={4}
               placeholder="Enter rejection remarks..."
-              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--ax-status-critical)]"
+              className="mt-4 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-status-critical)]"
             />
 
             {actionError && (
-              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+              <p className="mt-3 text-sm text-[var(--ax-status-critical)]">
                 {actionError}
               </p>
             )}
@@ -1341,7 +1341,7 @@ function ActionItemsContent() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--color-text)]"
                 disabled={actionBusy}
                 onClick={() => {
                   setConfirmReject(false);
@@ -1395,17 +1395,17 @@ function ActionItemsContent() {
 
       {confirmDelete && selectedItem && (
         <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">
               Confirm Delete
             </h3>
 
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-2 text-sm text-[var(--ax-muted)]">
               Are you sure you want to delete &ldquo;{selectedItem.title}&rdquo;? This action cannot be undone.
             </p>
 
             {deleteError && (
-              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+              <p className="mt-3 text-sm text-[var(--ax-status-critical)]">
                 {deleteError}
               </p>
             )}
@@ -1413,7 +1413,7 @@ function ActionItemsContent() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--color-text)]"
                 disabled={deleteBusy}
                 onClick={() => {
                   setConfirmDelete(false);
@@ -1460,19 +1460,19 @@ function ActionItemsContent() {
 
       {confirmArchive && selectedItem && (
         <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">
               {selectedItem.archived ? "Confirm Unarchive" : "Confirm Archive"}
             </h3>
 
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
+            <p className="mt-2 text-sm text-[var(--ax-muted)]">
               {selectedItem.archived
                 ? `Are you sure you want to unarchive "${selectedItem.title}"?`
                 : `Are you sure you want to archive "${selectedItem.title}"?`}
             </p>
 
             {actionError && (
-              <p className="mt-3 text-sm text-[var(--alert-critical)]">
+              <p className="mt-3 text-sm text-[var(--ax-status-critical)]">
                 {actionError}
               </p>
             )}
@@ -1480,7 +1480,7 @@ function ActionItemsContent() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-primary)]"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--color-text)]"
                 disabled={actionBusy}
                 onClick={() => {
                   setConfirmArchive(false);
@@ -1492,7 +1492,7 @@ function ActionItemsContent() {
 
               <button
                 type="button"
-                className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+                className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50"
                 disabled={actionBusy}
                 onClick={async () => {
                   if (!selectedItem) return;
@@ -1551,7 +1551,7 @@ export default function ActionItemsPage() {
     <Suspense fallback={
       <AppShell title="Action Items">
         <div className="relative space-y-6 px-6 py-6">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-sm text-[var(--ax-muted)]">
             Loading action items...
           </div>
         </div>

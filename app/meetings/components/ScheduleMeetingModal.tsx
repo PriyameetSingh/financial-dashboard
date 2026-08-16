@@ -141,59 +141,59 @@ export default function ScheduleMeetingModal({
       className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-8 shadow-2xl">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
         >
           <X size={18} />
         </button>
 
-        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Schedule a Meeting</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <h2 className="text-xl font-semibold text-[var(--color-text)]">Schedule a Meeting</h2>
+        <p className="mt-1 text-sm text-[var(--ax-muted)]">
           Fill in the details below. Attach PDF, PowerPoint, Word, or Excel files to present during the meeting.
         </p>
 
         <div className="mt-6 space-y-5">
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Date</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Meeting Date</span>
             <input
               id="input-meeting-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+              className="mt-1 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
             />
           </label>
 
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Name</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Meeting Name</span>
             <input
               id="input-meeting-title"
               type="text"
               placeholder="e.g. Monthly Review — PMAY Urban"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+              className="mt-1 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)]/50 outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
             />
           </label>
 
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial Year</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Financial Year</span>
             {loadingFinancialYears ? (
               <input
                 type="text"
                 readOnly
                 value="Loading..."
-                className="mt-1 w-full cursor-default rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/50 px-4 py-2.5 text-sm text-[var(--text-muted)]"
+                className="mt-1 w-full cursor-default rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)]/50 px-4 py-2.5 text-sm text-[var(--ax-muted)]"
               />
             ) : (
               <select
                 id="input-meeting-fy"
                 value={selectedFinancialYearId}
                 onChange={(e) => setSelectedFinancialYearId(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                className="mt-1 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
               >
                 {financialYears.map((fy) => (
                   <option key={fy.id} value={fy.id}>
@@ -205,13 +205,13 @@ export default function ScheduleMeetingModal({
           </label>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Presentation files</span>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Presentation files</span>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               PDF, PPT, PPTX, DOC, DOCX, XLS, XLSX (max {MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)} MB each).
             </p>
-            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-card)] px-4 py-6 text-center transition-colors hover:border-[var(--accent)]/40">
-              <FileText className="mb-2 text-[var(--text-muted)]" size={22} />
-              <span className="text-sm font-medium text-[var(--text-primary)]">Drop or click to add files</span>
+            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-6 text-center transition-colors hover:border-[var(--color-accent)]/40">
+              <FileText className="mb-2 text-[var(--ax-muted)]" size={22} />
+              <span className="text-sm font-medium text-[var(--color-text)]">Drop or click to add files</span>
               <input
                 type="file"
                 accept={ACCEPT}
@@ -228,13 +228,13 @@ export default function ScheduleMeetingModal({
                 {pendingFiles.map((f, idx) => (
                   <li
                     key={`${f.name}-${idx}`}
-                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="flex items-center justify-between rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)]"
                   >
                     <span className="truncate pr-2">{f.name}</span>
                     <button
                       type="button"
                       onClick={() => removePendingFile(idx)}
-                      className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                      className="shrink-0 rounded-lg p-1.5 text-[var(--ax-muted)] hover:bg-[var(--ax-status-critical)]/10 hover:text-[var(--ax-status-critical)]"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -245,11 +245,11 @@ export default function ScheduleMeetingModal({
           </div>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Topics for Discussion</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Topics for Discussion</span>
             <button
               type="button"
               onClick={addTopic}
-              className="mt-2 flex items-center gap-1 text-xs font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent)]/80"
+              className="mt-2 flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent)]/80"
             >
               <Plus size={14} /> Add another topic
             </button>
@@ -262,13 +262,13 @@ export default function ScheduleMeetingModal({
                     placeholder={`Topic ${idx + 1}`}
                     value={t}
                     onChange={(e) => updateTopic(idx, e.target.value)}
-                    className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                    className="flex-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)]/50 outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
                   />
                   {topics.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeTopic(idx)}
-                      className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                      className="rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--ax-status-critical)]/10 hover:text-[var(--ax-status-critical)]"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -279,7 +279,7 @@ export default function ScheduleMeetingModal({
             
           </div>
 
-          {formError && <p className="text-sm text-[var(--alert-critical)]">{formError}</p>}
+          {formError && <p className="text-sm text-[var(--ax-status-critical)]">{formError}</p>}
 
           <button
             id="btn-submit-meeting"

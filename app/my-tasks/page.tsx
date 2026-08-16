@@ -31,7 +31,7 @@ function PendingCountLabel({
   plural: string;
 }) {
   const label = count === 1 ? singular : plural;
-  const toneClass = tone ? BADGE_TONE_CLASS[tone] : "text-[var(--text-muted)]";
+  const toneClass = tone ? BADGE_TONE_CLASS[tone] : "text-[var(--ax-muted)]";
   return (
     <p className={`mt-2 text-xs font-semibold tabular-nums ${toneClass}`}>
       {count} {label}
@@ -133,8 +133,8 @@ export default function MyTasksHubPage() {
     <AppShell title="My tasks">
       <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
         <header className="max-w-3xl">
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">My tasks</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <h1 className="text-xl font-semibold text-[var(--color-text)]">My tasks</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Jump to the work you own: KPI measurements, financial scheme entry, and decision-tracker items — without
             hunting through the rest of the sidebar.
           </p>
@@ -142,14 +142,14 @@ export default function MyTasksHubPage() {
 
         <div className="grid max-w-5xl gap-4 sm:grid-cols-2">
           {showKpi && (
-            <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <section className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-text-primary)]">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--ax-nav-hover)] text-[var(--color-text)]">
                   <ClipboardList size={20} aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-[var(--sidebar-text-primary)]">KPI monitoring</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">KPI monitoring</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--ax-muted)]">
                     Enter or update measurements assigned to you for the latest dashboard meeting
                     {latestKpiMeeting ? ` (${latestKpiMeeting.meetingDate})` : ""}.
                   </p>
@@ -162,7 +162,7 @@ export default function MyTasksHubPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/kpis/entry"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
+                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
                     >
                       Open KPI entry
                       <ArrowRight size={14} aria-hidden />
@@ -170,12 +170,12 @@ export default function MyTasksHubPage() {
                     {showKpiReviewButton && (
                       <Link
                         href={{ pathname: "/kpis", query: { tab: "pending_review" } }}
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:bg-[var(--ax-nav-hover)]/60 hover:text-[var(--color-text)]"
                       >
                         <span>Pending review</span>
                         <span
                           className={`ml-1 text-[11px] font-semibold tabular-nums ${
-                            kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--text-muted)]"
+                            kpiReviewBadge.tone ? BADGE_TONE_CLASS[kpiReviewBadge.tone] : "text-[var(--ax-muted)]"
                           }`}
                         >
                           {kpiReviewBadge.count}
@@ -190,14 +190,14 @@ export default function MyTasksHubPage() {
           )}
 
           {showActions && (
-            <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <section className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-text-primary)]">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--ax-nav-hover)] text-[var(--color-text)]">
                   <ListChecks size={20} aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-[var(--sidebar-text-primary)]">Decision tracker</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">Decision tracker</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--ax-muted)]">
                     {showActionsByPermission
                       ? "View and update action items assigned to you, upload proof, and track status in one place."
                       : "You have decision items assigned to you. Open one below or go to the full tracker."}
@@ -211,7 +211,7 @@ export default function MyTasksHubPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/action-items"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
+                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
                     >
                       Open full action list
                       <ArrowRight size={14} aria-hidden />
@@ -219,14 +219,14 @@ export default function MyTasksHubPage() {
                     {showActionReviewButton && (
                       <Link
                         href={{ pathname: "/action-items", query: { filter: "my_tasks" } }}
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:bg-[var(--ax-nav-hover)]/60 hover:text-[var(--color-text)]"
                       >
                         <span>Pending review</span>
                         <span
                           className={`ml-1 text-[11px] font-semibold tabular-nums ${
                             actionReviewBadge.tone
                               ? BADGE_TONE_CLASS[actionReviewBadge.tone]
-                              : "text-[var(--text-muted)]"
+                              : "text-[var(--ax-muted)]"
                           }`}
                         >
                           {actionReviewBadge.count}
@@ -241,27 +241,27 @@ export default function MyTasksHubPage() {
           )}
 
           {showFinance && (
-            <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <section className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-text-primary)]">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--ax-nav-hover)] text-[var(--color-text)]">
                   <IndianRupee size={20} aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-[var(--sidebar-text-primary)]">Financial progress</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">Financial progress</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--ax-muted)]">
                     Record scheme-level expenditure and the finance summary heads you maintain.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/financial/entry/scheme"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--sidebar-active-bg)] px-3 py-2 text-xs font-medium text-[var(--sidebar-text-primary)] transition hover:opacity-90"
+                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
                     >
                       Scheme entry
                       <ArrowRight size={14} aria-hidden />
                     </Link>
                     <Link
                       href="/financial/entry/summary"
-                      className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
+                      className="inline-flex items-center gap-2 rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:bg-[var(--ax-nav-hover)]/60 hover:text-[var(--color-text)]"
                     >
                       Summary entry
                       <ArrowRight size={14} aria-hidden />
@@ -269,7 +269,7 @@ export default function MyTasksHubPage() {
                     {showBulkFinancial && (
                       <Link
                         href="/financial/entry/bulk"
-                        className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 hover:text-[var(--sidebar-text-primary)]"
+                        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:bg-[var(--ax-nav-hover)]/60 hover:text-[var(--color-text)]"
                       >
                         <Layers size={13} aria-hidden />
                         Bulk entry

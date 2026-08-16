@@ -9,9 +9,9 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--text-primary)] text-[var(--bg-primary)] border border-transparent hover:bg-opacity-90",
-  secondary: "bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--text-primary)]",
-  ghost: "bg-transparent text-[var(--text-muted)] border border-transparent hover:text-[var(--text-primary)]",
+  primary: "bg-[var(--color-text)] text-[var(--color-bg)] border border-transparent hover:bg-opacity-90",
+  secondary: "bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-divider)] hover:border-[var(--color-text)]",
+  ghost: "bg-transparent text-[var(--ax-muted)] border border-transparent hover:text-[var(--color-text)]",
 };
 
 export default function Button({ variant = "primary", loading, className, children, disabled, ...rest }: Props) {

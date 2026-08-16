@@ -1929,3 +1929,56 @@
   transform: rotate(-12deg);
   white-space: nowrap;
 }
+
+/* ── tokens promoted out of the legacy bridge (Gate F) ───────────────────────
+   `legacy-bridge.css` carried a handful of values that were not a rename of a
+   Nocturne token but a COMPOSITION of one — a tint, a mix, a softened divider.
+   Deleting the bridge meant those had to live somewhere real, so they live here,
+   with the names the rest of this file uses.
+
+   Declared in all three selector groups for the reason `--ax-muted` is: a
+   `color-mix()` is resolved where it is declared, so a nested theme island needs
+   its own declaration or it inherits the outer theme's computed literal. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"],
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  /* Text one step quieter than the body, but not as quiet as `--ax-muted`. */
+  --ax-text-secondary: color-mix(in srgb, var(--color-text) 78%, transparent);
+  /* A divider that has to be seen rather than felt — a table rule, a focus edge. */
+  --ax-divider-strong: color-mix(in srgb, var(--color-text) 34%, transparent);
+  /* Row and control hover, and the alternating row wash. */
+  --ax-hover: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --ax-row-alt: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  /* A panel tinted in the accent, and the same for the ok status. */
+  --ax-accent-tint: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --ax-status-ok-tint: color-mix(in srgb, var(--ax-status-ok) 16%, transparent);
+  /* The nav's selected and hovered rows. */
+  --ax-nav-active: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  --ax-nav-hover: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+/* ── scrollbars ──────────────────────────────────────────────────────────────
+   Moved here from `app/globals.css` at Gate F, where they read the pre-reskin
+   `--border-strong`. Scoped to `.noct` like everything else, which is also what
+   makes them follow the theme: a thin dark thumb on a dark page rather than the
+   browser's default light one. */
+.noct {
+  scrollbar-color: var(--ax-divider-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.noct ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.noct ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.noct ::-webkit-scrollbar-thumb {
+  background: var(--ax-divider-strong);
+  border-radius: 3px;
+}

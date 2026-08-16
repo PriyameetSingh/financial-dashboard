@@ -137,7 +137,7 @@ const COLUMN_UI: Record<
     title: "CRITICAL",
     range: ">15% behind Q target",
     // Clean header with only top accent border
-    headerBg: "bg-[var(--bg-card)]",
+    headerBg: "bg-[var(--color-surface)]",
     headerText: "ax-tone-critical",
     countBg: "ax-chip ax-chip-critical",
     barFill: "ax-fill-critical",
@@ -145,34 +145,34 @@ const COLUMN_UI: Record<
     badgeBg: "ax-chip ax-chip-critical",
     badgeText: "", // uses combined with badgeBg
     // Neutral column border, cards get left accent
-    border: "border-[var(--border)]",
-    cardBorder: "border-[var(--border)]",
+    border: "border-[var(--color-divider)]",
+    cardBorder: "border-[var(--color-divider)]",
     accentBorder: "border-l-[var(--ax-status-critical)]",
   },
   at_risk: {
     title: "AT RISK",
     range: "5-15% behind Q target",
-    headerBg: "bg-[var(--bg-card)]",
+    headerBg: "bg-[var(--color-surface)]",
     headerText: "ax-tone-warning",
     countBg: "ax-chip ax-chip-warning",
     barFill: "ax-fill-warning",
     badgeBg: "ax-chip ax-chip-warning",
     badgeText: "",
-    border: "border-[var(--border)]",
-    cardBorder: "border-[var(--border)]",
+    border: "border-[var(--color-divider)]",
+    cardBorder: "border-[var(--color-divider)]",
     accentBorder: "border-l-[var(--ax-status-warning)]",
   },
   on_track: {
     title: "ON TRACK",
     range: "Within 5% of Q target",
-    headerBg: "bg-[var(--bg-card)]",
+    headerBg: "bg-[var(--color-surface)]",
     headerText: "ax-tone-ok",
     countBg: "ax-chip ax-chip-ok",
     barFill: "ax-fill-ok",
     badgeBg: "ax-chip ax-chip-ok",
     badgeText: "",
-    border: "border-[var(--border)]",
-    cardBorder: "border-[var(--border)]",
+    border: "border-[var(--color-divider)]",
+    cardBorder: "border-[var(--color-divider)]",
     accentBorder: "border-l-[var(--ax-status-ok)]",
   },
 };
@@ -391,26 +391,26 @@ export default function SchemesBoardClient() {
     <AppShell title="Scheme utilisation board">
       <div className="relative space-y-6 px-6 py-6">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Read-only
           </div>
         )}
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.35em] text-[var(--ax-muted)]">
               Financial
             </p>
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)]">
               Scheme Budget vs. Expenditure
             </h1>
-            <p className="mt-1 max-w-2xl text-sm text-[var(--text-muted)]">
+            <p className="mt-1 max-w-2xl text-sm text-[var(--ax-muted)]">
               {filtered.length} schemes across {totals.verticalCount} verticals — each card is a
               scheme; expand to see sub-schemes.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-sm sm:gap-6 sm:px-6">
+          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3 shadow-sm sm:gap-6 sm:px-6">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -418,16 +418,16 @@ export default function SchemesBoardClient() {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                   Total RE
                 </span>
-                <span className="text-base font-black tabular-nums text-[var(--text-primary)]">
+                <span className="text-base font-black tabular-nums text-[var(--color-text)]">
                   ₹{fmtCr(totals.totalRe)} Cr
                 </span>
               </div>
             </div>
             
-            <div className="hidden h-8 w-px bg-[var(--border)] sm:block" />
+            <div className="hidden h-8 w-px bg-[var(--color-divider)] sm:block" />
 
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
@@ -436,16 +436,16 @@ export default function SchemesBoardClient() {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                   Expenditure
                 </span>
-                <span className="text-base font-black tabular-nums text-[var(--text-primary)]">
+                <span className="text-base font-black tabular-nums text-[var(--color-text)]">
                   ₹{fmtCr(totals.expenditure)} Cr
                 </span>
               </div>
             </div>
 
-            <div className="hidden h-8 w-px bg-[var(--border)] sm:block" />
+            <div className="hidden h-8 w-px bg-[var(--color-divider)] sm:block" />
 
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg ax-accent-panel">
@@ -455,10 +455,10 @@ export default function SchemesBoardClient() {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                   Utilisation
                 </span>
-                <span className="text-base font-black tabular-nums text-[var(--text-primary)]">
+                <span className="text-base font-black tabular-nums text-[var(--color-text)]">
                   {totals.overallPct.toFixed(1)}%
                 </span>
               </div>
@@ -472,8 +472,8 @@ export default function SchemesBoardClient() {
         {/* Legend / Info Section */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Targets Card */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+          <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--ax-muted)]">
               QTR Wise Spending Targets
             </h3>
             <div className="mt-3 grid grid-cols-4 gap-1">
@@ -504,56 +504,56 @@ export default function SchemesBoardClient() {
           </div>
 
           {/* Classification Card */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+          <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--ax-muted)]">
               Classification Rules
             </h3>
             <div className="mt-3 space-y-2.5">
               <div className="flex items-center gap-2.5">
                 <span className="size-2.5 rounded-full ax-fill-ok shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">On Track: &lt;5% behind target</span>
+                <span className="text-[11px] font-bold text-[var(--color-text)]">On Track: &lt;5% behind target</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="size-2.5 rounded-full ax-fill-warning shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">At Risk: 5–15% behind target</span>
+                <span className="text-[11px] font-bold text-[var(--color-text)]">At Risk: 5–15% behind target</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="size-2.5 rounded-full ax-fill-critical shadow-sm" />
-                <span className="text-[11px] font-bold text-[var(--text-primary)]">Critical: &gt;15% behind target</span>
+                <span className="text-[11px] font-bold text-[var(--color-text)]">Critical: &gt;15% behind target</span>
               </div>
             </div>
           </div>
 
           {/* Scheme Categories Card */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-sm">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+          <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--ax-muted)]">
               Scheme Categories
             </h3>
             <div className="mt-3 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="size-2.5 rounded-full ax-dv-bg-1 shadow-sm" />
-                  <span className="text-[11px] font-bold text-[var(--text-primary)]">State Sector (SS)</span>
+                  <span className="text-[11px] font-bold text-[var(--color-text)]">State Sector (SS)</span>
                 </div>
-                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                   {totals.ss}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="size-2.5 rounded-full ax-dv-bg-3 shadow-sm" />
-                  <span className="text-[11px] font-bold text-[var(--text-primary)]">Centrally Sponsored (CSS)</span>
+                  <span className="text-[11px] font-bold text-[var(--color-text)]">Centrally Sponsored (CSS)</span>
                 </div>
-                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                   {totals.css}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="size-2.5 rounded-full ax-dv-bg-2 shadow-sm" />
-                  <span className="text-[11px] font-bold text-[var(--text-primary)]">Central Sector (CS)</span>
+                  <span className="text-[11px] font-bold text-[var(--color-text)]">Central Sector (CS)</span>
                 </div>
-                <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                <span className="text-[11px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                   {totals.cs}
                 </span>
               </div>
@@ -584,15 +584,15 @@ export default function SchemesBoardClient() {
 
         {/* Tab switcher & Global controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1 w-fit">
+          <div className="flex items-center gap-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-1 w-fit">
             {(["board", "list"] as ViewTab[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${activeTab === tab
-                  ? "bg-[var(--bg-document)] text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)]"
+                  ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-sm"
+                  : "text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                   }`}
               >
                 {tab === "board" ? (
@@ -618,10 +618,10 @@ export default function SchemesBoardClient() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search schemes or verticals…"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] pl-8 pr-3 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-secondary)] shadow-sm"
+                  className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] pl-8 pr-3 py-1.5 text-xs text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:border-[var(--ax-text-secondary)] shadow-sm"
                 />
                 <svg
-                  className="absolute left-2.5 top-2.5 size-3.5 text-[var(--text-muted)]"
+                  className="absolute left-2.5 top-2.5 size-3.5 text-[var(--ax-muted)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -635,7 +635,7 @@ export default function SchemesBoardClient() {
                 aria-label="Filter schemes by sponsorship type"
                 value={selectedSponsorship}
                 onChange={(e) => setSelectedSponsorship(e.target.value as any)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-all shadow-sm focus:outline-none cursor-pointer"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--ax-text-secondary)] hover:text-[var(--color-text)] hover:border-[var(--ax-text-secondary)] transition-all shadow-sm focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All Sponsorships</option>
                 <option value="STATE">State Sector</option>
@@ -646,7 +646,7 @@ export default function SchemesBoardClient() {
               <button
                 type="button"
                 onClick={allExpanded ? collapseAll : expandAll}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all shadow-sm active:scale-95"
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--ax-text-secondary)] hover:bg-[var(--ax-hover)] hover:text-[var(--color-text)] transition-all shadow-sm active:scale-95"
                 title={allExpanded ? "Collapse all scheme cards" : "Expand all scheme cards"}
               >
                 <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -663,13 +663,13 @@ export default function SchemesBoardClient() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-[var(--alert-warning)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-primary)]">
+          <div className="rounded-lg border border-[var(--ax-status-warning)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-text)]">
             {error}
           </div>
         )}
 
         {loading && (
-          <p className="text-sm text-[var(--text-muted)]">Loading schemes…</p>
+          <p className="text-sm text-[var(--ax-muted)]">Loading schemes…</p>
         )}
 
         {!loading && !error && activeTab === "board" && (
@@ -680,10 +680,10 @@ export default function SchemesBoardClient() {
               return (
                 <div
                   key={key}
-                  className={`flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] ${ui.accentBorder} border-t-4`}
+                  className={`flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] ${ui.accentBorder} border-t-4`}
                 >
                   <div
-                    className={`flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 ${ui.headerBg}`}
+                    className={`flex items-center justify-between gap-2 border-b border-[var(--color-divider)] px-4 py-3 ${ui.headerBg}`}
                   >
                     <div>
                       <p className={`text-sm font-bold ${ui.headerText}`}>
@@ -704,7 +704,7 @@ export default function SchemesBoardClient() {
                             return { ...prev, [key]: next };
                           });
                         }}
-                        className="flex size-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-border)] text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)] transition-all"
+                        className="flex size-7 items-center justify-center rounded-lg border border-[var(--color-divider)] bg-[var(--color-divider)] text-[var(--ax-muted)] hover:bg-[var(--hover)] hover:text-[var(--color-text)] transition-all"
                         title={`Sort by utilization % (currently: ${
                           boardSorts[key] === "default"
                             ? "Default Target Variance"
@@ -719,12 +719,12 @@ export default function SchemesBoardClient() {
                           </svg>
                         )}
                         {boardSorts[key] === "desc" && (
-                          <svg className="size-4 text-[var(--text-primary)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg className="size-4 text-[var(--color-text)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h14M3 18h10M19 12v6m0 0l-3-3m3 3l3-3" />
                           </svg>
                         )}
                         {boardSorts[key] === "asc" && (
-                          <svg className="size-4 text-[var(--text-primary)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg className="size-4 text-[var(--color-text)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h10M3 12h14M3 18h18M19 18V12m0 0l-3 3m3-3l3 3" />
                           </svg>
                         )}
@@ -746,7 +746,7 @@ export default function SchemesBoardClient() {
                       const hasSubs = !!entry.subschemes?.length;
                       const expanded = expandedIds.has(entry.id);
 
-                      const cardClass = `rounded-lg border bg-[var(--bg-document)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--bg-document)] focus-visible:ring-2 focus-visible:ring-[var(--text-secondary)] ${ui.cardBorder} ${ui.accentBorder} border-l-4`;
+                      const cardClass = `rounded-lg border bg-[var(--color-bg)] p-3 shadow-sm outline-none ring-offset-2 ring-offset-[var(--color-bg)] focus-visible:ring-2 focus-visible:ring-[var(--ax-text-secondary)] ${ui.cardBorder} ${ui.accentBorder} border-l-4`;
 
                       return (
                         <div
@@ -766,10 +766,10 @@ export default function SchemesBoardClient() {
                                 }
                               }}
                             >
-                              <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">
+                              <p className="text-sm font-semibold leading-snug text-[var(--color-text)]">
                                 {entry.scheme}
                               </p>
-                              <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
+                              <p className="mt-0.5 text-[11px] text-[var(--ax-muted)]">
                                 {entry.scheme.trim().toLowerCase() ===
                                 entry.id.trim().toLowerCase()
                                   ? entry.vertical
@@ -790,7 +790,7 @@ export default function SchemesBoardClient() {
                                   e.stopPropagation();
                                   toggleExpand(entry.id);
                                 }}
-                                className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--sidebar-text-primary)] transition-transform ${expanded ? "rotate-180" : ""
+                                className={`flex size-6 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-muted)] hover:text-[var(--color-text)] transition-transform ${expanded ? "rotate-180" : ""
                                   }`}
                               >
                                 <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -804,7 +804,7 @@ export default function SchemesBoardClient() {
                             className="cursor-pointer"
                             onClick={() => setSchemeModalEntry(entry)}
                           >
-                            <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                            <p className="mt-2 text-[11px] text-[var(--ax-muted)]">
                               RE ₹{fmtCr(effBudget(entry))} Cr · Expenditure ₹
                               {fmtCr(entry.ifms)} Cr
                             </p>
@@ -821,7 +821,7 @@ export default function SchemesBoardClient() {
                                       : "Centrally Sponsored"
                                 }
                               />
-                              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
+                              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--color-divider)]">
                                 <div
                                   className={`h-full rounded-full transition-all ${ui.barFill}`}
                                   style={{
@@ -829,7 +829,7 @@ export default function SchemesBoardClient() {
                                   }}
                                 />
                               </div>
-                              <span className="text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                              <span className="text-[11px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                                 {pct.toFixed(1)}%
                               </span>
                             </div>
@@ -837,7 +837,7 @@ export default function SchemesBoardClient() {
 
                           {/* Expanded Content */}
                           {expanded && (
-                            <div className="mt-4 space-y-4 border-t border-[var(--border)] pt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="mt-4 space-y-4 border-t border-[var(--color-divider)] pt-4 animate-in fade-in slide-in-from-top-1 duration-200">
                               {/* Quarterly Progress */}
                               {(() => {
                                 const qp = getQuarterlyProgress(entry);
@@ -857,16 +857,16 @@ export default function SchemesBoardClient() {
                                   : accentColors.text;
 
                                 return (
-                                  <div className={`rounded-md border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} px-2 py-1.5`}>
+                                  <div className={`rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] border-l-4 ${accentColors.border} ${accentColors.text} px-2 py-1.5`}>
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className="text-[10px] font-medium text-[var(--text-muted)]">
+                                      <span className="text-[10px] font-medium text-[var(--ax-muted)]">
                                         Q{qp.quarter} Target
                                       </span>
                                       <span className={`text-[10px] font-semibold tabular-nums ${accentColors.text}`}>
                                         {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
                                       </span>
                                     </div>
-                                    <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--border)]">
+                                    <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--color-divider)]">
                                       <div
                                         className={`h-full rounded-full ${barColor}`}
                                         style={{
@@ -875,7 +875,7 @@ export default function SchemesBoardClient() {
                                       />
                                     </div>
                                     <div className="mt-0.5 flex items-center justify-between">
-                                      <span className="text-[9px] text-[var(--text-muted)]">
+                                      <span className="text-[9px] text-[var(--ax-muted)]">
                                         Q{qp.quarter} allocation: ₹{fmtCr((qp.cumulativeTargetPct / 100) * effBudget(entry))} Cr
                                       </span>
                                       <span className={`text-[9px] font-semibold tabular-nums ${varianceColor}`}>
@@ -890,7 +890,7 @@ export default function SchemesBoardClient() {
                               {/* Sub-schemes */}
                               {hasSubs && entry.subschemes && (
                                 <div className="space-y-3">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                                     Sub-schemes
                                   </p>
                                   <ul className="space-y-2">
@@ -900,7 +900,7 @@ export default function SchemesBoardClient() {
                                       return (
                                         <li
                                           key={sub.id}
-                                          className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 text-[11px]"
+                                          className="flex gap-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-2.5 text-[11px]"
                                         >
                                           <span
                                             className={`mt-1 size-1.5 shrink-0 rounded-full ${kind === "SS"
@@ -911,23 +911,23 @@ export default function SchemesBoardClient() {
                                               }`}
                                           />
                                           <div className="min-w-0 flex-1">
-                                            <p className="font-medium text-[var(--text-primary)]">
+                                            <p className="font-medium text-[var(--color-text)]">
                                               {sub.name}
                                             </p>
                                             {sub.name.trim().toLowerCase() !==
                                               sub.code.trim().toLowerCase() && (
-                                              <p className="text-[10px] text-[var(--text-muted)]">
+                                              <p className="text-[10px] text-[var(--ax-muted)]">
                                                 {sub.code}
                                               </p>
                                             )}
-                                            <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--text-secondary)]">
+                                            <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] tabular-nums text-[var(--ax-text-secondary)]">
                                               <span>RE ₹{fmtCr(re)} Cr</span>
                                               <span>
                                                 Expenditure ₹{fmtCr(sub.ifms ?? 0)} Cr
                                               </span>
                                             </div>
                                           </div>
-                                          <span className="shrink-0 self-start rounded bg-[var(--bg-document)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                          <span className="shrink-0 self-start rounded bg-[var(--color-bg)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                                             {sp.toFixed(1)}%
                                           </span>
                                         </li>
@@ -957,7 +957,7 @@ export default function SchemesBoardClient() {
                       );
                     })}
                     {list.length === 0 && (
-                      <p className="py-8 text-center text-xs text-[var(--text-muted)]">
+                      <p className="py-8 text-center text-xs text-[var(--ax-muted)]">
                         No schemes in this band.
                       </p>
                     )}
@@ -969,11 +969,11 @@ export default function SchemesBoardClient() {
         )}
 
         {!loading && !error && activeTab === "list" && (
-          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--bg-surface)] text-xs uppercase tracking-[0.06em] text-[var(--sidebar-text-primary)]">
+                  <tr className="border-b border-[var(--color-divider)] bg-[var(--color-surface)] text-xs uppercase tracking-[0.06em] text-[var(--color-text)]">
                     <th scope="col" className="w-10 px-4 py-3" />
                     {(
                       [
@@ -987,7 +987,7 @@ export default function SchemesBoardClient() {
                       <th
                         key={key}
                         scope="col"
-                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--sidebar-text-primary)] ${key === "re" || key === "expenditure" || key === "pct"
+                        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold hover:text-[var(--color-text)] ${key === "re" || key === "expenditure" || key === "pct"
                           ? "text-right"
                           : ""
                           }`}
@@ -1000,7 +1000,7 @@ export default function SchemesBoardClient() {
                     <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border)]">
+                <tbody className="divide-y divide-[var(--color-divider)]">
                   {sortedList.map((entry) => {
                     const pct = utilPct(entry);
                     const qp = getQuarterlyProgress(entry);
@@ -1018,14 +1018,14 @@ export default function SchemesBoardClient() {
                     return (
                       <Fragment key={entry.id}>
                         <tr
-                          className="group cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
+                          className="group cursor-pointer transition-colors hover:bg-[var(--ax-hover)]"
                           onClick={() => setSchemeModalEntry(entry)}
                         >
                           <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
                               onClick={() => toggleExpand(entry.id)}
-                              className={`flex size-6 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-transform ${expanded ? "rotate-180" : ""
+                              className={`flex size-6 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-muted)] hover:text-[var(--color-text)] transition-transform ${expanded ? "rotate-180" : ""
                                 }`}
                             >
                               <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1047,53 +1047,53 @@ export default function SchemesBoardClient() {
                                 }
                               />
                               <div>
-                                <p className="font-medium leading-snug text-[var(--text-primary)]">
+                                <p className="font-medium leading-snug text-[var(--color-text)]">
                                   {entry.scheme}
                                 </p>
                                 {entry.scheme.trim().toLowerCase() !==
                                   entry.id.trim().toLowerCase() && (
-                                  <p className="text-[11px] text-[var(--text-muted)]">
+                                  <p className="text-[11px] text-[var(--ax-muted)]">
                                     {entry.id}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-[var(--text-secondary)]">
+                          <td className="px-4 py-3 text-[var(--ax-text-secondary)]">
                             {entry.vertical}
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                          <td className="px-4 py-3 text-right tabular-nums text-[var(--ax-text-secondary)]">
                             ₹{fmtCr(effBudget(entry))}
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-[var(--text-secondary)]">
+                          <td className="px-4 py-3 text-right tabular-nums text-[var(--ax-text-secondary)]">
                             ₹{fmtCr(entry.ifms)}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-2">
-                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--border)]">
+                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--color-divider)]">
                                 <div
                                   className={`h-full rounded-full ${barFill}`}
                                   style={{ width: `${Math.min(100, pct)}%` }}
                                 />
                               </div>
-                              <span className="w-12 text-right text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                              <span className="w-12 text-right text-[11px] font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                                 {pct.toFixed(1)}%
                               </span>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-xs font-medium text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100">
+                            <span className="text-xs font-medium text-[var(--ax-muted)] opacity-0 transition-opacity group-hover:opacity-100">
                               View →
                             </span>
                           </td>
                         </tr>
                         {expanded && (
-                          <tr className="bg-[var(--bg-surface)]/20">
-                            <td colSpan={7} className="p-4 border-b border-[var(--border)]">
+                          <tr className="bg-[var(--color-surface)]/20">
+                            <td colSpan={7} className="p-4 border-b border-[var(--color-divider)]">
                               <div className="mx-auto max-w-5xl grid gap-6 md:grid-cols-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                 {/* Quarterly Progress */}
                                 <div className="space-y-2">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                                     Quarterly Target Details
                                   </p>
                                   {(() => {
@@ -1114,16 +1114,16 @@ export default function SchemesBoardClient() {
                                       : accentColors.text;
 
                                     return (
-                                      <div className={`rounded-lg border border-[var(--border)] bg-[var(--bg-card)] border-l-4 ${accentColors.border} ${accentColors.text} p-3`}>
+                                      <div className={`rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] border-l-4 ${accentColors.border} ${accentColors.text} p-3`}>
                                         <div className="flex items-center justify-between gap-2">
-                                          <span className="text-xs font-semibold text-[var(--text-primary)]">
+                                          <span className="text-xs font-semibold text-[var(--color-text)]">
                                             Q{qp.quarter} Target Progress
                                           </span>
                                           <span className={`text-xs font-bold tabular-nums ${accentColors.text}`}>
                                             {qp.actualPct.toFixed(1)}% / {qp.cumulativeTargetPct.toFixed(0)}%
                                           </span>
                                         </div>
-                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--border)]">
+                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-divider)]">
                                           <div
                                             className={`h-full rounded-full ${barColor}`}
                                             style={{
@@ -1132,7 +1132,7 @@ export default function SchemesBoardClient() {
                                           />
                                         </div>
                                         <div className="mt-2 flex items-center justify-between">
-                                          <span className="text-xs text-[var(--text-muted)]">
+                                          <span className="text-xs text-[var(--ax-muted)]">
                                             Q{qp.quarter} allocation: ₹{fmtCr((qp.cumulativeTargetPct / 100) * effBudget(entry))} Cr
                                           </span>
                                           <span className={`text-xs font-bold tabular-nums ${varianceColor}`}>
@@ -1147,7 +1147,7 @@ export default function SchemesBoardClient() {
 
                                 {/* Sub-schemes */}
                                 <div className="space-y-2">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">
                                     Sub-schemes
                                   </p>
                                   {entry.subschemes && entry.subschemes.length > 0 ? (
@@ -1158,7 +1158,7 @@ export default function SchemesBoardClient() {
                                         return (
                                           <li
                                             key={sub.id}
-                                            className="flex gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-xs"
+                                            className="flex gap-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3 text-xs"
                                           >
                                             <span
                                               className={`mt-1.5 size-1.5 shrink-0 rounded-full ${kind === "SS"
@@ -1169,23 +1169,23 @@ export default function SchemesBoardClient() {
                                                 }`}
                                             />
                                             <div className="min-w-0 flex-1">
-                                              <p className="font-semibold text-[var(--text-primary)]">
+                                              <p className="font-semibold text-[var(--color-text)]">
                                                 {sub.name}
                                               </p>
                                               {sub.name.trim().toLowerCase() !==
                                                 sub.code.trim().toLowerCase() && (
-                                                <p className="text-[10px] text-[var(--text-muted)]">
+                                                <p className="text-[10px] text-[var(--ax-muted)]">
                                                   {sub.code}
                                                 </p>
                                               )}
-                                              <div className="mt-1 flex flex-wrap gap-x-4 text-xs tabular-nums text-[var(--text-secondary)]">
+                                              <div className="mt-1 flex flex-wrap gap-x-4 text-xs tabular-nums text-[var(--ax-text-secondary)]">
                                                 <span>RE ₹{fmtCr(re)} Cr</span>
                                                 <span>
                                                   Expenditure ₹{fmtCr(sub.ifms ?? 0)} Cr
                                                 </span>
                                               </div>
                                             </div>
-                                            <span className="shrink-0 self-start rounded bg-[var(--bg-document)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--text-secondary)]">
+                                            <span className="shrink-0 self-start rounded bg-[var(--color-bg)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--ax-text-secondary)]">
                                               {sp.toFixed(1)}%
                                             </span>
                                           </li>
@@ -1193,7 +1193,7 @@ export default function SchemesBoardClient() {
                                       })}
                                     </ul>
                                   ) : (
-                                    <div className="flex h-[88px] items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-card)] p-4 text-xs text-[var(--text-muted)]">
+                                    <div className="flex h-[88px] items-center justify-center rounded-lg border border-dashed border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-xs text-[var(--ax-muted)]">
                                       No sub-schemes configured
                                     </div>
                                   )}
@@ -1209,7 +1209,7 @@ export default function SchemesBoardClient() {
                     <tr>
                       <td
                         colSpan={7}
-                        className="py-12 text-center text-xs text-[var(--text-muted)]"
+                        className="py-12 text-center text-xs text-[var(--ax-muted)]"
                       >
                         No schemes match your search.
                       </td>

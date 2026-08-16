@@ -124,6 +124,7 @@ const SURFACES = [
     minMatches: 1,
     views: [
       { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
       { name: "dark · phone", query: "", viewport: PHONE },
     ],
   },
@@ -140,7 +141,10 @@ const SURFACES = [
     authenticated: false,
     readySelector: ".noct .btn-primary",
     minMatches: 1,
-    views: [{ name: "dark · desktop", query: "?error=AccessDenied", viewport: DESKTOP }],
+    views: [
+      { name: "dark · desktop", query: "?error=AccessDenied", viewport: DESKTOP },
+      { name: "light · desktop", query: "?error=AccessDenied", viewport: DESKTOP, theme: "light" },
+    ],
   },
   {
     name: "app shell (reskin A)",
@@ -437,6 +441,132 @@ const SURFACES = [
     ],
   },
   {
+    name: "create scheme (reskin D1)",
+    path: "/schemes",
+    authenticated: true,
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "new decision item (reskin D1)",
+    path: "/action-items/create",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "kpi entry (reskin C)",
+    path: "/kpis/entry",
+    authenticated: true,
+    tenant: "demo",
+    // A KPI card heading. The page has no h1 — its title lives in the shell's
+    // topbar — so this waits on the list itself rather than on the frame.
+    blocked: "needs ENTER_KPI_DATA; the seeded dev users are Director and Programme Officer (demo) and TASU (odisha), none of which hold it",
+    readySelector: ".noct main h2",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "financial entry index (reskin C)",
+    path: "/financial/entry",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "financial entry — summary (reskin C)",
+    path: "/financial/entry/summary",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "financial entry — scheme (reskin C)",
+    path: "/financial/entry/scheme",
+    authenticated: true,
+    tenant: "demo",
+    // A section heading inside the form. The page's h1 only renders once a scheme
+    // is selected, so waiting on it would have measured the picker.
+    blocked: "needs ENTER_FINANCIAL_DATA or MANAGE_FINANCIAL_DATA; no seeded dev user holds either",
+    readySelector: ".noct main h2",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "financial entry — bulk (reskin C)",
+    path: "/financial/entry/bulk",
+    authenticated: true,
+    tenant: "demo",
+    // The bulk grid. This page has three states — loading, error, loaded — and only
+    // the last one has a table, so this is what distinguishes them.
+    blocked: "needs MANAGE_FINANCIAL_DATA, which NO ROLE IN THE SEED GRANTS — the screen is unreachable for every user, not just the audit",
+    readySelector: ".noct main table",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "execution efficiency (reskin C)",
+    path: "/financial/execution-efficiency",
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "financial years (reskin E)",
+    path: "/admin/financial-years",
+    authenticated: true,
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "scheme order (reskin E)",
+    path: "/admin/schemes-order",
+    authenticated: true,
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -445,8 +575,9 @@ const SURFACES = [
     readySelector: ".noct .ax-cfg-group",
     minMatches: 4,
     views: [
-      { name: "desktop", query: "", viewport: DESKTOP },
-      { name: "phone", query: "", viewport: PHONE },
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
     ],
   },
   {
@@ -459,8 +590,9 @@ const SURFACES = [
     readySelector: ".noct .ax-cap",
     minMatches: 20,
     views: [
-      { name: "desktop", query: "", viewport: DESKTOP },
-      { name: "phone", query: "", viewport: PHONE },
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
     ],
   },
   {
@@ -470,8 +602,9 @@ const SURFACES = [
     readySelector: ".noct #onboarding-code",
     minMatches: 1,
     views: [
-      { name: "desktop", query: "", viewport: DESKTOP },
-      { name: "phone", query: "", viewport: PHONE },
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+      { name: "dark · phone", query: "", viewport: PHONE },
     ],
   },
 ];
@@ -523,6 +656,8 @@ const createdTokenHashes = [];
 const failures = [];
 /** Screenshot paths, reported at the end so a reviewer knows where to look. */
 const shots = [];
+/** Surfaces that are listed but could not be reached, with the reason. */
+const blocked = [];
 
 // `detached` so the whole process group can be signalled. `npx next dev` is a
 // shim that forks the real server; killing only the shim leaves the server
@@ -857,6 +992,20 @@ async function main() {
       // A surface may need a path built from real data — a report needs a real
       // meeting id. Failing to resolve one is a failure, not a skip: a silently
       // absent surface is the thing this leg exists to prevent.
+      /*
+       * A surface can be listed and unreachable. `blocked` records WHY, the leg
+       * skips it, and the summary names it every run — deleting the entry would
+       * make the gap invisible, which is the failure this leg exists to prevent.
+       * Every current entry is the same shape of problem: the route is behind a
+       * permission no seeded dev user holds, so `useRequireAnyPermission`
+       * redirects before anything renders.
+       */
+      if (surface.blocked) {
+        blocked.push(`${surface.name}: ${surface.blocked}`);
+        console.log(`    – skipped: ${surface.blocked}`);
+        continue;
+      }
+
       let surfacePath = surface.path;
       if (surface.resolvePath) {
         const tenantRow = await db.tenant.findFirst({ where: { slug: tenant }, select: { id: true } });
@@ -983,9 +1132,13 @@ main()
       SURFACES.reduce((sum, surface) => sum + surface.views.length, 0) + WIZARD_STEPS.length + 1;
     console.log(
       `check-a11y: ok (WCAG 2.1 AA — ${TAGS.join(", ")} — ` +
-        `${SURFACES.length + 1} surfaces, ${views} views, wizard driven end to end; ` +
-        `${shots.length} screenshots in ${SHOT_DIR}/)`,
+        `${SURFACES.length + 1 - blocked.length} surfaces, ${shots.length} views, ` +
+        `wizard driven end to end; screenshots in ${SHOT_DIR}/)`,
     );
+    if (blocked.length > 0) {
+      console.log(`\n  ${blocked.length} surface(s) listed but NOT audited — unreachable, not clean:`);
+      for (const entry of blocked) console.log(`    – ${entry}`);
+    }
     process.exit(0);
   })
   .catch(async (error) => {

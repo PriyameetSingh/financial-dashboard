@@ -20,7 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { config } = await getTenantContextSafe();
   return (
     <html lang="en" className="h-full" data-scroll-behavior="smooth">
-      <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <body className="min-h-screen">
         <TenantConfigProvider config={config}>
           <AuthSessionProvider>
             <ThemeProvider>

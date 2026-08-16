@@ -7,11 +7,11 @@ interface CardProps {
 
 export default function Card({ title, subtitle, children, className }: CardProps) {
   return (
-    <div className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 shadow-sm ${className ?? ""}`}>
+    <div className={`rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-sm ${className ?? ""}`}>
       {(title || subtitle) && (
         <div className="mb-4">
-          {title && <p className="text-sm font-semibold text-[var(--text-primary)]">{title}</p>}
-          {subtitle && <p className="text-[13px] text-[var(--text-muted)]">{subtitle}</p>}
+          {title && <p className="text-sm font-semibold text-[var(--color-text)]">{title}</p>}
+          {subtitle && <p className="text-[13px] text-[var(--ax-muted)]">{subtitle}</p>}
         </div>
       )}
       {children}

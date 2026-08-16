@@ -146,38 +146,38 @@ export default function SummaryEntryPage() {
   return (
     <AppShell title="Financial Entry — FY budget summary">
       <div className="px-4 py-6 sm:px-6 sm:py-8">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6 shadow-lg space-y-6">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 sm:p-6 shadow-lg space-y-6">
           {success && (
-            <div className="rounded-xl border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-success)]">
+            <div className="rounded-xl border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-ok)]">
               FY budget summary saved.
             </div>
           )}
           {error && (
-            <div className="rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-critical)]">
+            <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-critical)]">
               {error}
             </div>
           )}
 
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Summary-level Financial Entry</p>
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Financial year budget allocation</h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Summary-level Financial Entry</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)]">Financial year budget allocation</h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               {financialYearLabel ? `FY ${financialYearLabel}` : "Loading financial year..."}
             </p>
-            <p className="mt-2 text-sm text-[var(--text-muted)] max-w-2xl">
+            <p className="mt-2 text-sm text-[var(--ax-muted)] max-w-2xl">
               State, centrally sponsored, and central sector scheme rows are calculated from scheme budgets, supplements, and
               expenditure. Edit only the commission, transfer, and admin lines below; total budget (₹ Cr) is the sum of estimates
               across all categories.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)] mb-3">Category breakdown</p>
-            {loading && <p className="text-sm text-[var(--text-muted)]">Loading...</p>}
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--ax-muted)] mb-3">Category breakdown</p>
+            {loading && <p className="text-sm text-[var(--ax-muted)]">Loading...</p>}
             {!loading && (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm block md:table">
-                  <thead className="hidden md:table-header-group text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  <thead className="hidden md:table-header-group text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">
                     <tr>
                       <th className="py-2 pr-4">Category</th>
                       <th className="py-2 pr-4">Budget estimate (₹ Cr)</th>
@@ -189,22 +189,22 @@ export default function SummaryEntryPage() {
                     {allocationLines.map((row) => {
                       const editable = MANUAL_CATEGORY_SET.has(row.category);
                       const inputClass =
-                        "w-full rounded border border-[var(--border)] px-2 py-1.5 text-sm " +
+                        "w-full rounded border border-[var(--color-divider)] px-2 py-1.5 text-sm " +
                         (editable
-                          ? "bg-[var(--bg-primary)] text-[var(--text-primary)]"
-                          : "bg-[var(--bg-primary)]/60 text-[var(--text-muted)] cursor-not-allowed");
+                          ? "bg-[var(--color-bg)] text-[var(--color-text)]"
+                          : "bg-[var(--color-bg)]/60 text-[var(--ax-muted)] cursor-not-allowed");
                       return (
-                        <tr key={row.category} className="border-t border-[var(--border)] block md:table-row pb-4 md:pb-0 bg-[var(--bg-card)] md:bg-transparent rounded-lg p-3 md:p-0">
-                          <td className="py-3 pr-4 text-[var(--text-primary)] font-medium block md:table-cell">
+                        <tr key={row.category} className="border-t border-[var(--color-divider)] block md:table-row pb-4 md:pb-0 bg-[var(--color-surface)] md:bg-transparent rounded-lg p-3 md:p-0">
+                          <td className="py-3 pr-4 text-[var(--color-text)] font-medium block md:table-cell">
                             {row.label}
                             {!editable && (
-                              <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-[var(--text-muted)]">
+                              <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-[var(--ax-muted)]">
                                 (auto filled)
                               </span>
                             )}
                           </td>
                           <td className="py-2 pr-4 block md:table-cell">
-                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">Budget estimate (₹ Cr)</span>
+                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--ax-muted)] mb-1">Budget estimate (₹ Cr)</span>
                             <input
                               type="number"
                               step="0.01"
@@ -215,7 +215,7 @@ export default function SummaryEntryPage() {
                             />
                           </td>
                           <td className="py-2 pr-4 block md:table-cell">
-                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">SO expenditure (₹ Cr)</span>
+                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--ax-muted)] mb-1">SO expenditure (₹ Cr)</span>
                             <input
                               type="number"
                               step="0.01"
@@ -226,7 +226,7 @@ export default function SummaryEntryPage() {
                             />
                           </td>
                           <td className="py-2 pr-4 block md:table-cell">
-                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">IFMS expenditure (₹ Cr)</span>
+                            <span className="block md:hidden text-[10px] uppercase tracking-wider text-[var(--ax-muted)] mb-1">IFMS expenditure (₹ Cr)</span>
                             <input
                               type="number"
                               step="0.01"
@@ -241,18 +241,18 @@ export default function SummaryEntryPage() {
                     })}
                   </tbody>
                   <tfoot className="block md:table-footer-group mt-4 md:mt-0">
-                    <tr className="border-t border-[var(--border)] font-semibold text-[var(--text-primary)] block md:table-row bg-[var(--bg-content-surface)] md:bg-transparent rounded-lg p-3 md:p-0">
+                    <tr className="border-t border-[var(--color-divider)] font-semibold text-[var(--color-text)] block md:table-row bg-[var(--color-surface)] md:bg-transparent rounded-lg p-3 md:p-0">
                       <td className="py-3 block md:table-cell">Totals</td>
                       <td className="py-3 pr-4 block md:table-cell">
-                        <span className="inline md:hidden text-xs text-[var(--text-muted)] font-normal mr-2">Budget Estimate:</span>
+                        <span className="inline md:hidden text-xs text-[var(--ax-muted)] font-normal mr-2">Budget Estimate:</span>
                         ₹ {totals.budgetEstimateCr.toFixed(2)} Cr
                       </td>
                       <td className="py-3 pr-4 block md:table-cell">
-                        <span className="inline md:hidden text-xs text-[var(--text-muted)] font-normal mr-2">SO Expenditure:</span>
+                        <span className="inline md:hidden text-xs text-[var(--ax-muted)] font-normal mr-2">SO Expenditure:</span>
                         ₹ {totals.soExpenditureCr.toFixed(2)} Cr
                       </td>
                       <td className="py-3 pr-4 block md:table-cell">
-                        <span className="inline md:hidden text-xs text-[var(--text-muted)] font-normal mr-2">IFMS Expenditure:</span>
+                        <span className="inline md:hidden text-xs text-[var(--ax-muted)] font-normal mr-2">IFMS Expenditure:</span>
                         ₹ {totals.ifmsExpenditureCr.toFixed(2)} Cr
                       </td>
                     </tr>

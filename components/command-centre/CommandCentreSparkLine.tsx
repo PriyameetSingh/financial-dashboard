@@ -7,13 +7,13 @@ export default function CommandCentreSparkLine({ data }: { data: number[] }) {
   return (
     <ResponsiveContainer width="100%" height={32}>
       <LineChart data={pts}>
-        <Line type="monotone" dataKey="v" stroke="var(--text-muted)" strokeWidth={1.5} dot={false} />
+        <Line type="monotone" dataKey="v" stroke="var(--ax-muted)" strokeWidth={1.5} dot={false} />
         <Tooltip
           contentStyle={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-divider)",
             fontSize: 11,
-            color: "var(--text-primary)",
+            color: "var(--color-text)",
           }}
           formatter={(v) => [`${Number(v).toFixed(1)}%`, ""]}
           labelFormatter={() => ""}
