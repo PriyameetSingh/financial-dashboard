@@ -1868,3 +1868,64 @@
    so the tint carries the identity and the label carries the meaning. */
 .noct .ax-chip-cat-1 { background: color-mix(in srgb, var(--dv-cat-1) 20%, var(--color-surface)); }
 .noct .ax-chip-cat-2 { background: color-mix(in srgb, var(--dv-cat-2) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-3 { background: color-mix(in srgb, var(--dv-cat-3) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-4 { background: color-mix(in srgb, var(--dv-cat-4) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-5 { background: color-mix(in srgb, var(--dv-cat-5) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-6 { background: color-mix(in srgb, var(--dv-cat-6) 20%, var(--color-surface)); }
+
+/* A left edge in a categorical colour, for a timeline entry or a list row whose
+   kind is already named in its own label. */
+.noct .ax-edge-cat-1 { box-shadow: inset 3px 0 0 var(--dv-cat-1); }
+.noct .ax-edge-cat-2 { box-shadow: inset 3px 0 0 var(--dv-cat-2); }
+.noct .ax-edge-cat-3 { box-shadow: inset 3px 0 0 var(--dv-cat-3); }
+.noct .ax-edge-cat-4 { box-shadow: inset 3px 0 0 var(--dv-cat-4); }
+.noct .ax-edge-critical { box-shadow: inset 3px 0 0 var(--ax-status-critical); }
+
+/* The AI feature marker as a square plate — the agent cards' icon tile. Same
+   reasoning as `.ax-ai-section`: this says "a machine does this work", which is
+   a property of the product rather than of the tenant, and it is always paired
+   with the agent's own name and glyph. */
+.noct .ax-ai-plate {
+  background: color-mix(in srgb, var(--ax-ai-accent) 18%, var(--color-surface));
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ax-ai-accent) 55%, transparent);
+}
+
+/* The knob on a switch, and anything else that needs to read as "raised" on a
+   coloured track. The surface rather than white: white on a light-theme track is
+   invisible, which is what `bg-white` was doing. */
+.noct .ax-fill-surface { background: var(--color-surface); }
+
+/* A nav item that is an ACTION rather than a destination — "Create item" sitting
+   among the pages it creates into. A standing tint rather than the active
+   treatment, so it reads as available without claiming to be where you are. */
+.noct .ax-nav-item-emphasis {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* ── the read-only watermark ─────────────────────────────────────────────────
+   Drawn as generated content, not as text.
+   
+   It is a 10%-opacity wash across the page, so it cannot meet a contrast floor
+   and should not be asked to — but as a live text node an audit measures it
+   (1.29:1) and a screen reader reads it out of the middle of the page with no
+   explanation of what it applies to. `aria-hidden` fixes the second and only
+   sometimes the first: the rule still evaluates visible text. Generated content
+   is not in the accessibility tree and is not evaluated at all, which is the
+   honest description of what this is.
+   
+   The copy stays in the component, passed in as `--ax-watermark-text`, so it can
+   still be translated. The state itself is announced by a visually-hidden
+   sentence beside it. */
+.noct .ax-watermark::after {
+  content: var(--ax-watermark-text, "");
+  font-size: 80px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6em;
+  color: var(--color-text);
+  opacity: 0.1;
+  transform: rotate(-12deg);
+  white-space: nowrap;
+}

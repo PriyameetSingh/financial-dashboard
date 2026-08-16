@@ -217,7 +217,7 @@ export default function AdminNotificationsPage() {
   // Helper to check if system is currently paused/disabled
   const getSystemStatus = () => {
     if (configs.SYSTEM_NOTIFICATIONS_ENABLED === 'false') {
-      return { label: 'Globally Disabled', color: 'text-[var(--alert-critical)] bg-red-500/10 border-red-500/20' };
+      return { label: 'Globally Disabled', color: 'text-[var(--alert-critical)] ax-fill-critical/10 border-[var(--ax-status-critical)]/20' };
     }
     const disabledUntilStr = configs.SYSTEM_NOTIFICATIONS_DISABLED_UNTIL;
     if (disabledUntilStr) {
@@ -225,11 +225,11 @@ export default function AdminNotificationsPage() {
       if (!isNaN(until.getTime()) && until > new Date()) {
         return {
           label: `Paused until ${until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-          color: 'text-orange-500 bg-orange-500/10 border-orange-500/20'
+          color: 'ax-tone-warning ax-fill-warning/10 border-[var(--ax-status-warning)]/20'
         };
       }
     }
-    return { label: 'Active', color: 'text-green-500 bg-green-500/10 border-green-500/20' };
+    return { label: 'Active', color: 'ax-tone-ok ax-fill-ok/10 border-[var(--ax-status-ok)]/20' };
   };
 
   const statusInfo = getSystemStatus();
@@ -268,7 +268,7 @@ export default function AdminNotificationsPage() {
               {/* Master Control Panel */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <ShieldAlert className="h-5 w-5 text-orange-500" />
+                  <ShieldAlert className="h-5 w-5 ax-tone-warning" />
                   Service Master Controls
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -286,7 +286,7 @@ export default function AdminNotificationsPage() {
                     }}
                     className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition outline-none ${configs.SYSTEM_NOTIFICATIONS_ENABLED === 'true'
                       ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]'
-                      : 'bg-red-500/10 border-red-500/20 text-[var(--alert-critical)]'
+                      : 'ax-fill-critical/10 border-[var(--ax-status-critical)]/20 text-[var(--alert-critical)]'
                       }`}
                     type="button"
                   >
@@ -312,7 +312,7 @@ export default function AdminNotificationsPage() {
                           className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-[var(--border)] text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--border)] transition outline-none"
                           type="button"
                         >
-                          <Play className="h-3.5 w-3.5 text-green-500" />
+                          <Play className="h-3.5 w-3.5 ax-tone-ok" />
                           Resume Now
                         </button>
                       ) : (
@@ -348,7 +348,7 @@ export default function AdminNotificationsPage() {
               {/* Quiet Hours Settings */}
               <form onSubmit={handleSaveConfig} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-blue-500" />
+                  <Clock className="h-5 w-5 ax-tone-accent" />
                   Quiet Hours (Sleep Mode)
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -414,7 +414,7 @@ export default function AdminNotificationsPage() {
                     Save Settings
                   </button>
                   {configSuccess && (
-                    <span className="flex items-center gap-1 text-xs text-green-500 font-medium">
+                    <span className="flex items-center gap-1 text-xs ax-tone-ok font-medium">
                       <Check className="h-3.5 w-3.5" />
                       Settings Saved!
                     </span>
@@ -425,7 +425,7 @@ export default function AdminNotificationsPage() {
               {/* Event Trigger Toggles */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-purple-500" />
+                  <Settings className="h-5 w-5 ax-tone-accent" />
                   Automated Event Triggers
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -485,7 +485,7 @@ export default function AdminNotificationsPage() {
             <div>
               <form onSubmit={handleSendManual} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Send className="h-5 w-5 text-emerald-500" />
+                  <Send className="h-5 w-5 ax-tone-ok" />
                   Manual Notification Dispatcher
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -493,7 +493,7 @@ export default function AdminNotificationsPage() {
                 </p>
 
                 {manualError && (
-                  <div className="p-3 text-xs text-[var(--alert-critical)] bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2">
+                  <div className="p-3 text-xs text-[var(--alert-critical)] ax-fill-critical/10 border border-[var(--ax-status-critical)]/20 rounded-lg flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     {manualError}
                   </div>
@@ -592,7 +592,7 @@ export default function AdminNotificationsPage() {
                     Dispatch Alert
                   </button>
                   {sendSuccess && (
-                    <span className="flex items-center gap-1 text-xs text-green-500 font-medium">
+                    <span className="flex items-center gap-1 text-xs ax-tone-ok font-medium">
                       <Check className="h-3.5 w-3.5" />
                       Alert Sent successfully!
                     </span>

@@ -7,6 +7,7 @@ import { Permission, UserRole, hasPermission } from "@/lib/auth";
 import type { OfficerType } from "@/types";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { TableScroll } from "@/components/nocturne";
 
 type OverrideEffect = "allow" | "deny";
 
@@ -469,7 +470,7 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex w-full max-w-lg flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl">
@@ -506,7 +507,7 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
             Granted
           </span>
           <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)]" />
+            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_12%,_transparent)]" />
             Denied (override)
           </span>
           <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
@@ -526,7 +527,7 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
                   key={`modal-${user.code ?? user.email}-${permission.code}`}
                   onClick={() => onToggle(user.code ?? "", permission.code)}
                   className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors whitespace-nowrap ${override?.effect === "deny"
-                    ? "border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] text-[var(--alert-critical)]"
+                    ? "border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_12%,_transparent)] text-[var(--alert-critical)]"
                     : granted
                       ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
                       : "border-[var(--border)] bg-transparent text-[var(--text-muted)] hover:border-[var(--text-muted)]"
@@ -627,7 +628,7 @@ function CreateUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
@@ -845,7 +846,7 @@ function EditUserProfileModal({
 }: EditUserProfileModalProps) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
@@ -1644,7 +1645,7 @@ export default function AdminUsersPage() {
         </div>
 
         {alert && !selectedUser && !profileEditUser && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-4 py-3">
+          <div className="rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-3">
             <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
           </div>
         )}
@@ -1698,7 +1699,7 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
-          <div className="overflow-x-auto overflow-y-visible">
+          <TableScroll label="User directory" className="overflow-x-auto overflow-y-visible">
             <table className="min-w-[1000px] w-full text-left text-sm">
               <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 <tr>
@@ -1743,6 +1744,7 @@ export default function AdminUsersPage() {
                           <RoleBadge role={currentRole} />
                           <div className="relative">
                             <select
+                              aria-label={`Role for ${user.name ?? user.email ?? "this user"}`}
                               value={selectedRole}
                               onChange={(e) => handleRoleDraftChange(userCode, e.target.value as UserRole)}
                               disabled={!userCode || isUpdatingRole || isDeleting || !canMutateUsers}
@@ -1905,7 +1907,7 @@ export default function AdminUsersPage() {
                                     setOpenDropdownCode(null);
                                   }}
                                   disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
-                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[rgba(255,59,59,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {isDeleting ? "Deleting..." : "Delete"}
                                 </button>
@@ -1926,7 +1928,7 @@ export default function AdminUsersPage() {
                 )}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
         </div>
       </div>
 
@@ -2046,7 +2048,7 @@ function ResetPasswordModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex w-full max-w-md flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl overflow-y-auto">
@@ -2072,7 +2074,7 @@ function ResetPasswordModal({
         <div className="px-6 py-5">
           {successPwd ? (
             <div className="space-y-4">
-              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
+              <div className="rounded-lg ax-fill-ok/10 border border-[var(--ax-status-ok)]/20 p-3 text-xs ax-tone-ok">
                 Password reset successfully!
               </div>
 
@@ -2105,7 +2107,7 @@ function ResetPasswordModal({
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               {alert && (
-                <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
+                <div className="rounded-lg bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--ax-status-critical)_20%,_transparent)] p-3 text-xs text-[var(--alert-critical)]">
                   {alert}
                 </div>
               )}

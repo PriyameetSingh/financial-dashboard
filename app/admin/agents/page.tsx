@@ -98,16 +98,16 @@ export default function AdminAgentsDirectoryPage() {
             <div className="group relative flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 transition hover:border-[var(--border-strong)]">
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Sparkles className="h-6 w-6" />
                   </div>
                   <div className="flex items-center gap-2">
                     {config?.enabled ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--alert-success-bg)] px-2.5 py-0.5 text-xs font-semibold text-[var(--alert-success)]">
+                      <span className="inline-flex items-center gap-1 rounded-full ax-chip ax-chip-ok px-2.5 py-0.5 text-xs font-semibold">
                         Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                      <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                         Inactive
                       </span>
                     )}
@@ -140,7 +140,7 @@ export default function AdminAgentsDirectoryPage() {
                           {lastLog.status === "SUCCESS" ? (
                             <CheckCircle className="h-3 w-3 text-[var(--alert-success)]" />
                           ) : (
-                            <AlertTriangle className="h-3 w-3 text-red-500" />
+                            <AlertTriangle className="h-3 w-3 ax-tone-critical" />
                           )}
                           {new Date(lastLog.runDate).toLocaleString(tenantLocale(), {
                             day: "numeric",
@@ -160,7 +160,7 @@ export default function AdminAgentsDirectoryPage() {
               <div className="mt-6 pt-4">
                 <Link
                   href="/admin/agents/meeting-wise-progress"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] transition hover:opacity-90"
+                  className="btn btn-primary w-full px-4 py-2.5 text-sm font-semibold"
                 >
                   <Settings2 className="h-4 w-4" />
                   Configure & Trigger
@@ -170,14 +170,14 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 2. Finance Audit Monitor Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <ShieldAlert className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Under Dev
                     </span>
                   </div>
@@ -213,14 +213,14 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 3. Action Item Emailer Agent Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Mail className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Inactive
                     </span>
                   </div>
@@ -256,14 +256,14 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 4. Ad-hoc Assistant Agent Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Bot className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Inactive
                     </span>
                   </div>

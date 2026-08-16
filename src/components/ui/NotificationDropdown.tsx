@@ -187,19 +187,19 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
         return <FileText className="h-4 w-4 text-[var(--text-secondary)]" />;
       case 'ACTION_ITEM_UPDATE':
       case 'ACTION_ITEM_REVIEW_REQUEST':
-        return <MessageSquare className="h-4 w-4 text-blue-500" />;
+        return <MessageSquare className="h-4 w-4 ax-tone-accent" />;
       case 'ACTION_ITEM_COMPLETED':
-        return <Check className="h-4 w-4 text-green-500" />;
+        return <Check className="h-4 w-4 ax-tone-ok" />;
       case 'ACTION_ITEM_REJECTED':
         return <X className="h-4 w-4 text-[var(--alert-critical)]" />;
       case 'KPI_ASSIGNED':
       case 'KPI_REASSIGNED':
       case 'KPI_SUBMITTED':
-        return <TrendingUp className="h-4 w-4 text-purple-500" />;
+        return <TrendingUp className="h-4 w-4 ax-tone-accent" />;
       case 'KPI_REVIEW_DECISION':
-        return <TrendingUp className="h-4 w-4 text-emerald-500" />;
+        return <TrendingUp className="h-4 w-4 ax-tone-ok" />;
       case 'LAPSE_RISK':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 ax-tone-warning" />;
       case 'AGENT_ALERT':
         return <ShieldAlert className="h-4 w-4 text-[var(--alert-critical)]" />;
       default:
@@ -232,7 +232,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--alert-critical)] text-[9px] font-bold text-white leading-none">
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--alert-critical)] text-[9px] font-bold leading-none">
             {unreadCount}
           </span>
         )}
@@ -251,7 +251,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-[10px] uppercase tracking-wider text-blue-500 hover:text-blue-600 transition outline-none font-semibold"
+                className="text-[10px] uppercase tracking-wider ax-tone-accent hover:ax-tone-accent transition outline-none font-semibold"
                 type="button"
               >
                 Mark all read
@@ -304,7 +304,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
                     {item.status === 'UNREAD' && (
                       <button
                         onClick={(e) => handleMarkAsRead(item.id, e)}
-                        className="absolute right-2 top-2 p-1 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition hover:text-green-500"
+                        className="absolute right-2 top-2 p-1 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition hover:ax-tone-ok"
                         title="Mark as read"
                         type="button"
                       >

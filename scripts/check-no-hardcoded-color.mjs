@@ -106,6 +106,13 @@ const RESKINNED = [
   { path: "components/meeting-report/", gate: "D2" },
   { path: "components/pendance-report/", gate: "D2" },
   { path: "components/nocturne/TableScroll.tsx", gate: "D2" },
+
+  // ── Reskin Gate E — admin surfaces, profile, changelog ────────────────────
+  // `app/admin/` as a whole: the two Phase-4 configurators under it were already
+  // in scope individually, and a prefix entry now covers every sibling.
+  { path: "app/admin/", gate: "E" },
+  { path: "app/profile/", gate: "E" },
+  { path: "app/changelog/", gate: "E" },
 ];
 
 /**

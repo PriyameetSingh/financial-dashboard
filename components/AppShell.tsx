@@ -164,11 +164,23 @@ export default function AppShell({ children, title }: Props) {
         </header>
         <main className="relative flex-1 overflow-y-auto">
           {isViewer && (
-            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-              <div className="text-[80px] font-bold uppercase tracking-[0.6em] text-[var(--color-text)] opacity-10 rotate-[-12deg]">
-                Read Only
-              </div>
-            </div>
+            /*
+             * Decoration, drawn as generated content — see `.ax-watermark`.
+             * As a live text node it was measured at 1.29:1 and read aloud out
+             * of the middle of the page with no explanation of what it applied
+             * to. The state it signals is carried instead by the visually-hidden
+             * sentence below, which is the channel that was missing.
+             */
+            <div
+              className="ax-watermark pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+              style={{ ["--ax-watermark-text" as string]: '"Read Only"' }}
+              aria-hidden
+            />
+          )}
+          {isViewer && (
+            <p className="ax-sr-only">
+              You have read-only access to this dashboard. Actions that change data are unavailable.
+            </p>
           )}
           <div className="relative z-20">{children}</div>
         </main>

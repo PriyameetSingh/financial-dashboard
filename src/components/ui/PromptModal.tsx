@@ -53,7 +53,7 @@ export default function PromptModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={() => !busy && onCancel()}
     >
       <div
@@ -79,7 +79,7 @@ export default function PromptModal({
             disabled={!canConfirm}
             className={
               tone === "danger"
-                ? "bg-[var(--alert-critical)] text-white hover:bg-opacity-90"
+                ? "bg-[var(--alert-critical)]  hover:bg-opacity-90"
                 : undefined
             }
           >

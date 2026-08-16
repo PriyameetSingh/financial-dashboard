@@ -254,7 +254,7 @@ export default function MeetingWiseProgressAgentPage() {
                               </span>
                             ) : (
                               <span
-                                className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-950/30 px-2 py-0.5 text-[10px] font-semibold text-red-600"
+                                className="ax-chip ax-chip-critical px-2 py-0.5 text-[10px] font-semibold"
                                 title={log.errorLog || ""}
                               >
                                 <AlertTriangle className="h-3 w-3" /> FAILED
@@ -274,7 +274,7 @@ export default function MeetingWiseProgressAgentPage() {
                                 ))}
                               </div>
                             ) : log.errorLog ? (
-                              <div className="max-w-xs truncate font-mono text-[10px] text-red-500">{log.errorLog}</div>
+                              <div className="max-w-xs truncate font-mono text-[10px] ax-tone-critical">{log.errorLog}</div>
                             ) : (
                               "—"
                             )}
@@ -342,7 +342,7 @@ export default function MeetingWiseProgressAgentPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 font-semibold text-red-500">
+                      <div className="flex items-center gap-1.5 font-semibold ax-tone-critical">
                         <AlertTriangle className="h-4 w-4" /> Run failed.
                       </div>
                       <div className="max-h-24 overflow-y-auto rounded bg-[var(--bg-alternate-card)] p-1.5 font-mono text-[9px] text-[var(--text-muted)]">
@@ -357,7 +357,7 @@ export default function MeetingWiseProgressAgentPage() {
     </div>
   </div>
   {modalOpen && selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center ax-scrim backdrop-blur-sm p-4">
           <div className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
               <div>
@@ -380,9 +380,9 @@ export default function MeetingWiseProgressAgentPage() {
 
             {/* Error log if failed */}
             {selectedLog.status !== "SUCCESS" && selectedLog.errorLog && (
-              <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/50 p-4 space-y-1">
-                <h4 className="text-xs font-bold text-red-700 dark:text-red-400">Execution Error Stack</h4>
-                <pre className="overflow-x-auto font-mono text-[10px] text-red-600 dark:text-red-300 whitespace-pre-wrap">
+              <div className="ax-chip ax-chip-critical block w-full p-4 space-y-1">
+                <h4 className="text-xs font-bold">Execution Error Stack</h4>
+                <pre className="overflow-x-auto font-mono text-[10px] whitespace-pre-wrap">
                   {selectedLog.errorLog}
                 </pre>
               </div>
@@ -407,7 +407,7 @@ export default function MeetingWiseProgressAgentPage() {
                                 </span>
                                 {step.success !== undefined && (
                                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${
-                                    step.success ? "bg-[var(--alert-success-bg)] text-[var(--alert-success)]" : "bg-red-100 text-red-700"
+                                    step.success ? "ax-chip ax-chip-ok" : "ax-chip ax-chip-critical"
                                   }`}>
                                     {step.success ? "SUCCESS" : "FAILED"}
                                   </span>

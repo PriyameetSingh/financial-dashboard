@@ -339,6 +339,104 @@ const SURFACES = [
     ],
   },
   {
+    name: "admin index (reskin E)",
+    path: "/admin",
+    authenticated: true,
+    readySelector: ".noct a[href*='/admin/']",
+    minMatches: 3,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "user directory (reskin E)",
+    path: "/admin/users",
+    // odisha, not demo: the admin surfaces need MANAGE permissions and the
+    // entitlements the odisha dev user holds.
+    authenticated: true,
+    readySelector: ".noct table tbody tr",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "roles (reskin E)",
+    path: "/admin/roles",
+    authenticated: true,
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "agents / AI config (reskin E)",
+    path: "/admin/agents",
+    authenticated: true,
+    // The AI plate. Waiting on it proves the agent cards rendered AND that the
+    // AI accent is on the document being measured.
+    readySelector: ".noct .ax-ai-plate",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "notifications admin (reskin E)",
+    path: "/admin/notifications",
+    authenticated: true,
+    readySelector: ".noct button",
+    minMatches: 3,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "masters data (reskin E)",
+    path: "/admin/masters",
+    authenticated: true,
+    readySelector: ".noct button",
+    minMatches: 3,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "profile (reskin E)",
+    path: "/profile",
+    authenticated: true,
+    // Unscoped now. At Gate A this surface was audited with `axeInclude` pointed
+    // at the chrome only, because the page inside the frame had not been
+    // reskinned yet. It has been, so the whole page is measured.
+    readySelector: ".noct .ax-nav .ax-nav-item",
+    minMatches: 3,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "changelog (reskin E)",
+    path: "/changelog",
+    authenticated: true,
+    // The page heading rather than a release chip: whether any releases exist is
+    // tenant data, and a surface that only renders when the data happens to be
+    // there is a surface that silently stops being audited.
+    readySelector: ".noct h1",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which

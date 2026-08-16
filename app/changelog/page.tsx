@@ -24,33 +24,39 @@ type Release = {
   entries: Entry[];
 };
 
+/*
+ * Four kinds of change, three of which are a KIND and one of which is a
+ * SEVERITY. That distinction is why they do not all read from one palette: New
+ * Feature, Improvement and Fix are categorical — no one of them is worse than
+ * another — while Breaking Change is a warning, and painting it as just another
+ * category would lose the only thing about it a reader needs to notice.
+ *
+ * Each entry keeps its own icon, which is what actually carries the kind at a
+ * glance; the tint and the edge reinforce it.
+ */
 const TYPE_CONFIG = {
   NEW_FEATURE: {
     label: "New Feature",
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    border: "border-emerald-500",
+    chip: "ax-chip-cat-2",
+    edge: "ax-edge-cat-2",
     icon: Rocket,
   },
   IMPROVEMENT: {
     label: "Improvement",
-    bg: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400 border-blue-500/20",
-    border: "border-blue-500",
+    chip: "ax-chip-cat-4",
+    edge: "ax-edge-cat-4",
     icon: Sparkles,
   },
   FIX: {
     label: "Fix",
-    bg: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400 border-amber-500/20",
-    border: "border-amber-500",
+    chip: "ax-chip-cat-3",
+    edge: "ax-edge-cat-3",
     icon: Wrench,
   },
   BREAKING_CHANGE: {
     label: "Breaking Change",
-    bg: "bg-rose-500/10",
-    text: "text-rose-600 dark:text-rose-400 border-rose-500/20",
-    border: "border-rose-500",
+    chip: "ax-chip-critical",
+    edge: "ax-edge-critical",
     icon: ShieldAlert,
   },
 };
@@ -135,7 +141,7 @@ export default function ChangelogPage() {
             <p className="text-sm text-[var(--text-muted)]">Loading changelog data...</p>
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-400">
+          <div className="rounded-2xl border border-[var(--ax-status-critical)]/20 ax-fill-critical/5 p-4 text-sm ax-tone-critical">
             {error}
           </div>
         ) : sortedReleases.length === 0 ? (
@@ -166,7 +172,7 @@ export default function ChangelogPage() {
                         v{release.version}
                       </h2>
                       {release.isCurrent && (
-                        <span className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        <span className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                           Current Release
                         </span>
                       )}
@@ -187,10 +193,10 @@ export default function ChangelogPage() {
                           return (
                             <div
                               key={entry.id}
-                              className={`rounded-2xl border border-[var(--border)] border-l-4 ${conf.border} bg-[var(--bg-card)] p-5 transition shadow-sm hover:shadow-md`}
+                              className={`card elev-sm ${conf.edge} p-5 transition hover:shadow-md`}
                             >
                               <div className="flex items-start gap-4">
-                                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${conf.bg} ${conf.text} border`}>
+                                <span className={`ax-chip ${conf.chip} flex h-8 w-8 shrink-0 items-center justify-center rounded-xl`}>
                                   <Icon size={16} />
                                 </span>
                                 <div className="space-y-1.5 min-w-0 flex-1">
@@ -198,7 +204,7 @@ export default function ChangelogPage() {
                                     <h4 className="text-base font-semibold text-[var(--text-primary)] leading-snug">
                                       {entry.title}
                                     </h4>
-                                    <span className={`rounded-lg px-2 py-0.5 text-[10px] font-semibold border ${conf.text} ${conf.bg} capitalize`}>
+                                    <span className={`ax-chip ${conf.chip} px-2 py-0.5 text-[10px] font-semibold capitalize`}>
                                       {conf.label}
                                     </span>
                                   </div>

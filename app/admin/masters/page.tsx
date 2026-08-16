@@ -216,18 +216,18 @@ export default function AdminMastersDataPage() {
 
         {/* Notification Feedback */}
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 flex items-center justify-between" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-critical)]/30 ax-fill-critical/10 px-4 py-3 text-sm flex items-center justify-between" role="alert">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-red-200 hover:text-white">
+            <button onClick={() => setError(null)} className="hover:">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {success && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200 flex items-center justify-between" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-ok)]/30 ax-fill-ok/10 px-4 py-3 text-sm flex items-center justify-between" role="alert">
             <span>{success}</span>
-            <button onClick={() => setSuccess(null)} className="text-emerald-200 hover:text-white">
+            <button onClick={() => setSuccess(null)} className="hover:">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -247,7 +247,7 @@ export default function AdminMastersDataPage() {
                 {activeTab === "verticals" && (
                   <div className="flex flex-col gap-1">
                     <label htmlFor="new-code" className="text-sm font-medium text-[var(--text-primary)]">
-                      Code <span className="text-red-500">*</span>
+                      Code <span className="ax-tone-critical">*</span>
                     </label>
                     <input
                       id="new-code"
@@ -262,7 +262,7 @@ export default function AdminMastersDataPage() {
                 )}
                 <div className="flex flex-col gap-1">
                   <label htmlFor="new-name" className="text-sm font-medium text-[var(--text-primary)]">
-                    Name <span className="text-red-500">*</span>
+                    Name <span className="ax-tone-critical">*</span>
                   </label>
                   <input
                     id="new-name"
@@ -349,7 +349,7 @@ export default function AdminMastersDataPage() {
                                   <button
                                     type="button"
                                     disabled={busy}
-                                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 p-1.5 text-white disabled:opacity-50 transition"
+                                    className="rounded-lg ax-fill-ok hover:ax-fill-ok p-1.5 disabled:opacity-50 transition"
                                     onClick={() => void onSaveEdit(item.id)}
                                     title="Save changes"
                                   >

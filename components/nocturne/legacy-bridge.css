@@ -100,6 +100,5 @@
   --alert-critical: var(--ax-status-critical);
   --alert-warning: var(--ax-status-warning);
   --alert-success: var(--ax-status-ok);
-  --accent-success: var(--ax-status-ok);
   --alert-success-bg: color-mix(in srgb, var(--ax-status-ok) 16%, transparent);
 }

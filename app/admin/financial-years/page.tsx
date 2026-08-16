@@ -122,7 +122,7 @@ export default function AdminFinancialYearsPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-critical)]/40 ax-fill-critical/10 px-4 py-3 text-sm" role="alert">
             {error}
           </div>
         )}
@@ -163,7 +163,7 @@ export default function AdminFinancialYearsPage() {
             <button
               type="submit"
               disabled={busy}
-              className="h-10 rounded-lg bg-[var(--sidebar-active-bg)] px-4 text-sm font-medium text-white disabled:opacity-50"
+              className="h-10 rounded-lg bg-[var(--sidebar-active-bg)] px-4 text-sm font-medium disabled:opacity-50"
             >
               Create
             </button>
@@ -222,7 +222,7 @@ export default function AdminFinancialYearsPage() {
                               <button
                                 type="button"
                                 disabled={busy}
-                                className="rounded-md bg-[var(--sidebar-active-bg)] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+                                className="rounded-md bg-[var(--sidebar-active-bg)] px-3 py-1 text-xs font-medium disabled:opacity-50"
                                 onClick={() => void onSaveEdit(row.id)}
                               >
                                 Save
@@ -244,7 +244,7 @@ export default function AdminFinancialYearsPage() {
                           <td className="py-2 pr-4 tabular-nums text-[var(--text-muted)]">{row.endDate}</td>
                           <td className="py-2 pr-4">
                             {row.isDefaultForApis ? (
-                              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">Yes</span>
+                              <span className="rounded-full ax-fill-ok/20 px-2 py-0.5 text-xs">Yes</span>
                             ) : (
                               <span className="text-[var(--text-muted)]">No</span>
                             )}

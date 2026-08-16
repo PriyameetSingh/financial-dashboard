@@ -146,7 +146,7 @@ export default function ProfilePage() {
           </p>
 
           {success && (
-            <div className="mt-4 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
+            <div className="mt-4 rounded-lg ax-fill-ok/10 border border-[var(--ax-status-ok)]/20 p-3 text-xs ax-tone-ok">
               {success}
             </div>
           )}
@@ -188,7 +188,7 @@ export default function ProfilePage() {
 
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
           <div className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
@@ -207,7 +207,7 @@ export default function ProfilePage() {
 
             <form onSubmit={handleFormSubmit} className="mt-6 space-y-4">
               {error && (
-                <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
+                <div className="rounded-lg bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--ax-status-critical)_20%,_transparent)] p-3 text-xs text-[var(--alert-critical)]">
                   {error}
                 </div>
               )}

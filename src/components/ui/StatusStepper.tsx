@@ -105,7 +105,7 @@ export default function StatusStepper({ item, className }: StatusStepperProps) {
                   className={clsx(
                     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none whitespace-nowrap",
                     isCurrent
-                      ? "border-[var(--alert-warning)] bg-[rgba(255,184,0,0.12)] text-[var(--alert-warning)]"
+                      ? "border-[var(--alert-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_12%,_transparent)] text-[var(--alert-warning)]"
                       : isDone
                       ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-card)]"
                       : "border-[var(--border)] text-[var(--text-muted)]"

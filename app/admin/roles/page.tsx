@@ -246,7 +246,7 @@ export default function AdminRolesPage() {
         </div>
 
         {alert && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-4 py-3">
+          <div className="rounded-xl border border-[var(--alert-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-3">
             <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
           </div>
         )}
@@ -494,7 +494,7 @@ export default function AdminRolesPage() {
                             {entry.actorName ?? entry.actorEmail ?? "System"}
                           </td>
                           <td className="py-2.5 align-top">
-                            <span className="inline-flex items-center rounded-full border border-[var(--accent-success)] bg-[rgba(34,197,94,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-success)]">
+                            <span className="ax-chip ax-chip-ok px-2 py-0.5 text-[10px] font-medium">
                               Verified
                             </span>
                           </td>
@@ -512,7 +512,7 @@ export default function AdminRolesPage() {
                   return (
                     <li key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center rounded-full border border-[var(--accent-success)] bg-[rgba(34,197,94,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-success)]">
+                        <span className="ax-chip ax-chip-ok px-2 py-0.5 text-[10px] font-medium">
                           Verified
                         </span>
                         <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{formatTimestamp(entry.occurredAt)}</span>

@@ -282,19 +282,19 @@ export default function SchemesOrderPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-[var(--alert-critical)]">
+          <div className="ax-chip ax-chip-critical block w-full px-4 py-3 text-sm">
             {error}
           </div>
         )}
 
         {schemesSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-success)]">
             Scheme order saved successfully.
           </div>
         )}
 
         {subschemesSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--alert-success)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--alert-success)]">
             Subscheme order saved successfully.
           </div>
         )}

@@ -633,13 +633,19 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                           <li key={child.href}>
                             <Link
                               href={child.href}
+                              /*
+                               * The same primitives as the parent items. Gate A
+                               * moved the top level onto `ax-nav-item` and left
+                               * the children on the legacy bridge names, which
+                               * held only because /profile — the one screen the
+                               * Gate A audit loaded — never expands a submenu.
+                               * On an admin page with one open, the active child
+                               * measured 1.35:1. One nav, one set of classes.
+                               */
                               className={[
-                                "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-[13px] leading-snug transition-colors",
-                                active
-                                  ? "bg-[var(--sidebar-active-bg)] font-medium text-[var(--sidebar-text-primary)]"
-                                  : child.emphasis
-                                    ? "bg-[var(--sidebar-hover-bg)]/70 text-[var(--sidebar-text-primary)] hover:bg-[var(--sidebar-hover-bg)]"
-                                    : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover-bg)]/50 hover:text-[var(--sidebar-text-primary)]",
+                                "ax-nav-item flex min-h-8 w-full min-w-0 items-center gap-2 px-2 py-1.5 text-[13px] leading-snug",
+                                active ? "ax-nav-item-active font-medium" : "",
+                                child.emphasis ? "ax-nav-item-emphasis" : "",
                               ].join(" ")}
                             >
                               <span className="shrink-0 opacity-90" aria-hidden>
