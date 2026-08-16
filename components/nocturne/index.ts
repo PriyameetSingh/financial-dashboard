@@ -43,6 +43,9 @@ export type { ModalProps } from "./Modal";
 export { default as StatTile } from "./StatTile";
 export type { StatTileProps } from "./StatTile";
 
+export { default as TableScroll } from "./TableScroll";
+export type { TableScrollProps } from "./TableScroll";
+
 export { default as Stepper } from "./Stepper";
 export type { StepperProps, Step, StepState } from "./Stepper";
 

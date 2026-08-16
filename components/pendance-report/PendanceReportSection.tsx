@@ -41,7 +41,7 @@ function renderUpdateAttribution(performerUserIds: string[] | undefined, created
 
   if (createdById && createdById !== performerUserIds[0]) {
     return (
-      <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600 border border-amber-500/20 italic">
+      <span className="ax-chip ax-chip-warning px-1.5 py-0.5 text-[9px] font-semibold italic">
         Posted by {actorName} (Previous Owner)
       </span>
     );
@@ -319,8 +319,8 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
         <div
           className={`mt-4 rounded-xl border px-4 py-3 text-sm flex items-start gap-3 ${
             actionMessage.type === "success"
-              ? "border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] text-[var(--alert-success)]"
-              : "border-[var(--alert-critical)] bg-[rgba(239,68,68,0.08)] text-[var(--alert-critical)]"
+              ? "ax-chip ax-chip-ok"
+              : "ax-chip ax-chip-critical"
           }`}
         >
           <AlertCircle size={18} className="mt-0.5 shrink-0" />
@@ -456,8 +456,8 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <span
                             className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                               task.type === "KPI"
-                                ? "bg-teal-500/10 text-teal-600 border border-teal-500/20"
-                                : "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20"
+                                ? "ax-chip ax-chip-cat-2"
+                                : "ax-chip ax-chip-cat-1"
                             }`}
                           >
                             {task.type === "KPI" ? <ClipboardList size={10} /> : <ListTodo size={10} />}
@@ -470,7 +470,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                             <PriorityBadge priority={task.priority} />
                           )}
                           {((task.type === "KPI" && task.rawKpi?.isSelfApproved) || (task.type === "ActionItem" && task.rawActionItem?.isSelfApproved)) && (
-                            <span className="inline-flex items-center rounded-md border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                            <span className="ax-chip ax-chip-ok px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]">
                               Self-Approved
                             </span>
                           )}
@@ -528,7 +528,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <button
                             onClick={() => handleApprove(task)}
                             disabled={busyItemId === task.id}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[rgba(0,200,83,0.1)] px-2.5 py-1 text-xs font-semibold text-[var(--alert-success)] transition hover:bg-[rgba(0,200,83,0.18)] disabled:opacity-50"
+                            className="btn btn-success px-2.5 py-1 text-xs font-semibold"
                             title="Approve Update"
                           >
                             <ThumbsUp size={12} />
@@ -537,7 +537,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <button
                             onClick={() => handleRejectClick(task)}
                             disabled={busyItemId === task.id}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[rgba(239,68,68,0.1)] px-2.5 py-1 text-xs font-semibold text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.18)] disabled:opacity-50"
+                            className="btn btn-danger px-2.5 py-1 text-xs font-semibold"
                             title="Reject Update"
                           >
                             <ThumbsDown size={12} />
@@ -564,7 +564,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
       {/* Rejection Modal */}
       {rejectingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">Reject Completion</h3>
             <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
@@ -596,7 +596,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={!rejectionComment.trim()}
-                className="rounded-xl bg-[var(--alert-critical)] px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-95 disabled:opacity-50"
+                className="btn btn-danger px-4 py-2 text-sm font-semibold"
               >
                 Confirm Rejection
               </button>

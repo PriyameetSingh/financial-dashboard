@@ -121,7 +121,7 @@ export default function PendanceReportPage() {
           )}
 
           {data && (
-            <div className="mx-auto max-w-[210mm] bg-white print:max-w-none">
+            <div className="ax-doc mx-auto max-w-[210mm] print:max-w-none">
               <PendanceReportContent data={data} logoSrc={logoSrc} />
             </div>
           )}

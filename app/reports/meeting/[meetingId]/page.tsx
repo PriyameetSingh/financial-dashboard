@@ -236,7 +236,7 @@ export default function MeetingReportPage() {
                 setPriority("ALL");
                 setStatus("ALL");
               }}
-              className="rounded-xl border border-[var(--border)] hover:border-red-500 hover:text-red-500 px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors h-[38px] flex items-center justify-center"
+              className="rounded-xl border border-[var(--border)] hover:border-[var(--ax-status-critical)] hover:ax-tone-critical px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors h-[38px] flex items-center justify-center"
             >
               Reset
             </button>
@@ -252,7 +252,7 @@ export default function MeetingReportPage() {
           )}
 
           {filteredData && (
-            <div className="mx-auto max-w-[210mm] bg-white print:max-w-none">
+            <div className="ax-doc mx-auto max-w-[210mm] print:max-w-none">
               <MeetingReportContent data={filteredData} logoSrc={logoSrc} />
             </div>
           )}

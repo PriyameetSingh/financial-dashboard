@@ -279,6 +279,66 @@ const SURFACES = [
     ],
   },
   {
+    name: "meeting report (reskin D2)",
+    // Resolved at run time rather than pinned: a report route needs a real
+    // meeting id, and a hardcoded one rots the first time the seed is rebuilt —
+    // silently, into a 404 that this leg would report as "did not render".
+    resolvePath: async (db, tenantId) => {
+      const meeting = await db.dashboardMeeting.findFirst({
+        where: { tenantId },
+        orderBy: { meetingDate: "desc" },
+        select: { id: true },
+      });
+      return meeting ? `/reports/meeting/${meeting.id}` : null;
+    },
+    authenticated: true,
+    tenant: "demo",
+    // The paper. Waiting on it proves the document rendered rather than the
+    // toolbar around it.
+    readySelector: ".noct .ax-doc",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "pendance report (reskin D2)",
+    resolvePath: async (db, tenantId) => {
+      const meeting = await db.dashboardMeeting.findFirst({
+        where: { tenantId },
+        orderBy: { meetingDate: "desc" },
+        select: { id: true },
+      });
+      return meeting ? `/reports/pendance/${meeting.id}` : null;
+    },
+    authenticated: true,
+    tenant: "demo",
+    readySelector: ".noct .ax-doc",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
+    name: "reports index (reskin D2)",
+    path: "/reports",
+    authenticated: true,
+    tenant: "demo",
+    // The meeting picker, ENABLED. Not the Open-report link — that only appears
+    // once a meeting is chosen — and not the bare select either: it renders
+    // disabled while the meeting list loads, and a disabled control is not
+    // focusable, so the audit was measuring a page whose only interactive
+    // elements had not arrived yet.
+    readySelector: "#report-meeting-select:not([disabled])",
+    minMatches: 1,
+    views: [
+      { name: "dark · desktop", query: "", viewport: DESKTOP },
+      { name: "light · desktop", query: "", viewport: DESKTOP, theme: "light" },
+    ],
+  },
+  {
     name: "design-system configurator (S3)",
     path: "/admin/design-system",
     // A tenant-admin surface: behind a session AND `MANAGE_TENANT_CONFIG`, which
@@ -695,6 +755,20 @@ async function main() {
     for (const surface of SURFACES) {
       console.log(`  · ${surface.name}`);
       const tenant = surface.tenant ?? "odisha";
+
+      // A surface may need a path built from real data — a report needs a real
+      // meeting id. Failing to resolve one is a failure, not a skip: a silently
+      // absent surface is the thing this leg exists to prevent.
+      let surfacePath = surface.path;
+      if (surface.resolvePath) {
+        const tenantRow = await db.tenant.findFirst({ where: { slug: tenant }, select: { id: true } });
+        surfacePath = tenantRow ? await surface.resolvePath(db, tenantRow.id) : null;
+        if (!surfacePath) {
+          failures.push(`${surface.name}: could not resolve a path — is the ${tenant} tenant seeded?`);
+          console.log(`    ✗ could not resolve a path for the ${tenant} tenant`);
+          continue;
+        }
+      }
       const signedIn = contexts.get(tenant);
       const context = surface.authenticated ? signedIn.context : anonymous;
       const host = surface.authenticated ? signedIn.host : HOST;
@@ -724,7 +798,7 @@ async function main() {
           window.localStorage.setItem("airawat-theme", theme);
         }, view.theme ?? "dark");
 
-        const url = `http://${host}:${PORT}${BASE_PATH}${surface.path}${view.query}`;
+        const url = `http://${host}:${PORT}${BASE_PATH}${surfacePath}${view.query}`;
         // `load` rather than `networkidle`: the dev server holds a hot-reload
         // socket open for the life of the page, so "idle" is not a state it
         // reliably reaches. The readiness selector below is the real signal.
@@ -757,7 +831,7 @@ async function main() {
         // A public page audited signed-out must still be the public page. If the
         // proxy ever started bouncing it to sign-in, the readiness selector might
         // still match something and the audit would pass on the wrong document.
-        if (!surface.authenticated && new URL(page.url()).pathname !== `${BASE_PATH}${surface.path}`) {
+        if (!surface.authenticated && new URL(page.url()).pathname !== `${BASE_PATH}${surfacePath}`) {
           failures.push(`${label}: redirected to ${page.url()} — public surfaces must render signed-out`);
           console.log(`    ✗ ${view.name} — redirected to ${page.url()}`);
           await page.close();

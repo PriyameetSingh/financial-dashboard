@@ -98,6 +98,14 @@ const RESKINNED = [
   { path: "components/schemes/", gate: "D1" },
   { path: "src/components/ui/PriorityBadge.tsx", gate: "D1" },
   { path: "src/components/ui/StatusBadge.tsx", gate: "D1" },
+
+  // ── Reskin Gate D2 — the on-screen report previews ────────────────────────
+  // NOT lib/*-pdf-server.tsx: those generate the server-side PDF and are out of
+  // this phase's scope.
+  { path: "app/reports/", gate: "D2" },
+  { path: "components/meeting-report/", gate: "D2" },
+  { path: "components/pendance-report/", gate: "D2" },
+  { path: "components/nocturne/TableScroll.tsx", gate: "D2" },
 ];
 
 /**

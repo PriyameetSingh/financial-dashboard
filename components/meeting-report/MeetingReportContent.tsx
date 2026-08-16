@@ -14,6 +14,7 @@ import {
 } from "@/lib/meeting-report-display";
 import { tenantConfig } from "@/lib/tenant-config";
 import { formatNumber } from "@/lib/tenant-config/format";
+import { TableScroll } from "@/components/nocturne";
 
 function fmtCr(n: number): string {
   if (!Number.isFinite(n)) return "—";
@@ -47,37 +48,34 @@ function FinanceTable({
   return (
     <section className="space-y-2 break-inside-avoid">
       {!hideTitle ? (
-        <h2 className="border border-black bg-[#FFD966] px-3 py-2 text-sm font-semibold text-black print:bg-[#FFD966]">
+        <h2 className="border ax-doc-rule ax-doc-band px-3 py-2 text-sm font-semibold">
           {title}
         </h2>
       ) : null}
-      <div
-        className={clsx(
-          "overflow-x-auto border border-black",
-          hideTitle && "border-t-0",
-          tableWrapClassName,
-        )}
+      <TableScroll
+        label={title}
+        className={clsx("overflow-x-auto border ax-doc-rule", hideTitle && "border-t-0", tableWrapClassName)}
       >
-        <table className="w-full min-w-[720px] border-collapse border border-black text-sm">
+        <table className="w-full min-w-[720px] border-collapse border ax-doc-rule text-sm">
           <thead>
-            <tr className="bg-rose-700 text-left text-xs text-white">
-              <th className="border border-rose-800 px-2 py-2 font-semibold">Plan Type</th>
-              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
+            <tr className="ax-doc-header text-left text-xs">
+              <th className="border ax-doc-header-rule px-2 py-2 font-semibold">Plan Type</th>
+              <th className="border ax-doc-header-rule px-2 py-2 font-semibold text-right">
                 Budget Estimate
                 <br />
                 {fyLabel ?? "FY"} (In {unit}.)
               </th>
-              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
+              <th className="border ax-doc-header-rule px-2 py-2 font-semibold text-right">
                 Expenditure as on {asOf}
                 <br />
                 as per {labels.soExpenditureFormal} order (In {unit}.)
               </th>
-              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">
+              <th className="border ax-doc-header-rule px-2 py-2 font-semibold text-right">
                 Expenditure as on {asOf}
                 <br />
                 as per {labels.ifmsExpenditureFormal} (In {unit}.)
               </th>
-              <th className="border border-rose-800 px-2 py-2 font-semibold text-right">% as per {labels.ifmsExpenditureFormal}</th>
+              <th className="border ax-doc-header-rule px-2 py-2 font-semibold text-right">% as per {labels.ifmsExpenditureFormal}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,45 +89,45 @@ function FinanceTable({
                   row.rowVariant === "grand_total");
               const muteHeading = "rowVariant" in row && row.rowVariant === "heading";
               const lowPct =
-                "pctIfms" in row &&
+ "pctIfms" in row &&
                 row.pctIfms !== null &&
                 row.pctIfms < 15 &&
                 row.rowVariant !== "heading";
 
               return (
-                <tr key={`${row.planType}-${i}`} className={i % 2 === 0 ? "bg-white" : "bg-orange-50/40 print:bg-orange-50/60"}>
+                <tr key={`${row.planType}-${i}`} className={i % 2 === 0 ? "ax-doc-paper" : "ax-doc-zebra "}>
                   <td
-                    className={`border border-black px-2 py-1.5 text-black ${bold ? "font-semibold" : ""} ${
-                      muteHeading ? "bg-sky-100/80 font-semibold print:bg-sky-100" : ""
+                    className={`border ax-doc-rule px-2 py-1.5  ${bold ? "font-semibold" : ""} ${
+                      muteHeading ? "ax-doc-subtotal font-semibold " : ""
                     }`}
                   >
                     {row.planType}
                   </td>
                   <td
-                    className={`border border-black px-2 py-1.5 text-right tabular-nums ${
-                      muteHeading ? "bg-sky-100/80 print:bg-sky-100" : ""
+                    className={`border ax-doc-rule px-2 py-1.5 text-right tabular-nums ${
+                      muteHeading ? "ax-doc-subtotal " : ""
                     }`}
                   >
                     {muteHeading ? "" : fmtCr(row.budgetEstimateCr)}
                   </td>
                   <td
-                    className={`border border-black px-2 py-1.5 text-right tabular-nums ${
-                      muteHeading ? "bg-sky-100/80 print:bg-sky-100" : ""
+                    className={`border ax-doc-rule px-2 py-1.5 text-right tabular-nums ${
+                      muteHeading ? "ax-doc-subtotal " : ""
                     }`}
                   >
                     {muteHeading ? "" : fmtCr(row.soExpenditureCr)}
                   </td>
                   <td
-                    className={`border border-black px-2 py-1.5 text-right tabular-nums ${muteHeading ? "bg-sky-100/80 print:bg-sky-100" : ""} ${
-                      !muteHeading && row.ifmsExpenditureCr > 0 ? "text-rose-700" : ""
+                    className={`border ax-doc-rule px-2 py-1.5 text-right tabular-nums ${muteHeading ? "ax-doc-subtotal " : ""} ${
+                      !muteHeading && row.ifmsExpenditureCr > 0 ? "ax-doc-quiet" : ""
                     }`}
                   >
                     {muteHeading ? "" : fmtCr(row.ifmsExpenditureCr)}
                   </td>
                   <td
-                    className={`border border-black px-2 py-1.5 text-right tabular-nums ${
-                      muteHeading ? "bg-sky-100/80 print:bg-sky-100" : ""
-                    } ${lowPct ? "bg-rose-200 font-semibold text-rose-900 print:bg-rose-200" : ""}`}
+                    className={`border ax-doc-rule px-2 py-1.5 text-right tabular-nums ${
+                      muteHeading ? "ax-doc-subtotal " : ""
+                    } ${lowPct ? "ax-doc-attention font-semibold " : ""}`}
                   >
                     {muteHeading ? "" : fmtPct("pctIfms" in row ? row.pctIfms : null)}
                   </td>
@@ -138,15 +136,15 @@ function FinanceTable({
             })}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
     </section>
   );
 }
 
 function SectionTitleBar({ n, title }: { n: number; title: string }) {
   return (
-    <div className="flex border border-black bg-[#FFD966] font-bold text-black">
-      <div className="flex w-11 shrink-0 items-center justify-center border-r border-black px-2 py-2 text-center">{n}</div>
+    <div className="flex border ax-doc-rule ax-doc-band font-bold">
+      <div className="flex w-11 shrink-0 items-center justify-center border-r ax-doc-rule px-2 py-2 text-center">{n}</div>
       <div className="flex-1 px-3 py-2">{title}</div>
     </div>
   );
@@ -201,10 +199,10 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
 
   return (
     <div
-      className="meeting-report-root bg-white text-black"
+      className="meeting-report-root ax-doc-paper"
       style={{ fontFamily: "Arial, Helvetica, system-ui, sans-serif" }}
     >
-      <header className="mb-6 border-b border-black pb-4">
+      <header className="mb-6 border-b ax-doc-rule pb-4">
         <div className="flex flex-col items-center gap-3">
           <div className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element -- runtime URL from public + basePath */}
@@ -223,20 +221,20 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
       {/* 1 */}
       <section className="mb-8 break-inside-avoid space-y-0">
         <SectionTitleBar n={1} title="Important Topics for Discussion" />
-        <div className="border border-t-0 border-black bg-white px-3 py-3">
+        <div className="border border-t-0 ax-doc-rule ax-doc-paper px-3 py-3">
           {data.topics.length === 0 && presentationRows.length === 0 ? (
-            <p className="text-sm text-neutral-600">No topics or presentations recorded.</p>
+            <p className="text-sm ax-doc-quiet">No topics or presentations recorded.</p>
           ) : (
             <ol className="ml-6 list-decimal space-y-1 text-sm">
               {data.topics.map((t) => (
-                <li key={t.id} className="text-black">
+                <li key={t.id} className="">
                   {t.topic}
                 </li>
               ))}
               {presentationRows.length > 0 && (
-                <li className="text-black font-semibold">
+                <li className="font-semibold">
                   Proposed Presentations
-                  <ul className="ml-6 list-disc font-normal text-neutral-800 space-y-1 mt-1">
+                  <ul className="ml-6 list-disc font-normal space-y-1 mt-1">
                     {presentationRows.map((row) => (
                       <li key={`${row.letter}-${row.label}`}>
                         {row.label}
@@ -280,20 +278,20 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
       {/* 4 */}
       <section className="mb-8 break-inside-avoid space-y-0">
         <SectionTitleBar n={4} title="Key Decisions from Last Dashboard Meetings" />
-        <div className="overflow-x-auto border border-t-0 border-black">
+        <TableScroll label="Key decisions from last dashboard meetings" className="overflow-x-auto border border-t-0 ax-doc-rule">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-black bg-neutral-100 text-left text-xs uppercase tracking-wide text-neutral-700">
-                <th className="border-b border-black px-3 py-2 font-semibold">Decision</th>
-                <th className="border-b border-black px-3 py-2 font-semibold">Action by</th>
-                <th className="border-b border-black px-3 py-2 font-semibold">Timeline</th>
-                <th className="border-b border-black px-3 py-2 font-semibold">Status</th>
+              <tr className="border-b ax-doc-rule ax-doc-zebra text-left text-xs uppercase tracking-wide ax-doc-quiet">
+                <th className="border-b ax-doc-rule px-3 py-2 font-semibold">Decision</th>
+                <th className="border-b ax-doc-rule px-3 py-2 font-semibold">Action by</th>
+                <th className="border-b ax-doc-rule px-3 py-2 font-semibold">Timeline</th>
+                <th className="border-b ax-doc-rule px-3 py-2 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {data.keyDecisions.length === 0 ? (
                 <tr>
-                  <td className="px-3 py-4 text-neutral-600" colSpan={4}>
+                  <td className="px-3 py-4 ax-doc-quiet" colSpan={4}>
                     No meeting decisions recorded up to this meeting.
                   </td>
                 </tr>
@@ -301,28 +299,28 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
                 data.keyDecisions.map((d) => (
                   <tr
                     key={d.id}
-                    className={`border-b border-black align-top ${d.statusCarriedForward ? "bg-amber-50 print:bg-amber-50" : ""}`}
+                    className={`border-b ax-doc-rule align-top ${d.statusCarriedForward ? "ax-doc-carried " : ""}`}
                   >
                     <td className="px-3 py-2">
-                      <p className="font-medium text-black">{d.title}</p>
-                      <p className="mt-1 text-xs text-neutral-600">{d.description}</p>
+                      <p className="font-medium">{d.title}</p>
+                      <p className="mt-1 text-xs ax-doc-quiet">{d.description}</p>
                       {d.sourceMeetingDate && (
-                        <p className="mt-1 text-[10px] uppercase tracking-wide text-neutral-500">
+                        <p className="mt-1 text-[10px] uppercase tracking-wide ax-doc-quiet">
                           Source meeting {d.sourceMeetingDate}
                         </p>
                       )}
                       {d.latestNote ? (
-                        <p className="mt-2 border-l-2 border-neutral-300 pl-2 text-xs italic text-neutral-600">
+                        <p className="mt-2 border-l-2 ax-doc-rule pl-2 text-xs italic ax-doc-quiet">
                           Latest note: {d.latestNote}
                         </p>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2 text-neutral-700">{d.actionBy}</td>
-                    <td className="px-3 py-2 tabular-nums text-neutral-700">{d.timeline}</td>
+                    <td className="px-3 py-2 ax-doc-quiet">{d.actionBy}</td>
+                    <td className="px-3 py-2 tabular-nums ax-doc-quiet">{d.timeline}</td>
                     <td className="px-3 py-2">
-                      <span className="font-medium text-black">{d.statusLabel}</span>
+                      <span className="font-medium">{d.statusLabel}</span>
                       {d.statusCarriedForward && (
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide">
                           Prior meeting update — not refreshed for this pack
                         </p>
                       )}
@@ -332,7 +330,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
               )}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </section>
 
       {/* 5 */}
@@ -341,35 +339,35 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
           n={5}
           title="Scheme / Outcome based Key Performance Indicators (KPIs) — Weekly Update"
         />
-        <div className="overflow-x-auto border border-t-0 border-black">
+        <TableScroll label="Key performance indicators" className="overflow-x-auto border border-t-0 ax-doc-rule">
           <table
-            className="w-full min-w-[900px] border-collapse border border-black text-xs sm:text-sm"
+            className="w-full min-w-[900px] border-collapse border ax-doc-rule text-xs sm:text-sm"
             aria-label="Key performance indicators by scheme and vertical"
           >
             <thead>
-              <tr className="bg-[#FFD966] text-left text-black print:bg-[#FFD966]">
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+              <tr className="ax-doc-band text-left">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   #
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   KPI
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Action by / Status
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Numerator
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Unit
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Denominator
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Unit
                 </th>
-                <th scope="col" className="border border-black px-2 py-2 text-xs font-bold sm:text-sm">
+                <th scope="col" className="border ax-doc-rule px-2 py-2 text-xs font-bold sm:text-sm">
                   Remarks
                 </th>
               </tr>
@@ -377,7 +375,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
             <tbody>
               {data.kpiRows.length === 0 ? (
                 <tr>
-                  <td className="border border-black px-3 py-4 text-neutral-900" colSpan={8}>
+                  <td className="border ax-doc-rule px-3 py-4" colSpan={8}>
                     No KPI definitions for this financial year.
                   </td>
                 </tr>
@@ -386,7 +384,7 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
                   <Fragment key={`${schemeGroup.schemeLabel}-${schemeGroup.vertical}-${schemeIdx}`}>
                     <tr>
                       <td
-                        className="border border-black bg-[#F8D4C4] px-3 py-2 text-sm font-bold text-black print:bg-[#F8D4C4]"
+                        className="border ax-doc-rule ax-doc-group px-3 py-2 text-sm font-bold"
                         colSpan={8}
                       >
                         {schemeKpiHeading(schemeGroup.schemeLabel, schemeGroup.vertical)}
@@ -395,26 +393,26 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
                     {schemeGroup.rows.map((k, rowInSchemeIdx) => (
                       <tr
                         key={`${schemeGroup.schemeLabel}-${schemeGroup.vertical}-${k.index}`}
-                        className={`align-top ${k.warnLowPct ? "bg-rose-50 print:bg-rose-50" : ""}`}
+                        className={`align-top ${k.warnLowPct ? "ax-doc-row-attention" : ""}`}
                       >
                         <th
                           scope="row"
-                          className="border border-black px-2 py-2 text-left text-sm font-normal tabular-nums text-black"
+                          className="border ax-doc-rule px-2 py-2 text-left text-sm font-normal tabular-nums"
                         >
                           {rowInSchemeIdx + 1}
                         </th>
-                        <td className="border border-black px-2 py-2 text-black">
+                        <td className="border ax-doc-rule px-2 py-2">
                           <span className="font-medium">{k.description}</span>
                         </td>
-                        <td className="border border-black px-2 py-2 text-neutral-800">
-                          <span className="font-medium text-black">{k.actionBy}</span>
-                          <p className="mt-1 capitalize text-neutral-900">{k.statusLabel}</p>
+                        <td className="border ax-doc-rule px-2 py-2">
+                          <span className="font-medium">{k.actionBy}</span>
+                          <p className="mt-1 capitalize">{k.statusLabel}</p>
                         </td>
-                        <td className="border border-black px-2 py-2 tabular-nums text-black">{k.numerator}</td>
-                        <td className="border border-black px-2 py-2 text-neutral-800">{k.numeratorUnit || "—"}</td>
-                        <td className="border border-black px-2 py-2 tabular-nums text-neutral-900">{k.denominator}</td>
-                        <td className="border border-black px-2 py-2 text-neutral-800">{k.denominatorUnit || "—"}</td>
-                        <td className="max-w-[220px] border border-black px-2 py-2 text-neutral-800">{k.remarks || "—"}</td>
+                        <td className="border ax-doc-rule px-2 py-2 tabular-nums">{k.numerator}</td>
+                        <td className="border ax-doc-rule px-2 py-2">{k.numeratorUnit || "—"}</td>
+                        <td className="border ax-doc-rule px-2 py-2 tabular-nums">{k.denominator}</td>
+                        <td className="border ax-doc-rule px-2 py-2">{k.denominatorUnit || "—"}</td>
+                        <td className="max-w-[220px] border ax-doc-rule px-2 py-2">{k.remarks || "—"}</td>
                       </tr>
                     ))}
                   </Fragment>
@@ -422,12 +420,12 @@ export function MeetingReportContent({ data, logoSrc }: MeetingReportContentProp
               )}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       </section>
 
       {data.meeting.notes ? (
-        <section className="text-sm text-neutral-700 print:break-inside-avoid">
-          <p className="font-semibold text-black">Meeting notes</p>
+        <section className="text-sm ax-doc-quiet print:break-inside-avoid">
+          <p className="font-semibold">Meeting notes</p>
           <p className="mt-2 whitespace-pre-wrap">{data.meeting.notes}</p>
         </section>
       ) : null}

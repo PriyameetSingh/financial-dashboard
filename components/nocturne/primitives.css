@@ -1811,3 +1811,60 @@
   margin-inline-start: 1px;
   box-shadow: inset 1px 0 0 color-mix(in srgb, currentColor 40%, transparent);
 }
+
+/* ── the document surface ────────────────────────────────────────────────────
+   The paper an on-screen report is printed on. See the document palette in
+   tokens.css for why this does not follow the theme.
+
+   `color-scheme: light` matters: without it a reader whose OS is dark gets dark
+   form controls and scrollbars inside a white page. */
+.noct .ax-doc {
+  background: var(--ax-doc-paper);
+  color: var(--ax-doc-ink);
+  color-scheme: light;
+}
+
+.noct .ax-doc-rule { border-color: var(--ax-doc-rule); }
+.noct .ax-doc-quiet { color: var(--ax-doc-ink-quiet); }
+
+.noct .ax-doc-band { background: var(--ax-doc-band); color: var(--ax-doc-ink); }
+.noct .ax-doc-group { background: var(--ax-doc-group); color: var(--ax-doc-ink); }
+.noct .ax-doc-subtotal { background: var(--ax-doc-subtotal); color: var(--ax-doc-ink); }
+.noct .ax-doc-zebra { background: var(--ax-doc-zebra); }
+.noct .ax-doc-paper { background: var(--ax-doc-paper); }
+
+.noct .ax-doc-header {
+  background: var(--ax-doc-header);
+  color: var(--ax-doc-header-ink);
+}
+.noct .ax-doc-header-rule { border-color: var(--ax-doc-header); }
+
+.noct .ax-doc-attention {
+  background: var(--ax-doc-attention);
+  color: var(--ax-doc-attention-ink);
+}
+.noct .ax-doc-carried { background: var(--ax-doc-carried); }
+.noct .ax-doc-row-attention { background: var(--ax-doc-row-attention); }
+.noct .ax-doc-row-done { background: var(--ax-doc-row-done); }
+.noct .ax-doc-done { background: var(--ax-doc-done); color: var(--ax-doc-done-ink); }
+.noct .ax-doc-pending { background: var(--ax-doc-pending); color: var(--ax-doc-pending-ink); }
+
+/* Print: the fills ARE the information here — a subtotal row that prints white
+   is a different document. `print-color-adjust` is what stops a browser from
+   helpfully dropping them. */
+@media print {
+  .noct .ax-doc,
+  .noct .ax-doc * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Categorical chips — a chip whose tone identifies a KIND rather than a status.
+   Two of them exist because the task list distinguishes KPI work from decision
+   work, and neither is better or worse than the other; a status tone would have
+   said something false. They take the first two categorical swatches, tinted
+   into the surface like every other chip, with the page's own foreground on top
+   so the tint carries the identity and the label carries the meaning. */
+.noct .ax-chip-cat-1 { background: color-mix(in srgb, var(--dv-cat-1) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-2 { background: color-mix(in srgb, var(--dv-cat-2) 20%, var(--color-surface)); }

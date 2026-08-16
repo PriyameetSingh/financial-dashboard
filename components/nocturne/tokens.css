@@ -349,3 +349,61 @@
 .noct [data-theme="light"] .table th {
   color: #575a68;
 }
+
+/* ── The document palette ────────────────────────────────────────────────────
+   PRINT-FIXED, AND DELIBERATELY NOT THEMED. Every other token in this file
+   follows the reader's theme and the tenant's brand. These do not, for a reason
+   that is checkable rather than aesthetic: the report screens ARE the print
+   output. `app/reports/**` calls `window.print()` on the same components the
+   reader is looking at, at `max-w-[210mm]`, with `@media print` rules and
+   `print:` variants throughout. There is no separate render path to diverge from.
+
+   So a report body is paper. Theming it dark would either print black rectangles
+   or preview something the printer will not produce, and both are worse than a
+   preview that admits it is a document. The chrome AROUND the document — the
+   toolbar, the filters, the page header — is ordinary product UI and follows the
+   theme normally; the paper is an island inside it, the same mechanism as the
+   dark sidebar, pointed the other way.
+
+   These are also not the tenant's to rebrand. A government report's rules and
+   highlight bands carry meaning to the officers reading them, in the same way
+   the flag colours in `NationalColourBand` do.
+
+   Every pair below is measured on its own fill. Report body ink is near-black
+   rather than pure, which is the usual print convention:
+     band 13.8:1 · group 13.7:1 · subtotal 15.5:1 · zebra 17.8:1
+     attention 13.4:1 · carried 18.2:1 · done 15.6:1 · pending 15.2:1
+   The four status pills carry their own deeper ink: 7.5 / 7.3 / 6.8:1, and the
+   table header band takes white on a deep rose at 8.0:1. */
+.noct {
+  --ax-doc-paper: #ffffff;
+  --ax-doc-ink: #111111;
+  --ax-doc-rule: #111111;
+  --ax-doc-ink-quiet: #4b4b4b;
+
+  /* Structural bands, in the order a reader meets them. */
+  --ax-doc-band: #ffd966;      /* numbered section title */
+  --ax-doc-group: #f8d4c4;     /* a group header inside a table */
+  --ax-doc-subtotal: #dbeafe;  /* subtotal and heading rows */
+  --ax-doc-zebra: #fff7ed;     /* alternating row stripe */
+  --ax-doc-header: #9f1239;    /* table header band */
+  --ax-doc-header-ink: #ffffff;
+
+  /* Meaning-carrying fills. Each is paired with a word in the cell it marks —
+     never colour alone, the same rule the rest of the product follows. */
+  --ax-doc-attention: #fecdd3;
+  --ax-doc-attention-ink: #881337;
+  --ax-doc-carried: #fffbeb;
+  --ax-doc-done: #bbf7d0;
+  --ax-doc-done-ink: #14532d;
+  --ax-doc-pending: #fde68a;
+  --ax-doc-pending-ink: #78350f;
+
+  /* Faint whole-row washes, for tables where every row is either fine or not.
+     They are a pair on purpose: the pendance report marks "has data" and "has
+     issues" rows this way, and folding both into the neutral stripe would have
+     deleted the only thing those rows are drawn to say. Ink on either clears
+     16:1, so the wash never has to carry the reading. */
+  --ax-doc-row-attention: #fff1f2;
+  --ax-doc-row-done: #f0fdf4;
+}

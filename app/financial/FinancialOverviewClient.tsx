@@ -24,6 +24,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { TableScroll } from "@/components/nocturne";
 import {
   CATEGORICAL,
   CHART_AXIS,
@@ -790,12 +791,7 @@ export default function FinancialOverviewClient({
               </div>
             </div>
             {activeHeadSummary.rows.length > 0 ? (
-              <div
-                className="mt-4 overflow-x-auto"
-                tabIndex={0}
-                role="region"
-                aria-label="Budget head breakdown — scrolls horizontally"
-              >
+              <TableScroll label="Budget head breakdown" className="mt-4 overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
                     <tr className="border-b border-[var(--border)]">
@@ -844,7 +840,7 @@ export default function FinancialOverviewClient({
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </TableScroll>
             ) : (
               <p className="mt-4 text-sm text-[var(--text-muted)]">No finance summary heads recorded for this year yet.</p>
             )}
