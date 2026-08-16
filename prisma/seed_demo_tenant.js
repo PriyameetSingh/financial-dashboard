@@ -239,8 +239,37 @@ async function main() {
       data: { tenantId: DEMO_TENANT_ID, code, name: code === "ACS" ? "Director" : "Programme Officer" },
     });
     roleIds[code] = role.id;
+    /*
+     * A realistic permission set, not a single view permission.
+     *
+     * Both roles previously got exactly one — VIEW_ALL_DATA for "Director",
+     * VIEW_ASSIGNED_DATA for "Programme Officer" — which made every demo user
+     * read-only and every data-entry screen unopenable in this tenant. That is
+     * not what either role means: "Programme Officer" is seeded as
+     * NODAL_OFFICER, whose job in the product is entering KPI data.
+     *
+     * These mirror the Odisha role definitions in `seed_roles_core.cjs` rather
+     * than inventing a second set, so the two tenants cannot drift.
+     */
+    const permCodes =
+      code === "ACS"
+        ? [
+            "VIEW_ALL_DATA",
+            "ENTER_FINANCIAL_DATA",
+            "ENTER_KPI_DATA",
+            "CREATE_ACTION_ITEMS",
+            "UPDATE_ACTION_ITEMS",
+            "UPLOAD_PROOF",
+            "EXPORT_REPORTS",
+            "VIEW_COMMAND_CENTRE",
+            "VIEW_ANALYTICS",
+            "APPROVE_KPI",
+            "APPROVE_ACTION_ITEMS",
+            "FLAG_KPI_ESCALATION",
+          ]
+        : ["VIEW_ASSIGNED_DATA", "ENTER_KPI_DATA", "UPLOAD_PROOF", "VIEW_ANALYTICS", "FLAG_KPI_ESCALATION"];
     const perms = await prisma.permission.findMany({
-      where: { code: { in: code === "ACS" ? ["VIEW_ALL_DATA"] : ["VIEW_ASSIGNED_DATA"] } },
+      where: { code: { in: permCodes } },
       select: { id: true },
     });
     for (const p of perms) {

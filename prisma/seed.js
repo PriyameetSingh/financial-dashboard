@@ -6,7 +6,7 @@ const { PrismaClient } = require("@prisma/client");
  */
 const TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
 
-const { seedRolesAndPermissions } = require("./seed_roles_core.cjs");
+const { seedRolesAndPermissions, ensureFinanceDeskUser } = require("./seed_roles_core.cjs");
 
 const datasourceUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
 const prisma = new PrismaClient(
@@ -193,6 +193,8 @@ async function ensureFinanceYearBudgetAllocationForYear(financialYearId) {
 
 async function main() {
   await seedRolesAndPermissions(prisma);
+  // Needs the roles to exist first — it links a user to the FA role.
+  await ensureFinanceDeskUser(prisma);
 
   for (const v of VERTICALS) {
     await prisma.vertical.upsert({

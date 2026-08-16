@@ -524,14 +524,15 @@ export default function KPIEntryPage() {
                   className={`rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6 ${!canEditSelected && !isReviewerOnly ? "pointer-events-none opacity-50" : ""}`}
                 >
                   <div className="mb-5 space-y-2 border-b border-[var(--color-divider)] pb-5">
-                    <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
+                    {/* Label WRAPS the control — it sat beside it with no htmlFor,
+                        so nothing but proximity connected the two. */}
+                    <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                       Meeting {!isReviewerOnly && <span className="text-[var(--ax-status-critical)]">*</span>}
-                    </label>
                     <select
                       value={meetingId}
                       onChange={(e) => setMeetingId(e.target.value)}
                       disabled={isReviewerOnly}
-                      className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] disabled:cursor-not-allowed disabled:text-[var(--ax-muted)]"
                     >
                       <option value="">Select meeting…</option>
                       {meetings.map((m) => (
@@ -540,6 +541,7 @@ export default function KPIEntryPage() {
                         </option>
                       ))}
                     </select>
+                    </label>
                     {meetings.length === 0 && (
                       <p className="text-[11px] text-[var(--ax-muted)]">
                         No meetings found. Create one under Meetings first.
@@ -558,7 +560,7 @@ export default function KPIEntryPage() {
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === true
                             ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
                             : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                           onClick={() => !isInputDisabled && setBinaryResponses((prev) => ({ ...prev, [item.id]: true }))}
                         >
                           Yes
@@ -568,7 +570,7 @@ export default function KPIEntryPage() {
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === false
                             ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
                             : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                           onClick={() => !isInputDisabled && setBinaryResponses((prev) => ({ ...prev, [item.id]: false }))}
                         >
                           No
@@ -581,9 +583,14 @@ export default function KPIEntryPage() {
                         <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                           Numerator{item.numeratorUnit ? ` (${item.numeratorUnit})` : ""}
                         </label>
+                        {/* Named per row. The visible label sits beside it and says
+                            only "Numerator"; on a page of many KPIs that is the
+                            same name repeated, so the accessible name carries the
+                            KPI as well. */}
                         <input
                           type="number"
                           inputMode="decimal"
+                          aria-label={`Numerator${item.numeratorUnit ? ` in ${item.numeratorUnit}` : ""} for ${item.description}`}
                           value={numeratorById[item.id] ?? ""}
                           min={isApproved && approvedNum != null ? approvedNum : undefined}
                           readOnly={isInputDisabled}
@@ -598,7 +605,7 @@ export default function KPIEntryPage() {
                           className={`w-full rounded-xl border px-4 py-2.5 text-sm tabular-nums text-[var(--color-text)] bg-[var(--color-surface)] focus:outline-none focus:ring-1 ${validationError
                             ? "border-[var(--ax-status-critical)] focus:ring-[var(--ax-status-critical)]"
                             : "border-[var(--color-divider)] focus:ring-[var(--color-text)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                         />
                         {validationError && (
                           <p className="text-[11px] text-[var(--ax-status-critical)]">{validationError}</p>
@@ -611,6 +618,7 @@ export default function KPIEntryPage() {
                         </label>
                         <input
                           type="number"
+                          aria-label={`Denominator${item.denominatorUnit ? ` in ${item.denominatorUnit}` : ""} for ${item.description} (read only)`}
                           value={denVal ?? ""}
                           readOnly
                           tabIndex={-1}
@@ -653,7 +661,7 @@ export default function KPIEntryPage() {
                   <div className="mt-5 space-y-2">
                     <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                       Remarks{" "}
-                      <span className="normal-case tracking-normal text-[var(--ax-muted)] opacity-60">
+                      <span className="normal-case tracking-normal text-[var(--ax-muted)]">
                         (optional)
                       </span>
                     </label>
@@ -666,7 +674,7 @@ export default function KPIEntryPage() {
                         setRemarksById((prev) => ({ ...prev, [item.id]: e.target.value }));
                       }}
                       placeholder="Add any notes or context…"
-                      className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                      className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                     />
                   </div>
 
@@ -710,7 +718,7 @@ export default function KPIEntryPage() {
                                         ? "border-[var(--ax-status-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_10%,_transparent)] text-[var(--ax-status-warning)]"
                                         : "border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] text-[var(--ax-status-ok)]"
                                     : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
-                                } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                                } ${isReviewerOnly ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                               >
                                 {label}
                               </button>
@@ -722,7 +730,7 @@ export default function KPIEntryPage() {
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                           Bottleneck reason{" "}
-                          <span className="normal-case tracking-normal opacity-60">(optional)</span>
+                          <span className="normal-case tracking-normal">(optional)</span>
                         </label>
                         <textarea
                           rows={2}
@@ -733,7 +741,7 @@ export default function KPIEntryPage() {
                             setBottleneckById((prev) => ({ ...prev, [item.id]: e.target.value }));
                           }}
                           placeholder="e.g. Awaiting circular from HQ / tender not yet floated…"
-                          className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                          className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isReviewerOnly ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                         />
                       </div>
                     </div>

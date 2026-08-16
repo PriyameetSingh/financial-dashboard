@@ -275,7 +275,11 @@ const SURFACES = [
     path: "/my-tasks",
     authenticated: true,
     tenant: "demo",
-    readySelector: ".noct .ax-chip",
+    // The page heading. It waited on a chip, which depended on the officer
+    // having pending work — and the permission fix changed which tiles this
+    // user sees. A surface whose readiness depends on today's data is a surface
+    // that stops being audited without anyone noticing.
+    readySelector: ".noct h1",
     minMatches: 1,
     views: [
       { name: "dark · desktop", query: "", viewport: DESKTOP },
@@ -467,10 +471,12 @@ const SURFACES = [
     name: "kpi entry (reskin C)",
     path: "/kpis/entry",
     authenticated: true,
-    tenant: "demo",
     // A KPI card heading. The page has no h1 — its title lives in the shell's
     // topbar — so this waits on the list itself rather than on the frame.
-    blocked: "needs ENTER_KPI_DATA; the seeded dev users are Director and Programme Officer (demo) and TASU (odisha), none of which hold it",
+    // The Programme Officer — seeded as NODAL_OFFICER, whose job in the product
+    // is entering KPI data. It holds ENTER_KPI_DATA as of the permission fix.
+    tenant: "demo",
+    user: "SDA_NODAL1",
     readySelector: ".noct main h2",
     minMatches: 1,
     views: [
@@ -506,11 +512,15 @@ const SURFACES = [
     name: "financial entry — scheme (reskin C)",
     path: "/financial/entry/scheme",
     authenticated: true,
-    tenant: "demo",
-    // A section heading inside the form. The page's h1 only renders once a scheme
-    // is selected, so waiting on it would have measured the picker.
-    blocked: "needs ENTER_FINANCIAL_DATA or MANAGE_FINANCIAL_DATA; no seeded dev user holds either",
-    readySelector: ".noct main h2",
+    // The scheme picker, which is what this page always renders — the form (and
+    // its h1/h2s) appears only after a scheme is chosen. Auditing the picker is
+    // auditing the screen as an officer first meets it.
+    // The finance desk. This screen takes ENTER_FINANCIAL_DATA, which the FA role
+    // has always held — it was unreachable only because no seeded user had that
+    // role until the permission fix added one.
+    tenant: "odisha",
+    user: "fa-bootstrap",
+    readySelector: ".noct main input",
     minMatches: 1,
     views: [
       { name: "dark · desktop", query: "", viewport: DESKTOP },
@@ -521,10 +531,12 @@ const SURFACES = [
     name: "financial entry — bulk (reskin C)",
     path: "/financial/entry/bulk",
     authenticated: true,
-    tenant: "demo",
     // The bulk grid. This page has three states — loading, error, loaded — and only
     // the last one has a table, so this is what distinguishes them.
-    blocked: "needs MANAGE_FINANCIAL_DATA, which NO ROLE IN THE SEED GRANTS — the screen is unreachable for every user, not just the audit",
+    // The finance desk, and the screen the whole permission fix was about: bulk
+    // entry is gated on MANAGE_FINANCIAL_DATA alone, which no role held.
+    tenant: "odisha",
+    user: "fa-bootstrap",
     readySelector: ".noct main table",
     minMatches: 1,
     views: [
@@ -759,9 +771,12 @@ async function get(path, host = HOST) {
  * on it, so the screens whose whole subject is data have to be read as that
  * tenant or they render their empty states and go green having drawn nothing.
  */
-async function mintSession(tenant = "odisha") {
+async function mintSession(tenant = "odisha", user) {
   const host = tenant === "odisha" ? HOST : `${tenant}.airawat.test`;
-  const res = await get(`/api/dev/session?tenant=${tenant}`, host);
+  const res = await get(
+    `/api/dev/session?tenant=${tenant}${user ? `&user=${encodeURIComponent(user)}` : ""}`,
+    host,
+  );
   let body;
   try {
     body = JSON.parse(res.body);
@@ -770,7 +785,8 @@ async function mintSession(tenant = "odisha") {
   }
   if (res.status !== 200 || !body.minted) {
     throw new Error(
-      `could not mint a ${tenant} session (${res.status} ${res.body.slice(0, 160)}). ` +
+      `could not mint a ${tenant}${user ? `/${user}` : ""} session ` +
+        `(${res.status} ${res.body.slice(0, 160)}). ` +
         `Is the dev database migrated and seeded?`,
     );
   }
@@ -939,9 +955,25 @@ async function main() {
   // One session per tenant any surface asks for, minted up front so a failure
   // here reads as "the database is not seeded" rather than as a page fault
   // halfway through the run.
-  const tenants = [...new Set(SURFACES.filter((s) => s.authenticated).map((s) => s.tenant ?? "odisha"))];
+  /*
+   * Keyed by tenant AND user, because a screen is only reachable by someone who
+   * holds the permission that gates it. Three financial and KPI entry screens
+   * were skipped for six gates because the only seeded users were an admin and
+   * two read-only officers; they are audited now as the officers whose job the
+   * screen actually is.
+   */
+  const principals = [
+    ...new Set(
+      SURFACES.filter((s) => s.authenticated).map((s) => `${s.tenant ?? "odisha"}|${s.user ?? ""}`),
+    ),
+  ];
   const sessions = Object.fromEntries(
-    await Promise.all(tenants.map(async (tenant) => [tenant, await mintSession(tenant)])),
+    await Promise.all(
+      principals.map(async (key) => {
+        const [tenant, user] = key.split("|");
+        return [key, await mintSession(tenant, user || undefined)];
+      }),
+    ),
   );
 
   const axeSource = readFileSync(require.resolve("axe-core"), "utf8");
@@ -974,13 +1006,14 @@ async function main() {
   // whichever tenant signed in last, and a cross-tenant cookie is the one thing
   // this product must never treat as ordinary.
   const contexts = new Map();
-  for (const [tenant, jar] of Object.entries(sessions)) {
+  for (const [key, jar] of Object.entries(sessions)) {
+    const tenant = key.split("|")[0];
     const host = tenant === "odisha" ? HOST : `${tenant}.airawat.test`;
     const context = await browser.newContext();
     await context.addCookies([
       { name: jar.name, value: jar.value, domain: host, path: "/", httpOnly: true, sameSite: "Lax" },
     ]);
-    contexts.set(tenant, { context, host });
+    contexts.set(key, { context, host });
   }
   const anonymous = await browser.newContext();
 
@@ -1016,7 +1049,7 @@ async function main() {
           continue;
         }
       }
-      const signedIn = contexts.get(tenant);
+      const signedIn = contexts.get(`${tenant}|${surface.user ?? ""}`);
       const context = surface.authenticated ? signedIn.context : anonymous;
       const host = surface.authenticated ? signedIn.host : HOST;
 
@@ -1025,9 +1058,9 @@ async function main() {
         const page = await context.newPage();
         await page.setViewportSize(view.viewport);
 
-        // The authenticated app's theme is the reader's own preference, stored
-        // per browser. Seeding it before navigation is how this leg audits both
-        // grounds without driving the toggle.
+    // The authenticated app's theme is the reader's own preference, stored
+    // per browser. Seeding it before navigation is how this leg audits both
+    // grounds without driving the toggle.
         /*
          * ALWAYS seeded, never left to the default.
          *
@@ -1046,9 +1079,9 @@ async function main() {
         }, view.theme ?? "dark");
 
         const url = `http://${host}:${PORT}${BASE_PATH}${surfacePath}${view.query}`;
-        // `load` rather than `networkidle`: the dev server holds a hot-reload
-        // socket open for the life of the page, so "idle" is not a state it
-        // reliably reaches. The readiness selector below is the real signal.
+    // `load` rather than `networkidle`: the dev server holds a hot-reload
+    // socket open for the life of the page, so "idle" is not a state it
+    // reliably reaches. The readiness selector below is the real signal.
         const response = await page.goto(url, { waitUntil: "load", timeout: 120_000 });
 
         if (!response || response.status() !== 200) {
@@ -1058,7 +1091,7 @@ async function main() {
           continue;
         }
 
-        // Non-vacuity: a page that did not render has no violations either.
+    // Non-vacuity: a page that did not render has no violations either.
         await page
           .locator(surface.readySelector)
           .first()
@@ -1075,9 +1108,9 @@ async function main() {
           continue;
         }
 
-        // A public page audited signed-out must still be the public page. If the
-        // proxy ever started bouncing it to sign-in, the readiness selector might
-        // still match something and the audit would pass on the wrong document.
+    // A public page audited signed-out must still be the public page. If the
+    // proxy ever started bouncing it to sign-in, the readiness selector might
+    // still match something and the audit would pass on the wrong document.
         if (!surface.authenticated && new URL(page.url()).pathname !== `${BASE_PATH}${surfacePath}`) {
           failures.push(`${label}: redirected to ${page.url()} — public surfaces must render signed-out`);
           console.log(`    ✗ ${view.name} — redirected to ${page.url()}`);

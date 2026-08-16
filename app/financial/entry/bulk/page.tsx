@@ -474,9 +474,10 @@ export default function BulkEntryPage() {
             {mode === "snapshot" && (
               <>
                 <div className="w-full md:w-auto md:min-w-[200px] md:max-w-xs">
+                  {/* The label WRAPS the control. It sat beside it before, with no
+                      htmlFor, so the association existed only visually. */}
                   <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                     Meeting <span className="text-[var(--ax-status-critical)]">*</span>
-                  </label>
                   <select
                     value={selectedMeetingId}
                     onChange={(e) => setSelectedMeetingId(e.target.value)}
@@ -489,18 +490,19 @@ export default function BulkEntryPage() {
                       </option>
                     ))}
                   </select>
+                  </label>
                 </div>
 
                 <div className="w-full md:w-auto">
                   <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                     Data As Of
-                  </label>
                   <input
                     type="date"
                     value={asOfDate}
                     onChange={(e) => setAsOfDate(e.target.value)}
                     className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2.5 py-1.5 text-sm text-[var(--color-text)] shadow-sm focus:border-[var(--color-text)] focus:outline-none"
                   />
+                  </label>
                 </div>
               </>
             )}

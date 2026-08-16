@@ -322,16 +322,21 @@ function MeetingCard({
 }) {
   const materials = meeting.materials ?? [];
   return (
+    /*
+     * NOT `role="button"` with a tabindex, which is what this was.
+     *
+     * The card contains edit and delete buttons, so declaring the card itself a
+     * button nested one control inside another: a keyboard user landed on the
+     * card, and the buttons inside it were unreachable in any predictable order.
+     * It only surfaced once a seeded user actually held the permissions that
+     * render those buttons — before the permission fix, no audit user did.
+     *
+     * The whole-card click stays for pointer users, exactly as before. The
+     * keyboard path is the title below, which is now a real button calling the
+     * same handler, so each card exposes one clear control plus its actions.
+     */
     <div
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      role="button"
-      tabIndex={0}
       className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
         isToday
           ? "border-[var(--color-accent)]/40 bg-gradient-to-br from-[var(--color-accent)]/5 to-[var(--color-surface)] shadow-md shadow-[var(--color-accent)]/5"
@@ -357,7 +362,16 @@ function MeetingCard({
         </div>
 
         <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">
-          {meeting.title ?? "Untitled meeting"}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.();
+            }}
+            className="text-left hover:underline focus-visible:underline"
+          >
+            {meeting.title ?? "Untitled meeting"}
+          </button>
         </h3>
         {meeting.notes && (
           <p className="mt-1.5 text-sm leading-relaxed text-[var(--ax-muted)]">{meeting.notes}</p>

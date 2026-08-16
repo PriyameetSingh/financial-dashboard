@@ -1519,6 +1519,24 @@
   text-decoration: none;
 }
 
+/*
+ * The same three colours again, at a specificity that beats the reset above.
+ *
+ * `.noct .ax-nav a` is (0,2,1); `.noct .ax-nav-item-active` is (0,2,0). When the
+ * item IS the anchor — which is what the submenu links became at Gate E — the
+ * reset's `color: inherit` therefore WINS over the item's own colour, and the
+ * link inherits from the nav's ancestor instead. On the light theme that meant
+ * the light `--color-text` painted inside the sidebar's dark island: 1.3:1,
+ * caught on the admin screens where a submenu is open.
+ *
+ * At Gate A the anchors sat INSIDE an `.ax-nav-item` div, so `inherit` picked up
+ * the div's colour and the bug could not appear. This states the colours for the
+ * anchor form explicitly rather than relying on where the class happens to sit.
+ */
+.noct .ax-nav a.ax-nav-item { color: var(--ax-muted); }
+.noct .ax-nav a.ax-nav-item:hover { color: var(--color-text); }
+.noct .ax-nav a.ax-nav-item-active { color: var(--color-text); }
+
 .noct .ax-nav-item {
   display: flex;
   align-items: center;

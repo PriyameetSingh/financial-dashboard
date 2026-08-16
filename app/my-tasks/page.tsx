@@ -162,7 +162,7 @@ export default function MyTasksHubPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/kpis/entry"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
+                      className="ax-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium"
                     >
                       Open KPI entry
                       <ArrowRight size={14} aria-hidden />
@@ -211,7 +211,7 @@ export default function MyTasksHubPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/action-items"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
+                      className="ax-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium"
                     >
                       Open full action list
                       <ArrowRight size={14} aria-hidden />
@@ -254,7 +254,7 @@ export default function MyTasksHubPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href="/financial/entry/scheme"
-                      className="inline-flex items-center gap-2 rounded-md bg-[var(--ax-nav-active)] px-3 py-2 text-xs font-medium text-[var(--color-text)] transition hover:opacity-90"
+                      className="ax-chip inline-flex items-center gap-2 px-3 py-2 text-xs font-medium"
                     >
                       Scheme entry
                       <ArrowRight size={14} aria-hidden />
