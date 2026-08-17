@@ -48,4 +48,29 @@ jobs:
       # gate (remove `|| true`) once the backlog reaches zero.
       - run: node scripts/check-tenancy-lint.mjs || true
 
+      # The filesystem-only legs of the golden harness. Each reads the source
+      # tree and nothing else — no database, no running server — so they cost
+      # seconds and are safe on a hosted runner. They run BEFORE the build so a
+      # violation reports in seconds rather than after a full compile.
+      #
+      # The remaining golden legs (vitest, check-tenant-integrity,
+      # check-http-smoke, check-a11y) need a seeded Postgres and a booted app,
+      # so they stay on Jenkins and in the local `npm run golden` run.
+
+      # Reskinned surfaces resolve every colour through a Nocturne role token;
+      # one hardcoded hex silently breaks per-tenant theming for that element.
+      - run: node scripts/check-no-hardcoded-color.mjs
+
+      # Every route maps to a module or an always-on core rule, so a new screen
+      # cannot ship ungated by entitlement.
+      - run: npx tsx scripts/check-route-module-map.ts
+
+      # No unscoped Prisma client or raw SQL escapes the tenant chokepoint.
+      - run: node scripts/check-tenant-chokepoint.mjs
+
       - run: npm run build
+
+      # Reads .next/server/functions-config-manifest.json to confirm every route
+      # is actually covered by the middleware matcher — so it must run after the
+      # build, not with the static checks above.
+      - run: node scripts/check-proxy-matcher.mjs
