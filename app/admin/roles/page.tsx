@@ -233,12 +233,12 @@ export default function AdminRolesPage() {
   return (
     <AppShell title="Admin · Roles">
       <div className="space-y-5 px-4 py-5 md:px-6 md:py-6">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">Role permissions</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+          <h1 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">Role permissions</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Defaults applied to everyone with each application role. Use the{" "}
-            <a href="/admin/users" className="font-medium text-[var(--text-primary)] underline-offset-2 hover:underline">
+            <a href="/admin/users" className="font-medium text-[var(--color-text)] underline-offset-2 hover:underline">
               user directory
             </a>{" "}
             for per-officer overrides.
@@ -246,13 +246,13 @@ export default function AdminRolesPage() {
         </div>
 
         {alert && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-4 py-3">
-            <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
+          <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-3">
+            <p className="text-sm text-[var(--ax-status-critical)]">{alert}</p>
           </div>
         )}
 
         {roles.length === 0 && !alert && (
-          <p className="text-sm text-[var(--text-muted)]">No roles returned from the server.</p>
+          <p className="text-sm text-[var(--ax-muted)]">No roles returned from the server.</p>
         )}
         {roles.length > 0 && selectedRole && (
           <div className="flex flex-col gap-4 md:flex-row md:items-start">
@@ -261,7 +261,7 @@ export default function AdminRolesPage() {
               <div className="md:hidden">
                 {!showDetailOnMobile ? (
                   <div className="space-y-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--text-muted)]">Available Roles</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ax-muted)]">Available Roles</p>
                     <CustomSelect
                       value={selectedRoleCode ?? ""}
                       onChange={(v) => {
@@ -283,8 +283,8 @@ export default function AdminRolesPage() {
                               }}
                               className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                                 isActive
-                                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                                  : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                                  ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                                  : "border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--ax-divider-strong)]"
                               }`}
                             >
                               {formatRoleLabel(role.code)}
@@ -298,7 +298,7 @@ export default function AdminRolesPage() {
                   <button
                     type="button"
                     onClick={() => setShowDetailOnMobile(false)}
-                    className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)]"
+                    className="rounded-md border border-[var(--color-divider)] px-3 py-1.5 text-[11px] font-medium text-[var(--ax-muted)] hover:border-[var(--ax-muted)]"
                   >
                     ← Back to list
                   </button>
@@ -307,7 +307,7 @@ export default function AdminRolesPage() {
 
               {/* Desktop: persistent sidebar */}
               <div className="hidden md:block">
-                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--text-muted)]">Available Roles</p>
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ax-muted)]">Available Roles</p>
                 <ul className="space-y-1">
                   {roles.map((role) => {
                     const isActive = role.code === selectedRoleCode;
@@ -318,8 +318,8 @@ export default function AdminRolesPage() {
                           onClick={() => setSelectedRoleCode(role.code)}
                           className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                             isActive
-                              ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                              : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                              ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                              : "border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--ax-divider-strong)]"
                           }`}
                         >
                           {formatRoleLabel(role.code)}
@@ -333,11 +333,11 @@ export default function AdminRolesPage() {
 
             {/* Main panel */}
             <div className={`min-w-0 flex-1 ${showDetailOnMobile ? "block" : "hidden"} md:block`}>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                <div className="mb-4 flex flex-col gap-1 border-b border-[var(--border)] pb-3 md:flex-row md:items-baseline md:justify-between">
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+                <div className="mb-4 flex flex-col gap-1 border-b border-[var(--color-divider)] pb-3 md:flex-row md:items-baseline md:justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-[var(--text-primary)]">{formatRoleLabel(selectedRole.code)}</h2>
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">{selectedRole.code}</p>
+                    <h2 className="text-lg font-semibold text-[var(--color-text)]">{formatRoleLabel(selectedRole.code)}</h2>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--ax-muted)]">{selectedRole.code}</p>
                   </div>
                 </div>
 
@@ -345,23 +345,23 @@ export default function AdminRolesPage() {
                   <div className="mb-4 space-y-3">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center">
                       <div className="flex-1 space-y-1">
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Role Code</label>
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">Role Code</label>
                         <input
                           type="text"
                           disabled
                           value={editingRoleCodeInput}
-                          className="w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-1.5 text-xs text-[var(--text-muted)] cursor-not-allowed opacity-60 focus:outline-none"
+                          className="w-full rounded-md border border-[var(--color-divider)] bg-transparent px-3 py-1.5 text-xs text-[var(--ax-muted)] cursor-not-allowed opacity-60 focus:outline-none"
                         />
                       </div>
                       <div className="flex-1 space-y-1">
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Display Name</label>
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">Display Name</label>
                         <input
                           type="text"
                           autoFocus
                           value={editingRoleName}
                           onChange={(e) => setEditingRoleName(e.target.value)}
                           placeholder="Display Name"
-                          className="w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--text-primary)] focus:outline-none"
+                          className="w-full rounded-md border border-[var(--color-divider)] bg-transparent px-3 py-1.5 text-xs text-[var(--color-text)] focus:border-[var(--color-text)] focus:outline-none"
                           onKeyDown={(e) => {
                             if (e.key === "Enter") void handleSaveRole(selectedRole.code);
                             if (e.key === "Escape") setEditingRoleCode(null);
@@ -374,7 +374,7 @@ export default function AdminRolesPage() {
                         type="button"
                         disabled={Boolean(saving[selectedRole.code])}
                         onClick={() => void handleSaveRole(selectedRole.code)}
-                        className="rounded-md bg-[var(--text-primary)] px-3 py-1.5 text-[11px] font-medium text-[var(--bg-primary)] disabled:opacity-50"
+                        className="rounded-md bg-[var(--color-text)] px-3 py-1.5 text-[11px] font-medium text-[var(--color-bg)] disabled:opacity-50"
                       >
                         {saving[selectedRole.code] ? "Saving..." : "Save Changes"}
                       </button>
@@ -382,7 +382,7 @@ export default function AdminRolesPage() {
                         type="button"
                         disabled={Boolean(saving[selectedRole.code])}
                         onClick={() => setEditingRoleCode(null)}
-                        className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)]"
+                        className="rounded-md border border-[var(--color-divider)] px-3 py-1.5 text-[11px] font-medium text-[var(--ax-muted)] hover:border-[var(--ax-muted)]"
                       >
                         Cancel
                       </button>
@@ -390,7 +390,7 @@ export default function AdminRolesPage() {
                   </div>
                 ) : (
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-[var(--text-muted)]">{selectedRole.name}</p>
+                    <p className="text-xs text-[var(--ax-muted)]">{selectedRole.name}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -398,7 +398,7 @@ export default function AdminRolesPage() {
                         setEditingRoleName(selectedRole.name);
                         setEditingRoleCodeInput(selectedRole.code);
                       }}
-                      className="text-[10px] font-medium text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-primary)] hover:underline"
+                      className="text-[10px] font-medium text-[var(--ax-muted)] underline-offset-2 hover:text-[var(--color-text)] hover:underline"
                     >
                       Edit details
                     </button>
@@ -413,17 +413,17 @@ export default function AdminRolesPage() {
                     );
                     if (groupPermissions.length === 0) return null;
                     return (
-                      <div key={group.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                      <div key={group.id} className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
                         <div className="mb-3 flex items-start gap-3">
-                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)]">
+                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)]">
                             <Icon className="h-4 w-4" />
                           </span>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">{group.label}</p>
-                            <p className="text-xs text-[var(--text-muted)]">{group.description}</p>
+                            <p className="text-sm font-semibold text-[var(--color-text)]">{group.label}</p>
+                            <p className="text-xs text-[var(--ax-muted)]">{group.description}</p>
                           </div>
                         </div>
-                        <ul className="divide-y divide-[var(--border)]">
+                        <ul className="divide-y divide-[var(--color-divider)]">
                           {groupPermissions.map((permCode) => {
                             const perm = permissionCatalog.find((c) => c.code === permCode);
                             const granted = (rolePermissionSet.get(selectedRole.code) ?? new Set<string>()).has(permCode);
@@ -432,8 +432,8 @@ export default function AdminRolesPage() {
                             return (
                               <li key={key} className="flex items-center justify-between gap-3 py-2.5">
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm text-[var(--text-primary)]">{perm?.name ?? permCode.replace(/_/g, " ")}</p>
-                                  <p className="truncate text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{permCode}</p>
+                                  <p className="truncate text-sm text-[var(--color-text)]">{perm?.name ?? permCode.replace(/_/g, " ")}</p>
+                                  <p className="truncate text-[10px] uppercase tracking-wider text-[var(--ax-muted)]">{permCode}</p>
                                 </div>
                                 <ToggleSwitch
                                   checked={granted}
@@ -454,10 +454,10 @@ export default function AdminRolesPage() {
             </div>
           </div>
         )}
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <section className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Role Update History</h2>
-            <p className="text-xs text-[var(--text-muted)]">
+            <h2 className="text-lg font-semibold text-[var(--color-text)]">Role Update History</h2>
+            <p className="text-xs text-[var(--ax-muted)]">
               {auditTotal === 0
                 ? "Recent permission changes across all roles"
                 : `Showing ${auditEntries.length} of ${auditTotal} ${auditTotal === 1 ? "entry" : "entries"}`}
@@ -465,14 +465,14 @@ export default function AdminRolesPage() {
           </div>
 
           {auditEntries.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">No permission changes recorded yet.</p>
+            <p className="text-sm text-[var(--ax-muted)]">No permission changes recorded yet.</p>
           ) : (
             <>
               {/* Desktop table */}
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border)] text-left text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                    <tr className="border-b border-[var(--color-divider)] text-left text-[10px] uppercase tracking-wider text-[var(--ax-muted)]">
                       <th className="py-2 pr-4 font-medium">Timestamp</th>
                       <th className="py-2 pr-4 font-medium">Modified Role</th>
                       <th className="py-2 pr-4 font-medium">Action Taken</th>
@@ -484,17 +484,17 @@ export default function AdminRolesPage() {
                     {auditEntries.map((entry) => {
                       const perm = permissionCatalog.find((c) => c.code === entry.permissionCode);
                       return (
-                        <tr key={entry.id} className="border-b border-[var(--border)] last:border-b-0">
-                          <td className="py-2.5 pr-4 align-top text-[var(--text-primary)]">{formatTimestamp(entry.occurredAt)}</td>
-                          <td className="py-2.5 pr-4 align-top text-[var(--text-primary)]">{entry.roleCode ?? "—"}</td>
-                          <td className="py-2.5 pr-4 align-top text-[var(--text-primary)]">
+                        <tr key={entry.id} className="border-b border-[var(--color-divider)] last:border-b-0">
+                          <td className="py-2.5 pr-4 align-top text-[var(--color-text)]">{formatTimestamp(entry.occurredAt)}</td>
+                          <td className="py-2.5 pr-4 align-top text-[var(--color-text)]">{entry.roleCode ?? "—"}</td>
+                          <td className="py-2.5 pr-4 align-top text-[var(--color-text)]">
                             {entry.granted ? "Granted" : "Revoked"} {perm?.name ?? entry.permissionCode.replace(/_/g, " ")}
                           </td>
-                          <td className="py-2.5 pr-4 align-top text-[var(--text-primary)]">
+                          <td className="py-2.5 pr-4 align-top text-[var(--color-text)]">
                             {entry.actorName ?? entry.actorEmail ?? "System"}
                           </td>
                           <td className="py-2.5 align-top">
-                            <span className="inline-flex items-center rounded-full border border-[var(--accent-success)] bg-[rgba(34,197,94,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-success)]">
+                            <span className="ax-chip ax-chip-ok px-2 py-0.5 text-[10px] font-medium">
                               Verified
                             </span>
                           </td>
@@ -510,27 +510,27 @@ export default function AdminRolesPage() {
                 {auditEntries.map((entry) => {
                   const perm = permissionCatalog.find((c) => c.code === entry.permissionCode);
                   return (
-                    <li key={entry.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
+                    <li key={entry.id} className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center rounded-full border border-[var(--accent-success)] bg-[rgba(34,197,94,0.08)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-success)]">
+                        <span className="ax-chip ax-chip-ok px-2 py-0.5 text-[10px] font-medium">
                           Verified
                         </span>
-                        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{formatTimestamp(entry.occurredAt)}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-[var(--ax-muted)]">{formatTimestamp(entry.occurredAt)}</span>
                       </div>
                       <dl className="space-y-1 text-xs">
                         <div className="flex gap-2">
-                          <dt className="w-24 shrink-0 text-[var(--text-muted)]">Modified Role</dt>
-                          <dd className="text-[var(--text-primary)]">{entry.roleCode ?? "—"}</dd>
+                          <dt className="w-24 shrink-0 text-[var(--ax-muted)]">Modified Role</dt>
+                          <dd className="text-[var(--color-text)]">{entry.roleCode ?? "—"}</dd>
                         </div>
                         <div className="flex gap-2">
-                          <dt className="w-24 shrink-0 text-[var(--text-muted)]">Action Taken</dt>
-                          <dd className="text-[var(--text-primary)]">
+                          <dt className="w-24 shrink-0 text-[var(--ax-muted)]">Action Taken</dt>
+                          <dd className="text-[var(--color-text)]">
                             {entry.granted ? "Granted" : "Revoked"} {perm?.name ?? entry.permissionCode.replace(/_/g, " ")}
                           </dd>
                         </div>
                         <div className="flex gap-2">
-                          <dt className="w-24 shrink-0 text-[var(--text-muted)]">Operator</dt>
-                          <dd className="text-[var(--text-primary)]">{entry.actorName ?? entry.actorEmail ?? "System"}</dd>
+                          <dt className="w-24 shrink-0 text-[var(--ax-muted)]">Operator</dt>
+                          <dd className="text-[var(--color-text)]">{entry.actorName ?? entry.actorEmail ?? "System"}</dd>
                         </div>
                       </dl>
                     </li>
@@ -541,8 +541,8 @@ export default function AdminRolesPage() {
           )}
 
           {auditTotalPages > 1 && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
-              <p className="text-xs text-[var(--text-muted)]">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-divider)] pt-4">
+              <p className="text-xs text-[var(--ax-muted)]">
                 Page {auditPage} of {auditTotalPages}
               </p>
               <div className="flex flex-wrap items-center gap-2">
@@ -550,7 +550,7 @@ export default function AdminRolesPage() {
                   type="button"
                   disabled={auditPage <= 1 || auditLoading}
                   onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
-                  className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-md border border-[var(--color-divider)] px-3 py-1.5 text-[11px] font-medium text-[var(--ax-muted)] hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   ← Previous
                 </button>
@@ -558,7 +558,7 @@ export default function AdminRolesPage() {
                   type="button"
                   disabled={auditPage >= auditTotalPages || auditLoading}
                   onClick={() => setAuditPage((p) => Math.min(auditTotalPages, p + 1))}
-                  className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-muted)] hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-md border border-[var(--color-divider)] px-3 py-1.5 text-[11px] font-medium text-[var(--ax-muted)] hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>

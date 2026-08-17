@@ -2,6 +2,15 @@
  * Display formatting helpers for the Pendance Report.
  */
 
+/** dd.mm.yyyy — moved here from lib/pendance-report.ts so client components
+ * never import the server report builder (whose data-scope chain reaches
+ * server-only modules: prisma, auth, tenant resolution). */
+export function formatPendanceReportDate(iso: string): string {
+  const [y, m, day] = iso.split("-");
+  if (!y || !m || !day) return iso;
+  return `${day}.${m}.${y}`;
+}
+
 export function pendanceReportTitleLine(meetingTitle: string | null): string {
   if (meetingTitle && meetingTitle.trim().length > 0) {
     return `Pendance Report — ${meetingTitle}`;

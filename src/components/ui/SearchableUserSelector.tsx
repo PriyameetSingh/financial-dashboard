@@ -71,11 +71,11 @@ export default function SearchableUserSelector({
   const displayHint = selected ? `${selected.name} — ${formatRole(selected.role)}` : "";
 
   return (
-    <div ref={rootRef} className={clsx("relative flex flex-col text-sm text-[var(--text-muted)]", className)}>
+    <div ref={rootRef} className={clsx("relative flex flex-col text-sm text-[var(--ax-muted)]", className)}>
       {label && (
         <span className="mb-2 text-xs uppercase tracking-[0.3em]">
           {label}
-          {required && <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>}
+          {required && <span className="text-[var(--ax-status-critical)] ml-0.5" aria-hidden="true">*</span>}
         </span>
       )}
       <div className="relative">
@@ -105,24 +105,24 @@ export default function SearchableUserSelector({
           }}
           required={required}
           aria-required={required ? "true" : undefined}
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] pl-3 pr-10 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/25"
+          className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] pl-3 pr-10 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text)]/25"
         />
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]">
           <ChevronDown className="h-4 w-4" />
         </div>
         {open && (
           <ul
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-lg"
+            className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] py-1 shadow-lg"
           >
             {showAllOption && !query.trim() && (
               <li role="option" aria-selected={value === "all"}>
                 <button
                   type="button"
                   className={clsx(
-                    "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[var(--bg-hover)]",
-                    value === "all" && "bg-[var(--bg-hover)]",
+                    "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[var(--ax-hover)]",
+                    value === "all" && "bg-[var(--ax-hover)]",
                   )}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
@@ -132,20 +132,20 @@ export default function SearchableUserSelector({
                     inputRef.current?.blur();
                   }}
                 >
-                  <span className="font-medium text-[var(--text-primary)]">{allOptionLabel}</span>
+                  <span className="font-medium text-[var(--color-text)]">{allOptionLabel}</span>
                 </button>
               </li>
             )}
             {filtered.length === 0 && (!showAllOption || query.trim() !== "") && (
-              <li className="px-3 py-2 text-sm text-[var(--text-muted)]">No users match your search.</li>
+              <li className="px-3 py-2 text-sm text-[var(--ax-muted)]">No users match your search.</li>
             )}
             {filtered.map((user) => (
               <li key={user.id} role="option" aria-selected={user.id === value}>
                 <button
                   type="button"
                   className={clsx(
-                    "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[var(--bg-hover)]",
-                    user.id === value && "bg-[var(--bg-hover)]",
+                    "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[var(--ax-hover)]",
+                    user.id === value && "bg-[var(--ax-hover)]",
                   )}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
@@ -155,8 +155,8 @@ export default function SearchableUserSelector({
                     inputRef.current?.blur();
                   }}
                 >
-                  <span className="font-medium text-[var(--text-primary)]">{user.name}</span>
-                  <span className="text-xs text-[var(--text-muted)]">
+                  <span className="font-medium text-[var(--color-text)]">{user.name}</span>
+                  <span className="text-xs text-[var(--ax-muted)]">
                     {formatRole(user.role)} · {user.email}
                   </span>
                 </button>

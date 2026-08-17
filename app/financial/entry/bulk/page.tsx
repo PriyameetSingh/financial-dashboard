@@ -61,10 +61,10 @@ function fmtCr(n: number): string {
 }
 
 function utilizationColor(pct: number): string {
-  if (pct > 100) return "#e74c3c";
-  if (pct >= 85) return "#f39c12";
-  if (pct >= 50) return "#2ecc71";
-  return "#3498db";
+  if (pct > 100) return "var(--ax-status-critical)";
+  if (pct >= 85) return "var(--ax-status-warning)";
+  if (pct >= 50) return "var(--ax-status-ok)";
+  return "var(--color-accent)";
 }
 
 function formatMeetingLabel(m: MeetingListItem): string {
@@ -397,7 +397,7 @@ export default function BulkEntryPage() {
   if (loading) {
     return (
       <AppShell title="Bulk Financial Entry">
-        <div className="flex h-64 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
+        <div className="flex h-64 items-center justify-center gap-3 text-sm text-[var(--ax-muted)]">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading financial data…
         </div>
@@ -409,12 +409,12 @@ export default function BulkEntryPage() {
     return (
       <AppShell title="Bulk Financial Entry">
         <div className="flex h-64 items-center justify-center p-8">
-          <div className="max-w-sm rounded-xl border border-[#f8b4b4] bg-[var(--bg-card)] p-6 text-center shadow-sm">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-[#e74c3c]" />
-            <p className="text-sm text-[var(--text-muted)]">{loadError}</p>
+          <div className="max-w-sm rounded-xl border border-[var(--ax-status-critical)] bg-[var(--color-surface)] p-6 text-center shadow-sm">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 ax-tone-critical" />
+            <p className="text-sm text-[var(--ax-muted)]">{loadError}</p>
             <button
               onClick={() => { setLoading(true); load(); }}
-              className="mt-4 rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-[var(--bg-content-surface)]"
+              className="mt-4 rounded-lg border border-[var(--color-divider)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-surface)]"
             >
               Retry
             </button>
@@ -428,28 +428,28 @@ export default function BulkEntryPage() {
 
   return (
     <AppShell title="Bulk Financial Entry">
-      <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[var(--bg-document)]">
+      <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[var(--color-bg)]">
 
         {/* ── Top Controls ─────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 space-y-3">
+        <div className="shrink-0 border-b border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 space-y-3">
 
           {/* Header row */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">
                 Finance Desk {financialYearLabel ? `· ${financialYearLabel}` : ""}
               </p>
-              <h1 className="text-lg font-semibold text-[var(--text-primary)] leading-tight">Bulk Financial Entry</h1>
+              <h1 className="text-lg font-semibold text-[var(--color-text)] leading-tight">Bulk Financial Entry</h1>
             </div>
 
             {/* Mode tabs */}
-            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] p-0.5">
+            <div className="flex items-center gap-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] p-0.5">
               <button
                 onClick={() => { setMode("snapshot"); clearAllDrafts(); }}
                 className={`flex items-center gap-2 rounded-md px-3 py-1 text-xs font-medium transition-all ${
                   mode === "snapshot"
-                    ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
+                    : "text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                 }`}
               >
                 <LayoutGrid className="h-3 w-3" />
@@ -459,8 +459,8 @@ export default function BulkEntryPage() {
                 onClick={() => { setMode("budget"); clearAllDrafts(); }}
                 className={`flex items-center gap-2 rounded-md px-3 py-1 text-xs font-medium transition-all ${
                   mode === "budget"
-                    ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
+                    : "text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                 }`}
               >
                 <IndianRupee className="h-3 w-3" />
@@ -474,13 +474,14 @@ export default function BulkEntryPage() {
             {mode === "snapshot" && (
               <>
                 <div className="w-full md:w-auto md:min-w-[200px] md:max-w-xs">
-                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                    Meeting <span className="text-[var(--alert-critical)]">*</span>
-                  </label>
+                  {/* The label WRAPS the control. It sat beside it before, with no
+                      htmlFor, so the association existed only visually. */}
+                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
+                    Meeting <span className="text-[var(--ax-status-critical)]">*</span>
                   <select
                     value={selectedMeetingId}
                     onChange={(e) => setSelectedMeetingId(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2.5 py-1.5 text-sm text-[var(--color-text)] shadow-sm focus:border-[var(--color-text)] focus:outline-none"
                   >
                     <option value="">Select meeting…</option>
                     {meetings.map((m) => (
@@ -489,44 +490,45 @@ export default function BulkEntryPage() {
                       </option>
                     ))}
                   </select>
+                  </label>
                 </div>
 
                 <div className="w-full md:w-auto">
-                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                  <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                     Data As Of
-                  </label>
                   <input
                     type="date"
                     value={asOfDate}
                     onChange={(e) => setAsOfDate(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] shadow-sm focus:border-[var(--text-primary)] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2.5 py-1.5 text-sm text-[var(--color-text)] shadow-sm focus:border-[var(--color-text)] focus:outline-none"
                   />
+                  </label>
                 </div>
               </>
             )}
 
             {/* Search */}
             <div className="relative w-full md:w-auto md:min-w-[200px] md:max-w-xs">
-              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                 Search
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--ax-muted)]" />
                 <input
                   type="text"
                   placeholder="Scheme or component…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] py-1.5 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] py-1.5 pl-9 pr-3 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-text)] focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="flex items-center gap-3 mb-1.5 ml-auto">
-              <p className="text-xs text-[var(--text-muted)]">
+              <p className="text-xs text-[var(--ax-muted)]">
                 {filteredRows.length} rows
                 {dirtyRows.length > 0 && (
-                  <span className="ml-1.5 font-semibold text-[var(--text-primary)]">
+                  <span className="ml-1.5 font-semibold text-[var(--color-text)]">
                     · {dirtyRows.length} edited
                   </span>
                 )}
@@ -535,7 +537,7 @@ export default function BulkEntryPage() {
               {dirtyRows.length > 0 && (
                 <button
                   onClick={clearAllDrafts}
-                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Clear
@@ -550,8 +552,8 @@ export default function BulkEntryPage() {
           <div
             className={`shrink-0 flex items-center gap-2 px-4 py-1.5 text-sm border-b ${
               globalMsg.type === "success"
-                ? "bg-[rgba(46,204,113,0.07)] border-[rgba(46,204,113,0.2)] text-[#27ae60]"
-                : "bg-[rgba(231,76,60,0.07)] border-[rgba(231,76,60,0.2)] text-[#c0392b]"
+                ? "bg-[color-mix(in_srgb,_var(--ax-status-ok)_7%,_transparent)] border-[color-mix(in_srgb,_var(--ax-status-ok)_20%,_transparent)] ax-tone-ok"
+                : "bg-[color-mix(in_srgb,_var(--ax-status-critical)_7%,_transparent)] border-[color-mix(in_srgb,_var(--ax-status-critical)_20%,_transparent)] ax-tone-critical"
             }`}
           >
             {globalMsg.type === "success" ? (
@@ -567,47 +569,47 @@ export default function BulkEntryPage() {
         <div className="flex-1 overflow-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-[var(--border)] bg-[var(--bg-card)]">
-                <th className="w-[50px] px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              <tr className="border-b border-[var(--color-divider)] bg-[var(--color-surface)]">
+                <th className="w-[50px] px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                   Sl. No.
                 </th>
-                <th className="w-[280px] px-5 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[280px] px-5 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                   Scheme
                 </th>
-                <th className="w-[180px] px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[180px] px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                   Component
                 </th>
-                <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                   Total Budget (₹ Cr)
                 </th>
 
                 {mode === "snapshot" ? (
                   <>
-                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                       Current SO (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#3498db]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-accent">
                       Add to SO (₹ Cr)
                     </th>
-                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                       Current IFMS (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-ok">
                       Add to IFMS (₹ Cr)
                     </th>
-                    <th className="w-[90px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[90px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                       Utilisation
                     </th>
                   </>
                 ) : (
                   <>
-                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="w-[140px] px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                       Current Budget (₹ Cr)
                     </th>
-                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[#f39c12]">
+                    <th className="w-[160px] px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-wider ax-tone-warning">
                       Supplement (₹ Cr)
                     </th>
-                    <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">
                       Reason
                     </th>
                   </>
@@ -631,18 +633,18 @@ export default function BulkEntryPage() {
                 return (
                   <tr
                     key={row.key}
-                    className={`border-b border-[var(--border)] transition-colors ${
+                    className={`border-b border-[var(--color-divider)] transition-colors ${
                       isRowSuccess
-                        ? "bg-[rgba(46,204,113,0.04)]"
+                        ? "bg-[color-mix(in_srgb,_var(--ax-status-ok)_4%,_transparent)]"
                         : isRowError
-                          ? "bg-[rgba(231,76,60,0.04)]"
+                          ? "bg-[color-mix(in_srgb,_var(--ax-status-critical)_4%,_transparent)]"
                           : dirty
-                            ? "bg-[rgba(52,152,219,0.03)]"
-                            : "hover:bg-[var(--bg-content-surface)]"
+                            ? "bg-[color-mix(in_srgb,_var(--color-accent)_3%,_transparent)]"
+                            : "hover:bg-[var(--color-surface)]"
                     }`}
                   >
                     {/* Sl. No. */}
-                    <td className="px-3 py-1.5 text-center text-xs text-[var(--text-secondary)] tabular-nums">
+                    <td className="px-3 py-1.5 text-center text-xs text-[var(--ax-text-secondary)] tabular-nums">
                       {index + 1}
                     </td>
 
@@ -652,14 +654,14 @@ export default function BulkEntryPage() {
                         <span
                           className={`font-medium leading-tight ${
                             row.locked
-                              ? "text-[var(--text-muted)]"
-                              : "text-[var(--text-primary)]"
+                              ? "text-[var(--ax-muted)]"
+                              : "text-[var(--color-text)]"
                           }`}
                         >
                           {row.schemeName}
                         </span>
                         {row.locked && (
-                          <span className="ml-1 rounded bg-[var(--bg-content-surface)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)] border border-[var(--border)]">
+                          <span className="ml-1 rounded bg-[var(--color-surface)] px-1.5 py-0.5 text-[10px] text-[var(--ax-muted)] border border-[var(--color-divider)]">
                             Locked
                           </span>
                         )}
@@ -670,27 +672,27 @@ export default function BulkEntryPage() {
                     <td className="px-4 py-1.5">
                       {row.componentCode ? (
                         <div>
-                          <div className="text-xs font-semibold text-[var(--text-primary)]">
+                          <div className="text-xs font-semibold text-[var(--color-text)]">
                             {row.componentCode}
                           </div>
-                          <div className="text-[11px] text-[var(--text-muted)] leading-tight max-w-[160px] truncate">
+                          <div className="text-[11px] text-[var(--ax-muted)] leading-tight max-w-[160px] truncate">
                             {row.componentName}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[var(--text-muted)] text-xs">—</span>
+                        <span className="text-[var(--ax-muted)] text-xs">—</span>
                       )}
                     </td>
 
                     {/* Total Budget */}
-                    <td className="px-4 py-1.5 text-right text-xs font-semibold text-[var(--text-primary)] tabular-nums">
+                    <td className="px-4 py-1.5 text-right text-xs font-semibold text-[var(--color-text)] tabular-nums">
                       {fmtCr(row.effectiveBudget)}
                     </td>
 
                     {mode === "snapshot" ? (
                       <>
                         {/* Current SO */}
-                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--ax-text-secondary)] tabular-nums">
                           {fmtCr(row.currentSo)}
                         </td>
 
@@ -707,21 +709,21 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure)
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.so !== ""
-                                  ? "border-[#3498db] bg-[rgba(52,152,219,0.06)] text-[#2980b9]"
-                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                                  ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,_var(--color-accent)_6%,_transparent)] ax-tone-accent"
+                                  : "border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--color-text)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes(tenantConfig().labels.soExpenditure) && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error.includes("and") ? `Invalid ${tenantConfig().labels.soExpenditure} value` : status.error}
                             </p>
                           )}
                         </td>
 
                         {/* Current IFMS */}
-                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--ax-text-secondary)] tabular-nums">
                           {fmtCr(row.currentIfms)}
                         </td>
 
@@ -738,14 +740,14 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure)
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.ifms !== ""
-                                  ? "border-[#2ecc71] bg-[rgba(46,204,113,0.06)] text-[#27ae60]"
-                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                                  ? "border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_6%,_transparent)] ax-tone-ok"
+                                  : "border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--color-text)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes(tenantConfig().labels.ifmsExpenditure) && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error.includes("and") ? `Invalid ${tenantConfig().labels.ifmsExpenditure} value` : status.error}
                             </p>
                           )}
@@ -767,7 +769,7 @@ export default function BulkEntryPage() {
                     ) : (
                       <>
                         {/* Current Budget */}
-                        <td className="px-4 py-1.5 text-right text-xs text-[var(--text-secondary)] tabular-nums">
+                        <td className="px-4 py-1.5 text-right text-xs text-[var(--ax-text-secondary)] tabular-nums">
                           {fmtCr(row.currentBudget)}
                         </td>
 
@@ -784,16 +786,16 @@ export default function BulkEntryPage() {
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
                             className={`w-full rounded-md border px-2 py-1 text-right text-xs font-semibold tabular-nums focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               isRowError && status?.error?.includes("Supplement")
-                                ? "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
+                                ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
                                 : draft.supplement !== ""
                                   ? Number(draft.supplement) >= 0
-                                    ? "border-[#f39c12] bg-[rgba(243,156,18,0.06)] text-[#e67e22]"
-                                    : "border-[#e74c3c] bg-[rgba(231,76,60,0.06)] text-[#c0392b]"
-                                  : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                                    ? "border-[var(--ax-status-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_6%,_transparent)] ax-tone-warning"
+                                    : "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_6%,_transparent)] ax-tone-critical"
+                                  : "border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--color-text)]"
                             }`}
                           />
                           {isRowError && status?.error?.includes("Supplement") && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c] text-left leading-tight">
+                            <p className="mt-0.5 text-[10px] ax-tone-critical text-left leading-tight">
                               {status.error}
                             </p>
                           )}
@@ -808,10 +810,10 @@ export default function BulkEntryPage() {
                             value={draft.supplementReason}
                             onChange={(e) => setDraftField(row.key, "supplementReason", e.target.value)}
                             disabled={row.locked || isRowSubmitting || isRowSuccess}
-                            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            className="w-full rounded-md border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1 text-xs text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-text)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           />
                           {isRowError && status?.error && !status.error.includes("Supplement") && (
-                            <p className="mt-0.5 text-[10px] text-[#e74c3c]">{status.error}</p>
+                            <p className="mt-0.5 text-[10px] ax-tone-critical">{status.error}</p>
                           )}
                         </td>
                       </>
@@ -824,7 +826,7 @@ export default function BulkEntryPage() {
                 <tr>
                   <td
                     colSpan={mode === "snapshot" ? 9 : 8}
-                    className="px-5 py-16 text-center text-sm text-[var(--text-muted)]"
+                    className="px-5 py-16 text-center text-sm text-[var(--ax-muted)]"
                   >
                     {query ? "No schemes match your search." : "No financial entries found."}
                   </td>
@@ -835,16 +837,16 @@ export default function BulkEntryPage() {
         </div>
 
         {/* ── Footer ────────────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
-          <div className="text-xs text-[var(--text-muted)] md:max-w-2xl">
+        <div className="shrink-0 border-t border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
+          <div className="text-xs text-[var(--ax-muted)] md:max-w-2xl">
             {mode === "snapshot" ? (
               <>
-                Enter amounts to <span className="font-medium text-[#3498db]">add to SO</span> and/or{" "}
-                <span className="font-medium text-[#2ecc71]">add to IFMS</span>. Values will be added to current amounts.
+                Enter amounts to <span className="font-medium ax-tone-accent">add to SO</span> and/or{" "}
+                <span className="font-medium ax-tone-ok">add to IFMS</span>. Values will be added to current amounts.
               </>
             ) : (
               <>
-                Enter a <span className="font-medium text-[#e67e22]">supplementary amount</span>{" "}
+                Enter a <span className="font-medium ax-tone-warning">supplementary amount</span>{" "}
                 (positive or negative) to record a budget supplement for this FY. The base budget
                 remains unchanged; only the supplement is added.
               </>
@@ -853,14 +855,14 @@ export default function BulkEntryPage() {
 
           <div className="flex items-center justify-end gap-3 w-full md:w-auto">
             {dirtyRows.length > 0 && (
-              <span className="rounded-full bg-[rgba(52,152,219,0.1)] px-2.5 py-1 text-xs font-semibold text-[#2980b9]">
+              <span className="rounded-full bg-[color-mix(in_srgb,_var(--color-accent)_10%,_transparent)] px-2.5 py-1 text-xs font-semibold ax-tone-accent">
                 {dirtyRows.length} pending
               </span>
             )}
             <button
               onClick={submitAll}
               disabled={isSubmitting || dirtyRows.length === 0 || noMeeting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-6 py-2 text-sm font-semibold text-[var(--accent-text)] shadow transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 w-full md:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-accent)] bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-[var(--ax-on-accent)] shadow transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 w-full md:w-auto"
             >
               {isSubmitting ? (
                 <>

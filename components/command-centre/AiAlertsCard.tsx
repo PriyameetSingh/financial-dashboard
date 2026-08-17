@@ -66,14 +66,14 @@ export default function AiAlertsCard({ className = "" }: { className?: string })
 
   return (
     <div
-      className={`rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5 ${className}`}
+      className={`rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3.5 ${className}`}
       style={{ borderStyle: "solid" }}
     >
       {/* Header */}
-      <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-[var(--border)] pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-primary)]">Progress Monitor</span>
+      <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-[var(--color-divider)] pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-text)]">Progress Monitor</span>
         {insight && (
-          <span className="text-[9.5px] font-medium text-[var(--text-muted)]">
+          <span className="text-[9.5px] font-medium text-[var(--ax-muted)]">
             Last report generated: {formatRelativeTime(insight.runDate)}
           </span>
         )}
@@ -83,13 +83,13 @@ export default function AiAlertsCard({ className = "" }: { className?: string })
       {loading ? (
         <div className="space-y-3 py-2 animate-pulse">
           <div className="space-y-1">
-            <div className="h-3 w-1/4 rounded bg-[var(--border)]" />
-            <div className="h-2.5 w-full rounded bg-[var(--border)]" />
+            <div className="h-3 w-1/4 rounded bg-[var(--color-divider)]" />
+            <div className="h-2.5 w-full rounded bg-[var(--color-divider)]" />
           </div>
-          <div className="h-[1px] w-full bg-[var(--border)]" />
+          <div className="h-[1px] w-full bg-[var(--color-divider)]" />
           <div className="space-y-1">
-            <div className="h-3 w-1/3 rounded bg-[var(--border)]" />
-            <div className="h-2.5 w-full rounded bg-[var(--border)]" />
+            <div className="h-3 w-1/3 rounded bg-[var(--color-divider)]" />
+            <div className="h-2.5 w-full rounded bg-[var(--color-divider)]" />
           </div>
         </div>
       ) : error ? (
@@ -99,24 +99,24 @@ export default function AiAlertsCard({ className = "" }: { className?: string })
         </div>
       ) : !insight || !insight.insights || insight.insights.length === 0 ? (
         <div className="py-4 text-center">
-          <p className="text-xs text-[var(--text-muted)]">No monitoring logs compiled yet.</p>
+          <p className="text-xs text-[var(--ax-muted)]">No monitoring logs compiled yet.</p>
           {isAdmin ? (
             <Link
               href="/admin/agents"
-              className="mt-2 inline-block text-[10px] text-[var(--text-primary)] underline underline-offset-2 hover:opacity-85"
+              className="mt-2 inline-block text-[10px] text-[var(--color-text)] underline underline-offset-2 hover:opacity-85"
             >
               Setup agent & trigger run
             </Link>
           ) : (
-            <p className="mt-1 text-[10px] text-[var(--text-muted)]">Contact an admin to configure scheduler.</p>
+            <p className="mt-1 text-[10px] text-[var(--ax-muted)]">Contact an admin to configure scheduler.</p>
           )}
         </div>
       ) : (
         <ul className="space-y-2.5">
           {insight.insights.map((a, i) => (
-            <li key={i} className="border-b border-[var(--border)] pb-2.5 last:border-0 last:pb-0">
-              <p className="text-xs font-semibold text-[var(--text-primary)]">{a.title}</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-[var(--text-muted)]">{a.body}</p>
+            <li key={i} className="border-b border-[var(--color-divider)] pb-2.5 last:border-0 last:pb-0">
+              <p className="text-xs font-semibold text-[var(--color-text)]">{a.title}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-[var(--ax-muted)]">{a.body}</p>
             </li>
           ))}
         </ul>

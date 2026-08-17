@@ -123,72 +123,72 @@ export default function EditMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-2xl">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-8 shadow-2xl">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
         >
           <X size={18} />
         </button>
 
-        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Edit Meeting</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <h2 className="text-xl font-semibold text-[var(--color-text)]">Edit Meeting</h2>
+        <p className="mt-1 text-sm text-[var(--ax-muted)]">
           Update meeting details, topics, and materials.
         </p>
 
         <div className="mt-6 space-y-5">
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Date</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Meeting Date</span>
             <input
               id="input-edit-meeting-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+              className="mt-1 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
             />
           </label>
 
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Meeting Name</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Meeting Name</span>
             <input
               id="input-edit-meeting-title"
               type="text"
               placeholder="e.g. Monthly Review — PMAY Urban"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+              className="mt-1 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)]/50 outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
             />
           </label>
 
           <label className="block">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial Year</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Financial Year</span>
             <input
               id="input-edit-meeting-fy"
               type="text"
               readOnly
               value={fy}
-              className="mt-1 w-full cursor-default rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]/50 px-4 py-2.5 text-sm text-[var(--text-muted)]"
+              className="mt-1 w-full cursor-default rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)]/50 px-4 py-2.5 text-sm text-[var(--ax-muted)]"
             />
           </label>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Current Materials</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Current Materials</span>
             {remainingMaterials.length > 0 ? (
               <ul className="mt-2 space-y-2">
                 {remainingMaterials.map((material) => (
                   <li
                     key={material.id}
-                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="flex items-center justify-between rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)]"
                   >
                     <span className="truncate pr-2">{material.fileName}</span>
                     <button
                       type="button"
                       onClick={() => toggleMaterialRemoval(material.id)}
-                      className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                      className="shrink-0 rounded-lg p-1.5 text-[var(--ax-muted)] hover:bg-[var(--ax-status-critical)]/10 hover:text-[var(--ax-status-critical)]"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -196,18 +196,18 @@ export default function EditMeetingModal({
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-xs text-[var(--text-muted)]">No materials uploaded yet.</p>
+              <p className="mt-2 text-xs text-[var(--ax-muted)]">No materials uploaded yet.</p>
             )}
           </div>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Add New Materials</span>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Add New Materials</span>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               PDF, PPT, PPTX, DOC, DOCX, XLS, XLSX (max {MEETING_MATERIAL_MAX_BYTES / (1024 * 1024)} MB each).
             </p>
-            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-card)] px-4 py-6 text-center transition-colors hover:border-[var(--accent)]/40">
-              <FileText className="mb-2 text-[var(--text-muted)]" size={22} />
-              <span className="text-sm font-medium text-[var(--text-primary)]">Drop or click to add files</span>
+            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-6 text-center transition-colors hover:border-[var(--color-accent)]/40">
+              <FileText className="mb-2 text-[var(--ax-muted)]" size={22} />
+              <span className="text-sm font-medium text-[var(--color-text)]">Drop or click to add files</span>
               <input
                 type="file"
                 accept={ACCEPT}
@@ -224,13 +224,13 @@ export default function EditMeetingModal({
                 {pendingFiles.map((f, idx) => (
                   <li
                     key={`${f.name}-${idx}`}
-                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="flex items-center justify-between rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)]"
                   >
                     <span className="truncate pr-2">{f.name}</span>
                     <button
                       type="button"
                       onClick={() => removePendingFile(idx)}
-                      className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                      className="shrink-0 rounded-lg p-1.5 text-[var(--ax-muted)] hover:bg-[var(--ax-status-critical)]/10 hover:text-[var(--ax-status-critical)]"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -241,11 +241,11 @@ export default function EditMeetingModal({
           </div>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Topics for Discussion</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Topics for Discussion</span>
             <button
               type="button"
               onClick={addTopic}
-              className="mt-2 flex items-center gap-1 text-xs font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent)]/80"
+              className="mt-2 flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent)]/80"
             >
               <Plus size={14} /> Add another topic
             </button>
@@ -258,13 +258,13 @@ export default function EditMeetingModal({
                     placeholder={`Topic ${idx + 1}`}
                     value={t}
                     onChange={(e) => updateTopic(idx, e.target.value)}
-                    className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 outline-none transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                    className="flex-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)]/50 outline-none transition-all focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
                   />
                   {topics.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeTopic(idx)}
-                      className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--alert-critical)]/10 hover:text-[var(--alert-critical)]"
+                      className="rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--ax-status-critical)]/10 hover:text-[var(--ax-status-critical)]"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -274,14 +274,14 @@ export default function EditMeetingModal({
             </div>
           </div>
 
-          {formError && <p className="text-sm text-[var(--alert-critical)]">{formError}</p>}
+          {formError && <p className="text-sm text-[var(--ax-status-critical)]">{formError}</p>}
 
           <button
             id="btn-update-meeting"
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
-            className="w-full rounded-xl bg-[var(--bg-surface)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98] disabled:opacity-60"
+            className="btn btn-primary w-full px-4 py-3 text-sm font-semibold"
           >
             {submitting ? "Updating…" : "Update Meeting"}
           </button>

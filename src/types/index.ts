@@ -34,6 +34,18 @@ export interface SessionUser {
   officerType?: OfficerType | null;
   assignedSchemes: string[];
   permissions?: Permission[];
+  /**
+   * Phase 3: module codes this TENANT is provisioned for (e.g. "MOD-FIN").
+   * Tenant-level, not user-level — it rides along here because this is already
+   * the client's "what may I see" payload.
+   *
+   * Nav derivation only. The enforcement is the gate in proxy.ts, which 404s a
+   * disabled module by direct URL regardless of what the client believes.
+   * Optional so a profile cached before Phase 3 still parses; a missing value
+   * hides gated nav until the next `/api/v1/rbac/me` refresh, which is the safe
+   * direction and self-heals on mount.
+   */
+  enabledModules?: string[];
 }
 
 export enum Permission {
@@ -64,6 +76,8 @@ export enum Permission {
   REORDER_SCHEMES = "REORDER_SCHEMES",
   MANAGE_NOTIFICATION_CONFIG = "MANAGE_NOTIFICATION_CONFIG",
   SEND_MANUAL_NOTIFICATIONS = "SEND_MANUAL_NOTIFICATIONS",
+  /** Read/write the tenant's own branding + locale configuration. */
+  MANAGE_TENANT_CONFIG = "MANAGE_TENANT_CONFIG",
 }
 
 export type ActionItemPriority = "Critical" | "High" | "Medium" | "Low";

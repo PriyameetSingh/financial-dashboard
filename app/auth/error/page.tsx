@@ -3,6 +3,8 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, RefreshCw } from "lucide-react";
 import GovLoginBranding from "@/components/GovLoginBranding";
 import TextSizeToolbarControl from "@/components/TextSizeToolbarControl";
+import NocturneRoot from "@/components/nocturne/NocturneRoot";
+import NationalColourBand from "@/components/NationalColourBand";
 import { withNextBasePath } from "@/lib/next-base-path";
 
 export const metadata: Metadata = {
@@ -46,22 +48,27 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Se
   const loginHref = withNextBasePath("/login");
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900">
-      <div className="flex h-1.5 w-full shrink-0" aria-hidden>
-        <div className="flex-1 bg-[#FF9933]" />
-        <div className="flex-1 bg-white" />
-        <div className="flex-1 bg-[#138808]" />
-      </div>
+    <NocturneRoot className="flex min-h-screen flex-col">
+      <NationalColourBand />
 
       <main className="flex flex-1 flex-col">
-        <div className="flex justify-end border-b border-slate-200/80 bg-white/80 px-4 py-2 backdrop-blur-sm">
-          <TextSizeToolbarControl compact lightBackground />
+        <div
+          className="flex justify-end px-4 py-2"
+          style={{ boxShadow: "inset 0 -1px 0 var(--color-divider)" }}
+        >
+          <TextSizeToolbarControl compact />
         </div>
 
         <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.06),0_12px_24px_-4px_rgba(15,23,42,0.08)]">
-            <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">
-              <p className="text-center text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-500">
+          <div
+            className="w-full max-w-4xl overflow-hidden elev-md"
+            style={{ borderRadius: "var(--radius-lg)", background: "var(--color-surface)" }}
+          >
+            <div
+              className="px-6 py-4 sm:px-8"
+              style={{ boxShadow: "inset 0 -1px 0 var(--color-divider)" }}
+            >
+              <p className="ax-section-title text-center" style={{ margin: 0 }}>
                 Official portal · Sign-in problem
               </p>
             </div>
@@ -70,39 +77,45 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Se
               <GovLoginBranding />
 
               <div className="flex min-h-0 flex-col justify-center space-y-8">
-                <header className="space-y-4 border-b border-slate-100 pb-8">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-200">
-                    <AlertTriangle className="h-6 w-6 text-amber-500" />
+                <header
+                  className="space-y-4 pb-8"
+                  style={{ boxShadow: "inset 0 -1px 0 var(--color-divider)" }}
+                >
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full"
+                    style={{
+                      color: "var(--ax-status-warning)",
+                      boxShadow: "inset 0 0 0 1px var(--ax-status-warning)",
+                    }}
+                  >
+                    <AlertTriangle className="h-6 w-6" aria-hidden />
                   </div>
-                  <h1 className="text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[1.65rem]">
-                    {message.title}
-                  </h1>
-                  <p className="text-sm leading-relaxed text-slate-600">{message.body}</p>
+                  <h1 style={{ fontSize: 26, margin: 0 }}>{message.title}</h1>
+                  <p className="ax-wz-hint" style={{ fontSize: 14 }}>
+                    {message.body}
+                  </p>
                   {error && (
-                    <p className="text-[11px] font-mono text-slate-400">
+                    <p className="text-[11px] font-mono" style={{ color: "var(--ax-muted)" }}>
                       Reference code: {error}
                     </p>
                   )}
                 </header>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <Link
-                    href={loginHref}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                  >
-                    <RefreshCw className="h-4 w-4" />
+                  <Link href={loginHref} className="btn btn-primary px-5 py-3">
+                    <RefreshCw className="h-4 w-4" aria-hidden />
                     Try signing in again
                   </Link>
-                  <a
-                    href={loginHref}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                  >
+                  <a href={loginHref} className="btn btn-secondary px-5 py-3">
                     Back to login
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" aria-hidden />
                   </a>
                 </div>
 
-                <footer className="space-y-3 border-t border-slate-100 pt-6 text-xs leading-relaxed text-slate-500">
+                <footer
+                  className="space-y-3 pt-6 text-xs leading-relaxed"
+                  style={{ boxShadow: "inset 0 1px 0 var(--color-divider)", color: "var(--ax-muted)" }}
+                >
                   <p>
                     If the problem continues, contact your departmental IT / SSO administrator and
                     share the reference code above.
@@ -113,6 +126,6 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Se
           </div>
         </div>
       </main>
-    </div>
+    </NocturneRoot>
   );
 }

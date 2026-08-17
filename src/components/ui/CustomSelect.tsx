@@ -65,15 +65,15 @@ export default function CustomSelect({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex w-full md:w-auto items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/15 transition-all text-left"
+          className="flex w-full md:w-auto items-center justify-between gap-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] hover:border-[var(--ax-divider-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--color-text)]/15 transition-all text-left"
         >
           <span className="truncate">{selectedOption ? selectedOption.label : ""}</span>
-          <ChevronDown className={clsx("h-4 w-4 text-[var(--text-muted)] shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+          <ChevronDown className={clsx("h-4 w-4 text-[var(--ax-muted)] shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
         </button>
 
         {isOpen && (
           <ul
-            className="absolute left-0 mt-1 max-h-60 w-full min-w-[160px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-xl z-40 focus:outline-none"
+            className="absolute left-0 mt-1 max-h-60 w-full min-w-[160px] overflow-y-auto rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] py-1 shadow-xl z-40 focus:outline-none"
             role="listbox"
           >
             {options.map((option) => (
@@ -85,8 +85,8 @@ export default function CustomSelect({
                     setIsOpen(false);
                   }}
                   className={clsx(
-                    "flex w-full items-center px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors",
-                    option.value === value && "bg-[var(--bg-hover)] font-medium"
+                    "flex w-full items-center px-3 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--ax-hover)] transition-colors",
+                    option.value === value && "bg-[var(--ax-hover)] font-medium"
                   )}
                 >
                   <span className="truncate">{option.label}</span>
@@ -101,7 +101,7 @@ export default function CustomSelect({
         <div ref={tooltipRef} className="relative flex items-center shrink-0">
           <button
             type="button"
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors focus:outline-none p-1 rounded-full hover:bg-[var(--bg-hover)]"
+            className="text-[var(--ax-muted)] hover:text-[var(--color-text)] transition-colors focus:outline-none p-1 rounded-full hover:bg-[var(--ax-hover)]"
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             onClick={(e) => {
@@ -113,7 +113,7 @@ export default function CustomSelect({
             <HelpCircle className="h-4 w-4" />
           </button>
           {showTooltip && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-xl shadow-xl text-xs text-[var(--text-primary)] z-50 whitespace-normal leading-relaxed animate-fade-in">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[var(--color-surface)] border border-[var(--ax-divider-strong)] rounded-xl shadow-xl text-xs text-[var(--color-text)] z-50 whitespace-normal leading-relaxed animate-fade-in">
               {tooltipText}
             </div>
           )}

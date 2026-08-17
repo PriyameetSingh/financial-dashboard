@@ -457,20 +457,26 @@ function SectionHeader({ number, title }: { number: number; title: string }) {
 
 /** Finance table columns — fit A4 portrait usable width ~531pt */
 function FinanceTableHeader({ asOf, fyLabel }: { asOf: string; fyLabel: string }) {
+  // Currency unit and the SO/IFMS vocabulary come from tenant config: under the
+  // Odisha defaults these render exactly as before ("Budget Est. (Cr.)",
+  // "S.O. Exp. (Cr.)", "IFMS Exp. (Cr.)"), while another tenant gets its own
+  // unit and labels instead of Odisha's.
+  const { currencyUnit, labels } = tenantConfig();
+  const unit = `(${currencyUnit}.)`;
   return (
     <View style={s.tableHeaderRow}>
       <Text style={[s.tableHeaderCell, { width: FIN_COLS.planType }]}>Plan Type</Text>
       <Text style={[s.tableHeaderCell, { width: FIN_COLS.budget, textAlign: "right" }]}>
-        Budget Est. (Cr.){"\n"}{fyLabel}
+        Budget Est. {unit}{"\n"}{fyLabel}
       </Text>
       <Text style={[s.tableHeaderCell, { width: FIN_COLS.soExp, textAlign: "right" }]}>
-        S.O. Exp. (Cr.){"\n"}as on {asOf}
+        {labels.soExpenditureFormal} Exp. {unit}{"\n"}as on {asOf}
       </Text>
       <Text style={[s.tableHeaderCell, { width: FIN_COLS.ifmsExp, textAlign: "right" }]}>
-        IFMS Exp. (Cr.){"\n"}as on {asOf}
+        {labels.ifmsExpenditureFormal} Exp. {unit}{"\n"}as on {asOf}
       </Text>
       <Text style={[s.tableHeaderCell, s.tableHeaderCellLast, { width: FIN_COLS.pct, textAlign: "right" }]}>
-        % as per{"\n"}IFMS
+        % as per{"\n"}{labels.ifmsExpenditureFormal}
       </Text>
     </View>
   );
@@ -634,7 +640,7 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
 
         {/* ── 2. Financial Progress ── */}
         <View style={[s.sectionContainer, s.mb16]}>
-          <SectionHeader number={2} title={`Financial Progress ${fy} (In Cr.)`} />
+          <SectionHeader number={2} title={`Financial Progress ${fy} (In ${tenantConfig().currencyUnit}.)`} />
           <View style={s.tableContainer}>
             <FinanceTableHeader asOf={asOf} fyLabel={fy} />
             {data.financeProgress.map((row, i) => (
@@ -645,7 +651,7 @@ export function MeetingReportPdfDocument({ data }: { data: MeetingReportPayload 
 
         {/* ── 3. Scheme-wise Financial Progress ── */}
         <View style={s.sectionContainer}>
-          <SectionHeader number={3} title={`Schemes wise Financial Progress ${fy} (In Cr.)`} />
+          <SectionHeader number={3} title={`Schemes wise Financial Progress ${fy} (In ${tenantConfig().currencyUnit}.)`} />
           {data.schemesFinancialProgress.map((block, bi) => (
             <View key={block.sponsorshipKey} style={{ marginBottom: bi < data.schemesFinancialProgress.length - 1 ? 8 : 0 }}>
               <View style={s.schemeSubheader}>

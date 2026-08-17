@@ -27,30 +27,30 @@ export default function AdminOverviewPage() {
     <AppShell title="Administration">
       <div className="space-y-6 px-6 py-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">System Controls</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Manage user access, schemes, and approval workflows.</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">System Controls</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">Manage user access, schemes, and approval workflows.</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           {showUsers && (
             <Link
               href="/admin/users"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Users</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">User Directory</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Assign roles and verify access scopes.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Users</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">User Directory</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">Assign roles and verify access scopes.</p>
             </Link>
           )}
           {showPermissions && (
             <Link
               href="/admin/roles"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Roles</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Role-wide permissions</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Roles</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">Role-wide permissions</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">
                 Edit default permission bundles for each application role (ACS, TASU, Nodal, etc.).
               </p>
             </Link>
@@ -58,41 +58,41 @@ export default function AdminOverviewPage() {
           {showSchemes && (
             <Link
               href="/schemes"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Schemes</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Scheme Registry</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Review scheme coverage and approval flags.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Schemes</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">Scheme Registry</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">Review scheme coverage and approval flags.</p>
             </Link>
           )}
           {showReorder && (
             <Link
               href="/admin/schemes-order"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Priority Ordering</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Reorder Schemes</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Arrange display priorities of schemes and subschemes.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Priority Ordering</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">Reorder Schemes</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">Arrange display priorities of schemes and subschemes.</p>
             </Link>
           )}
           {showFinancialYears && (
             <Link
               href="/admin/financial-years"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Financial years</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">FY calendar</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Add or edit financial year rows used across finance and KPIs.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Financial years</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">FY calendar</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">Add or edit financial year rows used across finance and KPIs.</p>
             </Link>
           )}
           {showMastersData && (
             <Link
               href="/admin/agents"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Agents</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">AI & Rules Monitors</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Agents</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">AI & Rules Monitors</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">
                 Configure automated scheduled runs to analyze progress since last review meeting.
               </p>
             </Link>
@@ -100,21 +100,21 @@ export default function AdminOverviewPage() {
           {showMastersData && (
             <Link
               href="/admin/masters"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Masters</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Masters Data</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">Manage reference directories like organisations, verticals, sections, ULBs and designations.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Masters</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">Masters Data</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)]">Manage reference directories like organisations, verticals, sections, ULBs and designations.</p>
             </Link>
           )}
           {showNotifications && (
             <Link
               href="/admin/notifications"
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition hover:border-[var(--border-strong)]"
+              className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--ax-divider-strong)]"
             >
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Notifications</p>
-              <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">Notification Center</h3>
-              <p className="mt-2 text-sm text-[var(--text-muted)] flex-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Notifications</p>
+              <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">Notification Center</h3>
+              <p className="mt-2 text-sm text-[var(--ax-muted)] flex-1">
                 Configure global service master toggles, quiet hours, and manually dispatch alerts.
               </p>
             </Link>

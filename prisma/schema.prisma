@@ -8,6 +8,43 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ─── Phase 2/3 multi-tenancy ─────────────────────────────────────────────────
+//
+// Every tenant-owned model carries:
+//
+//   tenantId String @db.Uuid          -- required, NOT NULL, no column default
+//
+// THE TENANT IS STAMPED IN EXACTLY ONE PLACE: the Prisma client extension in
+// lib/prisma.ts. Application code never writes `tenantId` by hand; it marks a
+// create payload with `tenantStamped()` (lib/prisma.ts), which asserts to the
+// type system what the extension guarantees at runtime. Code that legitimately
+// runs outside a tenant scope — seeds, migrations, maintenance scripts — uses
+// `prismaUnscoped` and passes a real `tenantId`, which the compiler now
+// requires of it.
+//
+// HISTORY, so this is not "helpfully" reintroduced (backlog H1, resolved):
+// these columns used to declare
+//
+//   @default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))
+//
+// NO DATABASE EVER HAD THAT DEFAULT. It existed only in this file, where its
+// sole effect was type-level — making `tenantId` optional in generated create
+// inputs. Its cost was a live hazard: the moment anything binds the
+// `app.tenant_id` GUC (a Postgres Row-Level Security rollout is the obvious
+// candidate, since RLS conventionally sets exactly this kind of session
+// variable), the default would stop evaluating to NULL and become a SILENT
+// STAMP — a write that bypassed the chokepoint would quietly land in whichever
+// tenant the pooled connection last had set, instead of failing on NOT NULL.
+//
+// Removing it also ended a standing annoyance: `prisma migrate dev` proposed 46
+// `ALTER COLUMN … SET DEFAULT` statements on every new migration, because the
+// schema and every database disagreed. Schema and database now match, and the
+// removal required no migration at all.
+//
+// If RLS is introduced later, bind the GUC per transaction and treat it as the
+// authoritative tenant source, or leave the chokepoint as the only writer. Do
+// not restore a column default: the two mechanisms must never be half-live.
+
 /// Scheme sponsorship; maps to FinanceYearBudgetCategory for scheme buckets:
 /// STATE → STATE_SCHEME, CENTRAL → CENTRALLY_SPONSORED_SCHEME, CENTRAL_SECTOR → CENTRAL_SECTOR_SCHEME
 /// NON_FINANCIAL → no financial bucket (KPI-only schemes)
@@ -127,87 +164,100 @@ enum OfficerType {
 }
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  code         String?  @unique
-  name         String
-  email        String   @unique
-  department   String?
+  id                           String       @id @default(uuid()) @db.Uuid
+  code                         String?
+  name                         String
+  email                        String
+  department                   String?
   // legacy string fields removed: designation, organisation, section
   // Use normalized relations instead (designationId, organisationId, userSections)
-  officerType  OfficerType?
-  isActive     Boolean  @default(true)
-  sessionsInvalidatedAt DateTime?
-  passwordChangeFailedAttempts Int @default(0)
-  passwordChangeLockedUntil DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  officerType                  OfficerType?
+  isActive                     Boolean      @default(true)
+  sessionsInvalidatedAt        DateTime?
+  passwordChangeFailedAttempts Int          @default(0)
+  passwordChangeLockedUntil    DateTime?
+  createdAt                    DateTime     @default(now())
+  updatedAt                    DateTime     @updatedAt
 
   // Normalized relations: keep the existing string fields for compatibility,
   // and provide optional FK links to the new reference tables.
-  designationId  String? @db.Uuid
-  organisationId String? @db.Uuid
-  ulbId          String? @db.Uuid
+  designationId   String?       @db.Uuid
+  organisationId  String?       @db.Uuid
+  ulbId           String?       @db.Uuid
   // Users may belong to multiple sections via the join table `UserSection`.
   // Users may belong to multiple organisations via the join table `UserOrganisation`.
-  designationRel  Designation? @relation(fields: [designationId], references: [id], onDelete: SetNull)
+  designationRel  Designation?  @relation(fields: [designationId], references: [id], onDelete: SetNull)
   organisationRel Organisation? @relation("LegacyUserOrganisation", fields: [organisationId], references: [id], onDelete: SetNull)
   ulbRel          Ulb?          @relation(fields: [ulbId], references: [id], onDelete: SetNull)
 
-  userSections UserSection[]
+  userSections      UserSection[]
   userOrganisations UserOrganisation[]
 
-  userRoles            UserRole[]
+  userRoles                  UserRole[]
   createdPermissionOverrides UserPermissionOverride[] @relation("CreatedOverrides")
-  permissionOverrides  UserPermissionOverride[]
+  permissionOverrides        UserPermissionOverride[]
 
-  createdSchemes        Scheme[]               @relation("SchemeCreatedBy")
-  createdSubschemes     Subscheme[]            @relation("SubschemeCreatedBy")
-  createdFinanceBudgets FinanceBudget[]        @relation("FinanceBudgetCreatedBy")
-  createdFinanceBudgetRevisions FinanceBudgetRevision[] @relation("FinanceBudgetRevisionCreatedBy")
-  createdExpenditureSnapshots FinanceExpenditureSnapshot[] @relation("FinanceSnapshotCreatedBy")
-  createdFinanceSummaryHeads FinanceSummaryHead[] @relation("FinanceSummaryCreatedBy")
-  createdKpiDefinitions KpiDefinition[]        @relation("KpiDefinitionCreatedBy")
-  kpiDefinitionPerformers KpiDefinitionPerformer[]
-  kpiDefinitionReviewerUsers KpiDefinitionReviewerUser[]
-  requestedKpiCompletions KpiDefinition[]      @relation("KpiDefinitionCompletionRequestedBy")
-  reviewedKpiCompletions  KpiDefinition[]      @relation("KpiDefinitionCompletionReviewedBy")
-  createdKpiMeasurements KpiMeasurement[]      @relation("KpiMeasurementCreatedBy")
-  reviewedKpiMeasurements KpiMeasurement[]     @relation("KpiMeasurementReviewedBy")
-  createdMeetings       DashboardMeeting[]     @relation("MeetingCreatedBy")
-  createdMeetingTopics  MeetingTopic[]         @relation("MeetingTopicCreatedBy")
-  uploadedMeetingMaterials MeetingMaterial[]   @relation("MeetingMaterialUploadedBy")
-  createdActionItems    ActionItem[]           @relation("ActionItemCreatedBy")
-  actionItemPerformers  ActionItemPerformer[]
-  actionItemReviewerUsers ActionItemReviewerUser[]
-  createdActionItemUpdates ActionItemUpdate[]  @relation("ActionItemUpdateCreatedBy")
-  uploadedFiles         File[]                 @relation("FileUploadedBy")
-  actionItemProofs      ActionItemProof[]      @relation("ActionItemProofUploadedBy")
-  createdBudgetSupplements FinanceBudgetSupplement[] @relation("FinanceBudgetSupplementCreatedBy")
+  createdSchemes                      Scheme[]                      @relation("SchemeCreatedBy")
+  createdSubschemes                   Subscheme[]                   @relation("SubschemeCreatedBy")
+  createdFinanceBudgets               FinanceBudget[]               @relation("FinanceBudgetCreatedBy")
+  createdFinanceBudgetRevisions       FinanceBudgetRevision[]       @relation("FinanceBudgetRevisionCreatedBy")
+  createdExpenditureSnapshots         FinanceExpenditureSnapshot[]  @relation("FinanceSnapshotCreatedBy")
+  createdFinanceSummaryHeads          FinanceSummaryHead[]          @relation("FinanceSummaryCreatedBy")
+  createdKpiDefinitions               KpiDefinition[]               @relation("KpiDefinitionCreatedBy")
+  kpiDefinitionPerformers             KpiDefinitionPerformer[]
+  kpiDefinitionReviewerUsers          KpiDefinitionReviewerUser[]
+  requestedKpiCompletions             KpiDefinition[]               @relation("KpiDefinitionCompletionRequestedBy")
+  reviewedKpiCompletions              KpiDefinition[]               @relation("KpiDefinitionCompletionReviewedBy")
+  createdKpiMeasurements              KpiMeasurement[]              @relation("KpiMeasurementCreatedBy")
+  reviewedKpiMeasurements             KpiMeasurement[]              @relation("KpiMeasurementReviewedBy")
+  createdMeetings                     DashboardMeeting[]            @relation("MeetingCreatedBy")
+  createdMeetingTopics                MeetingTopic[]                @relation("MeetingTopicCreatedBy")
+  uploadedMeetingMaterials            MeetingMaterial[]             @relation("MeetingMaterialUploadedBy")
+  createdActionItems                  ActionItem[]                  @relation("ActionItemCreatedBy")
+  actionItemPerformers                ActionItemPerformer[]
+  actionItemReviewerUsers             ActionItemReviewerUser[]
+  createdActionItemUpdates            ActionItemUpdate[]            @relation("ActionItemUpdateCreatedBy")
+  uploadedFiles                       File[]                        @relation("FileUploadedBy")
+  actionItemProofs                    ActionItemProof[]             @relation("ActionItemProofUploadedBy")
+  createdBudgetSupplements            FinanceBudgetSupplement[]     @relation("FinanceBudgetSupplementCreatedBy")
   createdFinanceYearBudgetAllocations FinanceYearBudgetAllocation[] @relation("FinanceYearBudgetAllocationCreatedBy")
 
-  auditLogs             AuditLog[]
+  auditLogs AuditLog[]
 
-  schemeAssignments      SchemeAssignment[]
-  seenReleases          UserSeenRelease[]
+  schemeAssignments SchemeAssignment[]
+  seenReleases      UserSeenRelease[]
 
-  notifications         Notification[]
-  notificationPrefs     UserNotificationPreference[]
-  updatedConfigs        SystemNotificationConfig[]
+  notifications     Notification[]
+  notificationPrefs UserNotificationPreference[]
+  updatedConfigs    SystemNotificationConfig[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, code])
+  @@unique([tenantId, email])
+  @@index([tenantId])
   @@map("users")
 }
 
 model Role {
   id        String   @id @default(uuid()) @db.Uuid
-  code      String   @unique
+  code      String
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rolePermissions RolePermission[]
-  userRoles       UserRole[]
+  rolePermissions   RolePermission[]
+  userRoles         UserRole[]
   schemeAssignments SchemeAssignment[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
   @@map("roles")
 }
 
@@ -218,7 +268,7 @@ model Permission {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rolePermissions RolePermission[]
+  rolePermissions         RolePermission[]
   userPermissionOverrides UserPermissionOverride[]
 
   @@map("permissions")
@@ -231,7 +281,12 @@ model RolePermission {
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([roleId, permissionId])
+  @@index([tenantId])
   @@map("role_permissions")
 }
 
@@ -242,7 +297,12 @@ model UserRole {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([userId, roleId])
+  @@index([tenantId])
   @@map("user_roles")
 }
 
@@ -258,64 +318,99 @@ model UserPermissionOverride {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
   createdBy  User?      @relation("CreatedOverrides", fields: [createdById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([userId, permissionId])
+  @@index([tenantId])
   @@map("user_permission_overrides")
 }
 
 model Vertical {
   id        String   @id @default(uuid()) @db.Uuid
-  code      String   @unique
+  code      String
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   actionItems ActionItem[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
   @@map("verticals")
 }
 
 /// Organizational sections (e.g. Accounts, PHE, Municipal- II ...)
 model Section {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   userSections UserSection[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("sections")
 }
 
 model Organisation {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[] @relation("LegacyUserOrganisation")
+  users             User[]             @relation("LegacyUserOrganisation")
   userOrganisations UserOrganisation[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("organisations")
 }
 
 model Designation {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
+  users User[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("designations")
 }
 
 model Ulb {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
+  users User[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("ulbs")
 }
 
@@ -326,7 +421,12 @@ model UserSection {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([userId, sectionId])
+  @@index([tenantId])
   @@map("user_sections")
 }
 
@@ -337,32 +437,43 @@ model UserOrganisation {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([userId, organisationId])
+  @@index([tenantId])
   @@map("user_organisations")
 }
 
 model FinancialYear {
   id        String   @id @default(uuid()) @db.Uuid
-  label     String   @unique
+  label     String
   startDate DateTime @db.Date
   endDate   DateTime @db.Date
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  financeBudgets            FinanceBudget[]
+  financeBudgets              FinanceBudget[]
   financeExpenditureSnapshots FinanceExpenditureSnapshot[]
-  financeSummaryHeads       FinanceSummaryHead[]
-  kpiTargets                KpiTarget[]
-  supplements FinanceBudgetSupplement[]
+  financeSummaryHeads         FinanceSummaryHead[]
+  kpiTargets                  KpiTarget[]
+  supplements                 FinanceBudgetSupplement[]
   financeYearBudgetAllocation FinanceYearBudgetAllocation?
-  meetings                  DashboardMeeting[]
+  meetings                    DashboardMeeting[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, label])
+  @@index([tenantId])
   @@map("financial_years")
 }
 
 model Scheme {
   id              String          @id @default(uuid()) @db.Uuid
-  code            String          @unique
+  code            String
   name            String
   verticalName    String
   sponsorshipType SponsorshipType
@@ -372,17 +483,23 @@ model Scheme {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  createdBy  User?    @relation("SchemeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy User? @relation("SchemeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
-  subschemes          Subscheme[]
-  assignments         SchemeAssignment[]
-  workflowConfigs     SchemeWorkflowConfig[]
-  financeBudgets      FinanceBudget[]
+  subschemes           Subscheme[]
+  assignments          SchemeAssignment[]
+  workflowConfigs      SchemeWorkflowConfig[]
+  financeBudgets       FinanceBudget[]
   expenditureSnapshots FinanceExpenditureSnapshot[]
-  kpiDefinitions      KpiDefinition[]
-  actionItems         ActionItem[]
-  supplements FinanceBudgetSupplement[]
+  kpiDefinitions       KpiDefinition[]
+  actionItems          ActionItem[]
+  supplements          FinanceBudgetSupplement[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
   @@map("schemes")
 }
 
@@ -404,11 +521,14 @@ model Subscheme {
   expenditureSnapshots FinanceExpenditureSnapshot[]
   kpiDefinitions       KpiDefinition[]
   actionItems          ActionItem[]
-  supplements FinanceBudgetSupplement[]
+  supplements          FinanceBudgetSupplement[]
 
-
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([schemeId, code])
+  @@index([tenantId])
   @@map("subschemes")
 }
 
@@ -427,7 +547,12 @@ model SchemeAssignment {
   user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      Role?      @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([schemeId, assignmentKind])
+  @@index([tenantId])
   @@map("scheme_assignments")
 }
 
@@ -440,92 +565,117 @@ model SchemeWorkflowConfig {
 
   scheme Scheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([schemeId, workflowType])
+  @@index([tenantId])
   @@map("scheme_workflow_configs")
 }
 
 model FinanceBudget {
-  id             String   @id @default(uuid()) @db.Uuid
-  schemeId       String   @db.Uuid
-  subschemeId    String?  @db.Uuid
-  financialYearId String  @db.Uuid
-  budgetEstimateCr Decimal @db.Decimal(16, 2)
-  locked         Boolean  @default(false)
-  createdById    String?  @db.Uuid
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  scheme       Scheme        @relation(fields: [schemeId], references: [id], onDelete: Cascade)
-  subscheme    Subscheme?    @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
-  financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
-  createdBy    User?         @relation("FinanceBudgetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  revisions FinanceBudgetRevision[]
-
-  @@unique([schemeId, subschemeId, financialYearId])
-  @@index([financialYearId])
-  @@map("finance_budgets")
-}
-
-model FinanceBudgetRevision {
-  id             String   @id @default(uuid()) @db.Uuid
-  financeBudgetId String  @db.Uuid
-  oldBudgetEstimateCr Decimal @db.Decimal(16, 2)
-  newBudgetEstimateCr Decimal @db.Decimal(16, 2)
-  reason         String
-  createdById    String?  @db.Uuid
-  createdAt      DateTime @default(now())
-
-  financeBudget FinanceBudget @relation(fields: [financeBudgetId], references: [id], onDelete: Cascade)
-  createdBy     User?         @relation("FinanceBudgetRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@index([financeBudgetId])
-  @@map("finance_budget_revisions")
-}
-
-model FinanceExpenditureSnapshot {
-  id              String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
   schemeId         String   @db.Uuid
   subschemeId      String?  @db.Uuid
   financialYearId  String   @db.Uuid
-  meetingId        String?  @db.Uuid
-  asOfDate         DateTime @db.Date
-  soExpenditureCr  Decimal  @db.Decimal(16, 2)
-  ifmsExpenditureCr Decimal @db.Decimal(16, 2)
-  remarks          String?
-  workflowStatus   FinancialWorkflowStatus @default(draft)
+  budgetEstimateCr Decimal  @db.Decimal(16, 2)
+  locked           Boolean  @default(false)
   createdById      String?  @db.Uuid
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   scheme        Scheme        @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme     Subscheme?    @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
+  createdBy     User?         @relation("FinanceBudgetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  revisions FinanceBudgetRevision[]
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([schemeId, subschemeId, financialYearId])
+  @@index([financialYearId])
+  @@index([tenantId])
+  @@map("finance_budgets")
+}
+
+model FinanceBudgetRevision {
+  id                  String   @id @default(uuid()) @db.Uuid
+  financeBudgetId     String   @db.Uuid
+  oldBudgetEstimateCr Decimal  @db.Decimal(16, 2)
+  newBudgetEstimateCr Decimal  @db.Decimal(16, 2)
+  reason              String
+  createdById         String?  @db.Uuid
+  createdAt           DateTime @default(now())
+
+  financeBudget FinanceBudget @relation(fields: [financeBudgetId], references: [id], onDelete: Cascade)
+  createdBy     User?         @relation("FinanceBudgetRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([financeBudgetId])
+  @@index([tenantId])
+  @@map("finance_budget_revisions")
+}
+
+model FinanceExpenditureSnapshot {
+  id                String                  @id @default(uuid()) @db.Uuid
+  schemeId          String                  @db.Uuid
+  subschemeId       String?                 @db.Uuid
+  financialYearId   String                  @db.Uuid
+  meetingId         String?                 @db.Uuid
+  asOfDate          DateTime                @db.Date
+  soExpenditureCr   Decimal                 @db.Decimal(16, 2)
+  ifmsExpenditureCr Decimal                 @db.Decimal(16, 2)
+  remarks           String?
+  workflowStatus    FinancialWorkflowStatus @default(draft)
+  createdById       String?                 @db.Uuid
+  createdAt         DateTime                @default(now())
+
+  scheme        Scheme            @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  subscheme     Subscheme?        @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
+  financialYear FinancialYear     @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
   meeting       DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  createdBy     User?         @relation("FinanceSnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy     User?             @relation("FinanceSnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([schemeId, financialYearId, asOfDate])
   @@index([financialYearId, asOfDate])
   @@index([meetingId])
+  @@index([tenantId])
   @@map("finance_expenditure_snapshots")
 }
 
 /// Dated snapshot rows; scheme buckets (STATE_SCHEME / CENTRALLY_SPONSORED / CENTRAL_SECTOR) are derived from scheme data — use POST /summary only for manual heads (commissions, transfer, admin). Current FY totals also live on `FinanceYearBudgetCategoryLine`.
 model FinanceSummaryHead {
-  id              String   @id @default(uuid()) @db.Uuid
-  financialYearId  String   @db.Uuid
-  headCode         String
-  asOfDate         DateTime @db.Date
-  budgetEstimateCr Decimal  @db.Decimal(16, 2)
-  soExpenditureCr  Decimal  @db.Decimal(16, 2)
-  ifmsExpenditureCr Decimal @db.Decimal(16, 2)
-  createdById      String?  @db.Uuid
-  createdAt        DateTime @default(now())
+  id                String   @id @default(uuid()) @db.Uuid
+  financialYearId   String   @db.Uuid
+  headCode          String
+  asOfDate          DateTime @db.Date
+  budgetEstimateCr  Decimal  @db.Decimal(16, 2)
+  soExpenditureCr   Decimal  @db.Decimal(16, 2)
+  ifmsExpenditureCr Decimal  @db.Decimal(16, 2)
+  createdById       String?  @db.Uuid
+  createdAt         DateTime @default(now())
 
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
   createdBy     User?         @relation("FinanceSummaryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([financialYearId, headCode, asOfDate])
   @@index([financialYearId, asOfDate])
+  @@index([tenantId])
   @@map("finance_summary_heads")
 }
 
@@ -545,43 +695,53 @@ model KpiDefinition {
   archived        Boolean             @default(false)
 
   /// User-initiated completion workflow (distinct from admin archiving).
-  completionStatus         KpiCompletionStatus?
-  completionNote           String?
-  completionRequestedAt    DateTime?
-  completionRequestedById   String?   @db.Uuid
-  completionReviewedAt     DateTime?
-  completionReviewedById    String?   @db.Uuid
-  completionReviewNote     String?
+  completionStatus        KpiCompletionStatus?
+  completionNote          String?
+  completionRequestedAt   DateTime?
+  completionRequestedById String?              @db.Uuid
+  completionReviewedAt    DateTime?
+  completionReviewedById  String?              @db.Uuid
+  completionReviewNote    String?
 
-  scheme     Scheme     @relation(fields: [schemeId], references: [id], onDelete: Cascade)
-  subscheme  Subscheme? @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
-  createdBy  User?      @relation("KpiDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  completionRequestedBy User? @relation("KpiDefinitionCompletionRequestedBy", fields: [completionRequestedById], references: [id], onDelete: SetNull)
-  completionReviewedBy  User? @relation("KpiDefinitionCompletionReviewedBy",  fields: [completionReviewedById],  references: [id], onDelete: SetNull)
+  scheme                Scheme     @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  subscheme             Subscheme? @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
+  createdBy             User?      @relation("KpiDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  completionRequestedBy User?      @relation("KpiDefinitionCompletionRequestedBy", fields: [completionRequestedById], references: [id], onDelete: SetNull)
+  completionReviewedBy  User?      @relation("KpiDefinitionCompletionReviewedBy", fields: [completionReviewedById], references: [id], onDelete: SetNull)
 
-  performers KpiDefinitionPerformer[]
+  performers    KpiDefinitionPerformer[]
   reviewerUsers KpiDefinitionReviewerUser[]
 
   targets KpiTarget[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([schemeId])
+  @@index([tenantId])
   @@map("kpi_definitions")
 }
 
 /// Users who may enter / update KPI measurements for this definition (when non-empty, overrides scheme-level kpi_owner_1).
 model KpiDefinitionPerformer {
-  id              String   @id @default(uuid()) @db.Uuid
-  kpiDefinitionId String   @db.Uuid
-  userId          String   @db.Uuid
-  sortOrder       Int      @default(0)
-  assignedAt      DateTime @default(now())
+  id              String    @id @default(uuid()) @db.Uuid
+  kpiDefinitionId String    @db.Uuid
+  userId          String    @db.Uuid
+  sortOrder       Int       @default(0)
+  assignedAt      DateTime  @default(now())
   unassignedAt    DateTime?
-  isActive        Boolean  @default(true)
+  isActive        Boolean   @default(true)
 
   kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([kpiDefinitionId, isActive])
+  @@index([tenantId])
   @@map("kpi_definition_performers")
 }
 
@@ -594,51 +754,66 @@ model KpiDefinitionReviewerUser {
   kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([kpiDefinitionId, userId])
+  @@index([tenantId])
   @@map("kpi_definition_reviewers")
 }
 
 model KpiTarget {
-  id             String   @id @default(uuid()) @db.Uuid
-  kpiDefinitionId String  @db.Uuid
-  financialYearId String  @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
+  kpiDefinitionId  String   @db.Uuid
+  financialYearId  String   @db.Uuid
   denominatorValue Decimal? @db.Decimal(16, 2)
-  createdAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
 
   kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
 
   measurements KpiMeasurement[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([kpiDefinitionId, financialYearId])
+  @@index([tenantId])
   @@map("kpi_targets")
 }
 
 model KpiMeasurement {
-  id             String            @id @default(uuid()) @db.Uuid
-  kpiTargetId    String            @db.Uuid
-  meetingId      String?           @db.Uuid
-  measuredAt     DateTime
-  numeratorValue Decimal?          @db.Decimal(16, 2)
-  yesValue       Boolean?
+  id               String             @id @default(uuid()) @db.Uuid
+  kpiTargetId      String             @db.Uuid
+  meetingId        String?            @db.Uuid
+  measuredAt       DateTime
+  numeratorValue   Decimal?           @db.Decimal(16, 2)
+  yesValue         Boolean?
   progressStatus   KPIProgressStatus
   workflowStatus   KPIWorkflowStatus
   remarks          String?
   bottleneckReason String?
   escalationFlag   KpiEscalationFlag?
-  createdById    String?           @db.Uuid
-  createdAt      DateTime          @default(now())
-  reviewedById   String?           @db.Uuid
-  reviewedAt     DateTime?
-  reviewNote     String?
+  createdById      String?            @db.Uuid
+  createdAt        DateTime           @default(now())
+  reviewedById     String?            @db.Uuid
+  reviewedAt       DateTime?
+  reviewNote       String?
 
-  kpiTarget  KpiTarget @relation(fields: [kpiTargetId], references: [id], onDelete: Cascade)
+  kpiTarget  KpiTarget         @relation(fields: [kpiTargetId], references: [id], onDelete: Cascade)
   meeting    DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  createdBy  User?     @relation("KpiMeasurementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  reviewedBy User?     @relation("KpiMeasurementReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdBy  User?             @relation("KpiMeasurementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedBy User?             @relation("KpiMeasurementReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([kpiTargetId, measuredAt])
   @@index([meetingId])
+  @@index([tenantId])
   @@map("kpi_measurements")
 }
 
@@ -651,17 +826,22 @@ model DashboardMeeting {
   createdById     String?  @db.Uuid
   createdAt       DateTime @default(now())
 
-  createdBy    User?         @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy     User?          @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   financialYear FinancialYear? @relation(fields: [financialYearId], references: [id], onDelete: SetNull)
 
-  topics     MeetingTopic[]
-  actionItems ActionItem[]
-  materials  MeetingMaterial[]
-  kpiMeasurements            KpiMeasurement[]
+  topics                      MeetingTopic[]
+  actionItems                 ActionItem[]
+  materials                   MeetingMaterial[]
+  kpiMeasurements             KpiMeasurement[]
   financeExpenditureSnapshots FinanceExpenditureSnapshot[]
-  actionItemProgressUpdates  ActionItemUpdate[]
+  actionItemProgressUpdates   ActionItemUpdate[]
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([meetingDate])
+  @@index([tenantId])
   @@map("dashboard_meetings")
 }
 
@@ -675,76 +855,95 @@ model MeetingTopic {
   meeting   DashboardMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   createdBy User?            @relation("MeetingTopicCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([meetingId])
+  @@index([tenantId])
   @@map("meeting_topics")
 }
 
 model MeetingMaterial {
-  id          String   @id @default(uuid()) @db.Uuid
-  meetingId   String   @db.Uuid
-  storagePath String   @unique
-  fileName    String
-  mimeType    String?
-  sizeBytes   Int?
-  sortOrder   Int      @default(0)
-  uploadedById String? @db.Uuid
-  createdAt   DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  meetingId    String   @db.Uuid
+  storagePath  String   @unique
+  fileName     String
+  mimeType     String?
+  sizeBytes    Int?
+  sortOrder    Int      @default(0)
+  uploadedById String?  @db.Uuid
+  createdAt    DateTime @default(now())
 
   meeting    DashboardMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   uploadedBy User?            @relation("MeetingMaterialUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([meetingId])
+  @@index([tenantId])
   @@map("meeting_materials")
 }
 
 model ActionItem {
-  id           String           @id @default(uuid()) @db.Uuid
-  meetingId    String?          @db.Uuid
-  schemeId     String?          @db.Uuid
-  subschemeId  String?          @db.Uuid
-  verticalId   String?          @db.Uuid
-  itemType     ActionItemType
-  title        String
-  description  String
-  priority     ActionItemPriority
-  dueDate      DateTime         @db.Date
-  status       ActionItemStatus
-  createdById  String?          @db.Uuid
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  archived     Boolean          @default(false)
-
+  id          String             @id @default(uuid()) @db.Uuid
+  meetingId   String?            @db.Uuid
+  schemeId    String?            @db.Uuid
+  subschemeId String?            @db.Uuid
+  verticalId  String?            @db.Uuid
+  itemType    ActionItemType
+  title       String
+  description String
+  priority    ActionItemPriority
+  dueDate     DateTime           @db.Date
+  status      ActionItemStatus
+  createdById String?            @db.Uuid
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  archived    Boolean            @default(false)
 
   meeting   DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   scheme    Scheme?           @relation(fields: [schemeId], references: [id], onDelete: Cascade)
-  subscheme Subscheme?       @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
-  vertical  Vertical?        @relation(fields: [verticalId], references: [id], onDelete: SetNull)
+  subscheme Subscheme?        @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
+  vertical  Vertical?         @relation(fields: [verticalId], references: [id], onDelete: SetNull)
 
   performers    ActionItemPerformer[]
   reviewerUsers ActionItemReviewerUser[]
-  createdBy   User? @relation("ActionItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy     User?                    @relation("ActionItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   updates ActionItemUpdate[]
   proofs  ActionItemProof[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([status, dueDate])
   @@index([meetingId])
+  @@index([tenantId])
   @@map("action_items")
 }
 
 model ActionItemPerformer {
-  id           String   @id @default(uuid()) @db.Uuid
-  actionItemId String   @db.Uuid
-  userId       String   @db.Uuid
-  sortOrder    Int      @default(0)
-  assignedAt   DateTime @default(now())
+  id           String    @id @default(uuid()) @db.Uuid
+  actionItemId String    @db.Uuid
+  userId       String    @db.Uuid
+  sortOrder    Int       @default(0)
+  assignedAt   DateTime  @default(now())
   unassignedAt DateTime?
-  isActive     Boolean  @default(true)
+  isActive     Boolean   @default(true)
 
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([actionItemId, isActive])
+  @@index([tenantId])
   @@map("action_item_performers")
 }
 
@@ -756,131 +955,171 @@ model ActionItemReviewerUser {
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@id([actionItemId, userId])
+  @@index([tenantId])
   @@map("action_item_reviewers")
 }
 
 model ActionItemUpdate {
-  id           String         @id @default(uuid()) @db.Uuid
-  actionItemId String         @db.Uuid
-  meetingId    String?        @db.Uuid
+  id           String           @id @default(uuid()) @db.Uuid
+  actionItemId String           @db.Uuid
+  meetingId    String?          @db.Uuid
   timestamp    DateTime
   status       ActionItemStatus
   note         String
-  createdById  String?        @db.Uuid
-  createdAt    DateTime       @default(now())
+  createdById  String?          @db.Uuid
+  createdAt    DateTime         @default(now())
 
-  actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  actionItem ActionItem        @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   meeting    DashboardMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  createdBy  User?      @relation("ActionItemUpdateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy  User?             @relation("ActionItemUpdateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([actionItemId, timestamp])
   @@index([meetingId])
+  @@index([tenantId])
   @@map("action_item_updates")
 }
 
 model File {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String
-  url         String
-  mimeType    String?
-  sizeBytes   Int?
-  uploadedById String? @db.Uuid
-  uploadedAt  DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  url          String
+  mimeType     String?
+  sizeBytes    Int?
+  uploadedById String?  @db.Uuid
+  uploadedAt   DateTime @default(now())
 
   uploadedBy User? @relation("FileUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   actionItemProofs ActionItemProof[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
   @@map("files")
 }
 
 model ActionItemProof {
-  id          String   @id @default(uuid()) @db.Uuid
-  actionItemId String  @db.Uuid
-  fileId      String   @db.Uuid
-  uploadedById String? @db.Uuid
-  uploadedAt  DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  actionItemId String   @db.Uuid
+  fileId       String   @db.Uuid
+  uploadedById String?  @db.Uuid
+  uploadedAt   DateTime @default(now())
 
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
   file       File       @relation(fields: [fileId], references: [id], onDelete: Cascade)
   uploadedBy User?      @relation("ActionItemProofUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([actionItemId, fileId])
+  @@index([tenantId])
   @@map("action_item_proofs")
 }
 
 model AuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  occurredAt DateTime @default(now())
-  actorUserId String? @db.Uuid
-  actionType String
-  entityType String
-  entityId   String?
-  before     Json?
-  after      Json?
-  metadata   Json?
+  id          String   @id @default(uuid()) @db.Uuid
+  occurredAt  DateTime @default(now())
+  actorUserId String?  @db.Uuid
+  actionType  String
+  entityType  String
+  entityId    String?
+  before      Json?
+  after       Json?
+  metadata    Json?
 
   actorUser User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([occurredAt])
+  @@index([tenantId])
   @@map("audit_log")
 }
 
 model FinanceBudgetSupplement {
-  id              String   @id @default(uuid()) @db.Uuid
-  schemeId        String   @db.Uuid
-  subschemeId     String?  @db.Uuid
-  financialYearId String   @db.Uuid
+  id              String  @id @default(uuid()) @db.Uuid
+  schemeId        String  @db.Uuid
+  subschemeId     String? @db.Uuid
+  financialYearId String  @db.Uuid
 
   // Signed value — positive = top-up, negative = diversion/cut
-  amountCr        Decimal  @db.Decimal(16, 2)
+  amountCr Decimal @db.Decimal(16, 2)
 
   // Why this supplement exists — mandatory
-  reason          String
+  reason      String
   // Optional reference (e.g. sanction order number)
-  referenceNo     String?
+  referenceNo String?
 
-  createdById     String?  @db.Uuid
-  createdAt       DateTime @default(now())
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
 
   scheme        Scheme        @relation(fields: [schemeId], references: [id], onDelete: Cascade)
   subscheme     Subscheme?    @relation(fields: [subschemeId], references: [id], onDelete: Cascade)
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
   createdBy     User?         @relation("FinanceBudgetSupplementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@index([schemeId, financialYearId])
+  @@index([tenantId])
   @@map("finance_budget_supplements")
 }
 
 /// Per–financial-year total and breakdown; totalBudgetCr should equal sum of category line budgetEstimateCr (enforce in app).
 model FinanceYearBudgetAllocation {
-  id               String   @id @default(uuid()) @db.Uuid
-  financialYearId  String   @unique @db.Uuid
-  totalBudgetCr    Decimal  @db.Decimal(16, 2)
-  createdById      String?  @db.Uuid
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  financialYearId String   @unique @db.Uuid
+  totalBudgetCr   Decimal  @db.Decimal(16, 2)
+  createdById     String?  @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   financialYear FinancialYear @relation(fields: [financialYearId], references: [id], onDelete: Cascade)
   createdBy     User?         @relation("FinanceYearBudgetAllocationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   categoryLines FinanceYearBudgetCategoryLine[]
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
   @@map("finance_year_budget_allocations")
 }
 
 model FinanceYearBudgetCategoryLine {
-  id                String   @id @default(uuid()) @db.Uuid
-  allocationId      String   @db.Uuid
+  id                String                    @id @default(uuid()) @db.Uuid
+  allocationId      String                    @db.Uuid
   category          FinanceYearBudgetCategory
-  budgetEstimateCr  Decimal  @db.Decimal(16, 2)
-  soExpenditureCr   Decimal  @db.Decimal(16, 2)
-  ifmsExpenditureCr Decimal  @db.Decimal(16, 2)
+  budgetEstimateCr  Decimal                   @db.Decimal(16, 2)
+  soExpenditureCr   Decimal                   @db.Decimal(16, 2)
+  ifmsExpenditureCr Decimal                   @db.Decimal(16, 2)
 
   allocation FinanceYearBudgetAllocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
   @@unique([allocationId, category])
+  @@index([tenantId])
   @@map("finance_year_budget_category_lines")
 }
 
@@ -898,8 +1137,8 @@ model Release {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  entries   ChangelogEntry[]
-  seenBy    UserSeenRelease[]
+  entries ChangelogEntry[]
+  seenBy  UserSeenRelease[]
 
   @@map("releases")
 }
@@ -913,7 +1152,7 @@ model ChangelogEntry {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
-  release     Release            @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 
   @@map("changelog_entries")
 }
@@ -923,10 +1162,15 @@ model UserSeenRelease {
   releaseId String   @db.Uuid
   seenAt    DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  release   Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@id([userId, releaseId])
+  @@index([tenantId])
   @@map("user_seen_releases")
 }
 
@@ -934,23 +1178,33 @@ model AgentConfig {
   id        String   @id @default(uuid()) @db.Uuid
   enabled   Boolean  @default(true)
   runDay    String   @default("Monday") // Monday, Tuesday, etc.
-  mode      String   @default("BOTH")   // RULE_BASED, LLM_BASED, BOTH
+  mode      String   @default("BOTH") // RULE_BASED, LLM_BASED, BOTH
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
   @@map("agent_configs")
 }
 
 model AgentInsight {
   id            String   @id @default(uuid()) @db.Uuid
   runDate       DateTime @default(now())
-  modeUsed      String   // RULE_BASED, LLM_BASED, BOTH
-  status        String   // SUCCESS, FAILED
-  insights      Json     // Array of: { title: string, body: string }
+  modeUsed      String // RULE_BASED, LLM_BASED, BOTH
+  status        String // SUCCESS, FAILED
+  insights      Json // Array of: { title: string, body: string }
   errorLog      String?  @db.Text
   executionLogs String?  @db.Text
   createdAt     DateTime @default(now())
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
   @@map("agent_insights")
 }
 
@@ -974,22 +1228,27 @@ enum DispatchStatus {
 }
 
 model Notification {
-  id          String             @id @default(uuid()) @db.Uuid
-  userId      String             @db.Uuid
-  title       String
-  content     String
-  type        String             // e.g., "MANUAL", "ACTION_ITEM_ASSIGNED", "ACTION_ITEM_REASSIGNED", "ACTION_ITEM_UPDATE", "KPI_ASSIGNED", "KPI_REASSIGNED", "KPI_SUBMITTED"
-  priority    ActionItemPriority // Reuses existing priority enum
-  status      NotificationStatus @default(UNREAD)
-  link        String?            // App routing path, e.g., "/action-items/{id}"
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  metadata    Json?              // Contextual metadata e.g., { actionItemId: "uuid" }
+  id        String             @id @default(uuid()) @db.Uuid
+  userId    String             @db.Uuid
+  title     String
+  content   String
+  type      String // e.g., "MANUAL", "ACTION_ITEM_ASSIGNED", "ACTION_ITEM_REASSIGNED", "ACTION_ITEM_UPDATE", "KPI_ASSIGNED", "KPI_REASSIGNED", "KPI_SUBMITTED"
+  priority  ActionItemPriority // Reuses existing priority enum
+  status    NotificationStatus @default(UNREAD)
+  link      String? // App routing path, e.g., "/action-items/{id}"
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  metadata  Json? // Contextual metadata e.g., { actionItemId: "uuid" }
 
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dispatches  NotificationDispatch[]
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dispatches NotificationDispatch[]
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([userId, status, createdAt])
+  @@index([tenantId])
   @@map("notifications")
 }
 
@@ -1003,34 +1262,272 @@ model NotificationDispatch {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
-  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([notificationId, channel])
+  @@index([tenantId])
   @@map("notification_dispatches")
 }
 
 model UserNotificationPreference {
-  id          String              @id @default(uuid()) @db.Uuid
-  userId      String              @db.Uuid
-  category    String              // e.g. "lapseRisk", "overdueActions", "agentAlerts", "whatsapp"
-  channel     NotificationChannel
-  enabled     Boolean             @default(true)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid
+  category  String // e.g. "lapseRisk", "overdueActions", "agentAlerts", "whatsapp"
+  channel   NotificationChannel
+  enabled   Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@unique([userId, category, channel])
+  @@index([tenantId])
   @@map("user_notification_preferences")
 }
 
 model SystemNotificationConfig {
-  id          String              @id @default(uuid()) @db.Uuid
-  key         String              @unique // Config keys: e.g. "SYSTEM_NOTIFICATIONS_ENABLED", "SYSTEM_NOTIFICATIONS_DISABLED_UNTIL", "QUIET_HOURS_ENABLED", "QUIET_HOURS_START", "QUIET_HOURS_END", "TRIGGER_*" toggles
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String // Config keys: e.g. "SYSTEM_NOTIFICATIONS_ENABLED", "SYSTEM_NOTIFICATIONS_DISABLED_UNTIL", "QUIET_HOURS_ENABLED", "QUIET_HOURS_START", "QUIET_HOURS_END", "TRIGGER_*" toggles
   value       String
-  updatedAt   DateTime            @updatedAt
-  updatedById String?             @db.Uuid
-  updatedBy   User?               @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+  updatedById String?  @db.Uuid
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
+  /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
   @@map("system_notification_configs")
+}
+
+enum TenantStatus {
+  active
+  suspended
+}
+
+/// Phase 2: tenant organizations. Odisha is tenant #1 (backfilled by migration).
+model Tenant {
+  id        String       @id @default(uuid()) @db.Uuid
+  slug      String       @unique
+  name      String
+  status    TenantStatus @default(active)
+
+  /// The commercial tier this organization bought — the CEILING on what its own
+  /// administrators may switch on.
+  ///
+  /// Phase 4 / S3. Before this column the ceiling existed only on the onboarding
+  /// token, which is spent the moment the workspace is created: a tenant admin
+  /// opening the menu card afterwards had nothing to be measured against, so
+  /// "cannot self-upgrade past the purchased tier" was unenforceable by
+  /// construction. `TenantEntitlement.tier` is NOT the ceiling and never was —
+  /// it records which tier each MODULE belongs to, so every tenant carries rows
+  /// at every tier.
+  ///
+  /// Nullable so the migration is additive; the same migration backfills every
+  /// existing row, and `planCeiling()` reads null as `core`, which is the
+  /// fail-closed direction. Set from the onboarding token at provisioning.
+  planTier ModuleTier?
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  configEntries                  TenantConfigEntry[]
+  users                          User[]
+  roles                          Role[]
+  verticals                      Vertical[]
+  sections                       Section[]
+  organisations                  Organisation[]
+  designations                   Designation[]
+  ulbs                           Ulb[]
+  financialYears                 FinancialYear[]
+  schemes                        Scheme[]
+  dashboardMeetings              DashboardMeeting[]
+  actionItems                    ActionItem[]
+  files                          File[]
+  auditLogs                      AuditLog[]
+  agentConfigs                   AgentConfig[]
+  agentInsights                  AgentInsight[]
+  systemNotificationConfigs      SystemNotificationConfig[]
+  rolePermissions                RolePermission[]
+  userRoles                      UserRole[]
+  userPermissionOverrides        UserPermissionOverride[]
+  userSections                   UserSection[]
+  userOrganisations              UserOrganisation[]
+  subschemes                     Subscheme[]
+  schemeAssignments              SchemeAssignment[]
+  schemeWorkflowConfigs          SchemeWorkflowConfig[]
+  financeBudgets                 FinanceBudget[]
+  financeBudgetRevisions         FinanceBudgetRevision[]
+  financeExpenditureSnapshots    FinanceExpenditureSnapshot[]
+  financeSummaryHeads            FinanceSummaryHead[]
+  financeBudgetSupplements       FinanceBudgetSupplement[]
+  financeYearBudgetAllocations   FinanceYearBudgetAllocation[]
+  financeYearBudgetCategoryLines FinanceYearBudgetCategoryLine[]
+  kpiDefinitions                 KpiDefinition[]
+  kpiDefinitionPerformers        KpiDefinitionPerformer[]
+  kpiDefinitionReviewerUsers     KpiDefinitionReviewerUser[]
+  kpiTargets                     KpiTarget[]
+  kpiMeasurements                KpiMeasurement[]
+  meetingTopics                  MeetingTopic[]
+  meetingMaterials               MeetingMaterial[]
+  actionItemPerformers           ActionItemPerformer[]
+  actionItemReviewerUsers        ActionItemReviewerUser[]
+  actionItemUpdates              ActionItemUpdate[]
+  actionItemProofs               ActionItemProof[]
+  notifications                  Notification[]
+  notificationDispatches         NotificationDispatch[]
+  userNotificationPreferences    UserNotificationPreference[]
+  userSeenReleases               UserSeenRelease[]
+  entitlements                   TenantEntitlement[]
+
+  @@map("tenants")
+}
+
+/// Phase 2: per-tenant config KV. Typed registry in lib/tenant-config validates
+/// keys/shapes and overlays rows onto ODISHA_DEFAULTS. Secret-class keys are
+/// rejected by the write path (env-only) and never stored here.
+model TenantConfigEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  key       String
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@map("tenant_config_entries")
+}
+
+/// Phase 3: enforcement class of a module. `core` is never gated (auth, shell,
+/// profile, RBAC, administration, the landing dashboard); `gated` is checked
+/// against TenantEntitlement on every request; `roadmap` is catalog vocabulary —
+/// no route may map to it and the guard denies if one does.
+enum ModuleEnforcement {
+  core
+  gated
+  roadmap
+}
+
+/// Phase 3: commercial tier, mirroring the Notion `Tier` property. A placeholder
+/// for the future menu-card pricing — the guard NEVER reads it. A module is
+/// enabled or it is not.
+enum ModuleTier {
+  core
+  standard
+  premium
+  addon
+}
+
+/// Phase 3: catalog lifecycle, mirroring the Notion `Status` property.
+enum ModuleStatus {
+  active
+  deprecated
+  planned
+}
+
+/// Phase 3: the global module catalog. Tenant-INDEPENDENT, exactly like
+/// `Permission`: a closed registry whose codes are referenced literally in source
+/// (lib/entitlements/catalog.ts) and written only by migration/seed. It is
+/// provisioning vocabulary, never tenant data, so it is listed in GLOBAL_MODELS
+/// and is not auto-scoped by the chokepoint.
+model Module {
+  id          String            @id @default(uuid()) @db.Uuid
+  code        String            @unique
+  name        String
+  enforcement ModuleEnforcement @default(gated)
+  tier        ModuleTier?
+  status      ModuleStatus      @default(active)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  entitlements TenantEntitlement[]
+
+  @@map("modules")
+}
+
+/// Phase 3: which modules a tenant is provisioned for — what a tenant "has".
+/// Tenant-scoped (carries `tenantId`), so the Phase 2 chokepoint auto-scopes
+/// every application query against it with no registry change.
+///
+/// Absence of a row means NOT entitled (fail closed). The Phase 3 migration
+/// backfills an explicit row per existing tenant per provisionable module so no
+/// tenant loses a module on deploy; onboarding writes rows for new tenants.
+/// Phase 4 / S2 — the authorization gate on tenant creation.
+///
+/// Onboarding is a privileged write reachable from a public page: it creates a
+/// Tenant, its entitlements, its configuration and its permanent address. Open
+/// self-serve is not survivable for this product — the sharpest risk is not
+/// resource abuse but impersonation, since anyone could mint a plausible
+/// `<something-official>` workspace and phish the real body it names.
+///
+/// So provisioning requires a token Airawat issues out of band, at contract
+/// signature. Government procurement already has that step; the token rides on
+/// it rather than adding friction.
+///
+/// Three properties make it a real control rather than a speed bump:
+///
+///   - only the SHA-256 hash is stored, so a database read does not yield a
+///     usable token and neither does a log line;
+///   - `consumedAt` is set in the same transaction that creates the tenant, so
+///     two concurrent launches cannot both succeed;
+///   - `tier` lives here rather than in the request, so a customer cannot
+///     self-elevate by editing the payload. The wizard's module choices are
+///     intersected with this tier on the server.
+///
+/// Issuing tokens is the control plane's job (S4, out of scope here). Until it
+/// exists they are minted by `scripts/mint-onboarding-token.mjs`.
+model OnboardingToken {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// SHA-256 of the token, hex. The token itself is shown once, at issue, and
+  /// never stored.
+  tokenHash String @unique
+
+  /// Commercial tier this token authorizes. The ceiling on what it can enable.
+  tier ModuleTier
+
+  /// Who it was issued to. Operational bookkeeping; never shown to the visitor.
+  label String?
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  /// The tenant this token created, once it has. No relation: the token
+  /// outlives nothing and deleting a tenant must not delete the audit of how it
+  /// came to exist.
+  tenantId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("onboarding_tokens")
+}
+
+model TenantEntitlement {
+  id        String      @id @default(uuid()) @db.Uuid
+  tenantId  String      @db.Uuid
+  moduleId  String      @db.Uuid
+  enabled   Boolean     @default(false)
+  tier      ModuleTier?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, moduleId])
+  @@index([tenantId])
+  @@index([moduleId])
+  @@map("tenant_entitlements")
 }

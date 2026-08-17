@@ -3,12 +3,12 @@ import StatusBadge from "./StatusBadge";
 import { tenantLocale } from "@/lib/tenant-config/format";
 
 const DOT_COLORS: Record<ActionItemStatus, string> = {
-  OPEN: "var(--text-muted)",
-  IN_PROGRESS: "var(--alert-warning)",
-  PROOF_UPLOADED: "var(--alert-warning)",
-  UNDER_REVIEW: "var(--alert-warning)",
-  COMPLETED: "var(--alert-success)",
-  OVERDUE: "var(--alert-critical)",
+  OPEN: "var(--ax-muted)",
+  IN_PROGRESS: "var(--ax-status-warning)",
+  PROOF_UPLOADED: "var(--ax-status-warning)",
+  UNDER_REVIEW: "var(--ax-status-warning)",
+  COMPLETED: "var(--ax-status-ok)",
+  OVERDUE: "var(--ax-status-critical)",
 };
 
 interface StatusTimelineProps {
@@ -35,7 +35,7 @@ export default function StatusTimeline({ updates, className }: StatusTimelinePro
   return (
     <div className={className}>
       {sorted.length === 0 && (
-        <div className="rounded-xl border border-dashed border-[var(--border)] px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+        <div className="rounded-xl border border-dashed border-[var(--color-divider)] px-4 py-6 text-center text-sm text-[var(--ax-muted)]">
           No updates yet.
         </div>
       )}
@@ -45,17 +45,17 @@ export default function StatusTimeline({ updates, className }: StatusTimelinePro
             <div className="flex flex-col items-center">
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: DOT_COLORS[update.status] ?? "var(--text-muted)" }}
+                style={{ backgroundColor: DOT_COLORS[update.status] ?? "var(--ax-muted)" }}
               />
-              {index < sorted.length - 1 && <span className="mt-1 h-full w-px bg-[var(--border)]" />}
+              {index < sorted.length - 1 && <span className="mt-1 h-full w-px bg-[var(--color-divider)]" />}
             </div>
             <div className="flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={update.status} />
-                <span className="text-xs text-[var(--text-muted)]">{formatDate(update.timestamp)}</span>
+                <span className="text-xs text-[var(--ax-muted)]">{formatDate(update.timestamp)}</span>
               </div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">{update.note}</p>
-              <p className="text-xs text-[var(--text-muted)]">Updated by {update.actor}</p>
+              <p className="text-sm font-medium text-[var(--color-text)]">{update.note}</p>
+              <p className="text-xs text-[var(--ax-muted)]">Updated by {update.actor}</p>
             </div>
           </div>
         ))}

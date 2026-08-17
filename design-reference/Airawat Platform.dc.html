@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
+<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  body:has([data-theme="light"]) { background: #eef0f8; }
+  [data-theme="light"] {
+    --color-bg: #eef0f8;
+    --color-surface: #f8f9fd;
+    --color-text: #232532;
+    --color-accent: #5d5294;
+    --color-divider: color-mix(in srgb, #232532 16%, transparent);
+    --shadow-sm: 0 0 0 1px #d9dde9;
+    --shadow-md: 0 0 0 1px #dfe2ee, 0 6px 18px rgba(35,37,50,0.10);
+    --shadow-lg: 0 0 0 1px #cfd3e5, 0 16px 40px rgba(35,37,50,0.16);
+    --color-accent-800: #e7e5fe;
+    --color-accent-100: #423a6a;
+    --color-accent-2-800: #e7e5fe;
+    --color-accent-2-100: #423a6a;
+    --color-neutral-800: #e4e7f5;
+    --color-neutral-100: #3f424d;
+  }
+  [data-theme="light"] .text-muted,
+  [data-theme="light"] figcaption { color: #575a68; }
+  .noct-nav { display: flex; align-items: center; gap: 9px; text-align: left; width: 100%; padding: 8px 10px; min-height: 34px; font: inherit; font-size: 13px; cursor: pointer; border: 0; border-radius: var(--radius-sm); color: inherit; background: transparent; }
+  .noct-nav:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+  .noct-nav[data-on="1"] { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); box-shadow: inset 2px 0 0 var(--color-accent); }
+  [data-density="compact"] {
+    --space-1: 2px; --space-2: 4px; --space-3: 6px;
+    --space-4: 8px; --space-6: 11px; --space-8: 15px;
+  }
+  .tag, .btn { white-space: nowrap; flex: none; }
+  @keyframes noct-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden;">
+
+  <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+  <header style="position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--color-bg) 88%, transparent); backdrop-filter: blur(12px); background-image: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); background-repeat: no-repeat; background-position: bottom; background-size: 100% 1px;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap;">
+      <a href="#top" style="display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: auto;">
+        <span style="display: block; width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--color-accent); background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);"></span>
+        <span style="font-family: var(--font-heading); font-weight: 500; font-size: 17px; letter-spacing: -0.01em;">Airawat</span>
+        <span class="text-muted" style="font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding-left: 9px; border-left: 1px solid var(--color-divider);">Finance Dashboard</span>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 22px; font-size: 14px;">
+        <a href="#platform" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Platform</a>
+        <a href="#modules" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Modules</a>
+        <a href="#trust" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Security</a>
+        <a href="#plans" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Plans</a>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-secondary" onClick="{{ toggleAnnotations }}" title="Show design annotations" style="font-size: 12px; padding: 6px 10px;">Notes {{ annoLabel }}</button>
+        <button class="btn btn-secondary btn-icon" onClick="{{ toggleTheme }}" aria-label="Switch light or dark theme">
+          <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a104 104 0 1 0 104 104A104.1 104.1 0 0 0 128 24Zm0 16v176a88 88 0 0 1 0-176Z"></path></svg>
+        </button>
+        <button class="btn btn-primary" onClick="{{ goDemo }}">See the live demo</button>
+      </div>
+    </div>
+  </header>
+
+  <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 14px 28px 0;">
+      <div style="border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: 12px 14px; font-size: 13px; display: flex; gap: 14px; align-items: flex-start; animation: noct-rise 0.25s ease both;">
+        <span class="tag tag-outline" style="flex: none;">Intent</span>
+        <p style="margin: 0; opacity: 0.9;">Notes are on. Each section carries a short note on what it shows and how it behaves. The theme control switches the page between light and dark; your own organization's colors replace these in your workspace.</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <section id="top" style="max-width: 1240px; margin: 0 auto; padding: 88px 28px 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 56px; align-items: center;">
+    <div style="max-width: 34rem;">
+      <span class="tag tag-accent" style="margin-bottom: 22px;">Your brand · your modules · your locale</span>
+      <h1 style="font-size: clamp(38px, 5vw, 60px); margin: 18px 0 20px; letter-spacing: -0.025em; text-wrap: balance;">Every rupee, every scheme, every KPI on one dashboard your leadership trusts</h1>
+      <p style="font-size: 17px; line-height: 1.6; opacity: 0.78; max-width: 32rem; text-wrap: pretty;">Track budget utilization, treasury releases, scheme progress and KPIs in one place — under your logo, in your currency, on your fiscal year. We configure the platform for your organization, so you go live in days rather than budget cycles.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px;">
+        <button class="btn btn-primary" onClick="{{ goDemo }}" style="padding: 11px 18px; font-size: 15px;">See the live demo</button>
+        <a class="btn btn-secondary" href="Onboarding.dc.html" style="padding: 11px 18px; font-size: 15px;">Onboard your organization</a>
+      </div>
+      <p class="text-muted" style="font-size: 13px; margin-top: 20px;">No custom development · WCAG 2.1 AA · hosted with us or in your environment</p>
+    </div>
+
+    <div style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); background: var(--color-surface); overflow: hidden;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--color-divider);">
+        <span style="width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--color-accent);"></span>
+        <span style="font-family: var(--font-heading); font-size: 12px;">Suryapur Development Authority</span>
+        <span class="text-muted" style="font-size: 11px; margin-left: auto;">FY 2026–27 · Command Centre</span>
+      </div>
+      <div style="padding: 14px; display: grid; gap: 12px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div style="padding: 11px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;">Utilization</div>
+            <div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">68.4%</div>
+            <div style="height: 3px; border-radius: 2px; background: var(--color-neutral-800); margin-top: 8px;"><div style="width: 68%; height: 3px; border-radius: 2px; background: var(--color-accent);"></div></div>
+          </div>
+          <div style="padding: 11px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;">Released</div>
+            <div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">₹ 4,812<span style="font-size: 12px; opacity: 0.6;"> cr</span></div>
+            <div class="text-muted" style="font-size: 10px; margin-top: 8px;">of ₹ 7,040 cr allotted</div>
+          </div>
+          <div style="padding: 11px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;">Lapse risk</div>
+            <div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px; color: var(--color-accent);">7</div>
+            <div class="text-muted" style="font-size: 10px; margin-top: 8px;">schemes flagged</div>
+          </div>
+        </div>
+        <div style="padding: 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+            <span style="font-family: var(--font-heading); font-size: 13px;">Treasury releases, 12 months</span>
+            <span class="text-muted" style="font-size: 10px;">indexed</span>
+          </div>
+          <svg viewBox="0 0 320 74" width="100%" height="74" preserveAspectRatio="none" role="img" aria-label="Twelve month treasury release trend, rising">
+            <defs><linearGradient id="noctFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--color-accent)" stop-opacity="0.28"></stop><stop offset="100%" stop-color="var(--color-accent)" stop-opacity="0"></stop></linearGradient></defs>
+            <path d="M0 58 L29 52 L58 55 L87 44 L116 47 L145 36 L174 30 L203 34 L232 24 L261 18 L290 21 L320 9 L320 74 L0 74 Z" fill="url(#noctFill)"></path>
+            <path d="M0 58 L29 52 L58 55 L87 44 L116 47 L145 36 L174 30 L203 34 L232 24 L261 18 L290 21 L320 9" fill="none" stroke="var(--color-accent)" stroke-width="1.6" vector-effect="non-scaling-stroke"></path>
+          </svg>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; font-size: 11px;">
+          <span class="tag tag-neutral">4 approvals pending</span>
+          <span class="tag tag-outline">2 alerts</span>
+          <span class="text-muted" style="margin-left: auto;">Tenant theme applied at runtime</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="background: var(--color-section); color: #e9e9ed;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 34px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 28px;">
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 30px;">23</div>
+        <div style="font-size: 13px; opacity: 0.72;">modules, toggled per tenant</div>
+      </div>
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 30px;">Config-only</div>
+        <div style="font-size: 13px; opacity: 0.72;">onboarding, no engineering</div>
+      </div>
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 30px;">Live in days</div>
+        <div style="font-size: 13px; opacity: 0.72;">from profile to launched workspace</div>
+      </div>
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 30px;">AA</div>
+        <div style="font-size: 13px; opacity: 0.72;">WCAG 2.1, light and dark</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="platform" style="max-width: 1240px; margin: 0 auto; padding: 80px 28px 24px;">
+    <h6 style="color: var(--color-accent); margin-bottom: 14px;">Why organizations choose Airawat</h6>
+    <h2 style="font-size: clamp(28px, 3.4vw, 38px); max-width: 26rem; margin-bottom: 12px;">Configured for your organization, not rebuilt for it</h2>
+    <p style="max-width: 36rem; opacity: 0.72; font-size: 15px;">You get your own branding, locale and module set. Every improvement we ship arrives in your workspace without an upgrade project.</p>
+    <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 18px 0 0; padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 40rem;">Note: these five points answer what procurement asks first — how the platform is delivered, how quickly, who can see what, what it covers, and what it produces.</div>
+    </sc-if>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 34px;">
+      <div class="card elev-sm">
+        <div class="card-kicker">Tenancy</div>
+        <div class="card-title">Your organization, your identity</div>
+        <p class="card-body">Your logo, colors, typography, density and locale — set by your own administrators, applied everywhere, changeable any day.</p>
+      </div>
+      <div class="card elev-sm">
+        <div class="card-kicker">Delivery</div>
+        <div class="card-title">Live in days, without developers</div>
+        <p class="card-body">A guided setup covers your profile, branding, locale, modules, starter data and people. Pause and resume it as approvals come through.</p>
+      </div>
+      <div class="card elev-sm">
+        <div class="card-kicker">Governance</div>
+        <div class="card-title">Everyone sees exactly what they should</div>
+        <p class="card-body">Roles scoped to departments and schemes, and an audit trail that answers who changed or approved what, and when.</p>
+      </div>
+      <div class="card elev-sm">
+        <div class="card-kicker">Coverage</div>
+        <div class="card-title">One set of numbers, agreed across teams</div>
+        <p class="card-body">Utilization, releases against allotment, KPI thresholds and scheme progress come from one source, so no two reports disagree.</p>
+      </div>
+      <div class="card elev-sm">
+        <div class="card-kicker">Outputs</div>
+        <div class="card-title">Meeting packs in minutes</div>
+        <p class="card-body">Agenda, KPI summary, financials and action items assemble into a print-ready pack your office can circulate the same morning.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="modules" style="max-width: 1240px; margin: 0 auto; padding: 80px 28px 24px;">
+    <h6 style="color: var(--color-accent); margin-bottom: 14px;">Module tour</h6>
+    <h2 style="font-size: clamp(28px, 3.4vw, 38px); max-width: 24rem; margin-bottom: 26px;">What your teams see on day one</h2>
+    <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 0 22px; padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 40rem;">Note: each tab shows the module as your users would see it. Figures belong to Suryapur Development Authority, a demonstration organization.</div>
+    </sc-if>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;">
+      <button class="btn" onClick="{{ pickMod0 }}" style="border-color: var(--color-divider);" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent);">{{ tab0 }}</button>
+      <button class="btn" onClick="{{ pickMod1 }}" style="border-color: var(--color-divider);" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent);">{{ tab1 }}</button>
+      <button class="btn" onClick="{{ pickMod2 }}" style="border-color: var(--color-divider);" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent);">{{ tab2 }}</button>
+      <button class="btn" onClick="{{ pickMod3 }}" style="border-color: var(--color-divider);" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent);">{{ tab3 }}</button>
+      <button class="btn" onClick="{{ pickMod4 }}" style="border-color: var(--color-divider);" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent);">{{ tab4 }}</button>
+    </div>
+
+    <div style="border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-md); padding: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 30px; align-items: start;">
+
+      <sc-if value="{{ isMod0 }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width: 26rem;">
+          <h3 style="font-size: 23px;">Command Centre</h3>
+          <p style="opacity: 0.78; font-size: 14px;">Your leadership's first screen each morning: utilization against allotment, treasury trend, lapse-risk flags, pending approvals and alerts in one view, with drill-down into any scheme.</p>
+          <ul style="display: grid; gap: 7px; padding-left: 16px; margin: 16px 0 0; font-size: 13px; opacity: 0.78;">
+            <li>Each officer sees only their department and role</li>
+            <li>Lapse risk flagged against your fiscal-year end</li>
+            <li>Alerts name the officer who can act</li>
+          </ul>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMod0 }}" hint-placeholder-val="{{ true }}">
+        <div style="display: grid; gap: 10px;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <div style="padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;">Allotted</div><div style="font-family: var(--font-heading); font-size: 19px;">₹ 7,040 cr</div></div>
+            <div style="padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;">Released</div><div style="font-family: var(--font-heading); font-size: 19px;">₹ 4,812 cr</div></div>
+            <div style="padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;">Spent</div><div style="font-family: var(--font-heading); font-size: 19px;">₹ 3,281 cr</div></div>
+          </div>
+          <div style="padding: 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="font-family: var(--font-heading); font-size: 12px; margin-bottom: 10px;">Utilization by department</div>
+            <div style="display: grid; gap: 8px; font-size: 11px;">
+              <div style="display: grid; grid-template-columns: 92px 1fr 34px; gap: 8px; align-items: center;"><span class="text-muted">Water works</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 81%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>81%</span></div>
+              <div style="display: grid; grid-template-columns: 92px 1fr 34px; gap: 8px; align-items: center;"><span class="text-muted">Transport</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 64%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>64%</span></div>
+              <div style="display: grid; grid-template-columns: 92px 1fr 34px; gap: 8px; align-items: center;"><span class="text-muted">Sanitation</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 52%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>52%</span></div>
+              <div style="display: grid; grid-template-columns: 92px 1fr 34px; gap: 8px; align-items: center;"><span class="text-muted">Housing</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 34%; height: 6px; border-radius: 3px; background: var(--color-accent-700);"></span></span><span>34%</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMod1 }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 26rem;">
+          <h3 style="font-size: 23px;">Financial Overview</h3>
+          <p style="opacity: 0.78; font-size: 14px;">Budget against released and actual, quarter by quarter, with a head-code breakdown and a fiscal year that follows your own FY start.</p>
+          <ul style="display: grid; gap: 7px; padding-left: 16px; margin: 16px 0 0; font-size: 13px; opacity: 0.78;">
+            <li>Your fiscal year is always visible and selectable</li>
+            <li>Head-code drill from major head to object head</li>
+            <li>Export to a workbook or straight into a report pack</li>
+          </ul>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMod1 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+            <span style="font-family: var(--font-heading); font-size: 12px;">Budget · released · actual by quarter</span>
+            <span class="text-muted" style="font-size: 10px;">₹ cr</span>
+          </div>
+          <svg viewBox="0 0 320 130" width="100%" height="150" role="img" aria-label="Grouped bars comparing budget, released and actual across four quarters">
+            <line x1="0" y1="112" x2="320" y2="112" stroke="var(--color-divider)" stroke-width="1"></line>
+            <g><rect x="14" y="34" width="16" height="78" fill="var(--color-accent-800)"></rect><rect x="32" y="52" width="16" height="60" fill="var(--color-accent-600)"></rect><rect x="50" y="70" width="16" height="42" fill="var(--color-accent)"></rect></g>
+            <g><rect x="94" y="30" width="16" height="82" fill="var(--color-accent-800)"></rect><rect x="112" y="48" width="16" height="64" fill="var(--color-accent-600)"></rect><rect x="130" y="66" width="16" height="46" fill="var(--color-accent)"></rect></g>
+            <g><rect x="174" y="26" width="16" height="86" fill="var(--color-accent-800)"></rect><rect x="192" y="40" width="16" height="72" fill="var(--color-accent-600)"></rect><rect x="210" y="60" width="16" height="52" fill="var(--color-accent)"></rect></g>
+            <g><rect x="254" y="22" width="16" height="90" fill="var(--color-accent-800)"></rect><rect x="272" y="56" width="16" height="56" fill="var(--color-accent-600)"></rect><rect x="290" y="84" width="16" height="28" fill="var(--color-accent)"></rect></g>
+            <text x="40" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q1</text>
+            <text x="120" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q2</text>
+            <text x="200" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q3</text>
+            <text x="280" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q4</text>
+          </svg>
+          <div style="display: flex; gap: 14px; font-size: 11px; margin-top: 8px; flex-wrap: wrap;">
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent-800);"></span>Budget</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent-600);"></span>Released</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent);"></span>Actual</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMod2 }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 26rem;">
+          <h3 style="font-size: 23px;">KPI Monitoring</h3>
+          <p style="opacity: 0.78; font-size: 14px;">Every KPI carries a definition, an owner and a threshold, so reviews start from agreed measures. Status reads on-track, at-risk or breached at a glance.</p>
+          <ul style="display: grid; gap: 7px; padding-left: 16px; margin: 16px 0 0; font-size: 13px; opacity: 0.78;">
+            <li>Status readable by label and shape, not color alone</li>
+            <li>Thresholds set by your own administrators</li>
+            <li>A breach raises an alert on the Command Centre immediately</li>
+          </ul>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMod2 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 6px 14px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <table class="table">
+            <thead><tr><th>KPI</th><th>Value</th><th>Trend</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-size: 13px;">Fund release cycle</td><td style="font-size: 13px;">11 d</td><td><svg width="54" height="16" viewBox="0 0 54 16"><path d="M0 12 L11 9 L22 11 L33 6 L44 5 L54 3" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+              <tr><td style="font-size: 13px;">Utilization vs. plan</td><td style="font-size: 13px;">68%</td><td><svg width="54" height="16" viewBox="0 0 54 16"><path d="M0 6 L11 8 L22 7 L33 10 L44 9 L54 11" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-accent">△ At risk</span></td></tr>
+              <tr><td style="font-size: 13px;">Works completed</td><td style="font-size: 13px;">142</td><td><svg width="54" height="16" viewBox="0 0 54 16"><path d="M0 13 L11 11 L22 9 L33 8 L44 5 L54 4" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+              <tr><td style="font-size: 13px;">Pending approvals age</td><td style="font-size: 13px;">19 d</td><td><svg width="54" height="16" viewBox="0 0 54 16"><path d="M0 11 L11 10 L22 7 L33 6 L44 3 L54 2" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-outline">! Breached</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMod3 }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 26rem;">
+          <h3 style="font-size: 23px;">Schemes register</h3>
+          <p style="opacity: 0.78; font-size: 14px;">Every scheme in your portfolio on one filterable register — sanction, release and utilization on a single row, with drill-in to the full record.</p>
+          <ul style="display: grid; gap: 7px; padding-left: 16px; margin: 16px 0 0; font-size: 13px; opacity: 0.78;">
+            <li>Filters on department, status, funding source, year</li>
+            <li>Scope follows the signed-in officer's role</li>
+            <li>Comfortable or compact density, to your users' preference</li>
+          </ul>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMod3 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 6px 14px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <table class="table">
+            <thead><tr><th>Scheme</th><th>Dept.</th><th>Released</th><th>Util.</th></tr></thead>
+            <tbody>
+              <tr><td style="font-size: 13px;">Riverfront embankment phase II</td><td class="text-muted" style="font-size: 12px;">Water</td><td style="font-size: 13px;">₹ 612 cr</td><td style="font-size: 13px;">78%</td></tr>
+              <tr><td style="font-size: 13px;">Arterial road resurfacing</td><td class="text-muted" style="font-size: 12px;">Transport</td><td style="font-size: 13px;">₹ 388 cr</td><td style="font-size: 13px;">64%</td></tr>
+              <tr><td style="font-size: 13px;">Ward sanitation upgrade</td><td class="text-muted" style="font-size: 12px;">Sanitation</td><td style="font-size: 13px;">₹ 241 cr</td><td style="font-size: 13px;">52%</td></tr>
+              <tr><td style="font-size: 13px;">Transit housing block C</td><td class="text-muted" style="font-size: 12px;">Housing</td><td style="font-size: 13px;">₹ 176 cr</td><td style="font-size: 13px;">34%</td></tr>
+              <tr><td style="font-size: 13px;">Stormwater drain network</td><td class="text-muted" style="font-size: 12px;">Water</td><td style="font-size: 13px;">₹ 154 cr</td><td style="font-size: 13px;">71%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMod4 }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width: 26rem;">
+          <h3 style="font-size: 23px;">Meetings and report packs</h3>
+          <p style="opacity: 0.78; font-size: 14px;">Run the review from one screen — agenda, KPI summary, financials and action items — then generate the pack as a print-ready PDF for circulation.</p>
+          <ul style="display: grid; gap: 7px; padding-left: 16px; margin: 16px 0 0; font-size: 13px; opacity: 0.78;">
+            <li>Action items carry an owner and a due date</li>
+            <li>Cover and headers carry your organization's branding</li>
+            <li>Every pack is versioned and traceable in the audit trail</li>
+          </ul>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMod4 }}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; gap: 10px;">
+          <div style="border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 16px 18px;">
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;">Report pack · cover</div>
+            <div style="font-family: var(--font-heading); font-size: 18px; margin-top: 10px;">Quarterly finance review</div>
+            <div class="text-muted" style="font-size: 12px;">Suryapur Development Authority · Q3 FY 2026–27</div>
+            <div style="height: 1px; margin: 14px 0; background: linear-gradient(to right, var(--color-divider), transparent);"></div>
+            <div style="display: grid; gap: 5px; font-size: 12px; opacity: 0.8;">
+              <div style="display: flex; justify-content: space-between;"><span>1 · KPI summary</span><span class="text-muted">4 pages</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>2 · Financials by head code</span><span class="text-muted">6 pages</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>3 · Scheme exceptions</span><span class="text-muted">3 pages</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>4 · Action items</span><span class="text-muted">2 pages</span></div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="tag tag-neutral">6 action items open</span>
+            <span class="tag tag-outline">Pack v4</span>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <section id="trust" style="max-width: 1240px; margin: 0 auto; padding: 80px 28px 24px;">
+    <h6 style="color: var(--color-accent); margin-bottom: 14px;">Security and isolation</h6>
+    <h2 style="font-size: clamp(28px, 3.4vw, 38px); max-width: 22rem; margin-bottom: 30px;">Ready for audit, procurement and scrutiny</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--color-divider); border-radius: var(--radius-md); overflow: hidden;">
+      <div style="background: var(--color-bg); padding: 20px;">
+        <div style="font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Role-based access</div>
+        <p style="font-size: 13px; opacity: 0.72; margin: 0;">Roles scoped by department, scheme and action, so officers see only what their post requires.</p>
+      </div>
+      <div style="background: var(--color-bg); padding: 20px;">
+        <div style="font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Per-tenant data isolation</div>
+        <p style="font-size: 13px; opacity: 0.72; margin: 0;">Your data is separated from every other organization's, and that separation is verified on every release.</p>
+      </div>
+      <div style="background: var(--color-bg); padding: 20px;">
+        <div style="font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Audit trail</div>
+        <p style="font-size: 13px; opacity: 0.72; margin: 0;">A complete, unalterable record of configuration changes, approvals and generated packs for your auditors.</p>
+      </div>
+      <div style="background: var(--color-bg); padding: 20px;">
+        <div style="font-family: var(--font-heading); font-size: 15px; margin-bottom: 6px;">Deployment options</div>
+        <p style="font-size: 13px; opacity: 0.72; margin: 0;">Hosted by us, or an isolated instance inside your own environment.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="plans" style="max-width: 1240px; margin: 0 auto; padding: 80px 28px 24px;">
+    <h6 style="color: var(--color-accent); margin-bottom: 14px;">Plans</h6>
+    <h2 style="font-size: clamp(28px, 3.4vw, 38px); max-width: 24rem; margin-bottom: 12px;">Choose the tier that matches your mandate</h2>
+    <p style="max-width: 34rem; opacity: 0.72; font-size: 15px;">You can see every module we offer and enable more whenever your mandate grows.</p>
+    <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 18px 0 0; padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 40rem;">Note: pricing is quoted per organization. These tiers explain which modules are included and how to add more later.</div>
+    </sc-if>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 34px;">
+      <div class="card elev-sm" style="padding: 20px; gap: var(--space-3);">
+        <div class="card-kicker">Tier 1</div>
+        <div class="card-title">Essential</div>
+        <p class="card-body">Command Centre, Financial Overview, Schemes register. Shared deployment, up to 50 users.</p>
+        <div class="text-muted" style="font-size: 12px;">8 modules</div>
+        <a class="btn btn-secondary btn-block" href="#top">Request a quote</a>
+      </div>
+      <div class="card elev-md" style="padding: 20px; gap: var(--space-3); box-shadow: 0 0 0 1px var(--color-accent), 0 6px 18px rgba(0,0,0,0.35);">
+        <div class="card-kicker">Tier 2</div>
+        <div class="card-title">Governance</div>
+        <p class="card-body">Adds KPI Monitoring, Meetings and report packs, Action Items, and the full design-system configurator.</p>
+        <div class="text-muted" style="font-size: 12px;">17 modules</div>
+        <a class="btn btn-primary btn-block" href="#top">Request a quote</a>
+      </div>
+      <div class="card elev-sm" style="padding: 20px; gap: var(--space-3);">
+        <div class="card-kicker">Tier 3</div>
+        <div class="card-title">Institution</div>
+        <p class="card-body">All 23 modules, isolated deployment, SSO, custom retention and an assigned onboarding lead.</p>
+        <div class="text-muted" style="font-size: 12px;">23 modules</div>
+        <a class="btn btn-secondary btn-block" href="#top">Request a quote</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1240px; margin: 0 auto; padding: 80px 28px;">
+    <div style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 40px 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: center;">
+      <div>
+        <h2 style="font-size: clamp(24px, 3vw, 32px); max-width: 20rem; margin-bottom: 10px;">See it on a working demonstration workspace</h2>
+        <p style="opacity: 0.72; font-size: 15px; margin: 0; max-width: 28rem;">A fully configured demonstration authority, with the same modules, dashboards and report packs your organization would receive.</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start;">
+        <button class="btn btn-primary" onClick="{{ goDemo }}" style="padding: 11px 18px; font-size: 15px;">See the live demo</button>
+        <a class="btn btn-secondary" href="Onboarding.dc.html" style="padding: 11px 18px; font-size: 15px;">Onboard your organization</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background-image: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); background-repeat: no-repeat; background-position: top; background-size: 100% 1px;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 40px 28px 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 28px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="display: block; width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--color-accent);"></span>
+          <span style="font-family: var(--font-heading); font-size: 15px;">Airawat</span>
+        </div>
+        <p class="text-muted" style="font-size: 12px; margin-top: 10px;">Finance and governance dashboards for governments and large institutions.</p>
+      </div>
+      <div style="display: grid; gap: 7px; align-content: start; font-size: 13px;">
+        <div class="text-muted" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Platform</div>
+        <a href="#modules" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Modules</a>
+        <a href="#platform" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">White-labeling</a>
+        <a href="#plans" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Plans</a>
+      </div>
+      <div style="display: grid; gap: 7px; align-content: start; font-size: 13px;">
+        <div class="text-muted" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Trust</div>
+        <a href="#trust" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Security</a>
+        <a href="#trust" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Data isolation</a>
+        <a href="#trust" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Accessibility</a>
+      </div>
+      <div style="display: grid; gap: 7px; align-content: start; font-size: 13px;">
+        <div class="text-muted" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Organization</div>
+        <a href="#top" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Onboarding</a>
+        <a href="#top" style="color: inherit; text-decoration: none;" style-hover="color: var(--color-accent);">Contact</a>
+      </div>
+    </div>
+    <div style="max-width: 1240px; margin: 0 auto; padding: 0 28px 40px;">
+      <p class="text-muted" style="font-size: 11px; margin: 0;">Figures shown belong to a demonstration organization. Airawat holds no real financial data on this page.</p>
+    </div>
+  </footer>
+  </sc-if>
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+  <div data-density="{{ density }}" style="{{ shellStyle }}">
+
+    <aside style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) var(--space-3); background: var(--color-surface); box-shadow: inset -1px 0 0 var(--color-divider);">
+      <div style="display: flex; align-items: center; gap: 9px; padding: var(--space-2) var(--space-2) var(--space-3);">
+        <span style="display: block; width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--color-accent); background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 40%, transparent), transparent 70%); flex: none;"></span>
+        <span style="display: grid; line-height: 1.2;">
+          <span style="font-family: var(--font-heading); font-size: 13px;">Suryapur</span>
+          <span class="text-muted" style="font-size: 10px;">Development Authority</span>
+        </span>
+      </div>
+
+      <nav style="display: grid; gap: 2px;">
+        <div class="text-muted" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: var(--space-2) var(--space-2) var(--space-1);">Monitoring</div>
+        <button class="noct-nav" onClick="{{ goCommand }}" data-on="{{ navCmd }}">Command Centre</button>
+        <button class="noct-nav" onClick="{{ goFin }}" data-on="{{ navFin }}">Financial Overview</button>
+        <button class="noct-nav" onClick="{{ goKpi }}" data-on="{{ navKpi }}">KPI Monitoring</button>
+        <button class="noct-nav" onClick="{{ goSchemes }}" data-on="{{ navSchemes }}">Schemes register</button>
+        <button class="noct-nav" onClick="{{ goMeet }}" data-on="{{ navMeet }}">Meetings &amp; packs</button>
+        <button class="noct-nav" onClick="{{ goActs }}" data-on="{{ navActs }}">Action items</button>
+        <div class="text-muted" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: var(--space-4) var(--space-2) var(--space-1);">Organization</div>
+        <button class="noct-nav" onClick="{{ goMenu }}" data-on="{{ navMenu }}">Menu cards</button>
+        <button class="noct-nav" onClick="{{ goTheme }}" data-on="{{ navTheme }}">Design system</button>
+        <button class="noct-nav" onClick="{{ goUsers }}" data-on="{{ navUsers }}">Users &amp; roles</button>
+      </nav>
+
+      <div style="margin-top: auto; display: grid; gap: 8px; padding: var(--space-2);">
+        <div class="text-muted" style="font-size: 10px;">Tier 2 · Governance</div>
+        <button class="btn btn-secondary" onClick="{{ goLanding }}" style="font-size: 12px; justify-content: flex-start;">← Back to airawat.com</button>
+      </div>
+    </aside>
+
+    <main style="min-width: 0;">
+      <div style="position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; padding: var(--space-3) var(--space-6); background: color-mix(in srgb, var(--color-bg) 90%, transparent); backdrop-filter: blur(10px); box-shadow: inset 0 -1px 0 var(--color-divider);">
+        <div style="margin-right: auto;">
+          <h1 style="font-size: 20px; margin: 0;">{{ appTitle }}</h1>
+          <div class="text-muted" style="font-size: 11px;">{{ appSubtitle }}</div>
+        </div>
+        <sc-if value="{{ appCommand }}" hint-placeholder-val="{{ true }}">
+        <div class="seg" role="group" aria-label="Fiscal year">
+          <label class="seg-opt"><input type="radio" name="noct-fy" checked="{{ fyCurrent }}" onChange="{{ pickFyCurrent }}">FY 2026–27</label>
+          <label class="seg-opt"><input type="radio" name="noct-fy" checked="{{ fyPrev }}" onChange="{{ pickFyPrev }}">FY 2025–26</label>
+        </div>
+        </sc-if>
+        <button class="btn btn-secondary" onClick="{{ toggleDensity }}" style="font-size: 12px;">{{ densityLabel }}</button>
+        <button class="btn btn-secondary" onClick="{{ toggleAnnotations }}" style="font-size: 12px;">Notes {{ annoLabel }}</button>
+        <button class="btn btn-secondary btn-icon" onClick="{{ toggleTheme }}" aria-label="Switch light or dark theme">
+          <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a104 104 0 1 0 104 104A104.1 104.1 0 0 0 128 24Zm0 16v176a88 88 0 0 1 0-176Z"></path></svg>
+        </button>
+      </div>
+
+      <div style="padding: var(--space-6) var(--space-6) var(--space-8); display: grid; gap: var(--space-4);">
+        <sc-if value="{{ appCommand }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 46rem;">Note: this screen answers three questions before any scrolling — are we spending on time, what is at risk, and what needs a decision today. The fiscal-year control reloads every figure; density suits users who want more rows on screen.</div>
+        </sc-if>
+
+        <sc-if value="{{ fyCurrent }}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3);">
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Budget utilization</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">68.4%</div>
+              <div class="text-muted" style="font-size: 11px;">₹ 4,812 cr of ₹ 7,040 cr</div>
+              <div style="height: 4px; border-radius: 2px; background: var(--color-neutral-800); margin-top: 12px;"><div style="width: 68.4%; height: 4px; border-radius: 2px; background: var(--color-accent);"></div></div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 6px;">Plan at this point: 75%</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Released this quarter</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 1,268 cr</div>
+              <div class="text-muted" style="font-size: 11px;">+9.4% on Q2</div>
+              <svg viewBox="0 0 120 28" width="100%" height="28" style="margin-top: 12px;" role="img" aria-label="Release trend rising"><path d="M0 22 L20 20 L40 21 L60 15 L80 12 L100 13 L120 6" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></path></svg>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Lapse risk</div>
+              <div style="display: flex; align-items: baseline; gap: 8px; margin: 6px 0 2px;">
+                <span style="font-family: var(--font-heading); font-size: 30px;">7</span>
+                <span class="tag tag-outline">! Attention</span>
+              </div>
+              <div class="text-muted" style="font-size: 11px;">schemes below 40% at 9 months</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 12px;">₹ 604 cr exposed</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Pending approvals</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">4</div>
+              <div class="text-muted" style="font-size: 11px;">oldest waiting 19 days</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 12px;">2 with you, 2 with Finance</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ fyPrev }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3);">
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Budget utilization</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">94.1%</div>
+              <div class="text-muted" style="font-size: 11px;">₹ 6,024 cr of ₹ 6,400 cr</div>
+              <div style="height: 4px; border-radius: 2px; background: var(--color-neutral-800); margin-top: 12px;"><div style="width: 94.1%; height: 4px; border-radius: 2px; background: var(--color-accent);"></div></div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 6px;">Year closed</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Released in Q4</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 2,110 cr</div>
+              <div class="text-muted" style="font-size: 11px;">35% of the year in one quarter</div>
+              <svg viewBox="0 0 120 28" width="100%" height="28" style="margin-top: 12px;" role="img" aria-label="Release trend spiking at year end"><path d="M0 23 L20 22 L40 21 L60 20 L80 18 L100 17 L120 3" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></path></svg>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Lapsed</div>
+              <div style="display: flex; align-items: baseline; gap: 8px; margin: 6px 0 2px;">
+                <span style="font-family: var(--font-heading); font-size: 30px;">3</span>
+                <span class="tag tag-neutral">Closed</span>
+              </div>
+              <div class="text-muted" style="font-size: 11px;">schemes surrendered funds</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 12px;">₹ 376 cr surrendered</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Approvals cleared</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">316</div>
+              <div class="text-muted" style="font-size: 11px;">median 11 days</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 12px;">Audit trail complete</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-3);">
+          <div style="grid-column: span 2; min-width: 0; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4);">
+              <h2 style="font-size: 15px; margin: 0;">Treasury releases against allotment</h2>
+              <span class="text-muted" style="font-size: 11px;">₹ cr, monthly · IFMS feed</span>
+              <span style="margin-left: auto; display: flex; gap: 14px; font-size: 11px;">
+                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 2px; background: var(--color-accent);"></span>Released</span>
+                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 2px; background: var(--color-neutral-600);"></span>Allotment pace</span>
+              </span>
+            </div>
+            <svg viewBox="0 0 640 190" width="100%" height="210" role="img" aria-label="Monthly treasury releases against the allotment pace, releases running below pace">
+              <defs><linearGradient id="noctArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--color-accent)" stop-opacity="0.22"></stop><stop offset="100%" stop-color="var(--color-accent)" stop-opacity="0"></stop></linearGradient></defs>
+              <g stroke="var(--color-divider)" stroke-width="1">
+                <line x1="0" y1="20" x2="640" y2="20"></line>
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="100" x2="640" y2="100"></line>
+                <line x1="0" y1="140" x2="640" y2="140"></line>
+                <line x1="0" y1="160" x2="640" y2="160"></line>
+              </g>
+              <path d="M20 150 L76 142 L132 136 L188 120 L244 112 L300 104 L356 92 L412 88 L468 74 L524 66 L580 58 L620 44 L620 160 L20 160 Z" fill="url(#noctArea)"></path>
+              <path d="M20 150 L76 142 L132 136 L188 120 L244 112 L300 104 L356 92 L412 88 L468 74 L524 66 L580 58 L620 44" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
+              <path d="M20 148 L620 26" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" stroke-dasharray="5 4"></path>
+              <g fill="var(--color-accent)">
+                <circle cx="620" cy="44" r="3.5"></circle>
+              </g>
+              <g font-size="10" fill="currentColor" opacity="0.5" text-anchor="middle">
+                <text x="20" y="178">Apr</text><text x="132" y="178">Jun</text><text x="244" y="178">Aug</text><text x="356" y="178">Oct</text><text x="468" y="178">Dec</text><text x="580" y="178">Feb</text>
+              </g>
+              <g font-size="10" fill="currentColor" opacity="0.45">
+                <text x="0" y="16">7,000</text><text x="0" y="96">3,500</text>
+              </g>
+            </svg>
+            <div class="text-muted" style="font-size: 11px; margin-top: var(--space-2);">Releases are tracking 6.6 points below the even-pace line since October.</div>
+          </div>
+
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3); align-content: start;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <h2 style="font-size: 15px; margin: 0;">Alerts</h2>
+              <span class="tag tag-outline">2 new</span>
+            </div>
+            <div style="display: grid; gap: var(--space-2);">
+              <div style="padding: 10px 12px; border-radius: var(--radius-sm); box-shadow: inset 2px 0 0 var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent);">
+                <div style="font-size: 13px;">KPI breached · pending approvals age</div>
+                <div class="text-muted" style="font-size: 11px; margin-top: 3px;">19 days against a 14-day threshold. Owner: Finance secretariat.</div>
+              </div>
+              <div style="padding: 10px 12px; border-radius: var(--radius-sm); box-shadow: inset 2px 0 0 var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent);">
+                <div style="font-size: 13px;">Lapse risk · Transit housing block C</div>
+                <div class="text-muted" style="font-size: 11px; margin-top: 3px;">34% utilized at 9 months. ₹ 116 cr exposed.</div>
+              </div>
+              <div style="padding: 10px 12px; border-radius: var(--radius-sm); box-shadow: inset 2px 0 0 var(--color-neutral-700);">
+                <div style="font-size: 13px;">IFMS feed delayed 40 minutes</div>
+                <div class="text-muted" style="font-size: 11px; margin-top: 3px;">Recovered. Figures reconciled at 14:20.</div>
+              </div>
+            </div>
+            <button class="btn btn-ghost" onClick="{{ soon }}" style="justify-self: start; font-size: 12px;">All alerts →</button>
+          </div>
+
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3); align-content: start;">
+            <h2 style="font-size: 15px; margin: 0;">Pending approvals</h2>
+            <div style="display: grid; gap: var(--space-2); font-size: 13px;">
+              <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+                <span>Revised estimate · Ward sanitation upgrade<span class="text-muted" style="display: block; font-size: 11px;">With you · 19 days</span></span>
+                <span class="tag tag-outline">Review</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+                <span>Release note Q3 · Water works<span class="text-muted" style="display: block; font-size: 11px;">With you · 6 days</span></span>
+                <span class="tag tag-outline">Review</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+                <span>Reappropriation · Transport<span class="text-muted" style="display: block; font-size: 11px;">With Finance · 3 days</span></span>
+                <span class="tag tag-neutral">Waiting</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+                <span>Vendor milestone · Stormwater drain network<span class="text-muted" style="display: block; font-size: 11px;">With Finance · 1 day</span></span>
+                <span class="tag tag-neutral">Waiting</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="grid-column: span 2; min-width: 0; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-2);">
+              <h2 style="font-size: 15px; margin: 0;">Schemes at risk</h2>
+              <span class="text-muted" style="font-size: 11px;">below 40% utilization at nine months</span>
+              <button class="btn btn-ghost" onClick="{{ soon }}" style="margin-left: auto; font-size: 12px;">Open register →</button>
+            </div>
+            <table class="table">
+              <thead>
+                <tr><th>Scheme</th><th>Department</th><th>Allotted</th><th>Released</th><th>Utilized</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr style="cursor: pointer;">
+                  <td>Transit housing block C</td><td class="text-muted" style="font-size: 13px;">Housing</td><td>₹ 520 cr</td><td>₹ 176 cr</td><td>34%</td><td><span class="tag tag-outline">! Lapse risk</span></td>
+                </tr>
+                <tr style="cursor: pointer;">
+                  <td>Market complex redevelopment</td><td class="text-muted" style="font-size: 13px;">Estates</td><td>₹ 310 cr</td><td>₹ 108 cr</td><td>31%</td><td><span class="tag tag-outline">! Lapse risk</span></td>
+                </tr>
+                <tr style="cursor: pointer;">
+                  <td>Lakeside park restoration</td><td class="text-muted" style="font-size: 13px;">Parks</td><td>₹ 148 cr</td><td>₹ 52 cr</td><td>29%</td><td><span class="tag tag-outline">! Lapse risk</span></td>
+                </tr>
+                <tr style="cursor: pointer;">
+                  <td>Ward sanitation upgrade</td><td class="text-muted" style="font-size: 13px;">Sanitation</td><td>₹ 462 cr</td><td>₹ 241 cr</td><td>52%</td><td><span class="tag tag-accent">△ Watch</span></td>
+                </tr>
+                <tr style="cursor: pointer;">
+                  <td>Arterial road resurfacing</td><td class="text-muted" style="font-size: 13px;">Transport</td><td>₹ 604 cr</td><td>₹ 388 cr</td><td>64%</td><td><span class="tag tag-neutral">✓ On track</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ appFin }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3);">
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Budget estimate</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 7,040 cr</div>
+              <div class="text-muted" style="font-size: 11px;">incl. ₹ 240 cr supplements</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Released (SO)</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 4,812 cr</div>
+              <div class="text-muted" style="font-size: 11px;">68.4% of estimate</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Actual (IFMS)</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 3,281 cr</div>
+              <div class="text-muted" style="font-size: 11px;">46.6% of estimate</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Release-to-spend gap</div>
+              <div style="font-family: var(--font-heading); font-size: 30px; margin: 6px 0 2px;">₹ 1,531 cr</div>
+              <div class="text-muted" style="font-size: 11px;">parked with executing agencies</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-3);">
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4);">
+                <h2 style="font-size: 15px; margin: 0;">Budget · released · actual by quarter</h2>
+                <span class="text-muted" style="font-size: 11px;">₹ cr</span>
+                <span style="margin-left: auto; display: flex; gap: 12px; font-size: 11px;">
+                  <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent-800);"></span>Budget</span>
+                  <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent-600);"></span>Released</span>
+                  <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent);"></span>Actual</span>
+                </span>
+              </div>
+              <svg viewBox="0 0 320 130" width="100%" height="160" role="img" aria-label="Grouped bars comparing budget, released and actual across four quarters">
+                <line x1="0" y1="112" x2="320" y2="112" stroke="var(--color-divider)" stroke-width="1"></line>
+                <g><rect x="14" y="34" width="16" height="78" fill="var(--color-accent-800)"></rect><rect x="32" y="52" width="16" height="60" fill="var(--color-accent-600)"></rect><rect x="50" y="70" width="16" height="42" fill="var(--color-accent)"></rect></g>
+                <g><rect x="94" y="30" width="16" height="82" fill="var(--color-accent-800)"></rect><rect x="112" y="48" width="16" height="64" fill="var(--color-accent-600)"></rect><rect x="130" y="66" width="16" height="46" fill="var(--color-accent)"></rect></g>
+                <g><rect x="174" y="26" width="16" height="86" fill="var(--color-accent-800)"></rect><rect x="192" y="40" width="16" height="72" fill="var(--color-accent-600)"></rect><rect x="210" y="60" width="16" height="52" fill="var(--color-accent)"></rect></g>
+                <g opacity="0.45"><rect x="254" y="22" width="16" height="90" fill="var(--color-accent-800)"></rect><rect x="272" y="56" width="16" height="56" fill="var(--color-accent-600)"></rect><rect x="290" y="84" width="16" height="28" fill="var(--color-accent)"></rect></g>
+                <text x="40" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q1</text>
+                <text x="120" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q2</text>
+                <text x="200" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q3</text>
+                <text x="280" y="126" font-size="9" fill="currentColor" opacity="0.55" text-anchor="middle">Q4 · proj.</text>
+              </svg>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3); align-content: start;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                <h2 style="font-size: 15px; margin: 0;">By funding source</h2>
+                <button class="btn btn-secondary" onClick="{{ soon }}" style="font-size: 12px;">Export ↓</button>
+              </div>
+              <div style="display: grid; gap: 9px; font-size: 12px;">
+                <div style="display: grid; grid-template-columns: 110px 1fr 60px; gap: 8px; align-items: center;"><span class="text-muted">State budget</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 72%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>₹ 3,466 cr</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 60px; gap: 8px; align-items: center;"><span class="text-muted">Central share</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 48%; height: 6px; border-radius: 3px; background: var(--color-accent-400);"></span></span><span>₹ 2,310 cr</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 60px; gap: 8px; align-items: center;"><span class="text-muted">External / loan</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 18%; height: 6px; border-radius: 3px; background: var(--color-accent-700);"></span></span><span>₹ 864 cr</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 60px; gap: 8px; align-items: center;"><span class="text-muted">Own funds</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 9%; height: 6px; border-radius: 3px; background: var(--color-accent-700);"></span></span><span>₹ 400 cr</span></div>
+              </div>
+              <div class="text-muted" style="font-size: 11px;">Central share releases lag state budget by one quarter on average.</div>
+            </div>
+          </div>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-2);">
+              <h2 style="font-size: 15px; margin: 0;">Head-code breakdown</h2>
+              <span class="text-muted" style="font-size: 11px;">major head → object head</span>
+            </div>
+            <table class="table">
+              <thead><tr><th>Head</th><th>Description</th><th>Budget</th><th>Released</th><th>Actual</th><th>Util.</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size: 12px;">4217-60-051</td><td style="font-size: 13px;">Capital · urban development works</td><td style="font-size: 13px;">₹ 2,840 cr</td><td style="font-size: 13px;">₹ 2,120 cr</td><td style="font-size: 13px;">₹ 1,486 cr</td><td style="font-size: 13px;">52%</td></tr>
+                <tr><td style="font-size: 12px;">2217-05-191</td><td style="font-size: 13px;">Assistance to ULBs · revenue</td><td style="font-size: 13px;">₹ 1,960 cr</td><td style="font-size: 13px;">₹ 1,401 cr</td><td style="font-size: 13px;">₹ 1,010 cr</td><td style="font-size: 13px;">51%</td></tr>
+                <tr><td style="font-size: 12px;">4215-01-101</td><td style="font-size: 13px;">Water supply · capital</td><td style="font-size: 13px;">₹ 1,240 cr</td><td style="font-size: 13px;">₹ 812 cr</td><td style="font-size: 13px;">₹ 520 cr</td><td style="font-size: 13px;">42%</td></tr>
+                <tr><td style="font-size: 12px;">2215-02-107</td><td style="font-size: 13px;">Sewerage &amp; sanitation · revenue</td><td style="font-size: 13px;">₹ 620 cr</td><td style="font-size: 13px;">₹ 341 cr</td><td style="font-size: 13px;">₹ 189 cr</td><td style="font-size: 13px;">30%</td></tr>
+                <tr><td style="font-size: 12px;">6217-60-800</td><td style="font-size: 13px;">Loans for urban development</td><td style="font-size: 13px;">₹ 380 cr</td><td style="font-size: 13px;">₹ 138 cr</td><td style="font-size: 13px;">₹ 76 cr</td><td style="font-size: 13px;">20%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ appKpi }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span class="tag tag-neutral">✓ On track · 9</span>
+            <span class="tag tag-accent">△ At risk · 4</span>
+            <span class="tag tag-outline">! Breached · 2</span>
+            <span class="text-muted" style="font-size: 11px; margin-left: auto;">15 KPIs · quarterly review cycle</span>
+          </div>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <table class="table">
+              <thead><tr><th>KPI</th><th>Owner</th><th>Value</th><th>Target</th><th>Trend</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size: 13px;">Fund release cycle time<span class="text-muted" style="display: block; font-size: 11px;">days, sanction to SO</span></td><td class="text-muted" style="font-size: 12px;">Finance section</td><td style="font-size: 13px;">11 d</td><td class="text-muted" style="font-size: 12px;">≤ 14 d</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 14 L13 10 L26 12 L39 7 L52 6 L64 4" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+                <tr><td style="font-size: 13px;">Utilization vs. plan<span class="text-muted" style="display: block; font-size: 11px;">IFMS actual against even pace</span></td><td class="text-muted" style="font-size: 12px;">Planning cell</td><td style="font-size: 13px;">68%</td><td class="text-muted" style="font-size: 12px;">≥ 75%</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 7 L13 9 L26 8 L39 11 L52 10 L64 12" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-accent">△ At risk</span></td></tr>
+                <tr><td style="font-size: 13px;">Works completed<span class="text-muted" style="display: block; font-size: 11px;">cumulative, this FY</span></td><td class="text-muted" style="font-size: 12px;">Engineering wing</td><td style="font-size: 13px;">142</td><td class="text-muted" style="font-size: 12px;">≥ 130</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 15 L13 13 L26 10 L39 9 L52 6 L64 4" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+                <tr><td style="font-size: 13px;">Pending approvals age<span class="text-muted" style="display: block; font-size: 11px;">oldest item in queue</span></td><td class="text-muted" style="font-size: 12px;">Secretariat</td><td style="font-size: 13px;">19 d</td><td class="text-muted" style="font-size: 12px;">≤ 14 d</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 12 L13 11 L26 8 L39 7 L52 4 L64 2" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-outline">! Breached</span></td></tr>
+                <tr><td style="font-size: 13px;">Household water connections<span class="text-muted" style="display: block; font-size: 11px;">new, cumulative</span></td><td class="text-muted" style="font-size: 12px;">Water works</td><td style="font-size: 13px;">18,240</td><td class="text-muted" style="font-size: 12px;">≥ 24,000</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 14 L13 12 L26 11 L39 10 L52 9 L64 9" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-accent">△ At risk</span></td></tr>
+                <tr><td style="font-size: 13px;">Grievance closure rate<span class="text-muted" style="display: block; font-size: 11px;">closed within 30 days</span></td><td class="text-muted" style="font-size: 12px;">Citizen services</td><td style="font-size: 13px;">91%</td><td class="text-muted" style="font-size: 12px;">≥ 85%</td><td><svg width="64" height="18" viewBox="0 0 64 18"><path d="M0 10 L13 9 L26 7 L39 6 L52 5 L64 4" fill="none" stroke="var(--color-accent)" stroke-width="1.4"></path></svg></td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="text-muted" style="font-size: 12px;">Status reads by label and shape as well as tint. A breach raises a Command Centre alert and appears in the next report pack automatically.</div>
+        </sc-if>
+
+        <sc-if value="{{ appSchemes }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ noScheme }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <input class="input" placeholder="Search schemes…" style="max-width: 200px; min-height: 34px;">
+              <span class="tag tag-accent">All departments ▾</span>
+              <span class="tag tag-neutral">Active ▾</span>
+              <span class="tag tag-neutral">All sources ▾</span>
+              <span class="text-muted" style="font-size: 11px; margin-left: auto;">12 schemes · scoped to your role</span>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+              <table class="table">
+                <thead><tr><th>Scheme</th><th>Department</th><th>Sanctioned</th><th>Released</th><th>Utilized</th><th>KPIs</th><th>Status</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ schemeRows }}" as="r" hint-placeholder-count="6">
+                    <tr onClick="{{ r.open }}" style="cursor: pointer;">
+                      <td style="font-size: 13px;">{{ r.name }}<span class="text-muted" style="display: block; font-size: 11px;">{{ r.code }}</span></td>
+                      <td class="text-muted" style="font-size: 12px;">{{ r.dept }}</td>
+                      <td style="font-size: 13px;">{{ r.sanction }}</td>
+                      <td style="font-size: 13px;">{{ r.released }}</td>
+                      <td style="font-size: 13px;">{{ r.util }}</td>
+                      <td class="text-muted" style="font-size: 12px;">{{ r.kpis }}</td>
+                      <td><span class="tag" style="{{ r.tagStyle }}">{{ r.status }}</span></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <div class="text-muted" style="font-size: 12px;">Click a scheme to open its record.</div>
+          </sc-if>
+          <sc-if value="{{ hasScheme }}" hint-placeholder-val="{{ false }}">
+            <div style="animation: noct-rise 0.2s ease both; display: grid; gap: var(--space-4);">
+              <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-ghost" onClick="{{ closeScheme }}" style="font-size: 12px;">← All schemes</button>
+                <h2 style="font-size: 19px; margin: 0;">{{ sName }}</h2>
+                <span class="tag" style="{{ sTagStyle }}">{{ sStatus }}</span>
+                <span class="text-muted" style="font-size: 12px;">{{ sCode }} · {{ sDept }}</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3);">
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;">Sanctioned</div><div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">{{ sSanction }}</div></div>
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;">Released</div><div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">{{ sReleased }}</div></div>
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;">Utilized</div><div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">{{ sUtil }}</div><div style="height: 4px; border-radius: 2px; background: var(--color-neutral-800); margin-top: 10px;"><div style="{{ sUtilBar }}"></div></div></div>
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"><div class="text-muted" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;">Open action items</div><div style="font-family: var(--font-heading); font-size: 24px; margin-top: 4px;">{{ sActions }}</div></div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-3); align-items: start;">
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                  <div style="font-family: var(--font-heading); font-size: 13px; margin-bottom: 10px;">IFMS expenditure trend</div>
+                  <svg viewBox="0 0 300 70" width="100%" height="80" preserveAspectRatio="none" role="img" aria-label="Monthly expenditure trend for this scheme">
+                    <path d="M0 60 L50 55 L100 50 L150 42 L200 34 L250 24 L300 14 L300 70 L0 70 Z" fill="var(--color-accent)" opacity="0.14"></path>
+                    <path d="M0 60 L50 55 L100 50 L150 42 L200 34 L250 24 L300 14" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
+                  </svg>
+                </div>
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 8px; align-content: start;">
+                  <div style="font-family: var(--font-heading); font-size: 13px;">Scheme KPIs</div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; gap: 8px;"><span>Physical progress</span><span class="tag tag-neutral">✓ 62%</span></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; gap: 8px;"><span>Milestone adherence</span><span class="tag tag-accent">△ 1 slipped</span></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; gap: 8px;"><span>Quality inspections</span><span class="tag tag-neutral">✓ On schedule</span></div>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;">Owner: {{ sOwner }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ appMeet }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-3); align-items: start;">
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3);">
+              <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                <h2 style="font-size: 15px; margin: 0;">Upcoming reviews</h2>
+                <button class="btn btn-secondary" onClick="{{ soon }}" style="font-size: 12px;">Schedule +</button>
+              </div>
+              <div style="display: grid; gap: var(--space-2);">
+                <div style="padding: 12px; border-radius: var(--radius-sm); box-shadow: inset 2px 0 0 var(--color-accent), var(--shadow-sm);">
+                  <div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline;"><span style="font-size: 13px; font-family: var(--font-heading);">Q3 leadership review</span><span class="tag tag-accent">In 2 days</span></div>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;">Fri 21 Aug · 10:30 · Chairperson's chamber · 12 topics · pack in draft</div>
+                </div>
+                <div style="padding: 12px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline;"><span style="font-size: 13px;">Water works monthly</span><span class="text-muted" style="font-size: 11px;">28 Aug</span></div>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;">Dept. review · 6 topics</div>
+                </div>
+                <div style="padding: 12px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline;"><span style="font-size: 13px;">Lapse-risk special sitting</span><span class="text-muted" style="font-size: 11px;">4 Sep</span></div>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;">7 flagged schemes · pack auto-assembles from live flags</div>
+                </div>
+              </div>
+              <div style="padding: 10px 12px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 8%, transparent); font-size: 12px;">Data entry for the Q3 review closes 20 Aug 18:00. Late entries need an override from the administrator.</div>
+            </div>
+            <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3); align-content: start;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                <h2 style="font-size: 15px; margin: 0;">Report pack · Q3 draft</h2>
+                <button class="btn btn-primary" onClick="{{ soon }}" style="font-size: 12px;">Generate PDF ↓</button>
+              </div>
+              <div style="border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 16px 18px;">
+                <div class="text-muted" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;">Cover preview</div>
+                <div style="font-family: var(--font-heading); font-size: 18px; margin-top: 10px;">Quarterly finance review</div>
+                <div class="text-muted" style="font-size: 12px;">Suryapur Development Authority · Q3 FY 2026–27</div>
+                <div style="height: 1px; margin: 14px 0; background: linear-gradient(to right, var(--color-divider), transparent);"></div>
+                <div style="display: grid; gap: 5px; font-size: 12px; opacity: 0.8;">
+                  <div style="display: flex; justify-content: space-between;"><span>1 · KPI summary</span><span class="text-muted">4 pages</span></div>
+                  <div style="display: flex; justify-content: space-between;"><span>2 · Financials by head code</span><span class="text-muted">6 pages</span></div>
+                  <div style="display: flex; justify-content: space-between;"><span>3 · Scheme exceptions</span><span class="text-muted">3 pages</span></div>
+                  <div style="display: flex; justify-content: space-between;"><span>4 · Action items</span><span class="text-muted">2 pages</span></div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="tag tag-outline">Pack v4 · draft</span>
+                <span class="text-muted" style="font-size: 11px;">regenerates from live data on open</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ appActs }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span class="tag tag-accent">Open · 6</span>
+            <span class="tag tag-neutral">In progress · 4</span>
+            <span class="tag tag-neutral">Done this quarter · 19</span>
+            <button class="btn btn-primary" onClick="{{ soon }}" style="font-size: 12px; margin-left: auto;">New action item +</button>
+          </div>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <table class="table">
+              <thead><tr><th>Action item</th><th>Scheme</th><th>Assignee</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size: 13px;">Submit revised estimate for embankment phase II</td><td class="text-muted" style="font-size: 12px;">Riverfront embankment II</td><td class="text-muted" style="font-size: 12px;">S. Menon</td><td style="font-size: 12px;">18 Aug</td><td><span class="tag tag-outline">High</span></td><td><span class="tag tag-accent">Open</span></td></tr>
+                <tr><td style="font-size: 13px;">Reconcile IFMS gap on sanitation head 2215</td><td class="text-muted" style="font-size: 12px;">Ward sanitation upgrade</td><td class="text-muted" style="font-size: 12px;">R. Iyer</td><td style="font-size: 12px;">20 Aug</td><td><span class="tag tag-outline">High</span></td><td><span class="tag tag-accent">Open</span></td></tr>
+                <tr><td style="font-size: 13px;">Issue tender corrigendum for housing block C</td><td class="text-muted" style="font-size: 12px;">Transit housing block C</td><td class="text-muted" style="font-size: 12px;">K. Bhatt</td><td style="font-size: 12px;">25 Aug</td><td><span class="tag tag-neutral">Medium</span></td><td><span class="tag tag-neutral">In progress</span></td></tr>
+                <tr><td style="font-size: 13px;">Verify completion proofs, stormwater package 3</td><td class="text-muted" style="font-size: 12px;">Stormwater drain network</td><td class="text-muted" style="font-size: 12px;">A. Deshpande</td><td style="font-size: 12px;">1 Sep</td><td><span class="tag tag-neutral">Medium</span></td><td><span class="tag tag-neutral">In progress</span></td></tr>
+                <tr><td style="font-size: 13px;">Prepare surrender note for lakeside park savings</td><td class="text-muted" style="font-size: 12px;">Lakeside park restoration</td><td class="text-muted" style="font-size: 12px;">N. Rao</td><td style="font-size: 12px;">8 Sep</td><td><span class="tag tag-neutral">Low</span></td><td><span class="tag tag-accent">Open</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="text-muted" style="font-size: 12px;">Each item carries its meeting of origin; progress notes are attributed to the review where they were reported.</div>
+        </sc-if>
+
+        <sc-if value="{{ appMenu }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 46rem;">Note: switch any module on or off and your navigation updates on the right, exactly as your users will see it. Modules above your tier stay visible with an upgrade path — nothing is hidden from you.</div>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: 1fr 220px; gap: var(--space-4); align-items: start;">
+            <div style="display: grid; gap: var(--space-4);">
+              <sc-for list="{{ modGroups }}" as="grp" hint-placeholder-count="3">
+                <div>
+                  <div class="text-muted" style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: var(--space-2);">{{ grp.name }}</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-2);">
+                    <sc-for list="{{ grp.mods }}" as="m" hint-placeholder-count="4">
+                      <div style="display: flex; align-items: center; gap: 10px; padding: var(--space-3); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); min-height: 62px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <div style="font-size: 13px; font-family: var(--font-heading);">{{ m.label }}</div>
+                          <div class="text-muted" style="font-size: 11px;">{{ m.desc }}</div>
+                        </div>
+                        <sc-if value="{{ m.locked }}" hint-placeholder-val="{{ false }}">
+                          <button class="btn btn-ghost" onClick="{{ m.upgrade }}" style="font-size: 11px; flex: none;">Tier 3 ↗</button>
+                        </sc-if>
+                        <sc-if value="{{ m.unlocked }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ m.toggle }}" role="switch" aria-checked="{{ m.ariaOn }}" aria-label="{{ m.label }}" style="{{ m.swStyle }}"><span style="{{ m.knobStyle }}"></span></button>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="position: sticky; top: 76px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden;">
+              <div style="padding: var(--space-2) var(--space-3); font-size: 11px; box-shadow: inset 0 -1px 0 var(--color-divider);" class="text-muted">Your navigation · live</div>
+              <div style="padding: var(--space-2); background: var(--color-surface); display: grid; gap: 2px;">
+                <div style="display: flex; align-items: center; gap: 7px; padding: 6px 8px;">
+                  <span style="width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--color-accent); flex: none;"></span>
+                  <span style="font-size: 10px; font-family: var(--font-heading);">Suryapur DA</span>
+                </div>
+                <sc-for list="{{ enabledNav }}" as="n" hint-placeholder-count="6">
+                  <div style="font-size: 11px; padding: 5px 8px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-text) 4%, transparent);">{{ n }}</div>
+                </sc-for>
+                <div class="text-muted" style="font-size: 10px; padding: 6px 8px;">{{ enabledCount }} modules enabled</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ appTheme }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 46rem;">Note: everything you change here re-renders the preview instantly — the same tokens drive your whole workspace. The contrast check tells you before you save whether a color choice stays readable for your users.</div>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: minmax(280px, 340px) 1fr; gap: var(--space-4); align-items: start;">
+            <div style="display: grid; gap: var(--space-4);">
+              <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3);">
+                <div style="font-family: var(--font-heading); font-size: 14px;">Brand color</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="6">
+                    <button onClick="{{ sw.pick }}" aria-label="{{ sw.name }}" title="{{ sw.name }}" style="{{ sw.style }}"></button>
+                  </sc-for>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                  <sc-if value="{{ contrastOk }}" hint-placeholder-val="{{ true }}">
+                    <span class="tag tag-neutral">✓ Contrast {{ contrastRatio }}:1</span>
+                    <span class="text-muted">readable on your {{ tModeLabel }} ground</span>
+                  </sc-if>
+                  <sc-if value="{{ contrastBad }}" hint-placeholder-val="{{ false }}">
+                    <span class="tag tag-outline">! Contrast {{ contrastRatio }}:1</span>
+                    <span class="text-muted">below 3:1 — we will deepen it for text automatically</span>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-3);">
+                <div style="font-family: var(--font-heading); font-size: 14px;">Feel</div>
+                <div class="field">
+                  <label>Default appearance</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="noct-tmode" checked="{{ tDark }}" onChange="{{ pickTDark }}">Dark</label>
+                    <label class="seg-opt"><input type="radio" name="noct-tmode" checked="{{ tLight }}" onChange="{{ pickTLight }}">Light</label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Density</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="noct-tdens" checked="{{ tComfy }}" onChange="{{ pickTComfy }}">Comfortable</label>
+                    <label class="seg-opt"><input type="radio" name="noct-tdens" checked="{{ tCompact }}" onChange="{{ pickTCompact }}">Compact</label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Corner feel</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="noct-trad" checked="{{ tRad4 }}" onChange="{{ pickTRad4 }}">Square</label>
+                    <label class="seg-opt"><input type="radio" name="noct-trad" checked="{{ tRad8 }}" onChange="{{ pickTRad8 }}">Soft</label>
+                    <label class="seg-opt"><input type="radio" name="noct-trad" checked="{{ tRad14 }}" onChange="{{ pickTRad14 }}">Round</label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Number format</label>
+                  <div class="seg">
+                    <label class="seg-opt"><input type="radio" name="noct-tloc" checked="{{ tLocIn }}" onChange="{{ pickTLocIn }}">₹ 12,34,567</label>
+                    <label class="seg-opt"><input type="radio" name="noct-tloc" checked="{{ tLocEu }}" onChange="{{ pickTLocEu }}">€ 1.234.567</label>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onClick="{{ saveTheme }}">Save theme</button>
+                <button class="btn btn-secondary" onClick="{{ resetTheme }}">Reset to default</button>
+                <button class="btn btn-secondary" onClick="{{ togglePreviewAsUser }}">{{ previewAsUserLabel }}</button>
+              </div>
+            </div>
+
+            <div style="{{ previewPaneStyle }}">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--color-divider);">
+                <span style="width: 15px; height: 15px; border-radius: 4px; border: 1px solid var(--color-accent); flex: none;"></span>
+                <span style="font-family: var(--font-heading); font-size: 12px;">Suryapur Development Authority</span>
+                <span class="text-muted" style="font-size: 10px; margin-left: auto;">Live preview · your users' view</span>
+              </div>
+              <div style="padding: var(--space-4); display: grid; gap: var(--space-3);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3);">
+                  <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                    <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Utilization</div>
+                    <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">68.4%</div>
+                    <div style="height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--color-text) 12%, transparent); margin-top: 10px;"><div style="width: 68%; height: 4px; border-radius: 2px; background: var(--color-accent);"></div></div>
+                  </div>
+                  <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                    <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Released</div>
+                    <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">{{ locAmount }}</div>
+                    <div class="text-muted" style="font-size: 10px; margin-top: 10px;">of {{ locTotal }} allotted</div>
+                  </div>
+                  <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                    <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Lapse risk</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+                      <span style="font-family: var(--font-heading); font-size: 26px;">7</span>
+                      <span style="font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-accent); color: var(--color-accent);">! Attention</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+                    <span style="font-family: var(--font-heading); font-size: 13px;">Releases, six months</span>
+                    <span class="text-muted" style="font-size: 10px;">{{ locUnit }}</span>
+                  </div>
+                  <svg viewBox="0 0 300 60" width="100%" height="60" preserveAspectRatio="none" role="img" aria-label="Six month release trend">
+                    <path d="M0 48 L60 42 L120 36 L180 30 L240 20 L300 10 L300 60 L0 60 Z" fill="var(--color-accent)" opacity="0.15"></path>
+                    <path d="M0 48 L60 42 L120 36 L180 30 L240 20 L300 10" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
+                  </svg>
+                </div>
+                <table class="table">
+                  <thead><tr><th>Scheme</th><th>Released</th><th>Util.</th></tr></thead>
+                  <tbody>
+                    <tr><td style="font-size: 13px;">Riverfront embankment II</td><td style="font-size: 13px;">{{ locRow1 }}</td><td style="font-size: 13px;">78%</td></tr>
+                    <tr><td style="font-size: 13px;">Arterial road resurfacing</td><td style="font-size: 13px;">{{ locRow2 }}</td><td style="font-size: 13px;">64%</td></tr>
+                  </tbody>
+                </table>
+                <div style="display: flex; gap: 8px;">
+                  <button style="{{ pvBtnStyle }}">Export report</button>
+                  <button style="{{ pvBtn2Style }}">Filter</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ appUsers }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ annos }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 11px 13px; border-left: 2px solid var(--color-accent); font-size: 13px; opacity: 0.85; max-width: 46rem;">Note: roles decide what each officer can see and approve. Scope narrows a role to a department, so access follows your organization chart, not ours.</div>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3);">
+            <div class="card elev-sm">
+              <div class="card-kicker">Role</div>
+              <div class="card-title" style="font-size: 15px;">Administrator</div>
+              <p class="card-body">Branding, modules, people. No access to financial approvals.</p>
+              <div class="card-meta">2 people</div>
+            </div>
+            <div class="card elev-sm">
+              <div class="card-kicker">Role</div>
+              <div class="card-title" style="font-size: 15px;">Approver</div>
+              <p class="card-body">Reviews and clears releases, estimates and reappropriations in scope.</p>
+              <div class="card-meta">4 people</div>
+            </div>
+            <div class="card elev-sm">
+              <div class="card-kicker">Role</div>
+              <div class="card-title" style="font-size: 15px;">Viewer</div>
+              <p class="card-body">Dashboards and reports for their department. No edits, no approvals.</p>
+              <div class="card-meta">31 people</div>
+            </div>
+          </div>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: baseline; gap: var(--space-4); margin-bottom: var(--space-2);">
+              <h2 style="font-size: 15px; margin: 0;">People</h2>
+              <span class="text-muted" style="font-size: 11px;">37 active</span>
+              <button class="btn btn-primary" onClick="{{ invite }}" style="margin-left: auto; font-size: 12px;">Invite person</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Name</th><th>Role</th><th>Scope</th><th>Last active</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>A. Deshpande</td><td><span class="tag tag-accent">Administrator</span></td><td class="text-muted" style="font-size: 13px;">All departments</td><td class="text-muted" style="font-size: 13px;">Today</td><td><span class="tag tag-neutral">Active</span></td></tr>
+                <tr><td>S. Menon</td><td><span class="tag tag-accent">Approver</span></td><td class="text-muted" style="font-size: 13px;">Water works</td><td class="text-muted" style="font-size: 13px;">Today</td><td><span class="tag tag-neutral">Active</span></td></tr>
+                <tr><td>R. Iyer</td><td><span class="tag tag-accent">Approver</span></td><td class="text-muted" style="font-size: 13px;">Transport</td><td class="text-muted" style="font-size: 13px;">Yesterday</td><td><span class="tag tag-neutral">Active</span></td></tr>
+                <tr><td>K. Bhatt</td><td><span class="tag tag-neutral">Viewer</span></td><td class="text-muted" style="font-size: 13px;">Housing</td><td class="text-muted" style="font-size: 13px;">3 days ago</td><td><span class="tag tag-neutral">Active</span></td></tr>
+                <tr><td>N. Rao</td><td><span class="tag tag-neutral">Viewer</span></td><td class="text-muted" style="font-size: 13px;">Sanitation</td><td class="text-muted" style="font-size: 13px;">—</td><td><span class="tag tag-outline">Invited</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+      </div>
+    </main>
+
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 40; padding: 10px 14px; border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-lg); font-size: 13px; animation: noct-rise 0.2s ease both;">{{ toastMsg }}</div>
+    </sc-if>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark' | 'light'&quot;,&quot;section&quot;:&quot;Theme&quot;}}">
+class Component extends DCLogic {
+  state = { theme: null, annos: false, mod: 0, screen: 'landing', density: 'comfortable', fy: 'current', toast: false,
+    appScreen: 'command', toastMsg: '',
+    modsOff: {}, // module id -> true when switched off
+    tAccent: '#9184d9', tMode: 'dark', tDensity: 'comfortable', tRad: 8, tLoc: 'in', previewAsUser: false };
+
+  static MODS = [
+    ['Monitoring', [
+      ['cmd', 'Command Centre', 'Your leadership landing view', false],
+      ['fin', 'Financial Overview', 'Budget vs. released vs. actual', false],
+      ['kpi', 'KPI Monitoring', 'Thresholds and status', false],
+      ['sch', 'Schemes register', 'Every scheme, filterable', false],
+      ['trs', 'Treasury trends', 'Monthly release feed', false],
+      ['alr', 'Alerts', 'Breaches and lapse risk', false],
+      ['map', 'Ward map', 'Spending on the map', true]
+    ]],
+    ['Governance', [
+      ['mtg', 'Review meetings', 'Agenda from live figures', false],
+      ['pak', 'Report packs', 'Print-ready PDF packs', false],
+      ['act', 'Action items', 'Owners and due dates', false],
+      ['apv', 'Approvals', 'Release and estimate queue', false],
+      ['aud', 'Audit trail', 'Every change, recorded', false]
+    ]],
+    ['Data', [
+      ['imp', 'Data import', 'Spreadsheet and CSV intake', false],
+      ['ifm', 'Treasury connector', 'Direct IFMS feed', true],
+      ['dqy', 'Data quality', 'Reconciliation checks', true],
+      ['arc', 'Archives', 'Closed-year records', true]
+    ]],
+    ['Administration', [
+      ['usr', 'Users & roles', 'People and access', false],
+      ['mnu', 'Menu cards', 'This module grid', false],
+      ['dsn', 'Design system', 'Your branding and theme', false],
+      ['loc', 'Localization', 'Language, currency, FY', false],
+      ['ntf', 'Notifications', 'Email and in-app digests', false],
+      ['api', 'API access', 'Read APIs for your systems', true],
+      ['sso', 'Single sign-on', 'Your identity provider', true]
+    ]]
+  ];
+  componentDidUpdate(prev) {
+    if (prev.theme !== this.props.theme) this.setState({ theme: null });
+  }
+
+  renderVals() {
+    const names = ['Command Centre', 'Financial Overview', 'KPI Monitoring', 'Schemes', 'Meetings & packs'];
+    const mark = (i) => (this.state.mod === i ? '\u2022 ' : '') + names[i];
+    return {
+      theme: this.state.theme ?? this.props.theme ?? 'dark',
+      annos: this.state.annos,
+      annoLabel: this.state.annos ? 'on' : 'off',
+      toggleTheme: () => this.setState(s => ({ theme: (s.theme ?? this.props.theme ?? 'dark') === 'dark' ? 'light' : 'dark' })),
+      toggleAnnotations: () => this.setState(s => ({ annos: !s.annos })),
+      tab0: mark(0), tab1: mark(1), tab2: mark(2), tab3: mark(3), tab4: mark(4),
+      isMod0: this.state.mod === 0, isMod1: this.state.mod === 1, isMod2: this.state.mod === 2,
+      isMod3: this.state.mod === 3, isMod4: this.state.mod === 4,
+      pickMod0: () => this.setState({ mod: 0 }), pickMod1: () => this.setState({ mod: 1 }),
+      pickMod2: () => this.setState({ mod: 2 }), pickMod3: () => this.setState({ mod: 3 }),
+      pickMod4: () => this.setState({ mod: 4 }),
+      isLanding: this.state.screen === 'landing',
+      isApp: this.state.screen === 'app',
+      goDemo: () => { window.scrollTo(0, 0); this.setState({ screen: 'app' }); },
+      goLanding: () => { window.scrollTo(0, 0); this.setState({ screen: 'landing' }); },
+      goCommand: () => this.setState({ screen: 'app', appScreen: 'command' }),
+      goMenu: () => { window.location.href = 'Menu Card.dc.html'; },
+      goTheme: () => this.setState({ appScreen: 'theme' }),
+      goUsers: () => this.setState({ appScreen: 'users' }),
+      goFin: () => this.setState({ appScreen: 'fin' }),
+      goKpi: () => this.setState({ appScreen: 'kpi' }),
+      goSchemes: () => this.setState({ appScreen: 'schemes', scheme: null }),
+      goMeet: () => this.setState({ appScreen: 'meet' }),
+      goActs: () => this.setState({ appScreen: 'acts' }),
+      density: this.state.density,
+      densityLabel: this.state.density === 'compact' ? 'Compact' : 'Comfortable',
+      toggleDensity: () => this.setState(s => ({ density: s.density === 'compact' ? 'comfortable' : 'compact' })),
+      fyCurrent: this.state.fy === 'current',
+      fyPrev: this.state.fy === 'prev',
+      pickFyCurrent: () => this.setState({ fy: 'current' }),
+      pickFyPrev: () => this.setState({ fy: 'prev' }),
+      toast: this.state.toast,
+      toastMsg: this.state.toastMsg,
+      soon: () => this.say('This module is part of the guided demo — ask your Airawat contact to walk you through it.'),
+      ...this.appVals()
+    };
+  }
+
+  say(msg) {
+    clearTimeout(this._t);
+    this.setState({ toast: true, toastMsg: msg });
+    this._t = setTimeout(() => this.setState({ toast: false }), 2200);
+  }
+
+  lum(hex) {
+    const c = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map(i => {
+      let v = parseInt(c.substr(i, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  static SCHEMES = [
+    ['Riverfront embankment phase II', 'SUR-WTR-014', 'Water works', '₹ 780 cr', '₹ 612 cr', 78, '4 KPIs', 'ok', 'S. Menon'],
+    ['Arterial road resurfacing', 'SUR-TRN-031', 'Transport', '₹ 604 cr', '₹ 388 cr', 64, '3 KPIs', 'ok', 'R. Iyer'],
+    ['Stormwater drain network', 'SUR-WTR-022', 'Water works', '₹ 214 cr', '₹ 154 cr', 71, '3 KPIs', 'ok', 'S. Menon'],
+    ['Ward sanitation upgrade', 'SUR-SAN-008', 'Sanitation', '₹ 462 cr', '₹ 241 cr', 52, '5 KPIs', 'watch', 'R. Iyer'],
+    ['Transit housing block C', 'SUR-HSG-011', 'Housing', '₹ 520 cr', '₹ 176 cr', 34, '4 KPIs', 'risk', 'K. Bhatt'],
+    ['Market complex redevelopment', 'SUR-EST-019', 'Estates', '₹ 310 cr', '₹ 108 cr', 31, '2 KPIs', 'risk', 'A. Deshpande'],
+    ['Lakeside park restoration', 'SUR-PRK-005', 'Parks', '₹ 148 cr', '₹ 52 cr', 29, '2 KPIs', 'risk', 'N. Rao']
+  ];
+
+  schemeStatus(kind) {
+    return kind === 'ok' ? ['✓ On track', { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' }]
+      : kind === 'watch' ? ['△ Watch', { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' }]
+      : ['! Lapse risk', { border: '1px solid var(--color-accent)', color: 'var(--color-accent)', background: 'transparent' }];
+  }
+
+  schemeVals() {
+    const sel = Component.SCHEMES.find(x => x[1] === this.state.scheme);
+    const rows = Component.SCHEMES.map(([name, code, dept, sanction, released, util, kpis, st]) => {
+      const [status, tagStyle] = this.schemeStatus(st);
+      return { name, code, dept, sanction, released, util: util + '%', kpis, status, tagStyle,
+        open: () => this.setState({ scheme: code }) };
+    });
+    const out = { schemeRows: rows, noScheme: !sel, hasScheme: !!sel, closeScheme: () => this.setState({ scheme: null }) };
+    if (sel) {
+      const [name, code, dept, sanction, released, util, kpis, st, owner] = sel;
+      const [status, tagStyle] = this.schemeStatus(st);
+      Object.assign(out, { sName: name, sCode: code, sDept: dept, sSanction: sanction, sReleased: released,
+        sUtil: util + '%', sStatus: status, sTagStyle: tagStyle, sOwner: owner,
+        sActions: st === 'risk' ? 3 : st === 'watch' ? 2 : 1,
+        sUtilBar: { display: 'block', width: util + '%', height: '4px', borderRadius: '2px', background: 'var(--color-accent)' } });
+    }
+    return out;
+  }
+
+  appVals() {
+    const s = this.state;
+    const scr = s.appScreen;
+    const titles = { command: ['Command Centre', 'Scope: all departments · updated 14:20'],
+      fin: ['Financial Overview', 'Budget · released · actual, by quarter and head code'],
+      kpi: ['KPI Monitoring', '15 KPIs against thresholds'],
+      schemes: ['Schemes register', '12 active schemes in your scope'],
+      meet: ['Meetings & report packs', 'Reviews, packs, and data-entry windows'],
+      acts: ['Action items', 'Decisions and follow-ups from reviews'],
+      menu: ['Menu cards', 'Choose the modules your organization uses'],
+      theme: ['Design system', 'Your branding, applied to every screen'],
+      users: ['Users & roles', 'Who can see and approve what'] };
+
+    // menu-card configurator
+    const modGroups = Component.MODS.map(([name, mods]) => ({ name, mods: mods.map(([id, label, desc, locked]) => {
+      const on = !locked && !s.modsOff[id];
+      return { id, label, desc, locked, unlocked: !locked, ariaOn: String(on),
+        toggle: () => this.setState(p => ({ modsOff: { ...p.modsOff, [id]: !p.modsOff[id] } })),
+        upgrade: () => this.say('Included in Tier 3 · Institution — your Airawat contact can enable it for a trial.'),
+        swStyle: { width: '34px', height: '20px', flex: 'none', borderRadius: '999px', border: '1px solid ' + (on ? 'var(--color-accent)' : 'var(--color-divider)'), background: on ? 'color-mix(in srgb, var(--color-accent) 35%, transparent)' : 'transparent', position: 'relative', cursor: 'pointer', padding: 0 },
+        knobStyle: { position: 'absolute', top: '2px', left: on ? '16px' : '2px', width: '14px', height: '14px', borderRadius: '50%', background: on ? 'var(--color-accent)' : 'var(--color-neutral-500)', transition: 'left 0.15s ease' } };
+    }) }));
+    const enabledNav = [];
+    for (const g of modGroups) for (const m of g.mods) if (!m.locked && m.ariaOn === 'true' && !['usr','mnu','dsn','loc','ntf'].includes(m.id)) enabledNav.push(m.label);
+
+    // design-system configurator
+    const dark = s.tMode === 'dark';
+    const pvBg = dark ? '#161826' : '#eef0f8';
+    const pvSurface = dark ? '#232532' : '#f8f9fd';
+    const pvText = dark ? '#e9e9ed' : '#232532';
+    const l1 = this.lum(s.tAccent), l2 = this.lum(pvBg);
+    const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const swatchList = [['Nocturne blurple', '#9184d9'], ['River teal', '#5fa8a0'], ['Laterite', '#c2925c'], ['Slate blue', '#7f9cc9'], ['Rosewood', '#c07f92'], ['Graphite', '#9397ab']];
+    const inr = s.tLoc === 'in';
+    const previewVars = {
+      '--color-accent': s.tAccent, '--color-bg': pvBg, '--color-surface': pvSurface, '--color-text': pvText,
+      '--color-divider': 'color-mix(in srgb, ' + pvText + ' 16%, transparent)',
+      '--radius-md': s.tRad + 'px', '--radius-sm': Math.max(2, s.tRad / 2) + 'px',
+      '--shadow-sm': dark ? '0 0 0 1px #3f424d' : '0 0 0 1px #d9dde9',
+      ...(s.tDensity === 'compact' ? { '--space-1': '2px', '--space-2': '4px', '--space-3': '6px', '--space-4': '8px', '--space-6': '11px', '--space-8': '15px' } : {})
+    };
+    return {
+      appTitle: titles[scr][0], appSubtitle: titles[scr][1],
+      appCommand: scr === 'command', appMenu: scr === 'menu', appTheme: scr === 'theme', appUsers: scr === 'users',
+      appFin: scr === 'fin', appKpi: scr === 'kpi', appSchemes: scr === 'schemes', appMeet: scr === 'meet', appActs: scr === 'acts',
+      navCmd: scr === 'command' ? '1' : '0', navMenu: scr === 'menu' ? '1' : '0',
+      navTheme: scr === 'theme' ? '1' : '0', navUsers: scr === 'users' ? '1' : '0',
+      navFin: scr === 'fin' ? '1' : '0', navKpi: scr === 'kpi' ? '1' : '0', navSchemes: scr === 'schemes' ? '1' : '0',
+      navMeet: scr === 'meet' ? '1' : '0', navActs: scr === 'acts' ? '1' : '0',
+      ...this.schemeVals(),
+      modGroups, enabledNav, enabledCount: enabledNav.length,
+      swatches: swatchList.map(([name, hex]) => ({ name, hex, pick: () => this.setState({ tAccent: hex }),
+        style: { width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', background: hex, border: '2px solid ' + (s.tAccent === hex ? 'var(--color-text)' : 'transparent'), boxShadow: s.tAccent === hex ? '0 0 0 2px var(--color-accent)' : 'var(--shadow-sm)', padding: 0 } })),
+      contrastOk: ratio >= 3, contrastBad: ratio < 3, contrastRatio: ratio.toFixed(1),
+      tModeLabel: dark ? 'dark' : 'light',
+      tDark: dark, tLight: !dark, pickTDark: () => this.setState({ tMode: 'dark' }), pickTLight: () => this.setState({ tMode: 'light' }),
+      tComfy: s.tDensity === 'comfortable', tCompact: s.tDensity === 'compact',
+      pickTComfy: () => this.setState({ tDensity: 'comfortable' }), pickTCompact: () => this.setState({ tDensity: 'compact' }),
+      tRad4: s.tRad === 4, tRad8: s.tRad === 8, tRad14: s.tRad === 14,
+      pickTRad4: () => this.setState({ tRad: 4 }), pickTRad8: () => this.setState({ tRad: 8 }), pickTRad14: () => this.setState({ tRad: 14 }),
+      tLocIn: inr, tLocEu: !inr, pickTLocIn: () => this.setState({ tLoc: 'in' }), pickTLocEu: () => this.setState({ tLoc: 'eu' }),
+      locAmount: inr ? '₹ 4,812 cr' : '€ 481,2 Mio.', locTotal: inr ? '₹ 7,040 cr' : '€ 704,0 Mio.',
+      locUnit: inr ? '₹ cr' : '€ Mio.', locRow1: inr ? '₹ 612 cr' : '€ 61,2 Mio.', locRow2: inr ? '₹ 388 cr' : '€ 38,8 Mio.',
+      previewPaneStyle: { ...previewVars, borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', overflow: 'hidden', background: pvBg, color: pvText, position: 'sticky', top: '76px' },
+      pvBtnStyle: { font: 'inherit', fontSize: '13px', fontFamily: 'var(--font-heading)', cursor: 'pointer', padding: '7px 14px', borderRadius: 'var(--radius-md)', border: '1px solid ' + s.tAccent, color: s.tAccent, background: 'transparent' },
+      pvBtn2Style: { font: 'inherit', fontSize: '13px', fontFamily: 'var(--font-heading)', cursor: 'pointer', padding: '7px 14px', borderRadius: 'var(--radius-md)', border: '1px solid color-mix(in srgb, ' + pvText + ' 16%, transparent)', color: pvText, background: 'transparent' },
+      saveTheme: () => this.say('Theme saved. Your users see it on their next sign-in.'),
+      resetTheme: () => this.setState({ tAccent: '#9184d9', tMode: 'dark', tDensity: 'comfortable', tRad: 8, tLoc: 'in', previewAsUser: false }),
+      previewAsUserLabel: s.previewAsUser ? 'Exit user preview' : 'Preview as end user',
+      togglePreviewAsUser: () => this.setState(p => ({ previewAsUser: !p.previewAsUser })),
+      shellStyle: { display: 'grid', gridTemplateColumns: '232px 1fr', minHeight: '100vh', alignItems: 'start', ...(s.previewAsUser ? previewVars : {}), ...(s.previewAsUser ? { background: pvBg, color: pvText } : {}) },
+      invite: () => this.say('Invitation flow is part of the guided demo.')
+    };
+  }
+}
+</script>
+</body>
+</html>

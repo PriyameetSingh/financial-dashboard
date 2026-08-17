@@ -162,9 +162,9 @@ export default function MeetingsPage() {
       <div className="space-y-8 px-6 py-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Coordination Desk</p>
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Meeting Calendar</h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Coordination Desk</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)]">Meeting Calendar</h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               HUDD dashboard meetings, presentation files, and linked action items.
             </p>
           </div>
@@ -173,7 +173,7 @@ export default function MeetingsPage() {
               id="btn-schedule-meeting"
               type="button"
               onClick={() => setShowSchedule(true)}
-              className="group flex items-center gap-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-5 py-2.5 text-sm font-medium text-[var(--accent)] transition-all hover:bg-[var(--accent)]/20 hover:shadow-lg hover:shadow-[var(--accent)]/10 active:scale-[0.97]"
+              className="btn btn-primary group px-5 py-2.5 text-sm font-medium"
             >
               <CalendarPlus size={16} className="transition-transform group-hover:rotate-6" />
               Schedule Meeting
@@ -182,20 +182,20 @@ export default function MeetingsPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[var(--alert-critical)]/5 px-4 py-3 text-sm text-[var(--alert-critical)]">
+          <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[var(--ax-status-critical)]/5 px-4 py-3 text-sm text-[var(--ax-status-critical)]">
             {error}
           </div>
         )}
 
         {loading && (
-          <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+          <div className="flex items-center gap-3 text-sm text-[var(--ax-muted)]">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent)] border-t-transparent" />
             Loading meetings…
           </div>
         )}
 
         {!loading && meetings.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-card)] p-10 text-center text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-dashed border-[var(--color-divider)] bg-[var(--color-surface)] p-10 text-center text-sm text-[var(--ax-muted)]">
             <CalendarPlus size={32} className="mx-auto mb-3 opacity-30" />
             No meetings recorded yet.
             {canSchedule && (
@@ -208,10 +208,10 @@ export default function MeetingsPage() {
 
         {todayMeetings.length > 0 && (
           <section>
-            <h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">
+            <h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-accent)]">
               <Sparkles size={14} /> Today&apos;s Meetings
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="ax-meeting-grid grid gap-4 md:grid-cols-2" role="group" aria-label="Today's meetings">
               {todayMeetings.map((m) => (
                 <MeetingCard 
                   key={m.id} 
@@ -231,11 +231,11 @@ export default function MeetingsPage() {
         {otherMeetings.length > 0 && (
           <section>
             {todayMeetings.length > 0 && (
-              <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                 Upcoming &amp; Past
               </h2>
             )}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="ax-meeting-grid grid gap-4 md:grid-cols-2" role="group" aria-label="Upcoming and past meetings">
               {otherMeetings.map((m) => (
                 <MeetingCard 
                   key={m.id} 
@@ -322,70 +322,84 @@ function MeetingCard({
 }) {
   const materials = meeting.materials ?? [];
   return (
+    /*
+     * NOT `role="button"` with a tabindex, which is what this was.
+     *
+     * The card contains edit and delete buttons, so declaring the card itself a
+     * button nested one control inside another: a keyboard user landed on the
+     * card, and the buttons inside it were unreachable in any predictable order.
+     * It only surfaced once a seeded user actually held the permissions that
+     * render those buttons — before the permission fix, no audit user did.
+     *
+     * The whole-card click stays for pointer users, exactly as before. The
+     * keyboard path is the title below, which is now a real button calling the
+     * same handler, so each card exposes one clear control plus its actions.
+     */
     <div
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 ${
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
         isToday
-          ? "border-[var(--accent)]/40 bg-gradient-to-br from-[var(--accent)]/5 to-[var(--bg-card)] shadow-md shadow-[var(--accent)]/5"
-          : "border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-hover,var(--border))]"
+          ? "border-[var(--color-accent)]/40 bg-gradient-to-br from-[var(--color-accent)]/5 to-[var(--color-surface)] shadow-md shadow-[var(--color-accent)]/5"
+          : "border-[var(--color-divider)] bg-[var(--color-surface)] hover:border-[var(--color-accent,var(--color-divider))]"
       }`}
     >
       {isToday && (
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[var(--accent)]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[var(--color-accent)]/10 blur-3xl" />
       )}
 
       <div className="relative">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">{meeting.meetingDate}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">{meeting.meetingDate}</p>
           <div className="flex items-center gap-2">
             {isToday && (
-              <span className="flex items-center gap-1 rounded-full bg-[var(--accent)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent)]">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
+              <span className="flex items-center gap-1 rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-accent)]">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-accent)]" />
                 Today
               </span>
             )}
-            <p className="text-xs text-[var(--text-muted)]">{meeting.createdByName ?? "—"}</p>
+            <p className="text-xs text-[var(--ax-muted)]">{meeting.createdByName ?? "—"}</p>
           </div>
         </div>
 
-        <h3 className="mt-3 text-lg font-semibold text-[var(--text-primary)]">
-          {meeting.title ?? "Untitled meeting"}
+        <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.();
+            }}
+            className="text-left hover:underline focus-visible:underline"
+          >
+            {meeting.title ?? "Untitled meeting"}
+          </button>
         </h3>
         {meeting.notes && (
-          <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-muted)]">{meeting.notes}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--ax-muted)]">{meeting.notes}</p>
         )}
 
         <div className="mt-3">
-          <span className="inline-block rounded-md bg-[var(--bg-card,var(--bg-primary))] px-2 py-0.5 text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+          <span className="inline-block rounded-md bg-[var(--color-surface,var(--color-bg))] px-2 py-0.5 text-[10px] uppercase tracking-widest text-[var(--ax-muted)]">
             FY {getFinancialYear(meeting.meetingDate)}
           </span>
         </div>
 
         {materials.length > 0 && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-            <FileText size={14} className="text-[var(--accent)]" />
+          <div className="mt-3 flex items-center gap-2 text-xs text-[var(--ax-muted)]">
+            <FileText size={14} className="text-[var(--color-accent)]" />
             <span>
               {materials.length} presentation file{materials.length !== 1 ? "s" : ""}
             </span>
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-[var(--text-muted)]">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-[var(--ax-muted)]">
           <p>
             <span className="text-[10px] font-medium uppercase tracking-[0.3em]">Discussion topics</span>
-            <span className="ml-2 tabular-nums text-[var(--text-primary)]">{meeting.topics.length}</span>
+            <span className="ml-2 tabular-nums text-[var(--color-text)]">{meeting.topics.length}</span>
           </p>
           <p>
             <span className="text-[10px] font-medium uppercase tracking-[0.3em]">Action items</span>
-            <span className="ml-2 tabular-nums text-[var(--text-primary)]">{meeting.actionItems.length}</span>
+            <span className="ml-2 tabular-nums text-[var(--color-text)]">{meeting.actionItems.length}</span>
           </p>
         </div>
 
@@ -398,7 +412,7 @@ function MeetingCard({
                 e.stopPropagation();
                 onEdit();
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-accent)]/5"
             >
               <Edit3 size={12} />
               Edit
@@ -412,7 +426,7 @@ function MeetingCard({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--alert-critical)]/40 bg-[var(--alert-critical)]/5 px-3 py-1.5 text-xs font-medium text-[var(--alert-critical)] transition-colors hover:border-[var(--alert-critical)]/60 hover:bg-[var(--alert-critical)]/10"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--ax-status-critical)]/40 bg-[var(--ax-status-critical)]/5 px-3 py-1.5 text-xs font-medium text-[var(--ax-status-critical)] transition-colors hover:border-[var(--ax-status-critical)]/60 hover:bg-[var(--ax-status-critical)]/10"
             >
               <Trash2 size={12} />
               Delete
@@ -428,7 +442,7 @@ function MeetingCard({
               e.stopPropagation();
               onClick();
             }}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--accent)]/20 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[var(--accent)]/30 active:scale-[0.98]"
+            className="btn btn-primary mt-5 w-full px-4 py-2.5 text-sm font-semibold"
           >
             <Play size={16} fill="white" />
             Start Meeting

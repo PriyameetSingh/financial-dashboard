@@ -9,11 +9,11 @@ import type { ActionItem } from "@/types";
 function statusTone(status: string) {
   switch (status) {
     case "COMPLETED":
-      return "text-[var(--alert-success)]";
+      return "text-[var(--ax-status-ok)]";
     case "OVERDUE":
-      return "text-[var(--alert-critical)]";
+      return "text-[var(--ax-status-critical)]";
     default:
-      return "text-[var(--text-muted)]";
+      return "text-[var(--ax-muted)]";
   }
 }
 
@@ -68,7 +68,7 @@ export default function ActionItemsMeetingPanel({ meeting }: { meeting: MeetingL
 
   if (loading || allItems === null) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center gap-2 py-8 text-sm text-[var(--ax-muted)]">
         <Loader2 className="animate-spin" size={18} />
         Loading action items…
       </div>
@@ -76,11 +76,11 @@ export default function ActionItemsMeetingPanel({ meeting }: { meeting: MeetingL
   }
 
   if (err) {
-    return <p className="text-sm text-[var(--alert-critical)]">{err}</p>;
+    return <p className="text-sm text-[var(--ax-status-critical)]">{err}</p>;
   }
 
   if (allItems.length === 0) {
-    return <p className="text-sm text-[var(--text-muted)]">No action items yet.</p>;
+    return <p className="text-sm text-[var(--ax-muted)]">No action items yet.</p>;
   }
 
   const emptyMeetingFilter = meetingOnly && visibleItems.length === 0;
@@ -88,17 +88,17 @@ export default function ActionItemsMeetingPanel({ meeting }: { meeting: MeetingL
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-[var(--text-muted)]">
+        <p className="text-xs text-[var(--ax-muted)]">
           {emptyMeetingFilter ? (
             <>
               Showing items linked to this meeting ({linkedIds.size} linked).
             </>
           ) : (
             <>
-              Progress: <strong className="text-[var(--text-primary)]">{progress.done}</strong> / {progress.total}{" "}
+              Progress: <strong className="text-[var(--color-text)]">{progress.done}</strong> / {progress.total}{" "}
               completed
               {!meetingOnly && linkedIds.size > 0 && (
-                <span className="ml-2 text-[var(--text-muted)]/80">
+                <span className="ml-2 text-[var(--ax-muted)]/80">
                   ({linkedIds.size} linked to this meeting)
                 </span>
               )}
@@ -112,8 +112,8 @@ export default function ActionItemsMeetingPanel({ meeting }: { meeting: MeetingL
           onClick={() => setMeetingOnly((v) => !v)}
           className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
             meetingOnly
-              ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-              : "border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-muted)] hover:border-[var(--border-hover,var(--border))]"
+              ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+              : "border-[var(--color-divider)] bg-[var(--color-bg)] text-[var(--ax-muted)] hover:border-[var(--color-accent,var(--color-divider))]"
           }`}
         >
           <Filter size={14} aria-hidden />
@@ -122,20 +122,20 @@ export default function ActionItemsMeetingPanel({ meeting }: { meeting: MeetingL
       </div>
 
       {emptyMeetingFilter ? (
-        <p className="text-sm text-[var(--text-muted)]">No action items are linked to this meeting.</p>
+        <p className="text-sm text-[var(--ax-muted)]">No action items are linked to this meeting.</p>
       ) : (
         <ul className="space-y-2">
           {visibleItems.map((a) => (
             <li
               key={a.id}
-              className="flex flex-col gap-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <p className="font-medium text-[var(--text-primary)]">{a.title}</p>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="font-medium text-[var(--color-text)]">{a.title}</p>
+                <p className="text-xs text-[var(--ax-muted)]">
                   Due {a.dueDate} · {a.assignedTo}
                   {!meetingOnly && linkedIds.has(a.id) && (
-                    <span className="ml-1.5 rounded-md bg-[var(--accent)]/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+                    <span className="ml-1.5 rounded-md bg-[var(--color-accent)]/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-accent)]">
                       This meeting
                     </span>
                   )}

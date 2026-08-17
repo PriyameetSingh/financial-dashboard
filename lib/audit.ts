@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
+import { tenantStamped, type TenantTransactionClient } from "@/lib/prisma";
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -19,7 +20,7 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
  * is serialized away.
  */
 export async function logAudit(
-  tx: Prisma.TransactionClient,
+  tx: TenantTransactionClient,
   actorUserId: string | null | undefined,
   actionType: string,
   entityType: string,
@@ -29,7 +30,7 @@ export async function logAudit(
   metadata?: any,
 ) {
   await tx.auditLog.create({
-    data: {
+    data: tenantStamped({
       actorUserId: actorUserId ?? null,
       actionType,
       entityType,
@@ -37,7 +38,7 @@ export async function logAudit(
       before: before === null || before === undefined ? Prisma.JsonNull : (before as Prisma.InputJsonValue),
       after: after === null || after === undefined ? Prisma.JsonNull : (after as Prisma.InputJsonValue),
       metadata: metadata === null || metadata === undefined ? undefined : (metadata as Prisma.InputJsonValue),
-    },
+    }),
   });
 }
 

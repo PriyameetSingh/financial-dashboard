@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ roleCo
     const { roleCode } = await ctx.params;
     const body = (await request.json()) as Body;
 
-    const role = await prisma.role.findUnique({ where: { code: roleCode } });
+    const role = await prisma.role.findFirst({ where: { code: roleCode } });
     if (!role) return NextResponse.json({ detail: "Role not found" }, { status: 404 });
 
     const perm = await prisma.permission.findUnique({ where: { code: body.permissionCode } });
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ roleCo
         await tx.rolePermission.upsert({
           where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
           update: {},
-          create: { roleId: role.id, permissionId: perm.id },
+          create: tenantStamped({ roleId: role.id, permissionId: perm.id }),
         });
       } else {
         await tx.rolePermission

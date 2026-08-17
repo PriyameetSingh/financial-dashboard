@@ -114,6 +114,11 @@ a new `departmentFullName` key.
 
 | # | Location | Current literal | Target |
 |---|----------|-----------------|--------|
+> **DISCHARGED** (Phase 3 follow-up): all three now read `reportFilenamePrefix`
+> from tenant config, and the golden's HTTP smoke leg asserts a non-Odisha tenant's
+> downloads carry that tenant's prefix. Odisha's default is the former literal
+> (`HUDD`), so its filenames are byte-identical.
+>
 | D1 | `app/api/v1/reports/meeting/[meetingId]/pdf/route.ts:53` | `` `HUDD-meeting-report-${date}.pdf` `` | `reportFilenamePrefix` key |
 | D2 | `app/api/v1/reports/meeting/[meetingId]/xlsx/route.ts:57` | `` `HUDD-meeting-report-${date}.xlsx` `` | same |
 | D3 | `app/api/v1/reports/pendance/[meetingId]/pdf/route.ts:41` | `` `HUDD-pendance-report-${date}.pdf` `` | same |
@@ -159,6 +164,54 @@ extract to `lib/tenant-config/`. Tracked separately from the discharge rule abov
 - `lib/templates.ts:94,97` — demo action-item rows
 - `app/financial/execution-efficiency/ExecutionEfficiencyClient.tsx:193-249,265` — demo `valueDisplay` strings
 - `components/AgentPanel.tsx:13,49`, `components/CommandCentre.tsx:40` — demo alert/status strings
+
+---
+
+## H. Human decisions — not agent-dischargeable
+
+Items that need an explicit human call. An agent must **document and exclude**
+them, never resolve them unilaterally.
+
+### H1. `tenantId` column-default drift — **RESOLVED**
+
+**Decision (operator, Phase 3):** remove the defaults. Option 1 of the two below.
+
+`prisma/schema.prisma` declared
+`@default(dbgenerated("(current_setting('app.tenant_id', true))::uuid"))` on the
+`tenantId` of 46 tenant-scoped models. **No database ever had it** — the schema
+was the only place it existed — so `prisma migrate dev` proposed 46
+`ALTER COLUMN … SET DEFAULT` statements on every new migration.
+
+**Why removal, not materialisation.** Per `docs/PHASE2-TENANCY-PLAN.md` §2 the
+hazard ran in the direction of *adding* it:
+
+- **No default (today):** a write that bypasses the chokepoint hits `NOT NULL`
+  and fails loudly. That is the safe failure.
+- **Default present, GUC unbound:** identical behaviour — evaluates to NULL,
+  `NOT NULL` still rejects.
+- **Default present, GUC bound** (an RLS rollout being the obvious candidate):
+  the same bypassing write silently succeeds, stamped with whatever tenant the
+  pooled connection last had set. A silent cross-tenant write.
+
+**What landed.**
+
+- The defaults are gone from the schema. **The removal produced an empty
+  migration** — confirmed twice with `prisma migrate dev --create-only` — because
+  schema and database now agree. Migrate no longer proposes anything.
+- `tenantId` became required in every generated create input. Resolved with a
+  typed wrapper, `tenantStamped()` (lib/prisma.ts), applied at the ~116
+  scoped-client create sites: it asserts to the type system what the chokepoint
+  guarantees at runtime, so the chokepoint remains the **sole** stamper and no
+  application code hand-writes a tenant id.
+- The ~14 unscoped-client sites (seeds, maintenance scripts) now pass a real
+  `tenantId`, which the compiler requires of them. That is a net safety gain:
+  those writes previously depended on a default that did not exist.
+- Schema header rewritten to record this decision, so the default is not
+  reintroduced by a future "helpful" edit.
+
+**If RLS is introduced later:** bind the GUC per transaction and treat it as the
+authoritative tenant source, or leave the chokepoint as the only writer. Do not
+restore a column default — the two mechanisms must never be half-live.
 
 ---
 

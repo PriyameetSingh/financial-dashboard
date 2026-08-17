@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OfficerType } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assignKeycloakClientRole, createOrFindKeycloakUser, deleteKeycloakUserById, KeycloakClientRoleNotFoundError } from "@/lib/keycloak-admin";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -100,13 +100,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const role = await prisma.role.findUnique({ where: { code: roleCode } });
+    const role = await prisma.role.findFirst({ where: { code: roleCode } });
     if (!role) {
       return NextResponse.json({ detail: `Role not found: ${roleCode}` }, { status: 400 });
     }
 
     // Validate email uniqueness
-    const existingUserByEmail = await prisma.user.findUnique({
+    const existingUserByEmail = await prisma.user.findFirst({
       where: { email },
     });
     if (existingUserByEmail) {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate phone number (code) uniqueness
-    const existingUserByCode = await prisma.user.findUnique({
+    const existingUserByCode = await prisma.user.findFirst({
       where: { code: username },
     });
     if (existingUserByCode) {
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     try {
       dbUser = await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
-          data: {
+          data: tenantStamped({
             name,
             email,
             code: username,
@@ -156,24 +156,24 @@ export async function POST(request: NextRequest) {
             ulbId,
             officerType,
             isActive: true,
-          },
+          }),
         });
 
         // "Set role" semantics: keep the selected role as the single primary role.
         await tx.userRole.create({
-          data: {
+          data: tenantStamped({
             userId: user.id,
             roleId: role.id,
-          },
+          }),
         });
 
         // Handle section associations via UserSection join table
         if (sectionIds.length > 0) {
           await tx.userSection.createMany({
-            data: sectionIds.map((sectionId) => ({
+            data: tenantStamped(sectionIds.map((sectionId) => ({
               userId: user.id,
               sectionId,
-            })),
+            }))),
             skipDuplicates: true,
           });
         }
@@ -181,10 +181,10 @@ export async function POST(request: NextRequest) {
         // Handle organisation associations via UserOrganisation join table
         if (organisationIds.length > 0) {
           await tx.userOrganisation.createMany({
-            data: organisationIds.map((organisationId) => ({
+            data: tenantStamped(organisationIds.map((organisationId) => ({
               userId: user.id,
               organisationId,
-            })),
+            }))),
             skipDuplicates: true,
           });
         }

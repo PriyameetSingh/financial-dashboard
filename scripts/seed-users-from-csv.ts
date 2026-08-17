@@ -1,4 +1,8 @@
 import { OfficerType, PrismaClient } from "@prisma/client";
+
+/** Phase 2: this script runs outside any request, so it addresses the tenant
+ * explicitly (default: the Odisha tenant; override with SEED_TENANT_ID). */
+const SCRIPT_TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
 import {
   createOrFindKeycloakUser,
   replaceKeycloakClientRole,
@@ -259,9 +263,10 @@ async function main() {
         if (!dryRun) {
           await prisma.$transaction(async (tx) => {
             const user = await tx.user.upsert({
-              where: { email: row.email },
+              where: { tenantId_email: { tenantId: SCRIPT_TENANT_ID, email: row.email } },
               update: {
-                name: row.name,
+                tenantId: SCRIPT_TENANT_ID,
+              name: row.name,
                 code: username,
                 department: row.department,
                 designationId,
@@ -270,7 +275,8 @@ async function main() {
                 isActive: true,
               },
               create: {
-                name: row.name,
+                tenantId: SCRIPT_TENANT_ID,
+              name: row.name,
                 email: row.email,
                 code: username,
                 department: row.department,
@@ -282,12 +288,16 @@ async function main() {
             });
 
             await tx.userRole.deleteMany({ where: { userId: user.id } });
-            await tx.userRole.create({ data: { userId: user.id, roleId } });
+            await tx.userRole.create({ data: { tenantId: SCRIPT_TENANT_ID, userId: user.id, roleId } });
 
             await tx.userOrganisation.deleteMany({ where: { userId: user.id } });
             if (organisationIds.length > 0) {
               await tx.userOrganisation.createMany({
-                data: organisationIds.map((organisationId) => ({ userId: user.id, organisationId })),
+                data: organisationIds.map((organisationId) => ({
+                  tenantId: SCRIPT_TENANT_ID,
+                  userId: user.id,
+                  organisationId,
+                })),
                 skipDuplicates: true,
               });
             }
@@ -295,7 +305,11 @@ async function main() {
             await tx.userSection.deleteMany({ where: { userId: user.id } });
             if (sectionIds.length > 0) {
               await tx.userSection.createMany({
-                data: sectionIds.map((sectionId) => ({ userId: user.id, sectionId })),
+                data: sectionIds.map((sectionId) => ({
+                  tenantId: SCRIPT_TENANT_ID,
+                  userId: user.id,
+                  sectionId,
+                })),
                 skipDuplicates: true,
               });
             }

@@ -147,7 +147,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4 py-8"
+      className="ax-scrim fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="reassign-kpi-title"
@@ -156,15 +156,15 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
       }}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 id="reassign-kpi-title" className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 id="reassign-kpi-title" className="text-lg font-semibold text-[var(--color-text)]">
               Reassign KPI
             </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               {submission.scheme} — {submission.description}
             </p>
           </div>
@@ -172,29 +172,29 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="shrink-0 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-hover)] disabled:opacity-50"
+            className="shrink-0 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] transition hover:bg-[var(--ax-hover)] disabled:opacity-50"
           >
             Close
           </button>
         </div>
 
         <div className="mt-6 space-y-6">
-          {usersError && <p className="text-sm text-[var(--alert-critical)]">{usersError}</p>}
+          {usersError && <p className="text-sm text-[var(--ax-status-critical)]">{usersError}</p>}
           {!usersError && users === null && (
-            <p className="text-sm text-[var(--text-muted)]">Loading user directory…</p>
+            <p className="text-sm text-[var(--ax-muted)]">Loading user directory…</p>
           )}
           {users && users.length < 1 && (
-            <p className="text-sm text-[var(--text-muted)]">The user directory is empty.</p>
+            <p className="text-sm text-[var(--ax-muted)]">The user directory is empty.</p>
           )}
           {users && users.length >= 1 && (
             <>
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Action owners</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">Action owners</p>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => setPerformerIds((prev) => [...prev, ""])}
-                  className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                  className="mt-2 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] disabled:opacity-50"
                 >
                   Add owner
                 </button>
@@ -217,7 +217,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                           type="button"
                           disabled={busy}
                           onClick={() => setPerformerIds((prev) => prev.filter((_, i) => i !== index))}
-                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                          className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)]"
                         >
                           Remove
                         </button>
@@ -226,35 +226,35 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-divider)]">
                 <input
                   type="checkbox"
                   id="reassign-kpi-self-approve-checkbox"
                   checked={isSelfApproved}
                   disabled={userPickerDisabled}
                   onChange={(e) => handleSelfApproveChange(e.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                  className="h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] focus:ring-[var(--color-accent)]"
                 />
-                <label htmlFor="reassign-kpi-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] cursor-pointer select-none">
+                <label htmlFor="reassign-kpi-self-approve-checkbox" className="text-xs uppercase tracking-[0.1em] text-[var(--ax-muted)] cursor-pointer select-none">
                   No separate review needed — owner will self-approve
                 </label>
               </div>
               {isSelfApproved && (
-                <p className="text-xs text-[var(--alert-success)]">
+                <p className="text-xs text-[var(--ax-status-ok)]">
                   ✓ KPI progress submissions will be approved immediately upon entry.
                 </p>
               )}
               {!isSelfApproved && (
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Reviewers</p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">Reviewers</p>
+                  <p className="mt-1 text-xs text-[var(--ax-muted)]">
                     Optional. If none are listed, submitted updates are marked complete without a separate review step.
                   </p>
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => setReviewerIds((prev) => [...prev, ""])}
-                    className="mt-2 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-50"
+                    className="mt-2 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] disabled:opacity-50"
                   >
                     Add reviewer
                   </button>
@@ -277,7 +277,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
                             type="button"
                             disabled={busy}
                             onClick={() => setReviewerIds((prev) => prev.filter((_, i) => i !== index))}
-                            className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)]"
+                            className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)]"
                           >
                             Remove
                           </button>
@@ -289,13 +289,13 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
               )}
             </>
           )}
-          {msg && <p className="text-sm text-[var(--text-muted)]">{msg}</p>}
+          {msg && <p className="text-sm text-[var(--ax-muted)]">{msg}</p>}
           <div className="flex flex-wrap gap-2 pt-2">
             <button
               type="button"
               disabled={busy || userPickerDisabled}
               onClick={handleSave}
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-xs font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-xs font-semibold text-[var(--color-bg)] disabled:opacity-50"
             >
               {busy ? "Saving…" : "Save assignments"}
             </button>
@@ -303,7 +303,7 @@ export default function ReassignKpiModal({ open, submission, onClose, onSaved }:
               type="button"
               disabled={busy}
               onClick={onClose}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs text-[var(--text-muted)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-xs text-[var(--ax-muted)]"
             >
               Cancel
             </button>

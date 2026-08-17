@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "Reason is required" }, { status: 400 });
     }
 
-    const scheme = await prisma.scheme.findUnique({
+    const scheme = await prisma.scheme.findFirst({
       where: { code: body.schemeCode },
       include: { subschemes: true },
     });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: "Scheme not found" }, { status: 404 });
     }
 
-    const fy = await prisma.financialYear.findUnique({ 
+    const fy = await prisma.financialYear.findFirst({ 
       where: { label: body.financialYearLabel } 
     });
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const created = await tx.financeBudgetSupplement.create({
-        data: {
+        data: tenantStamped({
           schemeId: scheme.id,
           subschemeId,
           financialYearId: fy.id,
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           reason: body.reason,
           referenceNo: body.referenceNo,
           createdById: actor?.id ?? null,
-        },
+        }),
       });
 
       await logAudit(

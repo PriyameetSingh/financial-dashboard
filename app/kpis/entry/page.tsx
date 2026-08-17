@@ -302,39 +302,39 @@ export default function KPIEntryPage() {
     setExpandedSchemes((prev) => ({ ...prev, [scheme]: !prev[scheme] }));
 
   const statusDot = (status: KPISubmission["status"]) => {
-    if (status === "approved") return "bg-[var(--alert-success)]";
-    if (status === "submitted" || status === "submitted_pending") return "bg-[var(--alert-warning,#f59e0b)]";
-    if (status === "draft") return "bg-[var(--text-muted)]";
-    return "bg-[var(--border)]";
+    if (status === "approved") return "bg-[var(--ax-status-ok)]";
+    if (status === "submitted" || status === "submitted_pending") return "ax-fill-warning";
+    if (status === "draft") return "bg-[var(--ax-muted)]";
+    return "bg-[var(--color-divider)]";
   };
 
   return (
     <AppShell title="KPI Entry">
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
         {/* ── Left sidebar ── */}
-        <aside className={`w-full md:w-[20rem] shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-card)] ${selectedId ? "hidden md:flex" : "flex"}`}>
-          <div className="border-b border-[var(--border)] px-4 py-3">
+        <aside className={`w-full md:w-[20rem] shrink-0 flex-col overflow-y-auto border-r border-[var(--color-divider)] bg-[var(--color-surface)] ${selectedId ? "hidden md:flex" : "flex"}`}>
+          <div className="border-b border-[var(--color-divider)] px-4 py-3">
             <Link
               href="/kpis"
-              className="text-[11px] font-medium text-[var(--accent)] hover:underline"
+              className="text-[11px] font-medium text-[var(--color-accent)] hover:underline"
             >
               ← All KPIs
             </Link>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
+            <p className="mt-3 text-[10px] uppercase tracking-[0.35em] text-[var(--ax-muted)]">
               Data entry
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-[var(--text-primary)] tabular-nums">
+            <p className="mt-0.5 text-sm font-semibold text-[var(--color-text)] tabular-nums">
               {financialYearLabel ?? "—"}
             </p>
             {!loading && (
-              <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+              <p className="mt-1 text-[11px] text-[var(--ax-muted)]">
                 {completion.submitted} of {completion.total} submitted
               </p>
             )}
             {!loading && grouped.length > 0 && (
               <div className="relative mt-3">
                 <Search
-                  className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]"
+                  className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ax-muted)]"
                   aria-hidden
                 />
                 <input
@@ -342,7 +342,7 @@ export default function KPIEntryPage() {
                   value={sidebarQuery}
                   onChange={(e) => setSidebarQuery(e.target.value)}
                   placeholder="Filter KPIs…"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] py-2 pl-8 pr-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                  className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] py-2 pl-8 pr-2 text-xs text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
                   autoComplete="off"
                 />
               </div>
@@ -350,16 +350,16 @@ export default function KPIEntryPage() {
           </div>
 
           {loading && (
-            <div className="px-4 py-6 text-xs text-[var(--text-muted)]">Loading…</div>
+            <div className="px-4 py-6 text-xs text-[var(--ax-muted)]">Loading…</div>
           )}
           {loadError && (
-            <div className="px-4 py-4 text-xs text-[var(--alert-critical)]">{loadError}</div>
+            <div className="px-4 py-4 text-xs text-[var(--ax-status-critical)]">{loadError}</div>
           )}
           {!loading && grouped.length === 0 && (
-            <div className="px-4 py-6 text-xs text-[var(--text-muted)]">No KPIs assigned.</div>
+            <div className="px-4 py-6 text-xs text-[var(--ax-muted)]">No KPIs assigned.</div>
           )}
           {!loading && grouped.length > 0 && filteredGrouped.length === 0 && (
-            <div className="px-4 py-6 text-xs text-[var(--text-muted)]">No KPIs match your filter.</div>
+            <div className="px-4 py-6 text-xs text-[var(--ax-muted)]">No KPIs match your filter.</div>
           )}
 
           <nav className="flex-1 py-2">
@@ -367,7 +367,7 @@ export default function KPIEntryPage() {
               <div key={scheme}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                   onClick={() => toggleScheme(scheme)}
                 >
                   {expandedSchemes[scheme] ? (
@@ -387,14 +387,14 @@ export default function KPIEntryPage() {
                           type="button"
                           onClick={() => setSelectedId(item.id)}
                           className={`flex w-full items-start gap-2 border-l-2 px-4 py-2 pl-[1.35rem] text-left transition ${selectedId === item.id
-                            ? "border-[var(--accent)] bg-[var(--bg-content-surface)]"
-                            : "border-transparent hover:border-[var(--border)] hover:bg-[var(--bg-content-surface)]"
+                            ? "border-[var(--color-accent)] bg-[var(--color-surface)]"
+                            : "border-transparent hover:border-[var(--color-divider)] hover:bg-[var(--color-surface)]"
                             }`}
                         >
                           <span
                             className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${statusDot(item.status)}`}
                           />
-                          <span className="min-w-0 text-xs leading-snug text-[var(--text-primary)]">
+                          <span className="min-w-0 text-xs leading-snug text-[var(--color-text)]">
                             {item.description}
                           </span>
                         </button>
@@ -408,9 +408,9 @@ export default function KPIEntryPage() {
         </aside>
 
         {/* ── Main detail panel ── */}
-        <main className={`min-w-0 flex-1 overflow-y-auto bg-[var(--bg-primary)] px-4 py-5 sm:px-8 sm:py-8 ${selectedId ? "block" : "hidden md:block"}`}>
+        <main className={`min-w-0 flex-1 overflow-y-auto bg-[var(--color-bg)] px-4 py-5 sm:px-8 sm:py-8 ${selectedId ? "block" : "hidden md:block"}`}>
           {!selectedItem && !loading && (
-            <div className="flex h-full min-h-[40vh] items-center justify-center px-4 text-center text-sm text-[var(--text-muted)]">
+            <div className="flex h-full min-h-[40vh] items-center justify-center px-4 text-center text-sm text-[var(--ax-muted)]">
               Select a KPI from the list to enter or review values.
             </div>
           )}
@@ -440,41 +440,41 @@ export default function KPIEntryPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedId(null)}
-                  className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline md:hidden"
+                  className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-accent)] hover:underline md:hidden"
                 >
                   ← Back to KPI List
                 </button>
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-5">
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-divider)] pb-5">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
+                    <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--ax-muted)]">
                       {item.scheme} · {item.vertical}
                     </p>
-                    <h2 className="mt-1.5 text-lg font-semibold leading-snug text-[var(--text-primary)] sm:text-xl">
+                    <h2 className="mt-1.5 text-lg font-semibold leading-snug text-[var(--color-text)] sm:text-xl">
                       {item.description}
                     </h2>
                     {(item.assignedToName || item.reviewerName) && (
-                      <p className="mt-2 text-xs text-[var(--text-muted)]">
+                      <p className="mt-2 text-xs text-[var(--ax-muted)]">
                         {item.assignedToName && (
                           <span>
-                            Action owner: <span className="text-[var(--text-primary)]">{item.assignedToName}</span>
+                            Action owner: <span className="text-[var(--color-text)]">{item.assignedToName}</span>
                           </span>
                         )}
                         {item.assignedToName && item.reviewerName ? " · " : ""}
                         {item.reviewerName && (
                           <span>
-                            Reviewer: <span className="text-[var(--text-primary)]">{item.reviewerName}</span>
+                            Reviewer: <span className="text-[var(--color-text)]">{item.reviewerName}</span>
                           </span>
                         )}
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      <span className="rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                         {item.type}
                       </span>
-                      <span className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                      <span className="rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--ax-muted)]">
                         {item.category}
                       </span>
-                      <span className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--text-secondary)]">
+                      <span className="rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--ax-text-secondary)]">
                         {item.numeratorUnit && item.denominatorUnit && item.numeratorUnit !== item.denominatorUnit ? (
                           <span>Units: {item.numeratorUnit} (Num) / {item.denominatorUnit} (Den)</span>
                         ) : (
@@ -486,7 +486,7 @@ export default function KPIEntryPage() {
                   <div className="shrink-0 flex items-center gap-2">
                     <StatusBadge status={item.status} />
                     {item.isSelfApproved && (
-                      <span className="inline-flex items-center rounded-full border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                      <span className="inline-flex items-center rounded-full border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_8%,_transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--ax-status-ok)]">
                         Self-Approved
                       </span>
                     )}
@@ -495,25 +495,25 @@ export default function KPIEntryPage() {
 
                 {/* Approved-decrease warning
                 {isApproved && approvedNum != null && (
-                  <div className="rounded-xl border border-[var(--alert-warning,#f59e0b)] bg-[rgba(245,158,11,0.08)] px-4 py-3 text-xs text-[var(--alert-warning,#f59e0b)]">
+                  <div className="rounded-xl ax-chip ax-chip-warning w-full px-4 py-3 text-xs">
                     Last approved value: <strong>{approvedNum} {item.numeratorUnit || item.unit}</strong>. New numerator cannot be set lower than this.
                   </div>
                 )} */}
 
                 {!canEditSelected && !isReviewerOnly && (
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+                  <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-muted)]">
                     You can view this KPI, but only the assigned action owner may enter or update progress (unless an administrator overrides).
                   </div>
                 )}
 
                 {isReviewerOnly && (
-                  <div className="rounded-xl border border-[var(--accent)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-accent)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-text)]">
                     {item.status === "submitted" || item.status === "submitted_pending" ? (
                       <span>Pending your review — approve or reject below.</span>
                     ) : item.status === "approved" ? (
-                      <span className="text-[var(--alert-success)]">✓ Approved</span>
+                      <span className="text-[var(--ax-status-ok)]">✓ Approved</span>
                     ) : item.hasEntryForLatestMeeting === false ? (
-                      <span className="text-[var(--text-muted)]">Pending entry from action owner</span>
+                      <span className="text-[var(--ax-muted)]">Pending entry from action owner</span>
                     ) : (
                       <span>Review only — inputs are read-only.</span>
                     )}
@@ -521,17 +521,18 @@ export default function KPIEntryPage() {
                 )}
 
                 <div
-                  className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-6 ${!canEditSelected && !isReviewerOnly ? "pointer-events-none opacity-50" : ""}`}
+                  className={`rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6 ${!canEditSelected && !isReviewerOnly ? "pointer-events-none opacity-50" : ""}`}
                 >
-                  <div className="mb-5 space-y-2 border-b border-[var(--border)] pb-5">
-                    <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
-                      Meeting {!isReviewerOnly && <span className="text-[var(--alert-critical)]">*</span>}
-                    </label>
+                  <div className="mb-5 space-y-2 border-b border-[var(--color-divider)] pb-5">
+                    {/* Label WRAPS the control — it sat beside it with no htmlFor,
+                        so nothing but proximity connected the two. */}
+                    <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
+                      Meeting {!isReviewerOnly && <span className="text-[var(--ax-status-critical)]">*</span>}
                     <select
                       value={meetingId}
                       onChange={(e) => setMeetingId(e.target.value)}
                       disabled={isReviewerOnly}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] disabled:cursor-not-allowed disabled:text-[var(--ax-muted)]"
                     >
                       <option value="">Select meeting…</option>
                       {meetings.map((m) => (
@@ -540,8 +541,9 @@ export default function KPIEntryPage() {
                         </option>
                       ))}
                     </select>
+                    </label>
                     {meetings.length === 0 && (
-                      <p className="text-[11px] text-[var(--text-muted)]">
+                      <p className="text-[11px] text-[var(--ax-muted)]">
                         No meetings found. Create one under Meetings first.
                       </p>
                     )}
@@ -549,16 +551,16 @@ export default function KPIEntryPage() {
 
                   {item.type === "BINARY" ? (
                     <div className="space-y-4">
-                      <p className="text-xs font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                      <p className="text-xs font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                         Response
                       </p>
                       <div className="flex flex-wrap gap-3">
                         <button
                           disabled={isInputDisabled}
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === true
-                            ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                            : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                            ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                            : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                           onClick={() => !isInputDisabled && setBinaryResponses((prev) => ({ ...prev, [item.id]: true }))}
                         >
                           Yes
@@ -566,9 +568,9 @@ export default function KPIEntryPage() {
                         <button
                           disabled={isInputDisabled}
                           className={`rounded-xl border px-6 py-2.5 text-xs uppercase tracking-[0.3em] transition ${binaryValue === false
-                            ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                            : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                            ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                            : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                           onClick={() => !isInputDisabled && setBinaryResponses((prev) => ({ ...prev, [item.id]: false }))}
                         >
                           No
@@ -578,12 +580,17 @@ export default function KPIEntryPage() {
                   ) : item.type === "OUTPUT" ? (
                     <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                           Numerator{item.numeratorUnit ? ` (${item.numeratorUnit})` : ""}
                         </label>
+                        {/* Named per row. The visible label sits beside it and says
+                            only "Numerator"; on a page of many KPIs that is the
+                            same name repeated, so the accessible name carries the
+                            KPI as well. */}
                         <input
                           type="number"
                           inputMode="decimal"
+                          aria-label={`Numerator${item.numeratorUnit ? ` in ${item.numeratorUnit}` : ""} for ${item.description}`}
                           value={numeratorById[item.id] ?? ""}
                           min={isApproved && approvedNum != null ? approvedNum : undefined}
                           readOnly={isInputDisabled}
@@ -595,35 +602,36 @@ export default function KPIEntryPage() {
                               setRowState((prev) => ({ ...prev, [item.id]: {} }));
                             }
                           }}
-                          className={`w-full rounded-xl border px-4 py-2.5 text-sm tabular-nums text-[var(--text-primary)] bg-[var(--bg-card)] focus:outline-none focus:ring-1 ${validationError
-                            ? "border-[var(--alert-critical)] focus:ring-[var(--alert-critical)]"
-                            : "border-[var(--border)] focus:ring-[var(--text-primary)]"
-                            } ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                          className={`w-full rounded-xl border px-4 py-2.5 text-sm tabular-nums text-[var(--color-text)] bg-[var(--color-surface)] focus:outline-none focus:ring-1 ${validationError
+                            ? "border-[var(--ax-status-critical)] focus:ring-[var(--ax-status-critical)]"
+                            : "border-[var(--color-divider)] focus:ring-[var(--color-text)]"
+                            } ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                         />
                         {validationError && (
-                          <p className="text-[11px] text-[var(--alert-critical)]">{validationError}</p>
+                          <p className="text-[11px] text-[var(--ax-status-critical)]">{validationError}</p>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                           Denominator{item.denominatorUnit ? ` (${item.denominatorUnit})` : ""}
                         </label>
                         <input
                           type="number"
+                          aria-label={`Denominator${item.denominatorUnit ? ` in ${item.denominatorUnit}` : ""} for ${item.description} (read only)`}
                           value={denVal ?? ""}
                           readOnly
                           tabIndex={-1}
-                          className="w-full cursor-default rounded-xl border border-[var(--border)] bg-[var(--bg-content-surface)] px-4 py-2.5 text-sm tabular-nums text-[var(--text-secondary)]"
+                          className="w-full cursor-default rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm tabular-nums text-[var(--ax-text-secondary)]"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
                           Percentage
                         </label>
                         <div
-                          className="flex min-h-[42px] w-full items-center rounded-xl border border-[var(--border)] bg-[var(--bg-content-surface)] px-4 py-2.5 text-sm tabular-nums text-[var(--text-primary)]"
+                          className="flex min-h-[42px] w-full items-center rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm tabular-nums text-[var(--color-text)]"
                           role="status"
                           aria-live="polite"
                           aria-label={
@@ -636,11 +644,11 @@ export default function KPIEntryPage() {
                         </div>
                         {pctBarWidth != null && (
                           <div
-                            className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--border)]/70"
+                            className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-divider)]/70"
                             aria-hidden
                           >
                             <div
-                              className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150"
+                              className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-150"
                               style={{ width: `${pctBarWidth}%` }}
                             />
                           </div>
@@ -651,9 +659,9 @@ export default function KPIEntryPage() {
 
                   {/* Remarks */}
                   <div className="mt-5 space-y-2">
-                    <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                       Remarks{" "}
-                      <span className="normal-case tracking-normal text-[var(--text-muted)] opacity-60">
+                      <span className="normal-case tracking-normal text-[var(--ax-muted)]">
                         (optional)
                       </span>
                     </label>
@@ -666,19 +674,19 @@ export default function KPIEntryPage() {
                         setRemarksById((prev) => ({ ...prev, [item.id]: e.target.value }));
                       }}
                       placeholder="Add any notes or context…"
-                      className={`w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] ${isInputDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                      className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isInputDisabled ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                     />
                   </div>
 
                   {/* Bottleneck & escalation — restricted to FLAG_KPI_ESCALATION */}
                   {/* {canFlagEscalation && (
-                    <div className="mt-5 space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-content-surface)] p-4">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    <div className="mt-5 space-y-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                         Meeting signals
                       </p>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                           Escalation status
                         </label>
                         <div className="flex flex-wrap gap-2">
@@ -705,12 +713,12 @@ export default function KPIEntryPage() {
                                 className={`rounded-lg border px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] transition ${
                                   active
                                     ? value === "needs_acs_decision"
-                                      ? "border-[var(--alert-critical)] bg-[rgba(239,68,68,0.1)] text-[var(--alert-critical)]"
+                                      ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] text-[var(--ax-status-critical)]"
                                       : value === "needs_coordination"
-                                        ? "border-[var(--alert-warning)] bg-[rgba(245,158,11,0.1)] text-[var(--alert-warning)]"
-                                        : "border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] text-[var(--alert-success)]"
-                                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-primary)]"
-                                } ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                                        ? "border-[var(--ax-status-warning)] bg-[color-mix(in_srgb,_var(--ax-status-warning)_10%,_transparent)] text-[var(--ax-status-warning)]"
+                                        : "border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] text-[var(--ax-status-ok)]"
+                                    : "border-[var(--color-divider)] text-[var(--ax-muted)] hover:border-[var(--color-text)]"
+                                } ${isReviewerOnly ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                               >
                                 {label}
                               </button>
@@ -720,9 +728,9 @@ export default function KPIEntryPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                        <label className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                           Bottleneck reason{" "}
-                          <span className="normal-case tracking-normal opacity-60">(optional)</span>
+                          <span className="normal-case tracking-normal">(optional)</span>
                         </label>
                         <textarea
                           rows={2}
@@ -733,7 +741,7 @@ export default function KPIEntryPage() {
                             setBottleneckById((prev) => ({ ...prev, [item.id]: e.target.value }));
                           }}
                           placeholder="e.g. Awaiting circular from HQ / tender not yet floated…"
-                          className={`w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] ${isReviewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                          className={`w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] ${isReviewerOnly ? "cursor-not-allowed text-[var(--ax-muted)]" : ""}`}
                         />
                       </div>
                     </div>
@@ -741,7 +749,7 @@ export default function KPIEntryPage() {
 
                   {/* Error message */}
                   {row.error && (
-                    <div className="mt-4 rounded-xl border border-[var(--alert-critical)] bg-[rgba(239,68,68,0.08)] px-4 py-2.5 text-xs text-[var(--alert-critical)]">
+                    <div className="mt-4 rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-2.5 text-xs text-[var(--ax-status-critical)]">
                       {row.error}
                     </div>
                   )}
@@ -752,14 +760,14 @@ export default function KPIEntryPage() {
                       <button
                         disabled={row.saving || !!validationError || !meetingId.trim() || isAlreadySubmittedForMeeting}
                         onClick={() => handleRowAction(item.id, "draft")}
-                        className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl border border-[var(--color-divider)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--ax-muted)] transition hover:border-[var(--color-text)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {row.saving ? "Saving…" : row.saved ? "Draft Saved ✓" : "Save Draft"}
                       </button>
                       <button
                         disabled={row.saving || !!validationError || !meetingId.trim() || isAlreadySubmittedForMeeting}
                         onClick={() => handleRowAction(item.id, "submit")}
-                        className="rounded-xl bg-[var(--text-primary)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--bg-primary)] transition disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl bg-[var(--color-text)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--color-bg)] transition disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {row.saving ? "Submitting…" : (row.submitted || isAlreadySubmittedForMeeting) ? "Submitted ✓" : "Submit"}
                       </button>
@@ -772,14 +780,14 @@ export default function KPIEntryPage() {
                             <button
                               disabled={row.saving}
                               onClick={() => handleReviewAction(item.id, "approve")}
-                              className="rounded-xl bg-[var(--alert-success)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="btn btn-success px-5 py-2 text-xs uppercase tracking-[0.25em] disabled:cursor-not-allowed"
                             >
                               {row.saving ? "Processing…" : row.submitted ? "Approved ✓" : "Approve"}
                             </button>
                             <button
                               disabled={row.saving}
                               onClick={() => setShowRejectDialog(true)}
-                              className="rounded-xl border border-[var(--alert-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded-xl border border-[var(--ax-status-critical)] bg-transparent px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--ax-status-critical)] transition hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Reject with Comment
                             </button>
@@ -787,30 +795,30 @@ export default function KPIEntryPage() {
                         )}
 
                         {showRejectDialog && (
-                          <div className="mt-6 space-y-3 rounded-xl border border-[var(--alert-critical)] bg-[rgba(239,68,68,0.04)] p-4">
-                            <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--text-muted)]">
-                              Rejection note <span className="text-[var(--alert-critical)]">*</span>
+                          <div className="mt-6 space-y-3 rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_4%,_transparent)] p-4">
+                            <label className="block text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--ax-muted)]">
+                              Rejection note <span className="text-[var(--ax-status-critical)]">*</span>
                               <textarea
                                 value={rejectNote}
                                 onChange={(e) => setRejectNote(e.target.value)}
                                 rows={3}
                                 autoFocus
                                 placeholder="Explain why this submission is being rejected..."
-                                className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--alert-critical)]"
+                                className="mt-2 w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--ax-status-critical)]"
                               />
                             </label>
                             <div className="flex flex-wrap items-center gap-2">
                               <button
                                 disabled={row.saving || !rejectNote.trim()}
                                 onClick={() => handleReviewAction(item.id, "reject", rejectNote.trim())}
-                                className="rounded-xl bg-[var(--alert-critical)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="btn btn-danger px-5 py-2 text-xs uppercase tracking-[0.25em] disabled:cursor-not-allowed"
                               >
                                 {row.saving ? "Processing…" : "Confirm Reject"}
                               </button>
                               <button
                                 disabled={row.saving}
                                 onClick={() => { setShowRejectDialog(false); setRejectNote(""); }}
-                                className="rounded-xl border border-[var(--border)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--text-muted)] transition hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-xl border border-[var(--color-divider)] px-5 py-2 text-xs uppercase tracking-[0.25em] text-[var(--ax-muted)] transition hover:border-[var(--color-text)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 Cancel
                               </button>
@@ -823,7 +831,7 @@ export default function KPIEntryPage() {
                 </div>
 
                 {/* Meta footer */}
-                <div className="text-[11px] text-[var(--text-muted)]">
+                <div className="text-[11px] text-[var(--ax-muted)]">
                   Last updated: {item.lastUpdated}
                   {financialYearLabel && <> · FY {financialYearLabel}</>}
                 </div>

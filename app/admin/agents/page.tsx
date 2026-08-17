@@ -73,41 +73,41 @@ export default function AdminAgentsDirectoryPage() {
     <AppShell title="Agent Directory">
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-6">
         {/* Back Link */}
-        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-          <Link href="/admin" className="flex items-center gap-1 hover:text-[var(--text-primary)]">
+        <div className="flex items-center gap-2 text-sm text-[var(--ax-muted)]">
+          <Link href="/admin" className="flex items-center gap-1 hover:text-[var(--color-text)]">
             <ArrowLeft className="h-4 w-4" /> Admin Controls
           </Link>
         </div>
 
         {/* Heading */}
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">System Monitors</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Background AI Agents</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">System Monitors</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">Background AI Agents</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Overview and controls for automated agents running scheduled analysis, notification dispatches, and rule engines.
           </p>
         </div>
 
         {loading ? (
-          <div className="flex h-[30vh] items-center justify-center text-[var(--text-muted)]">
+          <div className="flex h-[30vh] items-center justify-center text-[var(--ax-muted)]">
             <Clock className="mr-2 h-5 w-5 animate-spin" /> Loading agents...
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {/* 1. Meeting-wise Progress Agent Card */}
-            <div className="group relative flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 transition hover:border-[var(--border-strong)]">
+            <div className="group relative flex flex-col justify-between rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 transition hover:border-[var(--ax-divider-strong)]">
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Sparkles className="h-6 w-6" />
                   </div>
                   <div className="flex items-center gap-2">
                     {config?.enabled ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--alert-success-bg)] px-2.5 py-0.5 text-xs font-semibold text-[var(--alert-success)]">
+                      <span className="inline-flex items-center gap-1 rounded-full ax-chip ax-chip-ok px-2.5 py-0.5 text-xs font-semibold">
                         Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                      <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                         Inactive
                       </span>
                     )}
@@ -115,32 +115,32 @@ export default function AdminAgentsDirectoryPage() {
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text)]">
                     Meeting-wise Progress Agent
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--ax-muted)]">
                     Compares financial and operational snapshots since the last review meeting. Generates leadership insights
                     and alerts displayed on the Command Centre.
                   </p>
                 </div>
 
                 {/* Additional Metadata / Scheduled detail */}
-                <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4 text-xs text-[var(--text-muted)]">
+                <div className="mt-4 space-y-2 border-t border-[var(--color-divider)] pt-4 text-xs text-[var(--ax-muted)]">
                   <div className="flex justify-between">
                     <span>Schedule:</span>
-                    <span className="font-medium text-[var(--text-primary)]">
+                    <span className="font-medium text-[var(--color-text)]">
                       {config?.enabled ? `Every ${config.runDay}` : "Disabled"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Last Run:</span>
-                    <span className="flex items-center gap-1 font-medium text-[var(--text-primary)]">
+                    <span className="flex items-center gap-1 font-medium text-[var(--color-text)]">
                       {lastLog ? (
                         <>
                           {lastLog.status === "SUCCESS" ? (
-                            <CheckCircle className="h-3 w-3 text-[var(--alert-success)]" />
+                            <CheckCircle className="h-3 w-3 text-[var(--ax-status-ok)]" />
                           ) : (
-                            <AlertTriangle className="h-3 w-3 text-red-500" />
+                            <AlertTriangle className="h-3 w-3 ax-tone-critical" />
                           )}
                           {new Date(lastLog.runDate).toLocaleString(tenantLocale(), {
                             day: "numeric",
@@ -160,7 +160,7 @@ export default function AdminAgentsDirectoryPage() {
               <div className="mt-6 pt-4">
                 <Link
                   href="/admin/agents/meeting-wise-progress"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] transition hover:opacity-90"
+                  className="btn btn-primary w-full px-4 py-2.5 text-sm font-semibold"
                 >
                   <Settings2 className="h-4 w-4" />
                   Configure & Trigger
@@ -170,34 +170,34 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 2. Finance Audit Monitor Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <ShieldAlert className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Under Dev
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Finance Audit Monitor</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text)]">Finance Audit Monitor</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--ax-muted)]">
                     Scans live ledger tables and budget line entries to detect pacing anomalies or over-allocation hazards before they occur.
                   </p>
                 </div>
 
-                <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4 text-xs text-[var(--text-muted)]">
+                <div className="mt-4 space-y-2 border-t border-[var(--color-divider)] pt-4 text-xs text-[var(--ax-muted)]">
                   <div className="flex justify-between">
                     <span>Schedule:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Daily (Midnight)</span>
+                    <span className="font-medium text-[var(--color-text)]">Daily (Midnight)</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Audits:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Pacing, Threshold alerts</span>
+                    <span className="font-medium text-[var(--color-text)]">Pacing, Threshold alerts</span>
                   </div>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export default function AdminAgentsDirectoryPage() {
               <div className="mt-6 pt-4">
                 <button
                   disabled
-                  className="w-full rounded-xl border border-[var(--border)] py-2.5 text-sm font-semibold text-[var(--text-muted)] opacity-50 cursor-not-allowed"
+                  className="w-full rounded-xl border border-[var(--color-divider)] py-2.5 text-sm font-semibold text-[var(--ax-muted)] opacity-50 cursor-not-allowed"
                 >
                   Unavailable
                 </button>
@@ -213,34 +213,34 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 3. Action Item Emailer Agent Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Mail className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Inactive
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Action Item Reminder</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text)]">Action Item Reminder</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--ax-muted)]">
                     Aggregates critical deadlines and compiles scheduled email updates to departmental officers for upcoming or overdue tasks.
                   </p>
                 </div>
 
-                <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4 text-xs text-[var(--text-muted)]">
+                <div className="mt-4 space-y-2 border-t border-[var(--color-divider)] pt-4 text-xs text-[var(--ax-muted)]">
                   <div className="flex justify-between">
                     <span>Schedule:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Every Friday</span>
+                    <span className="font-medium text-[var(--color-text)]">Every Friday</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Target:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Nodal Officers & ACS</span>
+                    <span className="font-medium text-[var(--color-text)]">Nodal Officers & ACS</span>
                   </div>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export default function AdminAgentsDirectoryPage() {
               <div className="mt-6 pt-4">
                 <button
                   disabled
-                  className="w-full rounded-xl border border-[var(--border)] py-2.5 text-sm font-semibold text-[var(--text-muted)] opacity-50 cursor-not-allowed"
+                  className="w-full rounded-xl border border-[var(--color-divider)] py-2.5 text-sm font-semibold text-[var(--ax-muted)] opacity-50 cursor-not-allowed"
                 >
                   Unavailable
                 </button>
@@ -256,34 +256,34 @@ export default function AdminAgentsDirectoryPage() {
             </div>
 
             {/* 4. Ad-hoc Assistant Agent Card (Future) */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/50 p-6 opacity-75">
+            <div className="card flex flex-col justify-between p-6" style={{ borderStyle: "dashed", boxShadow: "inset 0 0 0 1px var(--color-divider)" }}>
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl ax-ai-plate">
                     <Bot className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+                    <span className="inline-flex items-center gap-1 rounded-full ax-chip px-2.5 py-0.5 text-xs font-semibold">
                       Inactive
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Ad-hoc query Assistant</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text)]">Ad-hoc query Assistant</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--ax-muted)]">
                     Enables conversational natural language inquiries on budget snapshots, scheme progress files, and meeting minutes.
                   </p>
                 </div>
 
-                <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4 text-xs text-[var(--text-muted)]">
+                <div className="mt-4 space-y-2 border-t border-[var(--color-divider)] pt-4 text-xs text-[var(--ax-muted)]">
                   <div className="flex justify-between">
                     <span>Interface:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Command Centre Ask Input</span>
+                    <span className="font-medium text-[var(--color-text)]">Command Centre Ask Input</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <span className="font-medium text-[var(--text-primary)]">Pre-Alpha Testing</span>
+                    <span className="font-medium text-[var(--color-text)]">Pre-Alpha Testing</span>
                   </div>
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function AdminAgentsDirectoryPage() {
               <div className="mt-6 pt-4">
                 <button
                   disabled
-                  className="w-full rounded-xl border border-[var(--border)] py-2.5 text-sm font-semibold text-[var(--text-muted)] opacity-50 cursor-not-allowed"
+                  className="w-full rounded-xl border border-[var(--color-divider)] py-2.5 text-sm font-semibold text-[var(--ax-muted)] opacity-50 cursor-not-allowed"
                 >
                   Unavailable
                 </button>

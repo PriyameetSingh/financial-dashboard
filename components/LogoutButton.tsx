@@ -26,7 +26,7 @@ export default function LogoutButton() {
 
   return (
     <button
-      className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-secondary)]"
+      className="flex items-center gap-2 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-text-secondary)]"
       onClick={handleLogout}
       type="button"
       disabled={pending}

@@ -30,11 +30,8 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function formatPendanceReportDate(iso: string): string {
-  const [y, m, day] = iso.split("-");
-  if (!y || !m || !day) return iso;
-  return `${day}.${m}.${y}`;
-}
+// formatPendanceReportDate moved to lib/pendance-report-display.ts (client-safe module).
+export { formatPendanceReportDate } from "./pendance-report-display";
 
 export type UserTaskRow = {
   userName: string;

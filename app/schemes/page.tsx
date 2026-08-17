@@ -176,9 +176,9 @@ export default function SchemesPage() {
       <div className="space-y-6 px-6 py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Programme registry</p>
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Schemes</h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Programme registry</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)]">Schemes</h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               All schemes with KPI definitions, latest expenditure ({financialYearLabel ?? "current FY"}), and subschemes.
             </p>
           </div>
@@ -189,8 +189,8 @@ export default function SchemesPage() {
                 onClick={() => setArchivedFilter("active")}
                 className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
                   archivedFilter === "active"
-                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                    ? "bg-[var(--color-text)] text-[var(--color-bg)]"
+                    : "border border-[var(--color-divider)] text-[var(--ax-muted)] hover:bg-[var(--color-surface)]"
                 }`}
               >
                 Active
@@ -200,8 +200,8 @@ export default function SchemesPage() {
                 onClick={() => setArchivedFilter("archived")}
                 className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
                   archivedFilter === "archived"
-                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                    ? "bg-[var(--color-text)] text-[var(--color-bg)]"
+                    : "border border-[var(--color-divider)] text-[var(--ax-muted)] hover:bg-[var(--color-surface)]"
                 }`}
               >
                 Archived
@@ -211,8 +211,8 @@ export default function SchemesPage() {
                 onClick={() => setArchivedFilter("all")}
                 className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
                   archivedFilter === "all"
-                    ? "bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                    : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]"
+                    ? "bg-[var(--color-text)] text-[var(--color-bg)]"
+                    : "border border-[var(--color-divider)] text-[var(--ax-muted)] hover:bg-[var(--color-surface)]"
                 }`}
               >
                 All
@@ -222,7 +222,7 @@ export default function SchemesPage() {
               <button
                 type="button"
                 onClick={openCreateScheme}
-                className="shrink-0 rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)]"
+                className="shrink-0 rounded-xl bg-[var(--color-text)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)]"
               >
                 Create scheme
               </button>
@@ -231,23 +231,23 @@ export default function SchemesPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--alert-critical)]">
+          <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-status-critical)]">
             {error}
           </div>
         )}
 
-        {loading && <div className="text-sm text-[var(--text-muted)]">Loading schemes...</div>}
+        {loading && <div className="text-sm text-[var(--ax-muted)]">Loading schemes...</div>}
 
         {!loading && schemes.length === 0 && !error && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-sm text-[var(--text-muted)]">
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 text-sm text-[var(--ax-muted)]">
             No schemes found.
           </div>
         )}
 
         {!loading && schemes.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
             <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              <thead className="bg-[var(--color-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                 <tr>
                   <th className="w-10 px-2 py-3" />
                   <th className="px-4 py-3">Code</th>
@@ -267,52 +267,52 @@ export default function SchemesPage() {
                   const exp = s.expenditure;
                   return (
                     <Fragment key={s.id}>
-                      <tr className="border-t border-[var(--border)]">
+                      <tr className="border-t border-[var(--color-divider)]">
                         <td className="px-2 py-3">
                           <button
                             type="button"
                             onClick={() => toggleExpand(s.id)}
-                            className="rounded p-1 text-[var(--text-muted)] hover:bg-[var(--border)]"
+                            className="rounded p-1 text-[var(--ax-muted)] hover:bg-[var(--color-divider)]"
                             aria-expanded={open}
                           >
                             {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           </button>
                         </td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{s.code}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{s.code}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1">
-                            <span className="font-medium text-[var(--text-primary)]">{s.name}</span>
+                            <span className="font-medium text-[var(--color-text)]">{s.name}</span>
                             <button
                               type="button"
                               onClick={() => setSchemeProgressModal(s)}
-                              className="w-fit text-left text-[11px] text-[var(--accent)] underline-offset-2 hover:underline"
+                              className="w-fit text-left text-[11px] text-[var(--color-accent)] underline-offset-2 hover:underline"
                             >
                               Progress & analytics
                             </button>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{s.verticalName}</td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{s.kpis.length}</td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{s.verticalName}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{s.kpis.length}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">
                           {exp ? formatCurrency(exp.annualBudgetCr) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{exp ? formatCurrency(exp.soExpenditureCr) : "—"}</td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{exp ? formatCurrency(exp.ifmsExpenditureCr) : "—"}</td>
-                        <td className="px-4 py-3 text-[var(--text-muted)]">{s.subschemes.length}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{exp ? formatCurrency(exp.soExpenditureCr) : "—"}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{exp ? formatCurrency(exp.ifmsExpenditureCr) : "—"}</td>
+                        <td className="px-4 py-3 text-[var(--ax-muted)]">{s.subschemes.length}</td>
                         {canManageSchemes && (
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
                               <button
                                 type="button"
                                 onClick={() => setKpiModalScheme(s)}
-                                className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--text-muted)]"
+                                className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-[11px] text-[var(--ax-muted)]"
                               >
                                 Add KPIs
                               </button>
                               <button
                                 type="button"
                                 onClick={() => openEditScheme(s)}
-                                className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--text-muted)]"
+                                className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-[11px] text-[var(--ax-muted)]"
                               >
                                 Edit
                               </button>
@@ -320,7 +320,7 @@ export default function SchemesPage() {
                                 <button
                                   type="button"
                                   onClick={() => unarchiveScheme(s.id)}
-                                  className="rounded-lg border border-[var(--accent)] px-2 py-1 text-[11px] text-[var(--accent)]"
+                                  className="rounded-lg border border-[var(--color-accent)] px-2 py-1 text-[11px] text-[var(--color-accent)]"
                                 >
                                   Unarchive
                                 </button>
@@ -328,7 +328,7 @@ export default function SchemesPage() {
                               <button
                                 type="button"
                                 onClick={() => deleteScheme(s.id, s.name)}
-                                className="rounded-lg border border-[var(--alert-critical)] px-2 py-1 text-[11px] text-[var(--alert-critical)] hover:bg-[var(--alert-critical)] hover:text-white"
+                                className="btn btn-danger px-2 py-1 text-[11px]"
                                 title="Delete scheme"
                               >
                                 Delete
@@ -338,15 +338,15 @@ export default function SchemesPage() {
                         )}
                       </tr>
                       {open && (
-                        <tr className="border-t border-[var(--border)] bg-[var(--bg-card)]" style={{ backgroundColor: 'var(--bg-card) !important' }}>
+                        <tr className="border-t border-[var(--color-divider)] bg-[var(--color-surface)]" style={{ backgroundColor: 'var(--color-surface) !important' }}>
                           <td colSpan={canManageSchemes ? 10 : 9} className="px-6 py-4">
                             <div className="grid gap-6 lg:grid-cols-3">
                               <div>
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Components</p>
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Components</p>
                                 {s.subschemes.length === 0 ? (
-                                  <p className="mt-2 text-sm text-[var(--text-muted)]">None</p>
+                                  <p className="mt-2 text-sm text-[var(--ax-muted)]">None</p>
                                 ) : (
-                                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-[var(--text-primary)]">
+                                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-[var(--color-text)]">
                                     {s.subschemes.map((sub) => (
                                       <li key={sub.id}>
                                         <span className="font-medium">{sub.code}</span> — {sub.name}
@@ -356,14 +356,14 @@ export default function SchemesPage() {
                                 )}
                               </div>
                               <div className="lg:col-span-2">
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">KPI definitions</p>
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">KPI definitions</p>
                                 {s.kpis.length === 0 ? (
-                                  <p className="mt-2 text-sm text-[var(--text-muted)]">No KPIs linked to this scheme.</p>
+                                  <p className="mt-2 text-sm text-[var(--ax-muted)]">No KPIs linked to this scheme.</p>
                                 ) : (
                                   <div className="mt-2 overflow-x-auto">
                                     <table className="w-full text-xs">
                                       <thead>
-                                        <tr className="text-left text-[var(--text-muted)]">
+                                        <tr className="text-left text-[var(--ax-muted)]">
                                           <th className="pb-2 pr-3">Description</th>
                                           <th className="pb-2 pr-3">Type</th>
                                           <th className="pb-2 pr-3">Category</th>
@@ -374,17 +374,17 @@ export default function SchemesPage() {
                                       </thead>
                                       <tbody>
                                         {s.kpis.map((k) => (
-                                          <tr key={k.id} className="border-t border-[var(--border)] text-[var(--text-primary)]">
+                                          <tr key={k.id} className="border-t border-[var(--color-divider)] text-[var(--color-text)]">
                                             <td className="py-2 pr-3 align-top">{k.description}</td>
                                             <td className="py-2 pr-3 align-top">{k.kpiType}</td>
                                             <td className="py-2 pr-3 align-top">{k.category}</td>
                                             <td className="py-2 pr-3 align-top">
                                               {k.monitoringLevel ? (
-                                                <span className="inline-flex items-center rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)]">
+                                                <span className="inline-flex items-center rounded-full border border-[var(--color-divider)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text)]">
                                                   {k.monitoringLevel}
                                                 </span>
                                               ) : (
-                                                <span className="text-[var(--text-muted)]">—</span>
+                                                <span className="text-[var(--ax-muted)]">—</span>
                                               )}
                                             </td>
                                             <td className="py-2 align-top">
@@ -397,7 +397,7 @@ export default function SchemesPage() {
                                                     type="button"
                                                     title="Edit KPI"
                                                     onClick={() => setEditKpiTarget(kpiSummaryToSubmission(k))}
-                                                    className="rounded p-1 text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
+                                                    className="rounded p-1 text-[var(--ax-muted)] transition hover:bg-[var(--color-divider)] hover:text-[var(--color-text)]"
                                                   >
                                                     <Pencil className="h-3 w-3" />
                                                   </button>
@@ -405,7 +405,7 @@ export default function SchemesPage() {
                                                     type="button"
                                                     title="Delete KPI"
                                                     onClick={() => deleteKpi(k.id, k.description, s.id)}
-                                                    className="rounded p-1 text-[var(--alert-critical)] transition hover:bg-[var(--alert-critical)] hover:text-white"
+                                                    className="btn btn-danger p-1"
                                                   >
                                                     <Trash2 className="h-3 w-3" />
                                                   </button>
@@ -421,14 +421,14 @@ export default function SchemesPage() {
                               </div>
                             </div>
                             {exp && (
-                              <p className="mt-4 text-xs text-[var(--text-muted)]">
+                              <p className="mt-4 text-xs text-[var(--ax-muted)]">
                                 Expenditure as of {exp.asOfDate ?? "—"} · FY {exp.financialYearLabel ?? "—"}
                               </p>
                             )}
                             {s.assignments.length > 0 && (
-                              <div className="mt-4 border-t border-[var(--border)] pt-4">
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Assignments</p>
-                                <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
+                              <div className="mt-4 border-t border-[var(--color-divider)] pt-4">
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">Assignments</p>
+                                <ul className="mt-2 space-y-1 text-xs text-[var(--ax-muted)]">
                                   {s.assignments.map((a) => (
                                     <li key={a.id}>
                                       {a.assignmentKind}

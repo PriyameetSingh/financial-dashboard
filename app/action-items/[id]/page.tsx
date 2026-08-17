@@ -27,12 +27,12 @@ const DESIGNATIONS: Record<UserRole, string> = {
 };
 
 const DOT_COLORS: Record<ActionItemStatus, string> = {
-  OPEN: "var(--text-muted)",
-  IN_PROGRESS: "var(--alert-warning)",
-  PROOF_UPLOADED: "var(--alert-warning)",
-  UNDER_REVIEW: "var(--alert-warning)",
-  COMPLETED: "var(--alert-success)",
-  OVERDUE: "var(--alert-critical)",
+  OPEN: "var(--ax-muted)",
+  IN_PROGRESS: "var(--ax-status-warning)",
+  PROOF_UPLOADED: "var(--ax-status-warning)",
+  UNDER_REVIEW: "var(--ax-status-warning)",
+  COMPLETED: "var(--ax-status-ok)",
+  OVERDUE: "var(--ax-status-critical)",
 };
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -264,7 +264,7 @@ function ActionItemDetailContent() {
   if (loading) {
     return (
       <AppShell title="Action Item">
-        <div className="px-6 py-6 text-sm text-[var(--text-muted)]">Loading action item...</div>
+        <div className="px-6 py-6 text-sm text-[var(--ax-muted)]">Loading action item...</div>
       </AppShell>
     );
   }
@@ -272,7 +272,7 @@ function ActionItemDetailContent() {
   if (!item) {
     return (
       <AppShell title="Action Item">
-        <div className="px-6 py-6 text-sm text-[var(--text-muted)]">Action item not found.</div>
+        <div className="px-6 py-6 text-sm text-[var(--ax-muted)]">Action item not found.</div>
       </AppShell>
     );
   }
@@ -281,29 +281,29 @@ function ActionItemDetailContent() {
     <AppShell title="Action Item">
       <div className="relative space-y-6 px-6 py-6 animate-fadeIn">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Read-only
           </div>
         )}
 
         <button
           onClick={handleBackToList}
-          className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+          className="flex items-center gap-2 text-sm text-[var(--ax-muted)] hover:text-[var(--color-text)] transition"
         >
           <ArrowLeft size={16} /> {fromTab === "tracker" ? "Back to Action Tracker" : "Back to list"}
         </button>
 
         {actionSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-ok)]">
             {actionSuccess}
           </div>
         )}
 
         {/* Combined Details Card */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 space-y-6">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 space-y-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="min-w-0 flex-1 space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-[var(--text-muted)] font-semibold">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)] font-semibold">
                 <span>Scheme: {item.schemeId}</span>
                 <span>•</span>
                 <span>Vertical: {item.vertical}</span>
@@ -316,12 +316,12 @@ function ActionItemDetailContent() {
                     autoFocus
                     value={titleValue}
                     onChange={(e) => setTitleValue(e.target.value)}
-                    className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xl font-semibold text-[var(--text-primary)]"
+                    className="flex-1 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-xl font-semibold text-[var(--color-text)]"
                   />
                   <button
                     type="button"
                     disabled={busy || !titleValue.trim()}
-                    className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-primary)] disabled:opacity-50"
+                    className="rounded-lg border border-[var(--color-divider)] p-1.5 text-[var(--color-text)] disabled:opacity-50"
                     onClick={async () => {
                       if (!titleValue.trim()) return;
                       setBusy(true);
@@ -341,7 +341,7 @@ function ActionItemDetailContent() {
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)]"
+                    className="rounded-lg border border-[var(--color-divider)] p-1.5 text-[var(--ax-muted)]"
                     onClick={() => setEditingTitle(false)}
                   >
                     <X size={14} />
@@ -349,11 +349,11 @@ function ActionItemDetailContent() {
                 </div>
               ) : (
                 <div className="mt-2 flex items-start gap-2">
-                  <h1 className="text-2xl font-semibold text-[var(--text-primary)] leading-tight">{item.title}</h1>
+                  <h1 className="text-2xl font-semibold text-[var(--color-text)] leading-tight">{item.title}</h1>
                   {canEdit && (
                     <button
                       type="button"
-                      className="mt-1 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      className="mt-1 shrink-0 rounded p-0.5 text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                       onClick={() => { setTitleValue(item.title); setEditingTitle(true); }}
                     >
                       <Pencil size={14} />
@@ -370,13 +370,13 @@ function ActionItemDetailContent() {
                     value={descriptionValue}
                     onChange={(e) => setDescriptionValue(e.target.value)}
                     rows={3}
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                    className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                   />
                   <div className="flex gap-2">
                     <button
                       type="button"
                       disabled={busy}
-                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
+                      className="flex items-center gap-1 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--color-text)] disabled:opacity-50"
                       onClick={async () => {
                         setBusy(true);
                         try {
@@ -395,7 +395,7 @@ function ActionItemDetailContent() {
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                      className="flex items-center gap-1 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
                       onClick={() => setEditingDescription(false)}
                     >
                       <X size={12} /> Cancel
@@ -404,11 +404,11 @@ function ActionItemDetailContent() {
                 </div>
               ) : (
                 <div className="mt-2 flex items-start gap-2">
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{item.description}</p>
+                  <p className="text-sm text-[var(--ax-muted)] leading-relaxed">{item.description}</p>
                   {canEdit && (
                     <button
                       type="button"
-                      className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      className="mt-0.5 shrink-0 rounded p-0.5 text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                       onClick={() => { setDescriptionValue(item.description); setEditingDescription(true); }}
                     >
                       <Pencil size={13} />
@@ -418,7 +418,7 @@ function ActionItemDetailContent() {
               )}
             </div>
 
-            <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-[var(--border)]">
+            <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-[var(--color-divider)]">
               <div className="flex items-center gap-2">
                 <StatusBadge status={item.status} />
               </div>
@@ -430,7 +430,7 @@ function ActionItemDetailContent() {
                     autoFocus
                     value={priorityValue}
                     onChange={(e) => setPriorityValue(e.target.value)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                    className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-sm text-[var(--color-text)]"
                   >
                     {(["Critical", "High", "Medium", "Low"] as const).map((p) => (
                       <option key={p} value={p}>{p}</option>
@@ -439,7 +439,7 @@ function ActionItemDetailContent() {
                   <button
                     type="button"
                     disabled={busy}
-                    className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
+                    className="rounded-lg border border-[var(--color-divider)] p-1 text-[var(--color-text)] disabled:opacity-50"
                     onClick={async () => {
                       setBusy(true);
                       try {
@@ -458,7 +458,7 @@ function ActionItemDetailContent() {
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
+                    className="rounded-lg border border-[var(--color-divider)] p-1 text-[var(--ax-muted)]"
                     onClick={() => setEditingPriority(false)}
                   >
                     <X size={13} />
@@ -466,12 +466,12 @@ function ActionItemDetailContent() {
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-sm">
-                  <span className="text-[var(--text-muted)] md:hidden">Priority:</span>
+                  <span className="text-[var(--ax-muted)] md:hidden">Priority:</span>
                   <PriorityBadge priority={item.priority} />
                   {canEdit && (
                     <button
                       type="button"
-                      className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      className="rounded p-0.5 text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                       onClick={() => { setPriorityValue(item.priority); setEditingPriority(true); }}
                     >
                       <Pencil size={13} />
@@ -484,17 +484,17 @@ function ActionItemDetailContent() {
               <div className="text-sm">
                 {editingDueDate ? (
                   <span className="flex items-center gap-2">
-                    <span className="text-[var(--text-muted)]">Due</span>
+                    <span className="text-[var(--ax-muted)]">Due</span>
                     <input
                       type="date"
                       value={dueDateValue}
                       onChange={(e) => setDueDateValue(e.target.value)}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                      className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-sm text-[var(--color-text)]"
                     />
                     <button
                       type="button"
                       disabled={busy || !dueDateValue}
-                      className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-primary)] disabled:opacity-50"
+                      className="rounded-lg border border-[var(--color-divider)] p-1 text-[var(--color-text)] disabled:opacity-50"
                       onClick={async () => {
                         if (!dueDateValue) return;
                         setBusy(true);
@@ -514,7 +514,7 @@ function ActionItemDetailContent() {
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-[var(--border)] p-1 text-[var(--text-muted)]"
+                      className="rounded-lg border border-[var(--color-divider)] p-1 text-[var(--ax-muted)]"
                       onClick={() => setEditingDueDate(false)}
                     >
                       <X size={14} />
@@ -522,11 +522,11 @@ function ActionItemDetailContent() {
                   </span>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[var(--text-muted)]">Due {item.dueDate}</span>
+                    <span className="text-[var(--ax-muted)]">Due {item.dueDate}</span>
                     {canEdit && (
                       <button
                         type="button"
-                        className="rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        className="rounded p-0.5 text-[var(--ax-muted)] hover:text-[var(--color-text)]"
                         onClick={() => {
                           setDueDateValue(item.dueDate);
                           setEditingDueDate(true);
@@ -539,26 +539,26 @@ function ActionItemDetailContent() {
                 )}
               </div>
               {item.daysOverdue && item.daysOverdue > 0 ? (
-                <span className="text-xs font-semibold text-[var(--alert-critical)]">{item.daysOverdue} days overdue</span>
+                <span className="text-xs font-semibold text-[var(--ax-status-critical)]">{item.daysOverdue} days overdue</span>
               ) : null}
             </div>
           </div>
 
-          <hr className="border-[var(--border)]" />
+          <hr className="border-[var(--color-divider)]" />
 
           {/* Officers & Reviewers Grid */}
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)] mb-3">Assigned Officers</p>
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)] mb-3">Assigned Officers</p>
               <div className="space-y-3">
                 {(item.performers?.length ? item.performers : [{ id: item.assignedToUserId ?? "", name: item.assignedTo, code: item.assignedToUserCode ?? null }]).map((p, idx) => {
                   const profile = p.code ? directoryUsers.find((u) => u.id === p.code) : matchUser(directoryUsers, p.name);
                   const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (p as { designation?: string }).designation?.trim() || "HUDD Officer");
                   return (
-                    <div key={`perf-${p.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5">
+                    <div key={`perf-${p.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2.5">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{profile?.name ?? p.name}</p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">{designation}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)] truncate">{profile?.name ?? p.name}</p>
+                        <p className="text-xs text-[var(--ax-muted)] truncate">{designation}</p>
                       </div>
                       {profile && <div className="shrink-0"><RoleBadge role={profile.role} /></div>}
                     </div>
@@ -568,16 +568,16 @@ function ActionItemDetailContent() {
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)] mb-3">Reviewers</p>
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)] mb-3">Reviewers</p>
               <div className="space-y-3">
                 {(item.reviewers?.length ? item.reviewers : [{ id: item.reviewerUserId ?? "", name: item.reviewer, code: item.reviewerUserCode ?? null }]).map((r, idx) => {
                   const profile = r.code ? directoryUsers.find((u) => u.id === r.code) : matchUser(directoryUsers, r.name);
                   const designation = profile?.designationName?.trim() || (profile ? DESIGNATIONS[profile.role] : (r as { designation?: string }).designation?.trim() || "HUDD Officer");
                   return (
-                    <div key={`rev-${r.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5">
+                    <div key={`rev-${r.id}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2.5">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{profile?.name ?? r.name}</p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">{designation}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)] truncate">{profile?.name ?? r.name}</p>
+                        <p className="text-xs text-[var(--ax-muted)] truncate">{designation}</p>
                       </div>
                       {profile && <div className="shrink-0"><RoleBadge role={profile.role} /></div>}
                     </div>
@@ -592,34 +592,34 @@ function ActionItemDetailContent() {
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
           {/* Main Activity and Updates Column */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 space-y-6">
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Activity & Updates</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-text)]">Activity & Updates</h2>
               </div>
 
               {/* Composer for manual updates & progress meeting attribution */}
               {canAddManualUpdate && (
-                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Add Progress Note</p>
+                <div className="space-y-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)]">Add Progress Note</p>
                   <textarea
                     value={manualUpdateText}
                     onChange={(event) => setManualUpdateText(event.target.value)}
                     rows={3}
                     disabled={busy}
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
+                    className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] shadow-inner"
                     placeholder="Add an update for this action item…"
                   />
                   
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     {needsProgressMeetingUi && (
                       <div className="flex-1 min-w-[200px]">
-                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
-                          Attribute progress to meeting <span className="text-[var(--alert-critical)]">*</span>
+                        <label className="block text-xs font-semibold text-[var(--ax-muted)] mb-1">
+                          Attribute progress to meeting <span className="text-[var(--ax-status-critical)]">*</span>
                         </label>
                         <select
                           value={progressMeetingId}
                           onChange={(e) => setProgressMeetingId(e.target.value)}
-                          className="w-full max-w-xs rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-sm text-[var(--text-primary)] shadow-sm"
+                          className="w-full max-w-xs rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-[var(--color-text)] shadow-sm"
                         >
                           <option value="">Select meeting…</option>
                           {meetings.map((m) => (
@@ -629,14 +629,14 @@ function ActionItemDetailContent() {
                           ))}
                         </select>
                         {meetings.length === 0 && (
-                          <p className="mt-1 text-[10px] text-[var(--text-muted)]">No meetings found. Create one under Meetings first.</p>
+                          <p className="mt-1 text-[10px] text-[var(--ax-muted)]">No meetings found. Create one under Meetings first.</p>
                         )}
                       </div>
                     )}
                     
                     <button
                       type="button"
-                      className="sm:self-end rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50 transition hover:opacity-90 shadow-sm"
+                      className="sm:self-end rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50 transition hover:opacity-90 shadow-sm"
                       disabled={busy || !manualUpdateText.trim().length || (needsProgressMeetingUi && !progressMeetingId.trim())}
                       onClick={async () => {
                         const note = manualUpdateText.trim();
@@ -667,19 +667,19 @@ function ActionItemDetailContent() {
 
               {/* Timeline showing chronological activity updates */}
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Activity Log & History</p>
-                <div className="relative pl-4 border-l border-[var(--border)] ml-2 space-y-6">
+                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)]">Activity Log & History</p>
+                <div className="relative pl-4 border-l border-[var(--color-divider)] ml-2 space-y-6">
                   {sortedThread.length === 0 && (
-                    <p className="text-sm text-[var(--text-muted)] italic">No activity logged yet.</p>
+                    <p className="text-sm text-[var(--ax-muted)] italic">No activity logged yet.</p>
                   )}
                   {sortedThread.map((entry) => {
-                    const dotColor = DOT_COLORS[entry.status as ActionItemStatus] ?? "var(--text-muted)";
+                    const dotColor = DOT_COLORS[entry.status as ActionItemStatus] ?? "var(--ax-muted)";
                     
                     return (
                       <div key={entry.id} className="relative group">
                         {/* Bullet marker */}
                         <div 
-                          className="absolute -left-[21px] top-[4px] h-2.5 w-2.5 rounded-full border bg-[var(--bg-card)] transition group-hover:scale-110 shadow-sm" 
+                          className="absolute -left-[21px] top-[4px] h-2.5 w-2.5 rounded-full border bg-[var(--color-surface)] transition group-hover:scale-110 shadow-sm" 
                           style={{ 
                             borderColor: dotColor,
                             backgroundColor: entry.isSystem ? 'transparent' : dotColor 
@@ -687,8 +687,8 @@ function ActionItemDetailContent() {
                         />
                         
                         {/* Timestamp & Status Badge Row */}
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--text-muted)]">
-                          <span className="font-semibold text-[var(--text-secondary)]">{entry.author}</span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ax-muted)]">
+                          <span className="font-semibold text-[var(--ax-text-secondary)]">{entry.author}</span>
                           <span>•</span>
                           <span>{formatDateTime(entry.timestamp)}</span>
                           <span>•</span>
@@ -699,24 +699,24 @@ function ActionItemDetailContent() {
 
                         {/* Content Block */}
                         {entry.isSystem ? (
-                          <div className="mt-1 text-sm text-[var(--text-muted)] italic leading-relaxed">
+                          <div className="mt-1 text-sm text-[var(--ax-muted)] italic leading-relaxed">
                             {entry.note}
                           </div>
                         ) : (
-                          <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3 shadow-sm hover:shadow transition">
+                          <div className="mt-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-3 shadow-sm hover:shadow transition">
                             {editingUpdateId === entry.id ? (
                               <div className="space-y-2">
                                 <textarea
                                   value={editingUpdateNote}
                                   onChange={(e) => setEditingUpdateNote(e.target.value)}
                                   rows={3}
-                                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-inner"
+                                  className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] shadow-inner"
                                 />
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     disabled={busy || !editingUpdateNote.trim()}
-                                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50 shadow-sm"
+                                    className="flex items-center gap-1 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--color-text)] disabled:opacity-50 shadow-sm"
                                     onClick={async () => {
                                       if (!editingUpdateNote.trim() || !entry.id) return;
                                       setBusy(true);
@@ -739,7 +739,7 @@ function ActionItemDetailContent() {
                                   </button>
                                   <button
                                     type="button"
-                                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                                    className="flex items-center gap-1 rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
                                     onClick={() => setEditingUpdateId(null)}
                                   >
                                     <X size={12} /> Cancel
@@ -748,11 +748,11 @@ function ActionItemDetailContent() {
                               </div>
                             ) : (
                               <div className="flex items-start justify-between gap-4">
-                                <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">{entry.note}</p>
+                                <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap leading-relaxed">{entry.note}</p>
                                 {canEdit && entry.id && (
                                   <button
                                     type="button"
-                                    className="shrink-0 rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition"
+                                    className="shrink-0 rounded p-1 text-[var(--ax-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] transition"
                                     onClick={() => {
                                       setEditingUpdateId(entry.id!);
                                       setEditingUpdateNote(entry.note ?? "");
@@ -776,20 +776,20 @@ function ActionItemDetailContent() {
           {/* Sidebar Column */}
           <div className="space-y-6">
             {/* Proof Files Card */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Proof Files</p>
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)]">Proof Files</p>
               <div className="space-y-2">
                 {item.proofFiles.length === 0 ? (
-                  <p className="text-sm text-[var(--text-muted)] italic">No files uploaded yet.</p>
+                  <p className="text-sm text-[var(--ax-muted)] italic">No files uploaded yet.</p>
                 ) : (
                   item.proofFiles.map((file) => (
-                    <div key={file.name} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm shadow-sm hover:shadow transition">
-                      <span className="font-medium text-[var(--text-primary)] truncate max-w-[160px]" title={file.name}>{file.name}</span>
+                    <div key={file.name} className="flex items-center justify-between rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm shadow-sm hover:shadow transition">
+                      <span className="font-medium text-[var(--color-text)] truncate max-w-[160px]" title={file.name}>{file.name}</span>
                       <a 
                         href={file.link} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="shrink-0 text-xs text-[var(--text-primary)] underline hover:text-[var(--text-secondary)] font-semibold transition"
+                        className="shrink-0 text-xs text-[var(--color-text)] underline hover:text-[var(--ax-text-secondary)] font-semibold transition"
                       >
                         Open
                       </a>
@@ -801,10 +801,10 @@ function ActionItemDetailContent() {
 
             {/* Performer Task Actions Card */}
             {showNodalActions && (item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Task Actions</p>
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)]">Task Actions</p>
                 
-                <div className="text-xs text-[var(--text-muted)] leading-relaxed">
+                <div className="text-xs text-[var(--ax-muted)] leading-relaxed">
                   {item.status === "IN_PROGRESS" ? (
                     "Ready to finish this task? Submit it to the reviewer for final approval and completion."
                   ) : (
@@ -816,7 +816,7 @@ function ActionItemDetailContent() {
                   {(item.status === "OPEN" || item.status === "OVERDUE" || item.status === "IN_PROGRESS") && (
                     <button
                       type="button"
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-card)] shadow-sm"
+                      className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] disabled:opacity-50 transition hover:bg-[var(--color-surface)] shadow-sm"
                       disabled={item.status === "IN_PROGRESS" ? true : (busy || !progressMeetingId.trim() || hasManualUpdates)}
                       onClick={async () => {
                         setBusy(true);
@@ -841,7 +841,7 @@ function ActionItemDetailContent() {
                   
                   <button
                     type="button"
-                    className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60 transition hover:opacity-90 shadow-sm"
+                    className="w-full rounded-xl bg-[var(--color-text)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-60 transition hover:opacity-90 shadow-sm"
                     disabled={busy || !progressMeetingId.trim()}
                     onClick={() => setConfirmClose(true)}
                   >
@@ -849,7 +849,7 @@ function ActionItemDetailContent() {
                   </button>
 
                   {!progressMeetingId.trim() && (
-                    <p className="text-[10px] text-[var(--alert-critical)] text-center font-medium">
+                    <p className="text-[10px] text-[var(--ax-status-critical)] text-center font-medium">
                       * Select a progress meeting in the updates section to enable actions.
                     </p>
                   )}
@@ -859,29 +859,29 @@ function ActionItemDetailContent() {
 
             {/* Reviewer / Admin Actions Card */}
             {((canReviewerAct && !isViewer) || (item.status === "COMPLETED" && !isViewer)) && (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-4">
-                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)]">Reviewer & Admin Actions</p>
+              <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 space-y-4">
+                <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[var(--ax-muted)]">Reviewer & Admin Actions</p>
                 
                 {canReviewerAct && !isViewer && (
                   <div className="space-y-4">
                     <button
-                      className="w-full rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] transition hover:opacity-90 shadow-sm"
+                      className="w-full rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] transition hover:opacity-90 shadow-sm"
                       onClick={() => setConfirmApprove(true)}
                     >
                       Approve Completion
                     </button>
                     
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-3 space-y-3 shadow-inner">
-                      <label className="block text-xs font-semibold text-[var(--text-muted)]">Rejection Comment</label>
+                    <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-3 space-y-3 shadow-inner">
+                      <label className="block text-xs font-semibold text-[var(--ax-muted)]">Rejection Comment</label>
                       <textarea
                         value={rejectComment}
                         onChange={(event) => setRejectComment(event.target.value)}
                         rows={3}
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-inner"
+                        className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] shadow-inner"
                         placeholder="Reason required before reject..."
                       />
                       <button
-                        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50 transition hover:bg-[var(--bg-primary)] shadow-sm"
+                        className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] disabled:opacity-50 transition hover:bg-[var(--color-bg)] shadow-sm"
                         onClick={() => setConfirmReject(true)}
                         disabled={!rejectComment.trim().length}
                       >
@@ -894,7 +894,7 @@ function ActionItemDetailContent() {
                 {item.status === "COMPLETED" && !isViewer && (
                   <button
                     type="button"
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--text-primary)] hover:bg-[var(--bg-card)] transition shadow-sm"
+                    className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-text)] hover:bg-[var(--color-surface)] transition shadow-sm"
                     onClick={() => setConfirmArchive(true)}
                   >
                     {item.archived ? "Unarchive Action Item" : "Archive Action Item"}
@@ -1010,7 +1010,7 @@ export default function ActionItemDetailPage() {
     <Suspense
       fallback={
         <AppShell title="Action Item">
-          <div className="px-6 py-6 text-sm text-[var(--text-muted)]">Loading action item...</div>
+          <div className="px-6 py-6 text-sm text-[var(--ax-muted)]">Loading action item...</div>
         </AppShell>
       }
     >

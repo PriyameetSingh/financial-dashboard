@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
@@ -66,11 +66,11 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       const created = await tx.financialYear.create({
-        data: {
+        data: tenantStamped({
           label,
           startDate: start,
           endDate: end,
-        },
+        }),
         select: { id: true, label: true, startDate: true, endDate: true },
       });
 

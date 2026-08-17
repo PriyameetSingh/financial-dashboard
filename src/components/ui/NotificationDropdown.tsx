@@ -184,26 +184,26 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
       case 'ACTION_ITEM_ASSIGNED':
       case 'ACTION_ITEM_REASSIGNED':
       case 'ACTION_ITEM_UNASSIGNED':
-        return <FileText className="h-4 w-4 text-[var(--text-secondary)]" />;
+        return <FileText className="h-4 w-4 text-[var(--ax-text-secondary)]" />;
       case 'ACTION_ITEM_UPDATE':
       case 'ACTION_ITEM_REVIEW_REQUEST':
-        return <MessageSquare className="h-4 w-4 text-blue-500" />;
+        return <MessageSquare className="h-4 w-4 ax-tone-accent" />;
       case 'ACTION_ITEM_COMPLETED':
-        return <Check className="h-4 w-4 text-green-500" />;
+        return <Check className="h-4 w-4 ax-tone-ok" />;
       case 'ACTION_ITEM_REJECTED':
-        return <X className="h-4 w-4 text-[var(--alert-critical)]" />;
+        return <X className="h-4 w-4 text-[var(--ax-status-critical)]" />;
       case 'KPI_ASSIGNED':
       case 'KPI_REASSIGNED':
       case 'KPI_SUBMITTED':
-        return <TrendingUp className="h-4 w-4 text-purple-500" />;
+        return <TrendingUp className="h-4 w-4 ax-tone-accent" />;
       case 'KPI_REVIEW_DECISION':
-        return <TrendingUp className="h-4 w-4 text-emerald-500" />;
+        return <TrendingUp className="h-4 w-4 ax-tone-ok" />;
       case 'LAPSE_RISK':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 ax-tone-warning" />;
       case 'AGENT_ALERT':
-        return <ShieldAlert className="h-4 w-4 text-[var(--alert-critical)]" />;
+        return <ShieldAlert className="h-4 w-4 text-[var(--ax-status-critical)]" />;
       default:
-        return <Bell className="h-4 w-4 text-[var(--text-secondary)]" />;
+        return <Bell className="h-4 w-4 text-[var(--ax-text-secondary)]" />;
     }
   };
 
@@ -211,7 +211,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'Critical':
-        return 'border-l-4 border-l-[var(--alert-critical)]';
+        return 'border-l-4 border-l-[var(--ax-status-critical)]';
       case 'High':
         return 'border-l-4 border-l-orange-500';
       case 'Medium':
@@ -226,13 +226,13 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
       {/* Bell trigger button */}
       <button
         onClick={toggleDropdown}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--sidebar-text-primary)] outline-none"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] transition hover:bg-[var(--ax-hover)] hover:text-[var(--color-text)] outline-none"
         aria-label="Notifications"
         type="button"
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--alert-critical)] text-[9px] font-bold text-white leading-none">
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ax-status-critical)] text-[9px] font-bold leading-none">
             {unreadCount}
           </span>
         )}
@@ -241,17 +241,17 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
       {/* Popover list */}
       {isOpen && (
         <div
-          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-[60] mt-2 w-80 sm:w-96 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 shadow-xl overflow-hidden`}
+          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-[60] mt-2 w-80 sm:w-96 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3 shadow-xl overflow-hidden`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-bottom pb-2 border-b border-[var(--border)]">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <div className="flex items-center justify-between border-bottom pb-2 border-b border-[var(--color-divider)]">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ax-muted)]">
               Notifications
             </span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-[10px] uppercase tracking-wider text-blue-500 hover:text-blue-600 transition outline-none font-semibold"
+                className="text-[10px] uppercase tracking-wider ax-tone-accent hover:ax-tone-accent transition outline-none font-semibold"
                 type="button"
               >
                 Mark all read
@@ -263,11 +263,11 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
           <div className="mt-2 max-h-[350px] overflow-y-auto custom-scrollbar">
             {loading && notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
-                <span className="text-xs text-[var(--text-muted)] mt-2">Loading notifications...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--ax-muted)]" />
+                <span className="text-xs text-[var(--ax-muted)] mt-2">Loading notifications...</span>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="text-center py-8 text-xs text-[var(--text-muted)]">
+              <div className="text-center py-8 text-xs text-[var(--ax-muted)]">
                 No new notifications.
               </div>
             ) : (
@@ -276,26 +276,26 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
                   <li
                     key={item.id}
                     onClick={() => handleNotificationClick(item)}
-                    className={`group relative flex gap-3 rounded-lg border border-[var(--border)] p-3 cursor-pointer transition hover:bg-[var(--bg-card)] ${
-                      item.status === 'UNREAD' ? 'bg-[var(--bg-hover)]' : 'bg-transparent'
+                    className={`group relative flex gap-3 rounded-lg border border-[var(--color-divider)] p-3 cursor-pointer transition hover:bg-[var(--color-surface)] ${
+                      item.status === 'UNREAD' ? 'bg-[var(--ax-hover)]' : 'bg-transparent'
                     } ${getPriorityStyle(item.priority)}`}
                   >
                     {/* Icon container */}
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border)]">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface)] border border-[var(--color-divider)]">
                       {getNotificationIcon(item.type)}
                     </div>
 
                     {/* Content area */}
                     <div className="flex-1 min-w-0 pr-6">
                       <div className="flex items-baseline justify-between gap-2">
-                        <p className={`text-xs truncate ${item.status === 'UNREAD' ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                        <p className={`text-xs truncate ${item.status === 'UNREAD' ? 'font-semibold text-[var(--color-text)]' : 'text-[var(--ax-text-secondary)]'}`}>
                           {item.title}
                         </p>
-                        <span className="text-[9px] text-[var(--text-muted)] shrink-0">
+                        <span className="text-[9px] text-[var(--ax-muted)] shrink-0">
                           {formatRelativeTime(item.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] leading-relaxed text-[var(--text-muted)] line-clamp-2">
+                      <p className="mt-1 text-[11px] leading-relaxed text-[var(--ax-muted)] line-clamp-2">
                         {item.content}
                       </p>
                     </div>
@@ -304,7 +304,7 @@ export function NotificationDropdown({ align = 'right' }: NotificationDropdownPr
                     {item.status === 'UNREAD' && (
                       <button
                         onClick={(e) => handleMarkAsRead(item.id, e)}
-                        className="absolute right-2 top-2 p-1 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition hover:text-green-500"
+                        className="absolute right-2 top-2 p-1 rounded-full bg-[var(--color-surface)] border border-[var(--color-divider)] text-[var(--ax-muted)] opacity-0 group-hover:opacity-100 transition hover:ax-tone-ok"
                         title="Mark as read"
                         type="button"
                       >

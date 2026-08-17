@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { callLocalLLM } from "@/lib/llm";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
@@ -749,13 +749,13 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
 
     // 8. Save Insight to Database
     const insightRow = await prisma.agentInsight.create({
-      data: {
+      data: tenantStamped({
         modeUsed: mode,
         status: "SUCCESS",
         insights: selectedCards as any,
         executionLogs: JSON.stringify(executionSteps, null, 2),
         runDate: new Date(),
-      }
+      })
     });
 
     return { success: true, insightId: insightRow.id };
@@ -764,14 +764,14 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
     console.error("Agent workflow execution failed:", error);
     // Log failure in AgentInsight
     const failedInsight = await prisma.agentInsight.create({
-      data: {
+      data: tenantStamped({
         modeUsed: modeOverride || "UNKNOWN",
         status: "FAILED",
         insights: [] as any,
         errorLog: error instanceof Error ? error.stack || error.message : String(error),
         executionLogs: JSON.stringify(executionSteps, null, 2),
         runDate: new Date(),
-      }
+      })
     });
     return { success: false, insightId: failedInsight.id, error: error.message };
   }

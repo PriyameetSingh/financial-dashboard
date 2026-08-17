@@ -32,16 +32,16 @@ interface PendanceReportSectionProps {
 
 function renderUpdateAttribution(performerUserIds: string[] | undefined, createdById: string | undefined | null, actorName: string) {
   if (!performerUserIds || performerUserIds.length === 0) {
-    return actorName ? <span className="text-[10px] text-[var(--text-muted)]">Posted by {actorName}</span> : null;
+    return actorName ? <span className="text-[10px] text-[var(--ax-muted)]">Posted by {actorName}</span> : null;
   }
 
   if (performerUserIds.length > 1) {
-    return <span className="text-[10px] text-[var(--text-muted)]">Posted by {actorName}</span>;
+    return <span className="text-[10px] text-[var(--ax-muted)]">Posted by {actorName}</span>;
   }
 
   if (createdById && createdById !== performerUserIds[0]) {
     return (
-      <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600 border border-amber-500/20 italic">
+      <span className="ax-chip ax-chip-warning px-1.5 py-0.5 text-[9px] font-semibold italic">
         Posted by {actorName} (Previous Owner)
       </span>
     );
@@ -259,37 +259,37 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
   if (loading && meetings.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-sm">
         <div className="flex flex-col items-center gap-2">
-          <RefreshCw className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
-          <p className="text-sm text-[var(--text-muted)]">Loading pendance report...</p>
+          <RefreshCw className="h-6 w-6 animate-spin text-[var(--ax-muted)]" />
+          <p className="text-sm text-[var(--ax-muted)]">Loading pendance report...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-sm">
       {/* Header & Controls */}
-      <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[var(--color-divider)] pb-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-            <ClipboardList className="text-[var(--accent)]" size={20} />
+          <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center gap-2">
+            <ClipboardList className="text-[var(--color-accent)]" size={20} />
             Pendance Report
           </h2>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
+          <p className="mt-1 text-xs text-[var(--ax-muted)]">
             Review data entries, updates, and pending approvals for KPIs and action items assigned to you.
           </p>
         </div>
 
         {/* Meeting Selector & Refresh */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 shadow-sm">
-            <Calendar size={16} className="text-[var(--text-muted)]" />
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 shadow-sm">
+            <Calendar size={16} className="text-[var(--ax-muted)]" />
             <select
               value={selectedMeetingId}
               onChange={(e) => setSelectedMeetingId(e.target.value)}
-              className="border-none bg-transparent text-sm font-medium text-[var(--text-primary)] focus:outline-none focus:ring-0"
+              className="border-none bg-transparent text-sm font-medium text-[var(--color-text)] focus:outline-none focus:ring-0"
             >
               {meetings.length === 0 ? (
                 <option value="">No meetings available</option>
@@ -306,7 +306,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition hover:bg-[var(--sidebar-hover-bg)]/60 disabled:opacity-50"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] transition hover:bg-[var(--ax-nav-hover)]/60 disabled:opacity-50"
             title="Refresh Report"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
@@ -319,8 +319,8 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
         <div
           className={`mt-4 rounded-xl border px-4 py-3 text-sm flex items-start gap-3 ${
             actionMessage.type === "success"
-              ? "border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] text-[var(--alert-success)]"
-              : "border-[var(--alert-critical)] bg-[rgba(239,68,68,0.08)] text-[var(--alert-critical)]"
+              ? "ax-chip ax-chip-ok"
+              : "ax-chip ax-chip-critical"
           }`}
         >
           <AlertCircle size={18} className="mt-0.5 shrink-0" />
@@ -338,7 +338,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
       <div className="mt-5 overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--bg-document)]/45 text-[10px] uppercase tracking-[0.25em] text-[var(--text-secondary)] font-semibold">
+            <tr className="border-b border-[var(--color-divider)] bg-[var(--color-bg)]/45 text-[10px] uppercase tracking-[0.25em] text-[var(--ax-text-secondary)] font-semibold">
               <th className="pb-3 pt-3 pl-4 pr-4 font-semibold">Task Details</th>
               <th className="pb-3 pt-3 pr-4 font-semibold">Owner / Performer</th>
               <th className="pb-3 pt-3 pr-4 font-semibold">Update for Selected Meeting</th>
@@ -349,7 +349,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
           <tbody>
             {filteredTasks.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-[var(--text-muted)]">
+                <td colSpan={5} className="py-8 text-center text-sm text-[var(--ax-muted)]">
                   No pending KPIs or Action Items assigned to you.
                 </td>
               </tr>
@@ -376,9 +376,9 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
                     meetingUpdateNode = (
                       <div>
-                        <div className="font-semibold text-[var(--text-primary)]">{formattedVal}</div>
+                        <div className="font-semibold text-[var(--color-text)]">{formattedVal}</div>
                         {m.remarks && (
-                          <div className="mt-1 text-xs italic text-[var(--text-muted)] max-w-xs truncate" title={m.remarks}>
+                          <div className="mt-1 text-xs italic text-[var(--ax-muted)] max-w-xs truncate" title={m.remarks}>
                             &ldquo;{m.remarks}&rdquo;
                           </div>
                         )}
@@ -390,7 +390,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                     );
                   } else {
                     meetingUpdateNode = (
-                      <span className="text-xs text-[var(--text-muted)] italic flex items-center gap-1.5">
+                      <span className="text-xs text-[var(--ax-muted)] italic flex items-center gap-1.5">
                         <AlertCircle size={12} /> No entry for this meeting
                       </span>
                     );
@@ -407,7 +407,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                     const latestUp = updatesForMeeting[updatesForMeeting.length - 1];
                     meetingUpdateNode = (
                       <div>
-                        <div className="font-medium text-[var(--text-primary)] max-w-xs truncate" title={latestUp.note}>
+                        <div className="font-medium text-[var(--color-text)] max-w-xs truncate" title={latestUp.note}>
                           {latestUp.note}
                         </div>
                         <div className="mt-1 flex items-center flex-wrap gap-1.5">
@@ -419,10 +419,10 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                   } else {
                     meetingUpdateNode = (
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs text-[var(--text-muted)] italic flex items-center gap-1.5">
+                        <span className="text-xs text-[var(--ax-muted)] italic flex items-center gap-1.5">
                           No updates this meeting
                         </span>
-                        <div className="text-[10px] text-[var(--text-muted)]">
+                        <div className="text-[10px] text-[var(--ax-muted)]">
                           Current status: <StatusBadge size="sm" status={task.rawActionItem.status} />
                         </div>
                       </div>
@@ -435,18 +435,18 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
                 // Additional metrics layout
                 const stalenessColor = task.staleDays === null 
-                  ? "text-[var(--text-muted)]" 
+                  ? "text-[var(--ax-muted)]" 
                   : task.staleDays > 21 
-                    ? "text-[var(--alert-critical)] font-medium" 
+                    ? "text-[var(--ax-status-critical)] font-medium" 
                     : task.staleDays > 7 
-                      ? "text-[var(--alert-warning)] font-medium" 
-                      : "text-[var(--text-muted)]";
+                      ? "text-[var(--ax-status-warning)] font-medium" 
+                      : "text-[var(--ax-muted)]";
 
                 return (
                   <tr
                     key={`${task.type}-${task.id}-${index}`}
-                    className={`border-b border-[var(--border)] hover:bg-[var(--bg-content-surface)]/30 transition ${
-                      index % 2 === 0 ? "bg-[var(--bg-card)]" : "bg-[var(--bg-document)]/30"
+                    className={`border-b border-[var(--color-divider)] hover:bg-[var(--color-surface)]/30 transition ${
+                      index % 2 === 0 ? "bg-[var(--color-surface)]" : "bg-[var(--color-bg)]/30"
                     }`}
                   >
                     {/* Task details */}
@@ -456,33 +456,33 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <span
                             className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                               task.type === "KPI"
-                                ? "bg-teal-500/10 text-teal-600 border border-teal-500/20"
-                                : "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20"
+                                ? "ax-chip ax-chip-cat-2"
+                                : "ax-chip ax-chip-cat-1"
                             }`}
                           >
                             {task.type === "KPI" ? <ClipboardList size={10} /> : <ListTodo size={10} />}
                             {task.type === "KPI" ? "KPI" : "Action"}
                           </span>
-                          <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                          <span className="text-[11px] font-semibold text-[var(--ax-muted)] uppercase tracking-wider">
                             {task.scheme}
                           </span>
                           {task.type === "ActionItem" && (
                             <PriorityBadge priority={task.priority} />
                           )}
                           {((task.type === "KPI" && task.rawKpi?.isSelfApproved) || (task.type === "ActionItem" && task.rawActionItem?.isSelfApproved)) && (
-                            <span className="inline-flex items-center rounded-md border border-[var(--alert-success)] bg-[rgba(0,200,83,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--alert-success)]">
+                            <span className="ax-chip ax-chip-ok px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]">
                               Self-Approved
                             </span>
                           )}
                         </div>
-                        <p className="mt-1.5 text-sm font-semibold text-[var(--text-primary)] leading-snug">
+                        <p className="mt-1.5 text-sm font-semibold text-[var(--color-text)] leading-snug">
                           {task.title}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        <p className="text-xs text-[var(--ax-muted)] mt-0.5">
                           {task.vertical}
                         </p>
                         {task.type === "ActionItem" && (
-                          <p className="mt-1 text-[11px] text-[var(--alert-warning)] font-medium">
+                          <p className="mt-1 text-[11px] text-[var(--ax-status-warning)] font-medium">
                             Due: {task.dueDate}
                           </p>
                         )}
@@ -490,9 +490,9 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                     </td>
 
                     {/* Performer */}
-                    <td className="py-4 pr-4 text-xs text-[var(--text-secondary)]">
+                    <td className="py-4 pr-4 text-xs text-[var(--ax-text-secondary)]">
                       <div className="flex items-center gap-1.5">
-                        <User size={13} className="text-[var(--text-muted)]" />
+                        <User size={13} className="text-[var(--ax-muted)]" />
                         <span className="truncate max-w-[150px]" title={task.performers}>
                           {task.performers}
                         </span>
@@ -507,7 +507,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                     {/* Last update date (staleness) */}
                     <td className="py-4 pr-4 text-xs">
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-[var(--text-primary)]">{task.lastUpdated}</span>
+                        <span className="font-medium text-[var(--color-text)]">{task.lastUpdated}</span>
                         <span className={`text-[10px] flex items-center gap-1 ${stalenessColor}`}>
                           <Clock size={10} />
                           {task.staleDays === null 
@@ -528,7 +528,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <button
                             onClick={() => handleApprove(task)}
                             disabled={busyItemId === task.id}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[rgba(0,200,83,0.1)] px-2.5 py-1 text-xs font-semibold text-[var(--alert-success)] transition hover:bg-[rgba(0,200,83,0.18)] disabled:opacity-50"
+                            className="btn btn-success px-2.5 py-1 text-xs font-semibold"
                             title="Approve Update"
                           >
                             <ThumbsUp size={12} />
@@ -537,7 +537,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           <button
                             onClick={() => handleRejectClick(task)}
                             disabled={busyItemId === task.id}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[rgba(239,68,68,0.1)] px-2.5 py-1 text-xs font-semibold text-[var(--alert-critical)] transition hover:bg-[rgba(239,68,68,0.18)] disabled:opacity-50"
+                            className="btn btn-danger px-2.5 py-1 text-xs font-semibold"
                             title="Reject Update"
                           >
                             <ThumbsDown size={12} />
@@ -545,7 +545,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                           </button>
                         </div>
                       ) : (
-                        <div className="text-xs text-[var(--text-muted)] italic pr-2">
+                        <div className="text-xs text-[var(--ax-muted)] italic pr-2">
                           {task.type === "KPI" && isKpiPendingReview && !task.rawKpi?.currentUserCanReview 
                             ? "Awaiting review (no access)" 
                             : task.type === "ActionItem" && isActionPendingReview && task.rawActionItem && !isDesignatedReviewer(task.rawActionItem, user)
@@ -564,23 +564,23 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
 
       {/* Rejection Modal */}
       {rejectingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl">
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">Reject Completion</h3>
-            <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
-              Are you sure you want to reject the update for: <span className="font-semibold text-[var(--text-primary)]">{rejectingItem.title}</span>?
+        <div className="ax-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-[var(--color-text)]">Reject Completion</h3>
+            <p className="mt-1.5 text-xs text-[var(--ax-text-secondary)]">
+              Are you sure you want to reject the update for: <span className="font-semibold text-[var(--color-text)]">{rejectingItem.title}</span>?
             </p>
             
             <div className="mt-4">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-                Reason for Rejection <span className="text-[var(--alert-critical)]">*</span>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ax-text-secondary)]">
+                Reason for Rejection <span className="text-[var(--ax-status-critical)]">*</span>
               </label>
               <textarea
                 value={rejectionComment}
                 onChange={(e) => setRejectionComment(e.target.value)}
                 placeholder="Specify what needs to be fixed or updated..."
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-document)]/50 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)]/50 px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-accent)] focus:outline-none"
               />
             </div>
 
@@ -588,7 +588,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
               <button
                 type="button"
                 onClick={() => setRejectingItem(null)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-document)]"
+                className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
               >
                 Cancel
               </button>
@@ -596,7 +596,7 @@ export default function PendanceReportSection({ user }: PendanceReportSectionPro
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={!rejectionComment.trim()}
-                className="rounded-xl bg-[var(--alert-critical)] px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-95 disabled:opacity-50"
+                className="btn btn-danger px-4 py-2 text-sm font-semibold"
               >
                 Confirm Rejection
               </button>

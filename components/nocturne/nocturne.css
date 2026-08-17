@@ -1,0 +1,454 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Nocturne — the design system's token sheet and component layer.
+
+   Ported from the signed-off export at
+   `design-reference/_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css`.
+   That file is the source of truth for every value here; this file is the same
+   CSS with one structural change and one omission, both deliberate:
+
+   1. SCOPE. The export writes its tokens on `:root` and its base rules on
+      `body`, `h1`-`h6`, `a`, `p`. This application already has a signed-off
+      global layer (`app/globals.css`) that owns those same selectors for the
+      existing screens. Redefining them globally would restyle every screen in
+      the product, which the phase's "additive only / Odisha byte-identical"
+      rule forbids. So every rule here is scoped under `.noct`, the class the
+      `NocturneRoot` component puts on the subtree it owns. Nothing outside a
+      `NocturneRoot` can see any of it.
+
+      The cost is one extra level of specificity (0,2,0 for `.noct .btn`),
+      which beats a Tailwind utility (0,1,0). Do not mix Tailwind utilities
+      into a Nocturne subtree expecting them to win — use the primitives.
+
+   2. THE WEBFONT `@import`. The export opens with an `@import url(...)` for
+      Inter from Google Fonts. It is not carried over: the existing app names
+      Inter in `--font-body` without ever fetching it, and adding a
+      render-blocking third-party font request to the new surfaces would be a
+      behaviour change this gate did not ask for. The `--font-heading` /
+      `--font-body` values are unchanged, so the moment Inter is self-hosted
+      the surfaces pick it up with no edit here.
+
+   Colour-contrast corrections live in `tokens.css`, not here, so that this
+   file stays a faithful transcription and every deviation is in one place.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct {
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  /* The accent is the product's blurple — OKLCH hue 289.2 at L 0.660, C 0.125.
+     It reads as an accent rather than another neutral. */
+  --color-accent: #9184d9;
+  /* Mono scheme: accent-2 is a machine-derived stand-in kept only so both sets
+     resolve. Treat it as the same role as the accent. */
+  --color-accent-2: #a7a1db;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+
+  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
+     same step of any role matches the others in visual value. */
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+
+  --color-accent-2-100: #f5f4ff;
+  --color-accent-2-200: #e7e5fe;
+  --color-accent-2-300: #d2cefd;
+  --color-accent-2-400: #b5afe8;
+  --color-accent-2-500: #9690c9;
+  --color-accent-2-600: #7972a9;
+  --color-accent-2-700: #5c5783;
+  --color-accent-2-800: #423e5d;
+  --color-accent-2-900: #2b293a;
+
+  /* Saturation as presence. Deck- and page-scale fills only — one full-bleed
+     band per page at most, never interface chrome. */
+  --color-section: #262a60;
+  --color-section-glow: #353b80;
+  --color-section-ghost: #4c5397;
+
+  --font-heading: "Inter", system-ui, sans-serif;
+  --font-heading-weight: 500;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Density 0.70× — this system is dense on purpose. */
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+  --space-6: 16.8px;
+  --space-8: 22.4px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  /* Elevation — derived from the ground: on a dark ground, a hairline edge
+     plus ambient darkness rather than a stacked drop shadow. */
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+/* The export's `body` rule. Applied to the scope root instead, so a Nocturne
+   subtree paints its own ground inside the host document's body. */
+.noct {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.noct,
+.noct *,
+.noct *::before,
+.noct *::after {
+  box-sizing: border-box;
+}
+
+/* — base type — */
+.noct h1,
+.noct h2,
+.noct h3,
+.noct h4,
+.noct h5,
+.noct h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-2);
+}
+.noct h1 { font-size: 42px; }
+.noct h2 { font-size: 32px; }
+.noct h3 { font-size: 25px; }
+.noct h4 { font-size: 20px; }
+.noct h5 { font-size: 16px; }
+.noct h6 {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.noct p { margin: 0 0 var(--space-3); }
+/* `text-decoration: underline` is not in the export — it does not need to be,
+   because a bare `<a>` is underlined by the browser and the export only has to
+   tune the offset. This application is different: Tailwind's preflight resets
+   `a { text-decoration: inherit }` globally, which strips the underline from
+   every link on the page including these. The accent alone then carries the
+   link, at 2.7:1 against the surrounding text — a WCAG 1.4.1 failure the
+   accessibility audit caught on the inline alert's "Retry".
+
+   So the underline is restored here rather than left to a default that this
+   codebase has already removed. `.nav a` and `.btn` opt back out, as the export
+   has them do. */
+.noct a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.noct img { display: block; max-width: 100%; }
+.noct figure { margin: 0; }
+.noct figcaption {
+  font-size: 11px;
+  margin-top: var(--space-1);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.noct .text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+/* Interaction states are themed, never browser defaults. `:focus` is cleared
+   only because `:focus-visible` immediately replaces it — keyboard focus is
+   always visible. */
+.noct :focus { outline: none; }
+.noct :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.noct ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+/* — rules —
+   Freestanding rules fade to transparent at both ends over 48px, a Nocturne
+   signature. Box outlines, in-control separators and short accent marks stay
+   solid. This system prefers whitespace to rules; reach for `.hr` rarely. */
+.noct .hr {
+  height: 1px;
+  border: 0;
+  margin: var(--space-4) 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+}
+
+/* — buttons — */
+.noct .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  /* 14px matches the .input — the pair sits side by side in sign-up rows. */
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+.noct .btn svg { display: block; }
+.noct .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* The primary action is an accent OUTLINE. Never a fill. */
+.noct .btn-primary { color: var(--color-accent); border-color: var(--color-accent); }
+.noct .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.noct .btn-primary:active:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.noct .btn-secondary { border-color: var(--color-divider); }
+.noct .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.noct .btn-secondary:active:not(:disabled) { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.noct .btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.noct .btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.noct .btn-ghost:active:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.noct .btn-icon { width: 36px; height: 36px; padding: 0; }
+.noct .btn-block { width: 100%; margin-top: var(--space-2); }
+
+/* — forms — */
+.noct .field > label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.noct .input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.noct .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.noct .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+.noct textarea.input { min-height: 90px; resize: vertical; }
+.noct .radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.noct .radio input,
+.noct .seg-opt input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.noct .radio .dot {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-divider);
+}
+.noct .radio:hover .dot { border-color: var(--color-accent); }
+.noct .radio input:checked + .dot {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow: inset 0 0 0 4px var(--color-bg);
+}
+.noct .radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.noct .seg {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.noct .seg-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.noct .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.noct .seg-opt:has(input:checked) { color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.noct .seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.noct .seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* — cards — */
+.noct .card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.noct .card-kicker {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.noct .card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  line-height: 1.2;
+}
+.noct .card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.noct .card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.noct .elev-sm { box-shadow: var(--shadow-sm); }
+.noct .elev-md { box-shadow: var(--shadow-md); }
+.noct .elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.noct .tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+}
+.noct .tag-accent { background: var(--color-accent-800); color: var(--color-accent-100); }
+.noct .tag-accent-2 { background: var(--color-accent-2-800); color: var(--color-accent-2-100); }
+.noct .tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-100); }
+.noct .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+/* — navigation — */
+.noct .nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: none;
+}
+.noct .nav-brand {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 18px;
+  margin-right: auto;
+}
+.noct .nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.noct .nav a:hover,
+.noct .nav a[aria-current="page"] { color: var(--color-accent); }
+
+/* — tables — */
+.noct .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.noct .table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2);
+  /* Keeps the layout; the row paints the fading rule. */
+  border-bottom: 1px solid transparent;
+}
+.noct .table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid transparent;
+}
+/* Row rules are painted at row level so the end-fade spans the row rather
+   than restarting inside each cell. */
+.noct .table thead tr {
+  background: linear-gradient(
+      to right,
+      transparent,
+      var(--color-divider) 48px,
+      var(--color-divider) calc(100% - 48px),
+      transparent
+    )
+    no-repeat bottom / 100% 1px;
+}
+.noct .table tbody tr {
+  background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--color-text) 8%, transparent) 48px,
+      color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px),
+      transparent
+    )
+    no-repeat bottom / 100% 1px;
+}
+.noct .table tbody tr:hover {
+  /* The hover tint layers over the row rule, which keeps painting. */
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--color-text) 4%, transparent),
+        color-mix(in srgb, var(--color-text) 4%, transparent)
+      )
+      no-repeat 0 0 / 100% 100%,
+    linear-gradient(
+        to right,
+        transparent,
+        color-mix(in srgb, var(--color-text) 8%, transparent) 48px,
+        color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px),
+        transparent
+      )
+      no-repeat bottom / 100% 1px;
+}
+
+/* — dialog — */
+.noct .dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+}
+.noct .dialog {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.noct .dialog-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+}
+.noct .dialog-body { font-size: 14px; opacity: 0.85; }
+.noct .dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* — imagery —
+   Photographs blend into whatever the page paints behind them: anything darker
+   than the backdrop falls away. Prefer subjects shot on dark backgrounds. */
+.noct .lighten { mix-blend-mode: lighten; background-color: transparent; }

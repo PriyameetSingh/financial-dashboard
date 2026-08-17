@@ -22,27 +22,23 @@ const STATUS_CONFIG: Record<StatusValue, { label: string; tone: Tone }> = {
   not_started: { label: "Not Started", tone: "neutral" },
 };
 
-const TONE_STYLES: Record<Tone, { color: string; background: string; border: string }> = {
-  critical: {
-    color: "var(--alert-critical)",
-    background: "rgba(255, 59, 59, 0.12)",
-    border: "rgba(255, 59, 59, 0.4)",
-  },
-  warning: {
-    color: "var(--alert-warning)",
-    background: "rgba(255, 184, 0, 0.12)",
-    border: "rgba(255, 184, 0, 0.4)",
-  },
-  success: {
-    color: "var(--alert-success)",
-    background: "rgba(0, 200, 83, 0.12)",
-    border: "rgba(0, 200, 83, 0.4)",
-  },
-  neutral: {
-    color: "var(--text-muted)",
-    background: "rgba(136, 136, 136, 0.16)",
-    border: "rgba(136, 136, 136, 0.32)",
-  },
+/**
+ * The borrowed chip treatment, one class per tone.
+ *
+ * These were `rgba()` literals — a fixed red, amber, green and grey, tuned for a
+ * white page and measuring around 3.5:1 on the dark theme. The chip tones read
+ * the status tokens and a foreground measured against the tint itself, so both
+ * themes hold and a tenant swap cannot strand them.
+ *
+ * `neutral` is the bare `ax-chip`: a tint of the page's own text colour. That is
+ * the design system's answer to "no status", and it is deliberately not a grey
+ * literal — a fixed grey is wrong on one of the two grounds by construction.
+ */
+const TONE_CHIP: Record<Tone, string> = {
+  critical: "ax-chip-critical",
+  warning: "ax-chip-warning",
+  success: "ax-chip-ok",
+  neutral: "",
 };
 
 const SIZE_CLASSES = {
@@ -60,15 +56,15 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status, size = "sm", className }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status];
-  const tone = TONE_STYLES[config.tone];
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full border uppercase tracking-[0.3em] font-semibold",
+        "ax-chip",
+        TONE_CHIP[config.tone],
+        "uppercase tracking-[0.3em] font-semibold",
         SIZE_CLASSES[size],
         className,
       )}
-      style={{ color: tone.color, backgroundColor: tone.background, borderColor: tone.border }}
     >
       {config.label}
     </span>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, requireTenantScope, tenantStamped } from "@/lib/prisma";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
         mode: "BOTH",
         createdAt: new Date(),
         updatedAt: new Date(),
+        tenantId: requireTenantScope("agent-config-fallback"),
       };
     }
     return NextResponse.json(config);
@@ -53,12 +55,12 @@ export async function POST(request: NextRequest) {
       });
     } else {
       config = await prisma.agentConfig.create({
-        data: {
+        data: tenantStamped({
           id: "d3b07384-d113-43cf-a5a5-4828f306d860",
           enabled: body.enabled,
           runDay: body.runDay,
           mode: body.mode,
-        },
+        }),
       });
     }
 

@@ -24,7 +24,7 @@ function renderMd(text: string) {
     .replace(/\n/g, "<br/>")
     .replace(
       /\| ([^|]+) \| ([^|]+) \|/g,
-      '<div style="display:flex;gap:24px;font-size:11px;border-bottom:1px solid var(--border);padding:3px 0"><span style="min-width:160px;color:var(--text-secondary)">$1</span><span style="color:var(--text-primary);font-weight:600">$2</span></div>',
+      '<div style="display:flex;gap:24px;font-size:11px;border-bottom:1px solid var(--color-divider);padding:3px 0"><span style="min-width:160px;color:var(--ax-text-secondary)">$1</span><span style="color:var(--color-text);font-weight:600">$2</span></div>',
     );
 }
 
@@ -125,22 +125,22 @@ export default function ConversationalAI({
     <div
       className={
         embedded
-          ? "flex h-full min-h-0 flex-col gap-0 overflow-hidden bg-[var(--bg-card)]"
-          : "flex flex-col gap-0 bg-[var(--bg-card)]"
+          ? "flex h-full min-h-0 flex-col gap-0 overflow-hidden bg-[var(--color-surface)]"
+          : "flex flex-col gap-0 bg-[var(--color-surface)]"
       }
       style={rootStyle}
     >
       <div className={embedded ? "mb-3 shrink-0 px-1" : "mb-4"} style={embedded ? undefined : { marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Ask Assistant</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--color-text)", marginBottom: 4 }}>Ask Assistant</h2>
+        <p style={{ fontSize: 13, color: "var(--ax-muted)" }}>
           {variant === "meeting"
             ? "Ask for live HUDD data — financials, KPIs, agenda, actions, or command centre overview"
             : "Conversational intelligence — answers use live dashboard data"}
         </p>
         {variant === "meeting" && meetingContext?.title && (
-          <p style={{ fontSize: 12, color: "var(--accent)", marginTop: 6 }}>Meeting: {meetingContext.title}</p>
+          <p style={{ fontSize: 12, color: "var(--color-accent)", marginTop: 6 }}>Meeting: {meetingContext.title}</p>
         )}
-        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>Current access: {scopeLabel}</p>
+        <p style={{ fontSize: 11, color: "var(--ax-muted)", marginTop: 4 }}>Current access: {scopeLabel}</p>
       </div>
 
       <div
@@ -166,7 +166,7 @@ export default function ConversationalAI({
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: m.role === "user" ? "var(--text-primary)" : "var(--border)",
+                background: m.role === "user" ? "var(--color-text)" : "var(--color-divider)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -174,17 +174,17 @@ export default function ConversationalAI({
               }}
             >
               {m.role === "user" ? (
-                <User size={13} style={{ color: "var(--bg-primary)" }} />
+                <User size={13} style={{ color: "var(--color-bg)" }} />
               ) : (
-                <Bot size={13} style={{ color: "var(--text-primary)" }} />
+                <Bot size={13} style={{ color: "var(--color-text)" }} />
               )}
             </div>
             <div
               style={{
                 maxWidth: "78%",
-                background: m.role === "user" ? "var(--text-primary)" : "var(--bg-card)",
-                color: m.role === "user" ? "var(--bg-primary)" : "var(--text-primary)",
-                border: m.role === "user" ? "none" : "1px solid var(--border)",
+                background: m.role === "user" ? "var(--color-text)" : "var(--color-surface)",
+                color: m.role === "user" ? "var(--color-bg)" : "var(--color-text)",
+                border: m.role === "user" ? "none" : "1px solid var(--color-divider)",
                 borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
                 padding: "12px 14px",
                 fontSize: 13,
@@ -201,7 +201,7 @@ export default function ConversationalAI({
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: "var(--border)",
+                background: "var(--color-divider)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -211,8 +211,8 @@ export default function ConversationalAI({
             </div>
             <div
               style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-divider)",
                 borderRadius: "12px 12px 12px 2px",
                 padding: "12px 14px",
               }}
@@ -225,7 +225,7 @@ export default function ConversationalAI({
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: "var(--text-muted)",
+                      background: "var(--ax-muted)",
                       animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
                     }}
                   />
@@ -250,10 +250,10 @@ export default function ConversationalAI({
               fontSize: 11,
               padding: "5px 10px",
               background: "transparent",
-              border: "1px solid var(--border)",
+              border: "1px solid var(--color-divider)",
               borderRadius: 20,
               cursor: "pointer",
-              color: "var(--text-muted)",
+              color: "var(--ax-muted)",
               transition: "all 0.15s",
             }}
           >
@@ -275,10 +275,10 @@ export default function ConversationalAI({
           style={{
             flex: 1,
             padding: "12px 16px",
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-divider)",
             borderRadius: 8,
-            color: "var(--text-primary)",
+            color: "var(--color-text)",
             fontSize: 13,
             outline: "none",
           }}
@@ -289,8 +289,8 @@ export default function ConversationalAI({
           disabled={!input.trim()}
           style={{
             padding: "0 18px",
-            background: "var(--text-primary)",
-            color: "var(--bg-primary)",
+            background: "var(--color-text)",
+            color: "var(--color-bg)",
             border: "none",
             borderRadius: 8,
             cursor: "pointer",
@@ -306,11 +306,11 @@ export default function ConversationalAI({
           type="button"
           style={{
             padding: "0 14px",
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-divider)",
             borderRadius: 8,
             cursor: "pointer",
-            color: "var(--text-muted)",
+            color: "var(--ax-muted)",
           }}
           title="Voice input (coming soon)"
         >

@@ -127,7 +127,7 @@ export default function MeetingWiseProgressAgentPage() {
   if (loading) {
     return (
       <AppShell title="Meeting-wise Progress Agent">
-        <div className="flex h-[50vh] items-center justify-center text-[var(--text-muted)]">
+        <div className="flex h-[50vh] items-center justify-center text-[var(--ax-muted)]">
           <Clock className="mr-2 h-5 w-5 animate-spin" /> Loading agent configuration...
         </div>
       </AppShell>
@@ -138,17 +138,17 @@ export default function MeetingWiseProgressAgentPage() {
     <AppShell title="Meeting-wise Progress Agent">
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-6">
         {/* Back Link */}
-        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-          <Link href="/admin/agents" className="flex items-center gap-1 hover:text-[var(--text-primary)]">
+        <div className="flex items-center gap-2 text-sm text-[var(--ax-muted)]">
+          <Link href="/admin/agents" className="flex items-center gap-1 hover:text-[var(--color-text)]">
             <ArrowLeft className="h-4 w-4" /> Agent Directory
           </Link>
         </div>
 
         {/* Heading */}
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">AI & Rules Scheduler</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Meeting-wise Progress Agent</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">AI & Rules Scheduler</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">Meeting-wise Progress Agent</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Configure the background agent that compares snapshots and reports progress since the last review meeting.
           </p>
         </div>
@@ -156,8 +156,8 @@ export default function MeetingWiseProgressAgentPage() {
         <div className="grid gap-6 md:grid-cols-3">
           {/* Config Settings Form */}
           <div className="md:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Scheduler Settings</h2>
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6">
+              <h2 className="text-lg font-semibold text-[var(--color-text)]">Scheduler Settings</h2>
               <form onSubmit={handleSave} className="mt-4 space-y-4">
                 {/* Enabled checkbox */}
                 <div className="flex items-start gap-3">
@@ -166,13 +166,13 @@ export default function MeetingWiseProgressAgentPage() {
                     id="agent-enabled"
                     checked={config.enabled}
                     onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
-                    className="mt-1 h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] text-[var(--accent-text)] accent-[var(--border-strong)]"
+                    className="mt-1 h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-on-accent)] accent-[var(--ax-divider-strong)]"
                   />
                   <div>
-                    <label htmlFor="agent-enabled" className="text-sm font-medium text-[var(--text-primary)]">
+                    <label htmlFor="agent-enabled" className="text-sm font-medium text-[var(--color-text)]">
                       Enable Monitoring Agent
                     </label>
-                    <p className="text-xs text-[var(--text-muted)]">
+                    <p className="text-xs text-[var(--ax-muted)]">
                       When enabled, the agent runs in the background on the designated schedule.
                     </p>
                   </div>
@@ -180,7 +180,7 @@ export default function MeetingWiseProgressAgentPage() {
 
                 {/* Day of Week */}
                 <div className="space-y-1.5">
-                  <label htmlFor="run-day" className="text-sm font-medium text-[var(--text-primary)]">
+                  <label htmlFor="run-day" className="text-sm font-medium text-[var(--color-text)]">
                     Execution Day
                   </label>
                   <select
@@ -188,7 +188,7 @@ export default function MeetingWiseProgressAgentPage() {
                     value={config.runDay}
                     disabled={!config.enabled}
                     onChange={(e) => setConfig({ ...config, runDay: e.target.value })}
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
+                    className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] disabled:opacity-50"
                   >
                     {DAYS_OF_WEEK.map((d) => (
                       <option key={d} value={d}>
@@ -204,7 +204,7 @@ export default function MeetingWiseProgressAgentPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-medium text-[var(--bg-primary)] transition hover:opacity-90 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
                   {saving ? "Saving..." : "Save Settings"}
@@ -213,13 +213,13 @@ export default function MeetingWiseProgressAgentPage() {
             </div>
 
             {/* Run History */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Execution Logs</h2>
-              <p className="text-xs text-[var(--text-muted)]">Previous agent runs and insights outcomes.</p>
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6">
+              <h2 className="text-lg font-semibold text-[var(--color-text)]">Execution Logs</h2>
+              <p className="text-xs text-[var(--ax-muted)]">Previous agent runs and insights outcomes.</p>
 
-              <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)]">
+              <div className="mt-4 overflow-hidden rounded-xl border border-[var(--color-divider)]">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-[var(--bg-alternate-card)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                  <thead className="bg-[var(--ax-row-alt)] text-xs uppercase tracking-wider text-[var(--ax-muted)]">
                     <tr>
                       <th className="px-4 py-3">Date</th>
                       <th className="px-4 py-3">Mode</th>
@@ -228,17 +228,17 @@ export default function MeetingWiseProgressAgentPage() {
                       <th className="px-4 py-3">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border)]">
+                  <tbody className="divide-y divide-[var(--color-divider)]">
                     {history.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
+                        <td colSpan={5} className="px-4 py-8 text-center text-xs text-[var(--ax-muted)]">
                           No history logs found. Run the agent manually to create log entries.
                         </td>
                       </tr>
                     ) : (
                       history.map((log) => (
-                        <tr key={log.id} className="hover:bg-[var(--bg-alternate-card)]">
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-[var(--text-muted)]">
+                        <tr key={log.id} className="hover:bg-[var(--ax-row-alt)]">
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-[var(--ax-muted)]">
                             {new Date(log.runDate).toLocaleString(tenantLocale(), {
                               day: "numeric",
                               month: "short",
@@ -249,32 +249,32 @@ export default function MeetingWiseProgressAgentPage() {
                           <td className="px-4 py-3 text-xs font-semibold">{log.modeUsed}</td>
                           <td className="px-4 py-3 text-xs">
                             {log.status === "SUCCESS" ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--alert-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--alert-success)]">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--ax-status-ok-tint)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ax-status-ok)]">
                                 <CheckCircle className="h-3 w-3" /> SUCCESS
                               </span>
                             ) : (
                               <span
-                                className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-950/30 px-2 py-0.5 text-[10px] font-semibold text-red-600"
+                                className="ax-chip ax-chip-critical px-2 py-0.5 text-[10px] font-semibold"
                                 title={log.errorLog || ""}
                               >
                                 <AlertTriangle className="h-3 w-3" /> FAILED
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-xs text-[var(--text-muted)]">
+                          <td className="px-4 py-3 text-xs text-[var(--ax-muted)]">
                             {log.insights && log.insights.length > 0 ? (
                               <div className="space-y-1.5">
                                 {log.insights.map((ins, i) => (
                                   <div key={i} className="text-xs">
-                                    <strong className="text-[var(--text-primary)]">{ins.title}:</strong>{" "}
-                                    <span className="font-semibold text-[var(--text-primary)]">{ins.status}</span>
-                                    {ins.description && <span className="text-[var(--text-muted)]"> — {ins.description}</span>}
-                                    {!ins.description && ins.body && <span className="text-[var(--text-muted)]"> — {ins.body}</span>}
+                                    <strong className="text-[var(--color-text)]">{ins.title}:</strong>{" "}
+                                    <span className="font-semibold text-[var(--color-text)]">{ins.status}</span>
+                                    {ins.description && <span className="text-[var(--ax-muted)]"> — {ins.description}</span>}
+                                    {!ins.description && ins.body && <span className="text-[var(--ax-muted)]"> — {ins.body}</span>}
                                   </div>
                                 ))}
                               </div>
                             ) : log.errorLog ? (
-                              <div className="max-w-xs truncate font-mono text-[10px] text-red-500">{log.errorLog}</div>
+                              <div className="max-w-xs truncate font-mono text-[10px] ax-tone-critical">{log.errorLog}</div>
                             ) : (
                               "—"
                             )}
@@ -286,7 +286,7 @@ export default function MeetingWiseProgressAgentPage() {
                                 setSelectedLog(log);
                                 setModalOpen(true);
                               }}
-                              className="font-semibold text-[var(--text-primary)] underline hover:text-[var(--text-muted)]"
+                              className="font-semibold text-[var(--color-text)] underline hover:text-[var(--ax-muted)]"
                             >
                               View Logs
                             </button>
@@ -302,9 +302,9 @@ export default function MeetingWiseProgressAgentPage() {
 
           {/* Manual Run Override Box */}
           <div className="space-y-6">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Manual Trigger</h2>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+            <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6">
+              <h2 className="text-lg font-semibold text-[var(--color-text)]">Manual Trigger</h2>
+              <p className="mt-2 text-xs leading-relaxed text-[var(--ax-muted)]">
                 Bypass the scheduler and run the analysis right now. This evaluates progress since the last meeting using
                 the current configuration mode.
               </p>
@@ -313,7 +313,7 @@ export default function MeetingWiseProgressAgentPage() {
                 type="button"
                 onClick={handleTriggerRun}
                 disabled={running}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] py-3 text-sm font-semibold text-[var(--bg-primary)] transition hover:opacity-90 disabled:opacity-50"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-text)] py-3 text-sm font-semibold text-[var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
               >
                 {running ? (
                   <>
@@ -330,22 +330,22 @@ export default function MeetingWiseProgressAgentPage() {
 
               {/* Run output */}
               {runResult && (
-                <div className="mt-4 rounded-xl border border-[var(--border)] p-4 text-xs">
+                <div className="mt-4 rounded-xl border border-[var(--color-divider)] p-4 text-xs">
                   {runResult.success ? (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 font-semibold text-[var(--alert-success)]">
+                      <div className="flex items-center gap-1.5 font-semibold text-[var(--ax-status-ok)]">
                         <CheckCircle className="h-4 w-4" /> Agent execution completed.
                       </div>
-                      <p className="text-[10px] text-[var(--text-muted)]">
+                      <p className="text-[10px] text-[var(--ax-muted)]">
                         Insights have been calculated, saved, and loaded to the dashboard.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 font-semibold text-red-500">
+                      <div className="flex items-center gap-1.5 font-semibold ax-tone-critical">
                         <AlertTriangle className="h-4 w-4" /> Run failed.
                       </div>
-                      <div className="max-h-24 overflow-y-auto rounded bg-[var(--bg-alternate-card)] p-1.5 font-mono text-[9px] text-[var(--text-muted)]">
+                      <div className="max-h-24 overflow-y-auto rounded bg-[var(--ax-row-alt)] p-1.5 font-mono text-[9px] text-[var(--ax-muted)]">
                         {runResult.error}
                       </div>
                     </div>
@@ -357,12 +357,12 @@ export default function MeetingWiseProgressAgentPage() {
     </div>
   </div>
   {modalOpen && selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center ax-scrim backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3">
               <div>
-                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Execution Details</h3>
-                <p className="text-xs text-[var(--text-muted)]">
+                <h3 className="text-lg font-semibold text-[var(--color-text)]">Execution Details</h3>
+                <p className="text-xs text-[var(--ax-muted)]">
                   Run Date: {new Date(selectedLog.runDate).toLocaleString(tenantLocale())} · Mode: {selectedLog.modeUsed}
                 </p>
               </div>
@@ -372,7 +372,7 @@ export default function MeetingWiseProgressAgentPage() {
                   setModalOpen(false);
                   setSelectedLog(null);
                 }}
-                className="rounded-lg p-1 text-[var(--text-muted)] hover:bg-[var(--bg-alternate-card)] hover:text-[var(--text-primary)]"
+                className="rounded-lg p-1 text-[var(--ax-muted)] hover:bg-[var(--ax-row-alt)] hover:text-[var(--color-text)]"
               >
                 Close
               </button>
@@ -380,9 +380,9 @@ export default function MeetingWiseProgressAgentPage() {
 
             {/* Error log if failed */}
             {selectedLog.status !== "SUCCESS" && selectedLog.errorLog && (
-              <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/50 p-4 space-y-1">
-                <h4 className="text-xs font-bold text-red-700 dark:text-red-400">Execution Error Stack</h4>
-                <pre className="overflow-x-auto font-mono text-[10px] text-red-600 dark:text-red-300 whitespace-pre-wrap">
+              <div className="ax-chip ax-chip-critical block w-full p-4 space-y-1">
+                <h4 className="text-xs font-bold">Execution Error Stack</h4>
+                <pre className="overflow-x-auto font-mono text-[10px] whitespace-pre-wrap">
                   {selectedLog.errorLog}
                 </pre>
               </div>
@@ -390,7 +390,7 @@ export default function MeetingWiseProgressAgentPage() {
 
             {/* Execution Steps */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-[var(--text-primary)]">Agent Tools & Execution Steps</h4>
+              <h4 className="text-sm font-semibold text-[var(--color-text)]">Agent Tools & Execution Steps</h4>
               {selectedLog.executionLogs ? (() => {
                 try {
                   const steps = JSON.parse(selectedLog.executionLogs);
@@ -400,21 +400,21 @@ export default function MeetingWiseProgressAgentPage() {
                         {steps.map((step: any, idx: number) => {
                           const isLLM = step.name === "LLM Selection & Refinement";
                           return (
-                            <div key={idx} className="rounded-xl border border-[var(--border)] bg-[var(--bg-alternate-card)] p-4 space-y-2">
+                            <div key={idx} className="rounded-xl border border-[var(--color-divider)] bg-[var(--ax-row-alt)] p-4 space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-[var(--text-primary)]">
+                                <span className="text-xs font-bold text-[var(--color-text)]">
                                   {idx + 1}. {step.name}
                                 </span>
                                 {step.success !== undefined && (
                                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${
-                                    step.success ? "bg-[var(--alert-success-bg)] text-[var(--alert-success)]" : "bg-red-100 text-red-700"
+                                    step.success ? "ax-chip ax-chip-ok" : "ax-chip ax-chip-critical"
                                   }`}>
                                     {step.success ? "SUCCESS" : "FAILED"}
                                   </span>
                                 )}
                               </div>
                               {step.details && (
-                                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                                <p className="text-xs text-[var(--ax-muted)] leading-relaxed">
                                   {step.details}
                                 </p>
                               )}
@@ -423,14 +423,14 @@ export default function MeetingWiseProgressAgentPage() {
                               {isLLM && (
                                 <div className="grid gap-3 pt-2 md:grid-cols-2">
                                   <div className="space-y-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">LLM Prompt</span>
-                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 font-mono text-[10px] text-[var(--text-muted)] whitespace-pre-wrap">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">LLM Prompt</span>
+                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-2.5 font-mono text-[10px] text-[var(--ax-muted)] whitespace-pre-wrap">
                                       {step.prompt}
                                     </div>
                                   </div>
                                   <div className="space-y-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">LLM Response</span>
-                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 font-mono text-[10px] text-[var(--text-primary)] whitespace-pre-wrap">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ax-muted)]">LLM Response</span>
+                                    <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-2.5 font-mono text-[10px] text-[var(--color-text)] whitespace-pre-wrap">
                                       {step.response}
                                     </div>
                                   </div>
@@ -446,12 +446,12 @@ export default function MeetingWiseProgressAgentPage() {
                   // Fallback if not valid JSON
                 }
                 return (
-                  <pre className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg-alternate-card)] p-4 font-mono text-[10px] text-[var(--text-muted)] whitespace-pre-wrap">
+                  <pre className="overflow-x-auto rounded-xl border border-[var(--color-divider)] bg-[var(--ax-row-alt)] p-4 font-mono text-[10px] text-[var(--ax-muted)] whitespace-pre-wrap">
                     {selectedLog.executionLogs}
                   </pre>
                 );
               })() : (
-                <p className="text-xs text-[var(--text-muted)] italic">No detailed execution steps logged for this run.</p>
+                <p className="text-xs text-[var(--ax-muted)] italic">No detailed execution steps logged for this run.</p>
               )}
             </div>
           </div>

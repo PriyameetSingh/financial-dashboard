@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { KPIWorkflowStatus, KpiEscalationFlag } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { assertKpiUpdaterForDefinition, userRoleIdsFromDbUser } from "@/lib/kpi-access";
 import { hasPermissionForUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       { canManageSchemes },
     );
 
-    const fy = await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } });
+    const fy = await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } });
     if (!fy) {
       return NextResponse.json({ detail: "Financial year not found" }, { status: 404 });
     }
@@ -90,11 +90,11 @@ export async function POST(request: NextRequest) {
     let target = existingTarget;
     if (!existingTarget) {
       target = await prisma.kpiTarget.create({
-        data: {
+        data: tenantStamped({
           kpiDefinitionId: definition.id,
           financialYearId: fy.id,
           denominatorValue: body.denominatorValue ?? undefined,
-        },
+        }),
       });
     } else if (body.denominatorValue !== undefined && body.denominatorValue !== null) {
       const current = existingTarget.denominatorValue;
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
         })
       : await prisma.$transaction(async (tx) => {
           await tx.kpiMeasurement.create({
-            data: {
+            data: tenantStamped({
               kpiTargetId: target.id,
               meetingId: meeting.id,
               measuredAt,
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
               escalationFlag: resolvedEscalationFlag,
               createdById: actor.id,
               ...reviewFields,
-            },
+            }),
           });
 
           const afterMeasurement = await tx.kpiMeasurement.findFirst({

@@ -123,65 +123,65 @@ export default function ActionItemCreatePage() {
     <AppShell title="Create Action Item">
       <div className="space-y-6 px-6 py-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">TASU Desk</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">New Action Item</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">TASU Desk</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">New Action Item</h1>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">
             Draft directives and assign officers for rapid follow up.
           </p>
         </div>
 
         {success && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-ok)]">
             Action item created and shared with assigned officers.
           </div>
         )}
         {error && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.1)] px-4 py-3 text-sm text-[var(--alert-critical)]">
+          <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-critical)]">
             {error}
           </div>
         )}
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6">
           {loading && (
-            <div className="text-sm text-[var(--text-muted)]">Loading schemes...</div>
+            <div className="text-sm text-[var(--ax-muted)]">Loading schemes...</div>
           )}
 
           {!loading && (
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
+              <label className="flex flex-col gap-2 text-sm text-[var(--ax-muted)]">
                 <span className="text-xs uppercase tracking-[0.3em]">
-                  Title <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                  Title <span className="text-[var(--ax-status-critical)] ml-0.5" aria-hidden="true">*</span>
                 </span>
                 <input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                   placeholder="Enter action item title"
                   required
                   aria-required="true"
                 />
               </label>
               <SchemeSelector schemes={schemes} value={scheme} onChange={setScheme} label="Scheme (Optional)" />
-              <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:col-span-2">
+              <label className="flex flex-col gap-2 text-sm text-[var(--ax-muted)] md:col-span-2">
                 <span className="text-xs uppercase tracking-[0.3em]">
-                  Description <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                  Description <span className="text-[var(--ax-status-critical)] ml-0.5" aria-hidden="true">*</span>
                 </span>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                   rows={3}
                   placeholder="Describe the expected action"
                   required
                   aria-required="true"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
+              <label className="flex flex-col gap-2 text-sm text-[var(--ax-muted)]">
                 <span className="text-xs uppercase tracking-[0.3em]">Priority</span>
                 <select
                   value={priority}
                   onChange={(event) => setPriority(event.target.value as ActionItemPriority)}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 >
                   {PRIORITIES.map((value) => (
                     <option key={value} value={value}>
@@ -190,12 +190,12 @@ export default function ActionItemCreatePage() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
+              <label className="flex flex-col gap-2 text-sm text-[var(--ax-muted)]">
                 <span className="text-xs uppercase tracking-[0.3em]">Related Meeting (Optional)</span>
                 <select
                   value={meetingId}
                   onChange={(event) => setMeetingId(event.target.value)}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 >
                   <option value="">Select a meeting</option>
                   {meetings.map((entry) => (
@@ -205,15 +205,15 @@ export default function ActionItemCreatePage() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
+              <label className="flex flex-col gap-2 text-sm text-[var(--ax-muted)]">
                 <span className="text-xs uppercase tracking-[0.3em]">
-                  Due Date <span className="text-[var(--alert-critical)] ml-0.5" aria-hidden="true">*</span>
+                  Due Date <span className="text-[var(--ax-status-critical)] ml-0.5" aria-hidden="true">*</span>
                 </span>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.target.value)}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                   required
                   aria-required="true"
                 />
@@ -226,14 +226,14 @@ export default function ActionItemCreatePage() {
                     id="self-approve-checkbox"
                     checked={isSelfApproved}
                     onChange={(e) => handleSelfApproveChange(e.target.checked)}
-                    className="h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-card)] focus:ring-[var(--accent)]"
+                    className="h-4 w-4 rounded border-[var(--color-divider)] bg-[var(--color-surface)] focus:ring-[var(--color-accent)]"
                   />
-                  <label htmlFor="self-approve-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] cursor-pointer select-none">
+                  <label htmlFor="self-approve-checkbox" className="text-xs uppercase tracking-[0.2em] text-[var(--ax-muted)] cursor-pointer select-none">
                     No separate review needed — owner will self-approve
                   </label>
                 </div>
                 {isSelfApproved && (
-                  <p className="text-xs text-[var(--alert-success)] normal-case tracking-normal">
+                  <p className="text-xs text-[var(--ax-status-ok)] normal-case tracking-normal">
                     ✓ This item will be marked approved immediately with no pending review step.
                   </p>
                 )}
@@ -249,19 +249,19 @@ export default function ActionItemCreatePage() {
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[var(--text-muted)]">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[var(--ax-muted)]">
             <div>
               <p>
-                Assigned to: <span className="text-[var(--text-primary)]">{selectedAssignee?.name ?? ""}</span>
+                Assigned to: <span className="text-[var(--color-text)]">{selectedAssignee?.name ?? ""}</span>
               </p>
               {!isSelfApproved && (
                 <p>
-                  Reviewer: <span className="text-[var(--text-primary)]">{selectedReviewer?.name ?? ""}</span>
+                  Reviewer: <span className="text-[var(--color-text)]">{selectedReviewer?.name ?? ""}</span>
                 </p>
               )}
             </div>
             <button
-              className="flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 if (!canSubmit) {
                   if (!isSelfApproved && assignee === reviewer) {

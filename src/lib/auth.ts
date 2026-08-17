@@ -103,7 +103,7 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       }
       return getCurrentUser();
     }
-    const data = (await res.json()) as { user: MeApiUser | null };
+    const data = (await res.json()) as { user: MeApiUser | null; enabledModules?: string[] };
     if (!data.user) {
       clearCurrentUser();
       return null;
@@ -124,6 +124,7 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       officerType: data.user.officerType ?? undefined,
       assignedSchemes: data.user.assignedSchemes,
       permissions: data.user.permissions,
+      enabledModules: data.enabledModules ?? [],
     };
     setCurrentUser(next);
     return next;

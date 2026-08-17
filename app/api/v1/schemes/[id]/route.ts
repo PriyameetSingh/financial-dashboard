@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { isValidAssignment, mapSchemeView, parseSponsorshipType } from "@/lib/scheme-api";
 import { requireAnyPermission, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ detail: "verticalName cannot be empty" }, { status: 400 });
     }
 
-    const after = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const after = await prisma.$transaction(async (tx) => {
       await tx.scheme.update({
         where: { id },
         data: {
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           }));
 
         if (rows.length > 0) {
-          await tx.schemeAssignment.createMany({ data: rows });
+          await tx.schemeAssignment.createMany({ data: tenantStamped(rows)});
         }
       }
 
@@ -172,7 +172,7 @@ export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: 
       return NextResponse.json({ detail: "Scheme not found" }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await prisma.$transaction(async (tx) => {
       await tx.schemeAssignment.deleteMany({ where: { schemeId: id } });
       await tx.kpiDefinition.deleteMany({ where: { schemeId: id } });
       await tx.subscheme.deleteMany({ where: { schemeId: id } });

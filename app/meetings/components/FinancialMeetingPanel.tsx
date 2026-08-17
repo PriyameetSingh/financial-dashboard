@@ -80,7 +80,7 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center gap-2 py-12 text-sm text-[var(--ax-muted)]">
         <Loader2 className="animate-spin" size={18} />
         Loading financial summary…
       </div>
@@ -88,7 +88,7 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
   }
 
   if (err || !totals) {
-    return <p className="text-sm text-[var(--alert-critical)]">{err ?? "No data"}</p>;
+    return <p className="text-sm text-[var(--ax-status-critical)]">{err ?? "No data"}</p>;
   }
 
   const pct =
@@ -98,58 +98,58 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
 
   return (
     <div className="space-y-6">
-      <p className="text-xs text-[var(--text-muted)]">
+      <p className="text-xs text-[var(--ax-muted)]">
         FY {fy ?? financialYearLabel}
         {asOf ? ` · snapshot ${asOf}` : " · FY budget & expenditure (latest rolled up)"}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Budget (est.)</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+        <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">Budget (est.)</p>
+          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
             ₹{totals.budgetEstimateCr.toFixed(1)} Cr
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">SO expenditure</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--text-primary)]">
+        <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">SO expenditure</p>
+          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-text)]">
             ₹{totals.soExpenditureCr.toFixed(1)} Cr
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">IFMS expenditure</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--accent)]">
+        <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">IFMS expenditure</p>
+          <p className="mt-1 text-lg font-semibold tabular-nums text-[var(--color-accent)]">
             ₹{totals.ifmsExpenditureCr.toFixed(1)} Cr
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-[var(--text-muted)]">
-        IFMS utilization vs budget estimate: <strong className="text-[var(--text-primary)]">{pct}%</strong>
+      <p className="text-sm text-[var(--ax-muted)]">
+        IFMS utilization vs budget estimate: <strong className="text-[var(--color-text)]">{pct}%</strong>
       </p>
 
       {barData.length > 0 && (
         <div>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
             By budget category — IFMS (₹ Cr)
           </p>
-          <div className="h-[220px] w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+          <div className="h-[220px] w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-2">
             <ResponsiveContainer width="100%" height={204}>
               <BarChart data={barData} margin={{ top: 8, right: 8, left: 4, bottom: 36 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)] opacity-50" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--color-divider)] opacity-50" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 10, fill: "var(--ax-muted)" }}
                   interval={0}
                   angle={-28}
                   textAnchor="end"
                   height={56}
                 />
-                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} width={44} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--ax-muted)" }} width={44} />
                 <Tooltip
                   contentStyle={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-divider)",
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
@@ -164,7 +164,7 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
                     payload?.[0]?.payload?.fullLabel ? String(payload[0].payload.fullLabel) : ""
                   }
                 />
-                <Bar dataKey="ifms" name="ifms" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ifms" name="ifms" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -173,19 +173,19 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
 
       {lineData.length > 0 && (
         <div>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-muted)]">
             IFMS trend by snapshot date (₹ Cr)
           </p>
-          <div className="h-[200px] w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+          <div className="h-[200px] w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-2">
             <ResponsiveContainer width="100%" height={184}>
               <LineChart data={lineData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)] opacity-50" />
-                <XAxis dataKey="asOfDate" tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} width={44} />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--color-divider)] opacity-50" />
+                <XAxis dataKey="asOfDate" tick={{ fontSize: 10, fill: "var(--ax-muted)" }} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--ax-muted)" }} width={44} />
                 <Tooltip
                   contentStyle={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-divider)",
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
@@ -194,7 +194,7 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
                     return [`₹${Number.isFinite(n) ? n.toFixed(2) : "0.00"} Cr`, tenantConfig().labels.ifmsExpenditure];
                   }}
                 />
-                <Line type="monotone" dataKey="ifmsCr" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="ifmsCr" stroke="var(--color-accent)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -202,10 +202,10 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
       )}
 
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-divider)]">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--border)] bg-[var(--bg-primary)] text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
+              <tr className="border-b border-[var(--color-divider)] bg-[var(--color-bg)] text-[10px] uppercase tracking-[0.15em] text-[var(--ax-muted)]">
                 <th className="px-3 py-2 font-medium">Category</th>
                 <th className="px-3 py-2 font-medium tabular-nums">Budget</th>
                 <th className="px-3 py-2 font-medium tabular-nums">SO</th>
@@ -214,11 +214,11 @@ export default function FinancialMeetingPanel({ financialYearLabel }: { financia
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.headCode} className="border-b border-[var(--border)]/80 last:border-0">
-                  <td className="px-3 py-2 text-[var(--text-primary)]">{r.label}</td>
-                  <td className="px-3 py-2 tabular-nums text-[var(--text-muted)]">₹{r.budgetEstimateCr.toFixed(1)}</td>
-                  <td className="px-3 py-2 tabular-nums text-[var(--text-muted)]">₹{r.soExpenditureCr.toFixed(1)}</td>
-                  <td className="px-3 py-2 tabular-nums text-[var(--accent)]">₹{r.ifmsExpenditureCr.toFixed(1)}</td>
+                <tr key={r.headCode} className="border-b border-[var(--color-divider)]/80 last:border-0">
+                  <td className="px-3 py-2 text-[var(--color-text)]">{r.label}</td>
+                  <td className="px-3 py-2 tabular-nums text-[var(--ax-muted)]">₹{r.budgetEstimateCr.toFixed(1)}</td>
+                  <td className="px-3 py-2 tabular-nums text-[var(--ax-muted)]">₹{r.soExpenditureCr.toFixed(1)}</td>
+                  <td className="px-3 py-2 tabular-nums text-[var(--color-accent)]">₹{r.ifmsExpenditureCr.toFixed(1)}</td>
                 </tr>
               ))}
             </tbody>

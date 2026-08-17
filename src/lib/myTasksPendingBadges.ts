@@ -5,16 +5,34 @@ import type { ActionItem, KPISubmission, SessionUser } from "@/types";
 export type PendingBadgeTone = "red" | "yellow" | "green";
 export type PendingBadgeState = { count: number; tone: PendingBadgeTone | null };
 
+/**
+ * The in-page badge's tone. Same three Nocturne tone classes as the nav badge —
+ * one set, so the two cannot drift.
+ *
+ * The `dark:` variants they replace were dead in any case: the app removed the
+ * `dark` class on every mount, so only the light half ever rendered.
+ */
 export const BADGE_TONE_CLASS: Record<PendingBadgeTone, string> = {
-  red: "text-red-600 dark:text-red-300",
-  yellow: "text-amber-600 dark:text-amber-300",
-  green: "text-emerald-600 dark:text-emerald-300",
+  red: "ax-tone-critical",
+  yellow: "ax-tone-warning",
+  green: "ax-tone-ok",
 };
 
+/**
+ * The nav badge's tone.
+ *
+ * Was three Tailwind palette classes, which pinned the badge to a fixed hue in
+ * one theme and left it unreadable in the other. The Nocturne tone classes read
+ * the status token pair, so both grounds are covered and a tenant swap cannot
+ * strand them.
+ *
+ * The tone is never the only signal: the badge sits beside the item's label and
+ * its count, and the count is the thing being communicated.
+ */
 export const SIDEBAR_BADGE_TONE_CLASS: Record<PendingBadgeTone, string> = {
-  red: "text-red-300",
-  yellow: "text-amber-300",
-  green: "text-emerald-300",
+  red: "ax-tone-critical",
+  yellow: "ax-tone-warning",
+  green: "ax-tone-ok",
 };
 
 function isOverdue(item: ActionItem) {

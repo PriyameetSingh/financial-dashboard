@@ -53,22 +53,22 @@ export default function PromptModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={() => !busy && onCancel()}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
-        {message && <p className="mt-2 text-sm text-[var(--text-muted)]">{message}</p>}
+        <h3 className="text-lg font-semibold text-[var(--color-text)]">{title}</h3>
+        {message && <p className="mt-2 text-sm text-[var(--ax-muted)]">{message}</p>}
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           autoFocus
           rows={4}
-          className="mt-4 w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-document)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
+          className="mt-4 w-full resize-none rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:border-[var(--color-accent)] focus:outline-none"
         />
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="ghost" onClick={onCancel} disabled={busy}>
@@ -79,7 +79,7 @@ export default function PromptModal({
             disabled={!canConfirm}
             className={
               tone === "danger"
-                ? "bg-[var(--alert-critical)] text-white hover:bg-opacity-90"
+                ? "bg-[var(--ax-status-critical)]  hover:bg-opacity-90"
                 : undefined
             }
           >

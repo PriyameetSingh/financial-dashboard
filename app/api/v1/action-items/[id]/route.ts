@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ActionItemStatus, Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { getDbUserBySession, hasPermissionForUser, requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
 import { NotificationService } from "@/lib/services/NotificationService";
@@ -216,14 +216,14 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         });
 
         await tx.actionItemUpdate.create({
-          data: {
+          data: tenantStamped({
             actionItemId: id,
             meetingId: current.meetingId,
             timestamp: new Date(),
             status: current.status,
             note: body.archived ? "Action item archived" : "Action item unarchived",
             createdById: actor.id,
-          },
+          }),
         });
 
         await logAudit(
@@ -257,7 +257,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
           data: { status: nextStatus },
         });
         await tx.actionItemUpdate.create({
-          data: {
+          data: tenantStamped({
             actionItemId: id,
             meetingId: body.meetingId?.trim() ?? current.meetingId,
             timestamp: new Date(),
@@ -267,7 +267,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
                 ? "Reviewer approved completion"
                 : `Reviewer rejected: ${body.rejectionReason}`,
             createdById: actor.id,
-          },
+          }),
         });
 
         await logAudit(
@@ -411,13 +411,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
             });
           } else {
             await tx.actionItemPerformer.create({
-              data: {
+              data: tenantStamped({
                 actionItemId: id,
                 userId,
                 isActive: true,
                 assignedAt: new Date(),
                 sortOrder: i,
-              },
+              }),
             });
           }
         }
@@ -425,7 +425,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         await tx.actionItemReviewerUser.deleteMany({ where: { actionItemId: id } });
         if (nextReviewerIds.length > 0) {
           await tx.actionItemReviewerUser.createMany({
-            data: nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i })),
+            data: tenantStamped(nextReviewerIds.map((userId, i) => ({ actionItemId: id, userId, sortOrder: i }))),
           });
         }
       });
@@ -483,14 +483,14 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
       await prisma.$transaction(async (tx) => {
         await tx.actionItemUpdate.create({
-          data: {
+          data: tenantStamped({
             actionItemId: id,
             meetingId: current.meetingId,
             timestamp: new Date(),
             status: current.status,
             note: `Reassigned: performers ${prevAssignName} → ${performersFound.map((u) => u.name).join(", ")}; reviewers ${prevReviewName} → ${isSelfApproved ? "Self-Approved" : (reviewersFound.map((u) => u.name).join(", ") || "—")}`,
             createdById: actor.id,
-          },
+          }),
         });
         await logAudit(
           tx,
@@ -681,14 +681,14 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         }
         if (noteTrimmed.length > 0 && noteMeetingId) {
           await tx.actionItemUpdate.create({
-            data: {
+            data: tenantStamped({
               actionItemId: id,
               meetingId: noteMeetingId,
               timestamp: new Date(),
               status: nextStatus ?? current.status,
               note: noteTrimmed,
               createdById: actor.id,
-            },
+            }),
           });
         }
 

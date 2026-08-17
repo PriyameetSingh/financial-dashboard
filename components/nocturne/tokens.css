@@ -1,0 +1,409 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Airawat platform tokens — layered over the Nocturne base sheet.
+
+   Ported from `design-reference/tokens.css`, scoped under `.noct` for the same
+   reason `nocturne.css` is (see its header). Three deliberate differences from
+   the reference file:
+
+   1. The reference carries a sample tenant theme (`[data-tenant="suryapur"]`)
+      as a demonstration of runtime swapping. It is NOT carried over: a tenant
+      list hardcoded in a stylesheet is exactly the "hardcoded / mock data in a
+      shipped surface" this phase forbids, and it would not scale past the one
+      tenant someone remembered to add. The same capability is delivered
+      properly by `NocturneRoot`, which emits a scoped override block from
+      whatever role values it is handed at runtime. See `theme.ts`.
+
+   2. A dark peer is written for every light override. The reference relies on
+      `:root` defaults for dark, which works when a document has exactly one
+      theme; the gallery renders both themes on one page, so a nested dark
+      island inside a light page has to be able to get its dark values back.
+
+   3. A colour-contrast correction block at the bottom. Every entry in it is a
+      value the raw design system computes below WCAG 2.1 AA for the size it is
+      used at. Each is annotated with the measured ratio before and after.
+
+   Everything a tenant theme may swap at runtime is a custom property. Nothing
+   in this file names a tenant.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The data-viz palette ────────────────────────────────────────────────────
+   Two changes from the values this file shipped with, both made at reskin Gate B
+   and both measured rather than judged. `tests/nocturne-dataviz.test.ts` reads
+   these declarations back and re-derives every number below, so the claims here
+   are checked rather than asserted.
+
+   1. IT WAS DARK-ONLY. Every swatch was declared once, on `.noct`, and the
+      comment said it had been checked "against the dark ground". There was no
+      light peer, so a chart on the light theme drew dark-theme fills on a light
+      surface. Both themes are now written out.
+
+   2. IT WAS NOT ACTUALLY COLOUR-BLIND SAFE. The original comment claimed a
+      deutan/protan check, but what had been verified was contrast against the
+      GROUND — each swatch against the page, never against each other. Simulating
+      the six categorical swatches (Viénot–Brettel–Mollon) and measuring CIE76 ΔE
+      pairwise put river teal and graphite 3.8 apart under deuteranopia, which is
+      indistinguishable: two series on one chart, same colour, for roughly one in
+      twelve men. The set is retuned to a floor of ΔE 16.
+
+   The retune keeps each token's HUE FAMILY and moves only lightness and
+   saturation — the palette still reads as blurple / teal / laterite / slate /
+   rosewood / graphite. That is deliberate: dichromats retain lightness
+   discrimination even where hue collapses, so laddering L* is what buys
+   separation, and it costs the least identity. `--dv-cat-1` is pinned to the
+   accent in both themes, as its name has always promised.
+
+   Floors, and why they differ. Categorical and diverging swatches are chart
+   FILLS — WCAG 1.4.11 non-text contrast, 3:1 — and every one of them clears 3.4:1
+   on both the page and a card, most far higher. Where this product paints a
+   FIGURE rather than a mark it uses `--ax-status-*` instead, which is measured
+   for text at 4.5:1. Keeping the two apart is the point: a token that has to
+   serve both ends up failing one.
+
+   Categorical, minimum pairwise ΔE across normal, deutan and protan vision:
+     dark 16.2 · light 16.5   (was 3.8 dark, and light did not exist) */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --dv-cat-1: #9184d9; /* blurple — follows the tenant accent */
+  --dv-cat-2: #78b09c; /* river teal */
+  --dv-cat-3: #c2925c; /* laterite */
+  --dv-cat-4: #88a0ce; /* slate blue */
+  --dv-cat-5: #ce7473; /* rosewood */
+  --dv-cat-6: #828da1; /* graphite */
+
+  /* Sequential scale — one hue, lightness ramp, low → high. Order reads without
+     colour vision at all, which is the property that matters: L* 17 → 27 → 39 →
+     50 → 62, monotone, smallest step 10.2. The lowest step sits close to the
+     ground on purpose; that is what "low" looks like on a scale of fills. */
+  --dv-seq-1: #2b2741;
+  --dv-seq-2: #423a6a;
+  --dv-seq-3: #5d5294;
+  --dv-seq-4: #796cbf;
+  --dv-seq-5: #968ae0;
+
+  /* Diverging scale — deficit → neutral → surplus. Laddered L* 54 → 71 → 95,
+     min pairwise ΔE 20.1. The ladder is doing the work: under deuteranopia a
+     teal collapses toward the neutral grey it is supposed to contrast with, so
+     hue alone cannot carry a three-stop diverging scale. */
+  --dv-div-neg: #b56d82;
+  --dv-div-mid: #a9aebf;
+  --dv-div-pos: #dcf5ee;
+
+  /* Status roles. Mono scheme: status is carried by weight, tint and a mark —
+     never by hue alone, which is why every status tag also ships a glyph.
+     Restated per theme because each resolves to a ramp step that is itself
+     themed, and a `var()` chain is resolved where it is declared. */
+  --status-ok-bg: var(--color-neutral-800);
+  --status-ok-fg: var(--color-neutral-100);
+  --status-risk-bg: var(--color-accent-800);
+  --status-risk-fg: var(--color-accent-100);
+  --status-breach-border: var(--color-accent);
+  --status-breach-fg: var(--color-accent);
+}
+
+/* The light peers. Not a lightened copy: on a light ground the usable band runs
+   the other way, so the sequential ramp inverts and the diverging scale runs
+   dark → mid rather than mid → light. Same measurements, own ground. */
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --dv-cat-1: #5d5294; /* blurple — follows the tenant accent */
+  --dv-cat-2: #226d5e; /* river teal */
+  --dv-cat-3: #8a5a00; /* laterite */
+  --dv-cat-4: #4e5979; /* slate blue */
+  --dv-cat-5: #b12f3f; /* rosewood */
+  --dv-cat-6: #1b2133; /* graphite */
+
+  /* L* 90 → 74 → 57 → 39 → 20, monotone, smallest step 15.5. */
+  --dv-seq-1: #e2dff5;
+  --dv-seq-2: #b9b0e2;
+  --dv-seq-3: #8b7fcc;
+  --dv-seq-4: #5d5294;
+  --dv-seq-5: #322b57;
+
+  /* L* 19 → 31 → 51, min pairwise ΔE 16.6. */
+  --dv-div-neg: #5c0f1c;
+  --dv-div-mid: #43485a;
+  --dv-div-pos: #2f8778;
+
+  --status-ok-bg: var(--color-neutral-800);
+  --status-ok-fg: var(--color-neutral-100);
+  --status-risk-bg: var(--color-accent-800);
+  --status-risk-fg: var(--color-accent-100);
+  --status-breach-border: var(--color-accent);
+  --status-breach-fg: var(--color-accent);
+}
+
+/* ── Status colours ──────────────────────────────────────────────────────────
+   Nocturne is a mono palette: status is carried by a mark and a word, which is
+   what `StatusTag` does and what WCAG 1.4.1 actually asks for. These three
+   exist for the screens that still paint status as bare colour, and for the
+   places where a hue genuinely adds — a chart series, a threshold line.
+
+   Each is a pair, measured on its own ground. The light values are markedly
+   deeper than the dark ones, for the reason this file keeps running into: a hue
+   that reads against a dark ground washes out against a light one.
+
+   MEASURED AGAINST THREE GROUNDS, not two. The page and a card were the obvious
+   pair, and they were the only ones checked until the audit reached a KPI table
+   whose rows carry an accent tint: a status figure on a tinted row measured
+   4.09:1 where the same token measured 5.56:1 on the page. A tint lightens the
+   ground toward the text, so every tinted container is a ground of its own, and
+   a token used as bare text has to clear the WORST of them.
+   
+   The dark values are lifted accordingly — the change is small, because the
+   binding ground is only a few percent off the surface.
+   
+   Dark:  worst-case 4.72:1 · 4.72:1 · 4.70:1   (page: 6.48 · 6.47 · 6.45)
+   Light: critical 5.67:1 · warning 5.21:1 · ok 5.51:1  (on --color-bg) */
+.noct {
+  --ax-status-critical: #c78d9e;
+  --ax-status-warning: #c3945f;
+  --ax-status-ok: #61a9a1;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-status-critical: #b02a41;
+  --ax-status-warning: #8a5a00;
+  --ax-status-ok: #1a6b5f;
+}
+
+/* Dark peer, so a dark island inside a light page — the sidebar, where the
+   pending-work badges live — gets the values measured for its own ground rather
+   than inheriting the deep light ones. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-status-critical: #c78d9e;
+  --ax-status-warning: #c3945f;
+  --ax-status-ok: #61a9a1;
+}
+
+/* ── The AI accent ───────────────────────────────────────────────────────────
+   A distinct hue for AI and agent features, borrowed from the company design
+   guide and re-measured on Nocturne's own grounds before adoption.
+
+   The guide's value (#CA920D) holds up on the dark ground — 6.4:1 on the page,
+   5.5:1 on a surface — and collapses on the light one, where it measures
+   2.42:1 and fails even the 3:1 floor for chrome. That is the same failure mode
+   as the three corrections below it: a value validated against one background
+   and carried to the other. So the token is a pair, and the light peer is a
+   deeper gold: 5.7:1 on the light ground, 6.2:1 on a light surface.
+
+   It is deliberately NOT a swappable role. A tenant brands the product; "this
+   was written by a machine" is a property of the product, and a tenant who
+   could recolour it to match their accent would erase the distinction. */
+.noct {
+  --ax-ai-accent: #ca920d;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-ai-accent: #7a5800;
+}
+
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-ai-accent: #ca920d;
+}
+
+/* ── Light theme — an equal peer of the dark default, not an afterthought ──
+   Selectors are doubled (`.noct[…]` and `.noct […]`) so a theme can be set on
+   the scope root OR on any island inside it. That is what lets one page show
+   the same component set in both themes side by side. */
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --color-bg: #eef0f8;
+  --color-surface: #f8f9fd;
+  --color-text: #232532;
+  --color-accent: #5d5294;
+  --color-divider: color-mix(in srgb, #232532 16%, transparent);
+  --shadow-sm: 0 0 0 1px #d9dde9;
+  --shadow-md: 0 0 0 1px #dfe2ee, 0 6px 18px rgba(35, 37, 50, 0.1);
+  --shadow-lg: 0 0 0 1px #cfd3e5, 0 16px 40px rgba(35, 37, 50, 0.16);
+  /* The tinted-fill pairs invert: on a light ground the tint is the light ramp
+     step and the text on it is the dark one. */
+  --color-accent-800: #e7e5fe;
+  --color-accent-100: #423a6a;
+  --color-accent-2-800: #e7e5fe;
+  --color-accent-2-100: #423a6a;
+  --color-neutral-800: #e4e7f5;
+  --color-neutral-100: #3f424d;
+}
+
+/* Dark peer — restores the base values for a dark island nested in a light
+   page. Identical to the `.noct` defaults in `nocturne.css`; stated again
+   because a nested scope cannot otherwise escape an ancestor's light block. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
+  --color-accent-800: #423a6a;
+  --color-accent-100: #f5f4ff;
+  --color-accent-2-800: #423e5d;
+  --color-accent-2-100: #f5f4ff;
+  --color-neutral-800: #3f424d;
+  --color-neutral-100: #f3f5fe;
+}
+
+/* ── Density switch — spacing moves, type sizes hold ──
+   Type stays put on purpose: shrinking text to fit more on screen is how a
+   dense interface becomes an unreadable one. */
+.noct[data-density="compact"],
+.noct [data-density="compact"] {
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-6: 11px;
+  --space-8: 15px;
+}
+
+.noct[data-density="comfortable"],
+.noct [data-density="comfortable"] {
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+  --space-6: 16.8px;
+  --space-8: 22.4px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Colour-contrast corrections — WCAG 2.1 AA, 1.4.3 Contrast (Minimum)
+
+   The design system expresses muted text as a percentage mix of the text
+   colour into the ground. Several of those percentages land below 4.5:1 at the
+   sizes they are actually used at, and the shortfall is much worse on the light
+   ground than the dark one, because mixing toward a light ground loses contrast
+   far faster than mixing toward a dark one.
+
+   Each correction below is the smallest change that clears 4.5:1 while keeping
+   the intended visual hierarchy (meta still reads quieter than body, which
+   still reads quieter than headings). Measured ratios are recorded so a future
+   retune can tell what was being protected.
+
+   The design system's own light-theme override for `.text-muted` is the
+   precedent for this: it already replaces the 55% mix with a fixed #575a68 on
+   light, for exactly this reason.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* `.card-body` and `.dialog-body` — expressed as `opacity` in the design system,
+   re-expressed as a colour here.
+
+   `opacity` composites the whole subtree, so anything nested inside a card body
+   is dimmed too: a muted 12px label inside one measured 4.19:1 (its own 62% mix,
+   then multiplied by the body's 0.8), and an accent outline button inside one
+   measured 3.54:1 — a button that fails AA purely because of where it sits.
+   Neither is visible when the body holds nothing but a paragraph, which is what
+   the design system's own examples hold.
+
+   `color` reaches exactly the text that inherits it and stops at any descendant
+   with a colour of its own, which is what the rule actually wants. The rendered
+   value for plain body text is identical to the opacity version (8.5:1 dark,
+   7.7:1 light); what changes is that a nested control keeps its own contrast.
+
+   Structural corollary, in `Card.tsx`: buttons belong in the `actions` slot,
+   outside the body, not inside it. This rule keeps the failure from being
+   silent; the slot keeps it from arising. */
+.noct .card-body {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.noct .dialog-body {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+/* `.card-meta` — 11px. Dark: 50% mix measures 4.49:1, four hundredths short.
+   Raised to 62%, which measures 6.2:1. */
+.noct .card-meta {
+  color: color-mix(in srgb, var(--color-text) 62%, transparent);
+}
+
+/* `.table th` — 11px uppercase. Dark: 60% mix measures 5.7:1 and passes; it is
+   raised in step with `.card-meta` only so the two quiet greys stay visually
+   matched rather than one drifting lighter than the other. */
+.noct .table th {
+  color: color-mix(in srgb, var(--color-text) 66%, transparent);
+}
+
+/* On the light ground the percentage mixes collapse: `.text-muted` at 55%
+   measures 3.4:1, `.card-meta` at 50% measures 3.0:1 and `.table th` at 60%
+   measures 4.0:1 — all failing. The design system already answers this for
+   `.text-muted` with a fixed grey at 6.0:1; the same grey is used for the other
+   two rather than inventing a second one. */
+.noct[data-theme="light"] .text-muted,
+.noct [data-theme="light"] .text-muted,
+.noct[data-theme="light"] figcaption,
+.noct [data-theme="light"] figcaption,
+.noct[data-theme="light"] .card-meta,
+.noct [data-theme="light"] .card-meta,
+.noct[data-theme="light"] .table th,
+.noct [data-theme="light"] .table th {
+  color: #575a68;
+}
+
+/* ── The document palette ────────────────────────────────────────────────────
+   PRINT-FIXED, AND DELIBERATELY NOT THEMED. Every other token in this file
+   follows the reader's theme and the tenant's brand. These do not, for a reason
+   that is checkable rather than aesthetic: the report screens ARE the print
+   output. `app/reports/**` calls `window.print()` on the same components the
+   reader is looking at, at `max-w-[210mm]`, with `@media print` rules and
+   `print:` variants throughout. There is no separate render path to diverge from.
+
+   So a report body is paper. Theming it dark would either print black rectangles
+   or preview something the printer will not produce, and both are worse than a
+   preview that admits it is a document. The chrome AROUND the document — the
+   toolbar, the filters, the page header — is ordinary product UI and follows the
+   theme normally; the paper is an island inside it, the same mechanism as the
+   dark sidebar, pointed the other way.
+
+   These are also not the tenant's to rebrand. A government report's rules and
+   highlight bands carry meaning to the officers reading them, in the same way
+   the flag colours in `NationalColourBand` do.
+
+   Every pair below is measured on its own fill. Report body ink is near-black
+   rather than pure, which is the usual print convention:
+     band 13.8:1 · group 13.7:1 · subtotal 15.5:1 · zebra 17.8:1
+     attention 13.4:1 · carried 18.2:1 · done 15.6:1 · pending 15.2:1
+   The four status pills carry their own deeper ink: 7.5 / 7.3 / 6.8:1, and the
+   table header band takes white on a deep rose at 8.0:1. */
+.noct {
+  --ax-doc-paper: #ffffff;
+  --ax-doc-ink: #111111;
+  --ax-doc-rule: #111111;
+  --ax-doc-ink-quiet: #4b4b4b;
+
+  /* Structural bands, in the order a reader meets them. */
+  --ax-doc-band: #ffd966;      /* numbered section title */
+  --ax-doc-group: #f8d4c4;     /* a group header inside a table */
+  --ax-doc-subtotal: #dbeafe;  /* subtotal and heading rows */
+  --ax-doc-zebra: #fff7ed;     /* alternating row stripe */
+  --ax-doc-header: #9f1239;    /* table header band */
+  --ax-doc-header-ink: #ffffff;
+
+  /* Meaning-carrying fills. Each is paired with a word in the cell it marks —
+     never colour alone, the same rule the rest of the product follows. */
+  --ax-doc-attention: #fecdd3;
+  --ax-doc-attention-ink: #881337;
+  --ax-doc-carried: #fffbeb;
+  --ax-doc-done: #bbf7d0;
+  --ax-doc-done-ink: #14532d;
+  --ax-doc-pending: #fde68a;
+  --ax-doc-pending-ink: #78350f;
+
+  /* Faint whole-row washes, for tables where every row is either fine or not.
+     They are a pair on purpose: the pendance report marks "has data" and "has
+     issues" rows this way, and folding both into the neutral stripe would have
+     deleted the only thing those rows are drawn to say. Ink on either clears
+     16:1, so the wash never has to carry the reading. */
+  --ax-doc-row-attention: #fff1f2;
+  --ax-doc-row-done: #f0fdf4;
+}

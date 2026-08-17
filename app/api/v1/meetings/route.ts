@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseListLimit } from "@/lib/list-query-limit";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     const meeting = await prisma.$transaction(async (tx) => {
       const meeting = await tx.dashboardMeeting.create({
-        data: {
+        data: tenantStamped({
           meetingDate,
           title: body.title ?? null,
           notes: body.notes ?? null,
@@ -78,13 +78,18 @@ export async function POST(request: NextRequest) {
           createdById: actor?.id ?? null,
           topics: body.topics?.length
             ? {
-                create: body.topics.map((t) => ({
-                  topic: t.topic,
-                  createdById: actor?.id ?? null,
-                })),
+                // Nested relation create — the chokepoint walks these and
+                // stamps each row (prepareNestedWrite), so the payload is
+                // marked here rather than carrying a hand-written tenant.
+                create: tenantStamped(
+                  body.topics.map((t) => ({
+                    topic: t.topic,
+                    createdById: actor?.id ?? null,
+                  })),
+                ),
               }
             : undefined,
-        },
+        }),
       });
 
       if (body.actionItemIds?.length) {

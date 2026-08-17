@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
+<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  .noct-tab[data-on="1"] { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+  @keyframes noct-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh;">
+
+  <header style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 12px 28px; background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+    <span style="display: flex; align-items: center; gap: 9px;">
+      <span style="display: block; width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--color-accent); background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);"></span>
+      <span style="font-family: var(--font-heading); font-size: 15px;">Airawat</span>
+      <span class="tag tag-outline" style="margin-left: 4px;">Control plane · internal</span>
+    </span>
+    <nav style="display: flex; gap: 4px; margin-left: 12px;">
+      <button onClick="{{ goTenants }}" data-on="{{ tabTenants }}" class="noct-tab" style="font: inherit; font-size: 13px; border: 0; background: transparent; color: inherit; padding: 7px 12px; border-radius: var(--radius-sm); cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-text) 6%, transparent);">Tenants &amp; builds</button>
+      <button onClick="{{ goEvals }}" data-on="{{ tabEvals }}" class="noct-tab" style="font: inherit; font-size: 13px; border: 0; background: transparent; color: inherit; padding: 7px 12px; border-radius: var(--radius-sm); cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-text) 6%, transparent);">Evals &amp; gates</button>
+      <button onClick="{{ goPipe }}" data-on="{{ tabPipe }}" class="noct-tab" style="font: inherit; font-size: 13px; border: 0; background: transparent; color: inherit; padding: 7px 12px; border-radius: var(--radius-sm); cursor: pointer;" style-hover="background: color-mix(in srgb, var(--color-text) 6%, transparent);">Agents &amp; pipeline</button>
+    </nav>
+    <span style="margin-left: auto; display: flex; align-items: center; gap: 14px;">
+      <span class="text-muted" style="font-size: 11px;">release 4.18.2 · fleet synced 14:32</span>
+      <a class="btn btn-secondary" href="Airawat Platform.dc.html" style="font-size: 12px;">airawat.com ↗</a>
+    </span>
+  </header>
+
+  <main style="max-width: 1320px; margin: 0 auto; padding: 22px 28px 64px; display: grid; gap: 16px;">
+
+    <sc-if value="{{ isTenants }}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Tenants</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">6 <span style="font-size: 12px; opacity: 0.55;">4 live</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Fleet health</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">4<span style="font-size: 12px; opacity: 0.55;">/6 healthy</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">On latest release</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">3<span style="font-size: 12px; opacity: 0.55;">/6 · 4.18.x</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Median configure-to-extend</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px; color: var(--color-accent);">93<span style="font-size: 12px;">%</span> <span style="font-size: 12px; opacity: 0.55; color: var(--color-text);">config</span></div>
+        </div>
+      </div>
+
+      <div style="padding: 6px 16px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+        <table class="table">
+          <thead><tr><th>Tenant</th><th>Health</th><th>Stage</th><th>Build</th><th>Modules</th><th>Environment</th><th>C:E</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ tenants }}" as="t" hint-placeholder-count="6">
+              <tr onClick="{{ t.open }}" style="{{ t.rowStyle }}">
+                <td>
+                  <span style="display: block; font-size: 13px; font-family: var(--font-heading);">{{ t.name }}</span>
+                  <span class="text-muted" style="font-size: 10px;">{{ t.slug }}.airawat.app</span>
+                </td>
+                <td><span class="tag" style="{{ t.healthStyle }}">{{ t.healthLabel }}</span></td>
+                <td><span style="font-size: 12px;">{{ t.stage }}</span></td>
+                <td><span style="font-size: 12px;">{{ t.version }}</span></td>
+                <td>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 64px; height: 4px; border-radius: 2px; background: var(--color-neutral-800); display: block;"><span style="{{ t.modBarStyle }}"></span></span>
+                    <span class="text-muted" style="font-size: 11px;">{{ t.mods }}/23</span>
+                  </span>
+                </td>
+                <td><span class="text-muted" style="font-size: 11px;">{{ t.env }}</span></td>
+                <td><span style="font-size: 12px; color: var(--color-accent-300);">{{ t.c2e }}%</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+
+      <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-6); display: grid; gap: 18px; animation: noct-rise 0.2s ease both;">
+          <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;">
+            <h2 style="font-size: 19px; margin: 0;">{{ dName }}</h2>
+            <span class="tag" style="{{ dHealthStyle }}">{{ dHealthLabel }}</span>
+            <span class="text-muted" style="font-size: 12px;">{{ dMeta }}</span>
+            <button class="btn btn-ghost" onClick="{{ closeDetail }}" style="margin-left: auto; font-size: 12px;">Close ×</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start;">
+            <div>
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Config summary</div>
+              <div style="display: grid; gap: 6px; font-size: 12px;">
+                <sc-for list="{{ dConfig }}" as="c" hint-placeholder-count="5">
+                  <div style="display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; background: linear-gradient(to right, color-mix(in srgb, var(--color-text) 8%, transparent), transparent) no-repeat bottom / 100% 1px;">
+                    <span class="text-muted">{{ c.k }}</span><span>{{ c.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Feature matrix · 23 modules</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 5px;">
+                <sc-for list="{{ dMatrix }}" as="m" hint-placeholder-count="12">
+                  <span style="{{ m.style }}" title="{{ m.name }}">{{ m.abbr }}</span>
+                </sc-for>
+              </div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 8px;">Filled = enabled · outlined = available in tier · dimmed = above tier</div>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Recent activity</div>
+              <div style="display: grid; gap: 8px; font-size: 12px;">
+                <sc-for list="{{ dActivity }}" as="a" hint-placeholder-count="4">
+                  <div style="display: flex; gap: 9px; align-items: flex-start;">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); flex: none; margin-top: 6px;"></span>
+                    <span><span>{{ a.what }}</span> <span class="text-muted" style="font-size: 10px;">· {{ a.when }}</span></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isEvals }}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Regression gate</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">5<span style="font-size: 12px; opacity: 0.55;">/6 pass</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Tenancy lint</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">6<span style="font-size: 12px; opacity: 0.55;">/6 pass</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Baseline drift</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">1 <span style="font-size: 12px; opacity: 0.55;">profile drifting</span></div>
+        </div>
+        <div style="padding: 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Release 4.19 readiness</div>
+          <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px; color: var(--color-accent);">Blocked<span style="font-size: 12px; opacity: 0.55; color: var(--color-text);"> · 1 gate</span></div>
+        </div>
+      </div>
+      <div style="padding: 6px 16px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+        <table class="table">
+          <thead><tr><th>Tenant profile</th><th>Regression</th><th>Tenancy lint</th><th>Baseline drift</th><th>Last eval</th><th>Release-ready</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ evals }}" as="e" hint-placeholder-count="6">
+              <tr>
+                <td><span style="font-size: 13px; font-family: var(--font-heading);">{{ e.name }}</span></td>
+                <td><span class="tag" style="{{ e.regStyle }}">{{ e.reg }}</span></td>
+                <td><span class="tag" style="{{ e.lintStyle }}">{{ e.lint }}</span></td>
+                <td>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 54px; height: 4px; border-radius: 2px; background: var(--color-neutral-800); display: block;"><span style="{{ e.driftBarStyle }}"></span></span>
+                    <span style="font-size: 11px;" class="text-muted">{{ e.drift }}%</span>
+                  </span>
+                </td>
+                <td><span class="text-muted" style="font-size: 11px;">{{ e.last }}</span></td>
+                <td><span class="tag" style="{{ e.readyStyle }}">{{ e.ready }}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 12px 14px; border-radius: var(--radius-md); box-shadow: inset 2px 0 0 var(--color-accent); font-size: 12px; max-width: 52rem;">
+        <span style="font-family: var(--font-heading);">Blocking 4.19:</span> Indrapur regression gate fails on report-pack pagination with Odia locale strings. Fix is in review; re-run scheduled tonight. <span class="text-muted">Baseline drift on Bhagirathi is config-approved (custom approval chain) — flagged for the quarterly baseline merge.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPipe }}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+        <div style="grid-column: span 2; min-width: 0; padding: var(--space-6); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
+            <h2 style="font-size: 15px; margin: 0;">Configure-to-Extend ratio</h2>
+            <span class="text-muted" style="font-size: 11px;">share of each onboarding delivered by configuration, not custom code · last 8 tenants</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 10px; margin: 8px 0 14px;">
+            <span style="font-family: var(--font-heading); font-size: 42px; color: var(--color-accent);">93%</span>
+            <span class="tag tag-neutral">▲ +9 pts over 6 months</span>
+          </div>
+          <svg viewBox="0 0 640 150" width="100%" height="170" role="img" aria-label="Configure-to-extend ratio trend rising from 78 to 96 percent across eight onboardings">
+            <g stroke="var(--color-divider)" stroke-width="1">
+              <line x1="0" y1="20" x2="640" y2="20"></line><line x1="0" y1="70" x2="640" y2="70"></line><line x1="0" y1="120" x2="640" y2="120"></line>
+            </g>
+            <g font-size="10" fill="currentColor" opacity="0.45">
+              <text x="0" y="16">100%</text><text x="0" y="66">80%</text><text x="0" y="116">60%</text>
+            </g>
+            <path d="M40 75 L120 68 L200 62 L280 55 L360 47 L440 38 L520 32 L600 30" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
+            <g fill="var(--color-accent)"><circle cx="40" cy="75" r="3"></circle><circle cx="120" cy="68" r="3"></circle><circle cx="200" cy="62" r="3"></circle><circle cx="280" cy="55" r="3"></circle><circle cx="360" cy="47" r="3"></circle><circle cx="440" cy="38" r="3"></circle><circle cx="520" cy="32" r="3"></circle><circle cx="600" cy="30" r="3"></circle></g>
+            <g font-size="9" fill="currentColor" opacity="0.5" text-anchor="middle">
+              <text x="40" y="142">T-8</text><text x="200" y="142">T-6</text><text x="360" y="142">T-4</text><text x="520" y="142">T-2</text><text x="600" y="142">latest</text>
+            </g>
+          </svg>
+        </div>
+        <div style="padding: var(--space-6); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 12px; align-content: start;">
+          <h2 style="font-size: 15px; margin: 0;">Per-tenant breakdown</h2>
+          <div style="display: grid; gap: 9px; font-size: 11px;">
+            <sc-for list="{{ c2eRows }}" as="r" hint-placeholder-count="6">
+              <div style="display: grid; grid-template-columns: 110px 1fr 38px; gap: 8px; align-items: center;">
+                <span class="text-muted">{{ r.name }}</span>
+                <span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="{{ r.barStyle }}"></span></span>
+                <span>{{ r.pct }}%</span>
+              </div>
+            </sc-for>
+          </div>
+          <div class="text-muted" style="font-size: 10px;">Extend share is custom code carried per tenant — the number we drive toward zero.</div>
+        </div>
+        <div style="padding: var(--space-6); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 12px; align-content: start;">
+          <h2 style="font-size: 15px; margin: 0;">Gate pass rates · 30 days</h2>
+          <div style="display: grid; gap: 9px; font-size: 11px;">
+            <div style="display: grid; grid-template-columns: 110px 1fr 38px; gap: 8px; align-items: center;"><span class="text-muted">Regression</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 94%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>94%</span></div>
+            <div style="display: grid; grid-template-columns: 110px 1fr 38px; gap: 8px; align-items: center;"><span class="text-muted">Tenancy lint</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 99%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>99%</span></div>
+            <div style="display: grid; grid-template-columns: 110px 1fr 38px; gap: 8px; align-items: center;"><span class="text-muted">A11y / contrast</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 97%; height: 6px; border-radius: 3px; background: var(--color-accent);"></span></span><span>97%</span></div>
+            <div style="display: grid; grid-template-columns: 110px 1fr 38px; gap: 8px; align-items: center;"><span class="text-muted">Locale render</span><span style="height: 6px; border-radius: 3px; background: var(--color-neutral-800); display: block;"><span style="display: block; width: 91%; height: 6px; border-radius: 3px; background: var(--color-accent-600);"></span></span><span>91%</span></div>
+          </div>
+          <div class="text-muted" style="font-size: 10px;">312 pipeline runs · median 6m 40s per run</div>
+        </div>
+        <div style="grid-column: 1 / -1; padding: 6px 16px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <table class="table">
+            <thead><tr><th>Run</th><th>Tenant profile</th><th>Trigger</th><th>Gates</th><th>Duration</th><th>Result</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ runs }}" as="r" hint-placeholder-count="5">
+                <tr>
+                  <td><span style="font-size: 12px;">{{ r.id }}</span></td>
+                  <td><span style="font-size: 12px;">{{ r.tenant }}</span></td>
+                  <td><span class="text-muted" style="font-size: 12px;">{{ r.trigger }}</span></td>
+                  <td><span class="text-muted" style="font-size: 12px;">{{ r.gates }}</span></td>
+                  <td><span class="text-muted" style="font-size: 12px;">{{ r.dur }}</span></td>
+                  <td><span class="tag" style="{{ r.resStyle }}">{{ r.res }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'tenants', sel: null };
+
+  static TENANTS = [
+    { name: 'Suryapur Development Authority', slug: 'suryapur', health: 'ok', stage: 'Live', version: '4.18.2', mods: 17, env: 'shared · ap-south', c2e: 96,
+      config: [['Tier', 'Governance'], ['Locale', 'en-IN · ₹ lakh/crore · FY 1 Apr'], ['Theme', 'River teal · dark default'], ['Deployment', 'Shared cluster ap-south'], ['Admins', '2 of 37 users']],
+      activity: [['Report-pack template updated by tenant admin', '2h ago'], ['Release 4.18.2 rolled out', 'yesterday'], ['KPI thresholds edited', '3d ago'], ['Quarterly access review completed', '1w ago']] },
+    { name: 'Chandranagar Municipal Corporation', slug: 'chandranagar', health: 'ok', stage: 'Live', version: '4.18.2', mods: 23, env: 'isolated · client VPC', c2e: 91,
+      config: [['Tier', 'Institution'], ['Locale', 'en-IN · ₹ lakh/crore · FY 1 Apr'], ['Theme', 'Slate blue · light default'], ['Deployment', 'Isolated · client VPC'], ['Admins', '3 of 214 users']],
+      activity: [['SSO certificate rotated', '6h ago'], ['Archives module enabled', '2d ago'], ['Release 4.18.2 rolled out', '2d ago'], ['Custom retention policy applied', '2w ago']] },
+    { name: 'Indrapur Smart City PMU', slug: 'indrapur', health: 'warn', stage: 'UAT', version: '4.19.0-rc1', mods: 19, env: 'staging · ap-south', c2e: 88,
+      config: [['Tier', 'Institution'], ['Locale', 'or-IN · ₹ lakh/crore · FY 1 Apr'], ['Theme', 'Laterite · dark default'], ['Deployment', 'Staging, go-live 1 Sep'], ['Admins', '2 of 18 users']],
+      activity: [['Regression gate failed — Odia report-pack pagination', '4h ago'], ['UAT round 2 sign-off received for KPI module', '1d ago'], ['Locale switched to or-IN', '3d ago']] },
+    { name: 'Bhagirathi Housing Board', slug: 'bhagirathi', health: 'ok', stage: 'Live', version: '4.17.6', mods: 14, env: 'shared · ap-south', c2e: 84,
+      config: [['Tier', 'Governance'], ['Locale', 'en-IN · ₹ million · FY 1 Apr'], ['Theme', 'Rosewood · light default'], ['Deployment', 'Shared cluster ap-south'], ['Admins', '1 of 52 users']],
+      activity: [['Custom approval chain deployed (extend)', '5d ago'], ['Pinned to 4.17.x until approval-chain merge', '5d ago'], ['Monthly report pack generated', '1w ago']] },
+    { name: 'Mandakini Water Supply Board', slug: 'mandakini', health: 'crit', stage: 'Live', version: '4.18.1', mods: 11, env: 'shared · ap-south', c2e: 97,
+      config: [['Tier', 'Essential'], ['Locale', 'en-IN · ₹ lakh/crore · FY 1 Apr'], ['Theme', 'Graphite · dark default'], ['Deployment', 'Shared cluster ap-south'], ['Admins', '1 of 29 users']],
+      activity: [['IFMS connector failing since 11:40 — feed credentials expired', '3h ago'], ['Alert escalated to client IT', '2h ago'], ['Utilization figures frozen at last good sync', '2h ago']] },
+    { name: 'Vindhyachal Zilla Parishad', slug: 'vindhyachal', health: 'ok', stage: 'Configuring', version: '—', mods: 8, env: 'provisioning', c2e: 100,
+      config: [['Tier', 'Essential'], ['Locale', 'en-IN · ₹ lakh/crore · FY 1 Apr'], ['Theme', 'Nocturne blurple · dark default'], ['Deployment', 'Shared, provisioning'], ['Admins', 'Onboarding step 5 of 7']],
+      activity: [['Onboarding wizard resumed at People step', '1h ago'], ['Branding uploaded, contrast check passed', '1d ago'], ['Workspace slug reserved', '2d ago']] }
+  ];
+
+  static MODULE_NAMES = ['Command Centre', 'Financial Overview', 'KPI Monitoring', 'Schemes register', 'Scheme detail', 'Treasury trends', 'Alerts', 'Ward map', 'Review meetings', 'Report packs', 'Action items', 'Approvals', 'Audit trail', 'Data import', 'Treasury connector', 'Data quality', 'Archives', 'Users & roles', 'Menu cards', 'Design system', 'Localization', 'Notifications', 'API & SSO'];
+
+  tag(kind) {
+    return kind === 'ok' ? { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' }
+      : kind === 'warn' ? { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' }
+      : { border: '1px solid var(--color-accent)', color: 'var(--color-accent)', background: 'transparent' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const healthLabel = { ok: '✓ Healthy', warn: '△ Degraded', crit: '! Critical' };
+    const sel = Component.TENANTS.find(t => t.slug === s.sel);
+    const bar = (pct, color) => ({ display: 'block', width: pct + '%', height: '100%', borderRadius: '3px', background: color || 'var(--color-accent)' });
+    return {
+      goTenants: () => this.setState({ tab: 'tenants' }),
+      goEvals: () => this.setState({ tab: 'evals' }),
+      goPipe: () => this.setState({ tab: 'pipe' }),
+      tabTenants: s.tab === 'tenants' ? '1' : '0', tabEvals: s.tab === 'evals' ? '1' : '0', tabPipe: s.tab === 'pipe' ? '1' : '0',
+      isTenants: s.tab === 'tenants', isEvals: s.tab === 'evals', isPipe: s.tab === 'pipe',
+
+      tenants: Component.TENANTS.map(t => ({
+        name: t.name, slug: t.slug, stage: t.stage, version: t.version, mods: t.mods, env: t.env, c2e: t.c2e,
+        open: () => this.setState({ sel: s.sel === t.slug ? null : t.slug }),
+        rowStyle: { cursor: 'pointer', background: s.sel === t.slug ? 'color-mix(in srgb, var(--color-accent) 7%, transparent)' : undefined },
+        healthLabel: healthLabel[t.health], healthStyle: this.tag(t.health),
+        modBarStyle: bar(Math.round(t.mods / 23 * 100))
+      })),
+      hasDetail: !!sel,
+      closeDetail: () => this.setState({ sel: null }),
+      dName: sel ? sel.name : '', dMeta: sel ? sel.stage + ' · ' + sel.version + ' · ' + sel.env : '',
+      dHealthLabel: sel ? healthLabel[sel.health] : '', dHealthStyle: sel ? this.tag(sel.health) : {},
+      dConfig: sel ? sel.config.map(([k, v]) => ({ k, v })) : [],
+      dActivity: sel ? sel.activity.map(([what, when]) => ({ what, when })) : [],
+      dMatrix: sel ? Component.MODULE_NAMES.map((name, i) => {
+        const tierCap = sel.config[0][1] === 'Essential' ? 12 : sel.config[0][1] === 'Governance' ? 19 : 23;
+        const on = i < sel.mods, inTier = i < tierCap;
+        const abbr = name.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
+        return { name, abbr, style: { fontSize: '9px', letterSpacing: '0.06em', textAlign: 'center', padding: '5px 2px', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap', overflow: 'hidden',
+          background: on ? 'var(--color-accent-800)' : 'transparent',
+          color: on ? 'var(--color-accent-100)' : inTier ? 'var(--color-neutral-400)' : 'var(--color-neutral-700)',
+          boxShadow: on ? 'none' : 'inset 0 0 0 1px ' + (inTier ? 'var(--color-divider)' : 'color-mix(in srgb, var(--color-divider) 50%, transparent)') } };
+      }) : [],
+
+      evals: [
+        ['Suryapur Development Authority', 'Pass', 'Pass', 3, '2h ago', 'Ready'],
+        ['Chandranagar Municipal Corporation', 'Pass', 'Pass', 5, '2h ago', 'Ready'],
+        ['Indrapur Smart City PMU', 'Fail', 'Pass', 4, '4h ago', 'Blocked'],
+        ['Bhagirathi Housing Board', 'Pass', 'Pass', 18, '6h ago', 'Hold'],
+        ['Mandakini Water Supply Board', 'Pass', 'Pass', 2, '3h ago', 'Ready'],
+        ['Vindhyachal Zilla Parishad', 'Pass', 'Pass', 0, '1d ago', 'Ready']
+      ].map(([name, reg, lint, drift, last, ready]) => ({
+        name, reg, lint, drift, last, ready,
+        regStyle: this.tag(reg === 'Pass' ? 'ok' : 'crit'), lintStyle: this.tag(lint === 'Pass' ? 'ok' : 'crit'),
+        readyStyle: this.tag(ready === 'Ready' ? 'ok' : ready === 'Hold' ? 'warn' : 'crit'),
+        driftBarStyle: bar(Math.min(100, drift * 4), drift > 10 ? 'var(--color-accent-400)' : 'var(--color-accent-700)')
+      })),
+
+      c2eRows: [
+        ['Vindhyachal', 100], ['Mandakini', 97], ['Suryapur', 96], ['Chandranagar', 91], ['Indrapur', 88], ['Bhagirathi', 84]
+      ].map(([name, pct]) => ({ name, pct, barStyle: bar(pct, pct >= 90 ? 'var(--color-accent)' : 'var(--color-accent-600)') })),
+
+      runs: [
+        ['#3127', 'Indrapur', 'release 4.19.0-rc1', '3/4 gates', '7m 12s', 'Fail'],
+        ['#3126', 'Suryapur', 'nightly eval', '4/4 gates', '6m 03s', 'Pass'],
+        ['#3125', 'Chandranagar', 'nightly eval', '4/4 gates', '6m 51s', 'Pass'],
+        ['#3124', 'Vindhyachal', 'onboarding config change', '4/4 gates', '5m 40s', 'Pass'],
+        ['#3123', 'Mandakini', 'connector credential rotation', '4/4 gates', '6m 22s', 'Pass'],
+        ['#3122', 'Bhagirathi', 'tenant config change', '4/4 gates', '6m 47s', 'Pass']
+      ].map(([id, tenant, trigger, gates, dur, res]) => ({ id, tenant, trigger, gates, dur, res, resStyle: this.tag(res === 'Pass' ? 'ok' : 'crit') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

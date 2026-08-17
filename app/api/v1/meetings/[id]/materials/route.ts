@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prisma";
+import { prisma, requireTenantScope, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { assertAllowedMeetingMaterial, sanitizeMeetingFileName, MEETING_MATERIAL_MAX_BYTES } from "@/lib/meeting-materials";
@@ -88,7 +88,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     }
 
     const safeName = sanitizeMeetingFileName(file.name);
-    const objectKey = `${meetingId}/${randomUUID()}-${safeName}`;
+    // Phase 2: physical storage is namespaced by tenant, so two tenants can
+    // never share a path on disk and a stray path cannot address another
+    // tenant's file. Reads need no change — they resolve whatever relative
+    // storagePath the row holds, so pre-Phase-2 Odisha files keep working at
+    // their legacy (un-prefixed) paths.
+    const objectKey = `${requireTenantScope("meeting-material-upload")}/${meetingId}/${randomUUID()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     try {
@@ -107,7 +112,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
 
     const created = await prisma.$transaction(async (tx) => {
       const material = await tx.meetingMaterial.create({
-        data: {
+        data: tenantStamped({
           meetingId,
           storagePath: objectKey,
           fileName: safeName,
@@ -115,7 +120,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
           sizeBytes: file.size,
           sortOrder,
           uploadedById: actor?.id ?? null,
-        },
+        }),
         select: { id: true, fileName: true, mimeType: true, sizeBytes: true },
       });
 

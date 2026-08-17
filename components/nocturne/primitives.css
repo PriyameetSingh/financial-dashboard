@@ -1,0 +1,2002 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Airawat extensions to Nocturne.
+
+   The design system ships eight component classes (`.btn`, `.tag`, `.field` /
+   `.input` / `.radio` / `.seg`, `.card`, `.nav`, `.table`, `.dialog`, `.hr`,
+   `.lighten`). The Component Gallery mockup shows a further set the product
+   needs — stat tiles, a stepper, tabs, a module toggle, a toast, a file
+   dropzone, an inline alert, an empty state and a spinner — drawn there with
+   inline styles rather than classes, because a mockup has no reuse problem.
+
+   This file promotes those to real classes. Everything here is built only from
+   the design system's own tokens: no new colour, no new radius, no raw px
+   outside the sizes the mockup fixes (icon boxes, dot diameters, rule heights).
+
+   The `ax-` prefix marks these as this repository's additions rather than the
+   design system's. If a future export adds a real class for one of them, the
+   prefix is what tells you which one to delete.
+
+   All of it is scoped under `.noct` for the reason given in `nocturne.css`.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── the quiet-text token ────────────────────────────────────────────────────
+   Every extension class below that paints small explanatory text reads this one
+   token rather than mixing its own percentage.
+
+   The reason is a real failure, not tidiness. The design system expresses muted
+   text as a percentage mix of the text colour into the ground, and mixing toward
+   a LIGHT ground loses contrast far faster than mixing toward a dark one: the
+   same 62% that measures 6.2:1 on the dark ground measures 4.2:1 on the light
+   one, which fails AA for the 10px sizes these classes use. The accessibility
+   audit found it on the light theme after the dark theme had been clean for an
+   hour.
+
+   With one token there is one place to get that right. Adding a tenth quiet-text
+   class cannot reintroduce the bug, because the class cannot express its own
+   percentage.
+
+   Dark: 62% of the text colour  → 6.2:1 on `--color-bg`.
+   Light: the same fixed grey the design system already chose for `.text-muted`
+          on light  → 6.0:1 on the ground, 6.5:1 on a surface. */
+.noct {
+  --ax-muted: color-mix(in srgb, var(--color-text) 62%, transparent);
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-muted: #575a68;
+}
+
+/* Dark peer. A custom property is resolved where it is DECLARED, so a dark
+   island inside a light page (the sidebar) would otherwise inherit the light
+   literal above and paint #575a68 on a #232532 surface — 2.21:1, which the audit
+   caught on every nav label at once. `nocturne.css` states the same peer for the
+   `--color-*` block for the same reason; every extension token below needs one
+   too, and `tests/nocturne-theme.test.ts` now checks that they all have it. */
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-muted: color-mix(in srgb, var(--color-text) 62%, transparent);
+}
+
+/* Accent-coloured text at paragraph size — field errors, inline emphasis.
+   The design system's guidance is to use "a deep ramp step (`--color-accent-300`
+   on this ground)" rather than the accent itself, because the accent is tuned to
+   3:1 and that is not enough for body copy. The parenthesis is the whole
+   problem: `-300` is the LIGHT end of the ramp, correct on the dark ground and
+   1.3:1 on the light one, where the deep step is `-800`. Naming the ramp step at
+   the call site therefore gets it right in exactly one theme.
+
+   The token names the intent instead, so a call site asks for "accent text" and
+   gets the right end of the ramp in whichever theme it renders.
+
+   Dark: 10.1:1 on a surface. Light: 9.7:1 on a surface, 9.0:1 on the ground. */
+.noct {
+  --ax-accent-text: var(--color-accent-300);
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-accent-text: #423a6a;
+}
+
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-accent-text: var(--color-accent-300);
+}
+
+/* Text sitting ON a solid accent fill — the inverse problem to `--ax-accent-text`,
+   which is accent text on the page.
+   
+   The accent is tuned to 3:1 against the ground, so it is a MID tone by
+   construction, and anything from the same end of the ramp laid on top of it is
+   unreadable. The legacy `--accent-text` mapped to the ramp's light step, which
+   measured 2.96:1 on the dark theme and 1.51:1 on the light one — the worst
+   contrast anywhere in this reskin, and invisible until the audit reached a
+   screen that used the pair.
+   
+   The answer is the opposite ground, not a ramp step: on dark the accent is
+   light, so the text on it is the page; on light the accent is deep, so the text
+   on it is the surface. Dark 5.45:1, light 6.44:1. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-on-accent: var(--color-bg);
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-on-accent: var(--color-surface);
+}
+
+/* ── accessibility utilities ─────────────────────────────────────────────────
+   Two things every full-page surface needs and no design system ships, because
+   they are about the page rather than about any component. */
+
+/* Text present for assistive technology and not painted. Clip-based rather than
+   `display: none` or `visibility: hidden`, both of which remove it from the
+   accessibility tree as well as from the screen. */
+.noct .ax-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The skip link. Off-screen until it takes keyboard focus, then it lands in the
+   top-left corner as a normal button. A keyboard user arriving on a long page
+   should not have to tab through the whole header to reach the content. */
+.noct .ax-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.noct .ax-skip:focus-visible {
+  left: 8px;
+  top: 8px;
+  background: var(--color-surface);
+}
+
+/* ── layout helpers ─────────────────────────────────────────────────────── */
+
+.noct .ax-page {
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* The header rule fades at both ends, like `.hr` — the Nocturne signature
+   applied to a sticky bar rather than a freestanding rule. */
+.noct .ax-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  padding: 12px 28px;
+  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+}
+
+.noct .ax-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px 28px 72px;
+  display: grid;
+  gap: 44px;
+}
+
+/* The design system draws section kickers at `h6` size. A page whose only
+   headings are `h6` has a broken heading outline, so the kicker is a class the
+   correct heading level wears rather than a level chosen for its looks. */
+.noct .ax-section-title {
+  font-size: 13px;
+  font-weight: var(--font-heading-weight);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin: 0 0 12px;
+}
+
+/* Auto-fitting card grid. The min track width is the argument. */
+.noct .ax-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--ax-grid-min, 300px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.noct .ax-panel {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.noct .ax-panel-title {
+  font-size: 12px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+}
+
+.noct .ax-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── stat tile ──────────────────────────────────────────────────────────── */
+
+.noct .ax-stat {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* At-risk and breached tiles take an accent edge on the inline start — a mark,
+   not a flood. */
+.noct .ax-stat-flagged {
+  box-shadow: inset 2px 0 0 var(--color-accent), var(--shadow-sm);
+}
+
+.noct .ax-stat-kicker {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+}
+
+.noct .ax-stat-value {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 26px;
+  margin-top: 4px;
+}
+
+.noct .ax-stat-foot {
+  font-size: 10px;
+  margin-top: 10px;
+  color: var(--ax-muted);
+}
+
+/* Progress meter. The filled width is set by `--ax-meter-fill`. */
+.noct .ax-meter {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-neutral-800);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+/* The fill defaults to the accent, so a plain meter is the tenant's colour. A
+   caller that is drawing a QUANTITY on a scale — a deficit bar, a surplus bar —
+   sets `--ax-meter-color` to a data-viz token instead, because that is a
+   different job from "this is our brand" and the two palettes are tuned
+   separately (see the data-viz block in tokens.css). */
+.noct .ax-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ax-meter-color, var(--color-accent));
+  width: var(--ax-meter-fill, 0%);
+}
+
+/* ── data bar ────────────────────────────────────────────────────────────────
+   A named row with its figure and a proportional bar: the shape the scheme
+   league tables use. The figure is text and therefore reads an `--ax-status-*`
+   tone (measured for text at 4.5:1); the bar is a graphical object and reads a
+   `--dv-*` token (measured as a fill at 3:1). Splitting them is deliberate — a
+   single token asked to be both ends up failing one of the two floors. */
+.noct .ax-databar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: 6px;
+}
+
+.noct .ax-databar-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.noct .ax-databar-value {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ── stepper ────────────────────────────────────────────────────────────── */
+
+.noct .ax-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Each step is a flex item that owns its own trailing connector. `display:
+   contents` would lay this out in one fewer element, but it has a history of
+   dropping the element out of the accessibility tree, and dropping a list item
+   out of the tree is precisely what this component exists to avoid. */
+.noct .ax-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Every step but the last carries a connector, so every step but the last
+   stretches. */
+.noct .ax-step:not(:last-child) {
+  flex: 1;
+}
+
+.noct .ax-step-marker {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--color-divider);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-step-done .ax-step-marker,
+.noct .ax-step-current .ax-step-marker {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The connector between two markers; solid once the step behind it is done. */
+.noct .ax-step-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.noct .ax-step-line-done {
+  background: var(--color-accent);
+}
+
+/* ── tabs ───────────────────────────────────────────────────────────────── */
+
+.noct .ax-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.noct .ax-tab {
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--color-text) 72%, transparent);
+}
+
+.noct .ax-tab:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+
+.noct .ax-tab[aria-selected="true"] {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+/* ── module toggle row ──────────────────────────────────────────────────── */
+
+.noct .ax-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-toggle-label {
+  flex: 1;
+  font-size: 12px;
+}
+
+.noct .ax-toggle-hint {
+  display: block;
+  font-size: 10px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-switch {
+  width: 34px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  position: relative;
+  cursor: pointer;
+}
+
+.noct .ax-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ax-muted);
+  transition: left 0.12s ease-out, background 0.12s ease-out;
+}
+
+.noct .ax-switch[aria-checked="true"] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.noct .ax-switch[aria-checked="true"]::after {
+  left: 16px;
+  background: var(--color-accent);
+}
+
+.noct .ax-switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* A row for a module the tenant's tier does not reach. Dimmed, but never below
+   the contrast floor — the text still has to be readable to be understood. */
+.noct .ax-toggle-row-locked .ax-toggle-label { color: color-mix(in srgb, var(--color-text) 78%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .noct .ax-switch::after { transition: none; }
+}
+
+/* ── toast ──────────────────────────────────────────────────────────────── */
+
+.noct .ax-toast {
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+}
+
+/* ── inline alert ───────────────────────────────────────────────────────── */
+
+.noct .ax-alert {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+  font-size: 12px;
+}
+
+/* ── file dropzone ──────────────────────────────────────────────────────── */
+
+.noct .ax-dropzone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px dashed var(--color-divider);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+
+.noct .ax-dropzone:hover { border-color: var(--color-accent); }
+
+.noct .ax-dropzone-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-accent);
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+}
+
+.noct .ax-dropzone-hint {
+  display: block;
+  font-size: 10px;
+  color: var(--ax-muted);
+}
+
+/* ── empty state ────────────────────────────────────────────────────────── */
+
+.noct .ax-empty {
+  padding: 14px 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  font-size: 11px;
+  color: var(--ax-muted);
+}
+
+/* ── spinner ────────────────────────────────────────────────────────────── */
+
+.noct .ax-loading {
+  padding: 14px 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-spinner {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 2px solid var(--color-divider);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  display: inline-block;
+  animation: ax-spin 0.9s linear infinite;
+}
+
+@keyframes ax-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Respect the OS setting. A spinner that cannot spin still has to say it is
+   working, so it holds a static ring rather than disappearing. */
+@media (prefers-reduced-motion: reduce) {
+  .noct .ax-spinner { animation: none; }
+}
+
+/* ── swatches (gallery / configurator) ──────────────────────────────────── */
+
+.noct .ax-swatch {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-swatch-chip {
+  height: 52px;
+}
+
+.noct .ax-swatch-label {
+  padding: 8px 10px;
+  font-size: 11px;
+  background: var(--color-surface);
+}
+
+.noct .ax-swatch-note {
+  display: block;
+  font-size: 10px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-ramp {
+  display: flex;
+  gap: 6px;
+}
+
+.noct .ax-ramp > span {
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── native <dialog> ────────────────────────────────────────────────────────
+   The dialog element is promoted to the top layer, so its own box needs the
+   layout reset; the `.dialog` surface inside it still matches `.noct .dialog`
+   because custom-property and selector matching both follow the DOM tree, not
+   the stacking order.
+
+   `::backdrop` is the exception. Its inheritance from the originating element
+   is a recent addition to the spec and not something to depend on across the
+   browsers a government office actually runs, so the tint is written as a
+   literal here rather than read from `--color-neutral-900`. It is the same
+   value that token resolves to at 50%. */
+.noct dialog::backdrop {
+  background: rgba(41, 43, 49, 0.5);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Landing surface (S1)
+   ─────────────────────────────────────────────────────────────────────────────
+   Page-scale layout for the public landing. Kept in this file rather than in a
+   sheet of its own so that the containment guarantee stays a property of three
+   known files: one place to assert that nothing escapes `.noct`, instead of one
+   more place to forget.
+
+   `ax-lp-` marks these as landing-specific — they are page furniture, not
+   reusable primitives, and a later surface should not reach for them.
+
+   Every width here is fluid or `auto-fit`, so the page reflows to a phone
+   without a single fixed breakpoint doing the work. The one media query at the
+   end only tightens padding, which is the part that cannot be expressed as a
+   ratio.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* The scope root itself paints the ground. The host document's `<body>` still
+   belongs to the app's own globals, so a Nocturne surface that did not paint
+   would show the existing product's page colour behind it. */
+.noct .ax-lp-root {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow-x: hidden;
+}
+
+.noct .ax-lp-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: 28px;
+}
+
+.noct .ax-lp-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+}
+
+.noct .ax-lp-bar {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding-block: 14px;
+}
+
+.noct .ax-lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  margin-right: auto;
+}
+
+.noct .ax-lp-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);
+}
+
+.noct .ax-lp-wordmark {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.noct .ax-lp-suffix {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-left: 9px;
+  border-left: 1px solid var(--color-divider);
+  color: var(--ax-muted);
+}
+
+/* Anchor navigation. Underlines are suppressed here for the same reason the
+   design system suppresses them on `.nav` — these are chrome, sitting alone in
+   a bar, not links inside a sentence, so nothing is signalled by colour that
+   position does not already signal. */
+.noct .ax-lp-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.noct .ax-lp-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.noct .ax-lp-nav a:hover,
+.noct .ax-lp-nav a:focus-visible {
+  color: var(--color-accent);
+}
+
+/* — hero — */
+.noct .ax-lp-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 56px;
+  align-items: center;
+  padding-block: 88px 64px;
+}
+
+.noct .ax-lp-title {
+  font-size: clamp(34px, 5vw, 60px);
+  margin: 18px 0 20px;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.noct .ax-lp-lede {
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 32rem;
+  text-wrap: pretty;
+}
+
+.noct .ax-lp-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.noct .ax-lp-actions .btn {
+  padding: 11px 18px;
+  font-size: 15px;
+}
+
+/* The hero illustration. A figure, with its caption, because that is what it
+   is — a picture of the product, not a reading of anyone's data. */
+.noct .ax-lp-figure {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.noct .ax-lp-figure-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 12px;
+  font-family: var(--font-heading);
+}
+
+.noct .ax-lp-figure-body {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-lp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 10px;
+}
+
+/* — the one saturated band on the page — */
+.noct .ax-lp-band {
+  background: var(--color-section);
+  /* The band carries its own ground, so it also carries its own foreground.
+     Reading `--color-text` here would put dark text on deep indigo in the light
+     theme; the band is the same colour in both. */
+  color: #e9e9ed;
+}
+
+.noct .ax-lp-band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 28px;
+  padding-block: 34px;
+}
+
+.noct .ax-lp-band-figure {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 30px;
+}
+
+.noct .ax-lp-band-label {
+  font-size: 13px;
+  /* Fixed, not a mix: the band's ground does not follow the theme, so a muted
+     value derived from `--color-text` would drift off it. 7.4:1 on the band. */
+  color: #c4c6d8;
+}
+
+/* — sections — */
+.noct .ax-lp-section {
+  padding-block: 80px 24px;
+}
+
+.noct .ax-lp-h2 {
+  font-size: clamp(26px, 3.4vw, 38px);
+  margin-bottom: 12px;
+}
+
+.noct .ax-lp-intro {
+  max-width: 36rem;
+  font-size: 15px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-lp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 14px;
+  margin-top: 34px;
+}
+
+/* — module tour — */
+.noct .ax-lp-tour-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.noct .ax-lp-tour-panel {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.noct .ax-lp-tour-points {
+  display: grid;
+  gap: 7px;
+  padding-left: 16px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--ax-muted);
+}
+
+/* — trust — hairline grid drawn with a 1px gap over a divider ground — */
+.noct .ax-lp-trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 1px;
+  background: var(--color-divider);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 30px;
+}
+
+.noct .ax-lp-trust > div {
+  background: var(--color-bg);
+  padding: 20px;
+}
+
+.noct .ax-lp-trust-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+/* — plans — */
+.noct .ax-lp-plan-featured {
+  box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-md);
+}
+
+.noct .ax-lp-plan-count {
+  font-size: 12px;
+  color: var(--ax-muted);
+}
+
+/* — closing call to action — */
+.noct .ax-lp-cta {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 40px 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 24px;
+  align-items: center;
+  margin-block: 80px;
+}
+
+/* — footer — */
+.noct .ax-lp-footer {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 1px;
+}
+
+.noct .ax-lp-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 28px;
+  padding-block: 40px 24px;
+}
+
+.noct .ax-lp-footer-col {
+  display: grid;
+  gap: 7px;
+  align-content: start;
+  font-size: 13px;
+}
+
+.noct .ax-lp-footer-head {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+}
+
+.noct .ax-lp-footer-col a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.noct .ax-lp-footer-col a:hover,
+.noct .ax-lp-footer-col a:focus-visible {
+  color: var(--color-accent);
+}
+
+.noct .ax-lp-fineprint {
+  font-size: 11px;
+  color: var(--ax-muted);
+  padding-bottom: 40px;
+  margin: 0;
+}
+
+/* Padding is the one thing a fluid grid cannot solve: 28px inline and 88px of
+   hero on a 360px screen is most of the viewport spent on nothing. */
+@media (max-width: 640px) {
+  .noct .ax-lp-shell { padding-inline: 18px; }
+  .noct .ax-lp-hero { padding-block: 48px 40px; gap: 36px; }
+  .noct .ax-lp-section { padding-block: 52px 16px; }
+  .noct .ax-lp-cta { padding: 26px 20px; margin-block: 52px; }
+  .noct .ax-lp-actions .btn { width: 100%; }
+}
+
+/* The card's action row. Sits outside `.card-body`, so a button in a card keeps
+   its own contrast rather than inheriting the body's quieter text colour. */
+.noct .card-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Onboarding wizard (S2)
+   ─────────────────────────────────────────────────────────────────────────────
+   A two-column shell — step rail beside step body — that becomes one column on
+   a phone. The rail moves above the body rather than disappearing: an officer
+   working through an eight-step setup on a handset still needs to know which
+   step they are on and how many are left.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct .ax-wz {
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr);
+  gap: 40px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 28px 72px;
+  align-items: start;
+}
+
+.noct .ax-wz-rail {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.noct .ax-wz-rail-head {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 10px 10px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: inherit;
+  background: transparent;
+}
+
+.noct .ax-wz-step:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.noct .ax-wz-step[aria-current="step"] {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+/* Not `opacity`, which would dim the marker's border below the 3:1 that
+   non-text contrast asks for. A step you cannot reach yet still has to be
+   readable — that is how you know what is coming. */
+.noct .ax-wz-step:disabled {
+  cursor: default;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-marker {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  border: 1px solid var(--color-divider);
+}
+
+.noct .ax-wz-step[aria-current="step"] .ax-wz-marker,
+.noct .ax-wz-step-done .ax-wz-marker {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.noct .ax-wz-step-label {
+  display: grid;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.noct .ax-wz-step-sub {
+  font-size: 11px;
+  color: var(--ax-muted);
+}
+
+.noct .ax-wz-body {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.noct .ax-wz-hint {
+  font-size: 14px;
+  color: var(--ax-muted);
+  max-width: 40rem;
+  margin: 0;
+}
+
+/* The step's own fields. A single column at any width: a two-column form is
+   where "which label belongs to which box" goes wrong. */
+.noct .ax-wz-fields {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 34rem;
+}
+
+.noct .ax-wz-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: var(--space-4);
+}
+
+/* A choice rendered as a card. Built on a real radio, so it is one arrow-key
+   group and announces as one — the visual is a card, the control is not. */
+.noct .ax-wz-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.noct .ax-wz-choice {
+  display: block;
+  cursor: pointer;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 50%, transparent), var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:has(input:checked) {
+  box-shadow: inset 0 0 0 1px var(--color-accent), var(--shadow-sm);
+}
+
+.noct .ax-wz-choice:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.noct .ax-wz-choice input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.noct .ax-wz-choice-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  display: block;
+}
+
+.noct .ax-wz-choice-body {
+  font-size: 13px;
+  display: block;
+  margin-top: 6px;
+  color: var(--ax-muted);
+}
+
+/* Brand swatches. Buttons, not divs — picking a colour is an action. */
+.noct .ax-wz-swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.noct .ax-wz-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.noct .ax-wz-swatch[aria-pressed="true"] {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.noct .ax-wz-review {
+  display: grid;
+  gap: 1px;
+  background: var(--color-divider);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.noct .ax-wz-review-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  background: var(--color-bg);
+  padding: 12px 14px;
+}
+
+.noct .ax-wz-review-label {
+  font-size: 12px;
+  color: var(--ax-muted);
+  flex: none;
+  width: 9rem;
+}
+
+.noct .ax-wz-review-value {
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.noct .ax-wz-people {
+  display: grid;
+  gap: 10px;
+}
+
+.noct .ax-wz-person {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .noct .ax-wz {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px 18px 56px;
+  }
+  .noct .ax-wz-rail {
+    position: static;
+  }
+  .noct .ax-wz-person {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .noct .ax-wz-nav .btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Configurators (S3)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.noct .ax-cfg {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 28px 72px;
+  display: grid;
+  gap: var(--space-8);
+}
+
+/* Two columns: the thing being edited, and the effect of editing it. The
+   preview is sticky because the point of a live preview is to be visible while
+   you change the value it reflects. */
+.noct .ax-cfg-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 28px;
+  align-items: start;
+}
+
+.noct .ax-cfg-aside {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-cfg-group {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  display: grid;
+  gap: 12px;
+}
+
+.noct .ax-cfg-group-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  background: linear-gradient(to right, var(--color-divider), transparent) no-repeat bottom / 100% 1px;
+}
+
+.noct .ax-cfg-badge {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-accent);
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  font-family: var(--font-heading);
+  font-size: 13px;
+}
+
+/* Capability rows. Presentational — the toggle is on the group, not on these. */
+.noct .ax-cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(255px, 100%), 1fr));
+  gap: 8px;
+}
+
+.noct .ax-cap {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+
+.noct .ax-cap-included {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.noct .ax-cap-id {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ax-muted);
+}
+
+.noct .ax-cap-name {
+  font-size: 12px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  margin: 4px 0;
+}
+
+.noct .ax-cap-desc {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ax-muted);
+  margin: 0;
+}
+
+/* The lifecycle dot. Always paired with a word — the legend names each state,
+   and every dot carries its status as text for assistive technology, because a
+   dot that means something only by its fill is a 1.4.1 failure. */
+.noct .ax-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.noct .ax-dot-live { background: var(--color-accent); }
+.noct .ax-dot-dev { background: var(--color-accent-300); }
+.noct .ax-dot-plan { border: 1px solid var(--color-neutral-500); }
+
+.noct .ax-legend {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+  padding: 10px 0;
+}
+
+.noct .ax-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* The theme preview pane. Its own scope root, so it renders in the tenant's
+   proposed colours while the page around it stays in the current ones. */
+.noct .ax-preview {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.noct .ax-preview-body {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.noct .ax-cfg-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .noct .ax-cfg-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .noct .ax-cfg-aside {
+    position: static;
+  }
+  .noct .ax-cfg {
+    padding: 24px 18px 56px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   The authenticated app frame (reskin, Gate A)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* The top bar. The fading rule is the Nocturne signature applied to the app's
+   own chrome, so the frame reads as the same system as the landing page. */
+.noct .ax-app-topbar {
+  background: var(--color-bg);
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+}
+
+/* A section whose contents were written by an agent, marked with the AI accent
+   on its inline start. Same reasoning as the assistant button below: the reader
+   is being told where the machine-written material begins, and that is a
+   property of the product rather than of the tenant, so it does not follow the
+   brand. The edge is paired with a visible label at every call site — an accent
+   alone would be saying it in colour only. */
+.noct .ax-ai-section {
+  box-shadow: inset 2px 0 0 var(--ax-ai-accent);
+  padding-inline-start: var(--space-4);
+}
+
+.noct .ax-ai-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-ai-accent);
+}
+
+/* The assistant's floating button. It carries the AI accent, which is the one
+   thing on the frame that is deliberately not the tenant's brand — "a machine
+   wrote this" is a property of the product, not of the organization. */
+.noct .ax-app-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 60;
+  display: flex;
+  height: 56px;
+  width: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--ax-ai-accent);
+  background: var(--color-surface);
+  color: var(--ax-ai-accent);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: transform 0.12s ease-out, background 0.12s ease-out;
+}
+
+.noct .ax-app-fab:hover {
+  background: color-mix(in srgb, var(--ax-ai-accent) 14%, var(--color-surface));
+  transform: scale(1.05);
+}
+
+.noct .ax-app-fab:active {
+  transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noct .ax-app-fab {
+    transition: none;
+  }
+  .noct .ax-app-fab:hover,
+  .noct .ax-app-fab:active {
+    transform: none;
+  }
+}
+
+/* ── the sidebar ─────────────────────────────────────────────────────────────
+   A permanent dark island: the element carries `data-theme="dark"`, so every
+   token inside it resolves to its dark value whichever theme the reader chose.
+   That is the borrowed treatment, and expressing it as a nested theme rather
+   than a private palette is what keeps the tenant's own accent on it. */
+.noct .ax-nav {
+  background: var(--color-surface);
+  box-shadow: inset -1px 0 0 var(--color-divider);
+}
+
+/* Nav links opt out of the accent-and-underline that `.noct a` gives a link in
+   running text — the same opt-out the export gives `.nav a`, and for the same
+   reason. A list of destinations in a rail is identified by where it is, not by
+   being coloured differently from the words around it; there are no words around
+   it. Leaving the global rule to apply cost real contrast, which is how this was
+   found: the active item's label kept the raw accent instead of inheriting the
+   item's own foreground, and read at 3.6:1 on its accent tint. */
+.noct .ax-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/*
+ * The same three colours again, at a specificity that beats the reset above.
+ *
+ * `.noct .ax-nav a` is (0,2,1); `.noct .ax-nav-item-active` is (0,2,0). When the
+ * item IS the anchor — which is what the submenu links became at Gate E — the
+ * reset's `color: inherit` therefore WINS over the item's own colour, and the
+ * link inherits from the nav's ancestor instead. On the light theme that meant
+ * the light `--color-text` painted inside the sidebar's dark island: 1.3:1,
+ * caught on the admin screens where a submenu is open.
+ *
+ * At Gate A the anchors sat INSIDE an `.ax-nav-item` div, so `inherit` picked up
+ * the div's colour and the bug could not appear. This states the colours for the
+ * anchor form explicitly rather than relying on where the class happens to sit.
+ */
+.noct .ax-nav a.ax-nav-item { color: var(--ax-muted); }
+.noct .ax-nav a.ax-nav-item:hover { color: var(--color-text); }
+.noct .ax-nav a.ax-nav-item-active { color: var(--color-text); }
+
+.noct .ax-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ax-muted);
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.noct .ax-nav-item:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* The active item takes an accent tint AND an inline-start mark, so "where am
+   I" survives greyscale and low vision — the same reason the stat tiles flag
+   with an edge rather than a fill. */
+.noct .ax-nav-item-active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-text);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+
+.noct .ax-nav-section {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-muted);
+}
+
+/* The brand plate. A surface rather than a white card, so a tenant logo sits on
+   the tenant's own palette instead of on an imported sheet of paper. */
+.noct .ax-nav-brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  padding: 6px;
+}
+
+/* ── status tones ────────────────────────────────────────────────────────────
+   For the places that paint status as a text colour rather than as a tag.
+
+   `StatusTag` remains the right answer wherever a label fits, because it pairs
+   the tone with a mark and a word and therefore survives greyscale. These exist
+   for the cases where there is genuinely no room for one — a count in a nav
+   badge, a figure in a dense row — and they read their colour from the status
+   token pair, so both themes are covered and a tenant swap cannot strand them.
+
+   A tone alone still must not be the only signal. Every call site pairs one
+   with text that says the same thing. */
+.noct .ax-tone-critical { color: var(--ax-status-critical); }
+.noct .ax-tone-warning { color: var(--ax-status-warning); }
+.noct .ax-tone-ok { color: var(--ax-status-ok); }
+
+/* The same three as a tinted chip: the borrowed ActionCard treatment, expressed
+   as tokens. Never a flat grey — the guide's own instruction — and never a fill
+   the text cannot be read on.
+
+   THE CHIP NEEDS ITS OWN FOREGROUND, which is not obvious and is why the first
+   version of these classes failed the audit. `--ax-status-critical` is measured
+   against the PAGE, where it is a comfortable 5.6:1. A chip does not put it on
+   the page: it puts it on an 18% tint of ITSELF, which lifts the background
+   toward the text and takes the pair to 3.7:1. The tint that makes the chip
+   readable as a chip is the same tint that makes its label unreadable.
+
+   So the label reads a separate token, solved against the composited chip
+   background rather than against the ground — and against BOTH chip
+   background. Since Gate D1 that ground is OPAQUE — the tint is mixed into the
+   surface rather than into transparency — so there is exactly one ground to solve
+   against instead of one per container the chip might land in. Worst case in each
+   theme: 4.90:1 dark, 4.92:1 light, with the margin deliberate so a later tint
+   adjustment cannot quietly drop it under 4.5.
+
+   Same rule as everywhere else in this file: a value validated against one
+   background tells you nothing about another. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"] {
+  --ax-chip-critical-fg: #d09fad;
+  --ax-chip-warning-fg: #cca476;
+  --ax-chip-ok-fg: #7ab7b0;
+}
+
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  --ax-chip-critical-fg: #a8283e;
+  --ax-chip-warning-fg: #7f5300;
+  --ax-chip-ok-fg: #19665b;
+}
+/*
+ * The chip's ground is OPAQUE — mixed into `--color-surface`, not into
+ * `transparent`.
+ *
+ * With a transparent tint the chip's real background is whatever it happens to
+ * land on, so the foreground has to be legible against every one of them. That
+ * held while chips sat on the page and on cards, and broke the moment one landed
+ * on a tinted table row: the row's tint composited under the chip's tint and
+ * took a measured 4.84:1 down to 4.35:1. Enumerating grounds does not converge —
+ * the next screen invents another one.
+ *
+ * Mixing into the surface instead makes the chip's ground a constant, so the
+ * foreground solved against it is correct wherever the chip is placed. It costs
+ * the chip its translucency, which nothing here was relying on.
+ */
+.noct .ax-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+  background: color-mix(in srgb, var(--color-text) 10%, var(--color-surface));
+  color: var(--color-text);
+}
+
+.noct .ax-chip-critical {
+  background: color-mix(in srgb, var(--ax-status-critical) 18%, var(--color-surface));
+  color: var(--ax-chip-critical-fg);
+}
+
+.noct .ax-chip-warning {
+  background: color-mix(in srgb, var(--ax-status-warning) 18%, var(--color-surface));
+  color: var(--ax-chip-warning-fg);
+}
+
+.noct .ax-chip-ok {
+  background: color-mix(in srgb, var(--ax-status-ok) 18%, var(--color-surface));
+  color: var(--ax-chip-ok-fg);
+}
+
+/* ── priority, encoded by shape as well as colour ────────────────────────────
+   The borrowed rule, minus the map it was written for — this codebase has none.
+   It applies to the priority indicators that DO exist: action items, KPIs and
+   notifications, and their filter chips.
+
+   Shape is the point. A reader with a colour vision deficiency, or a printed
+   menu card, or a screenshot in a grayscale report, all get the same three
+   marks: a star for high, a rounded rectangle for medium, a circle for low.
+   The colour is reinforcement (WCAG 1.4.1). */
+.noct .ax-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/*
+ * The mark takes `currentColor`, so SHAPE and TONE compose instead of being
+ * welded together.
+ *
+ * They were welded at Gate A — each shape class also set its own background —
+ * and Gate D1 is where that stopped working. The action-item scale has four
+ * levels, not three, and its existing tone mapping puts two of them (Medium and
+ * Low) on the SAME neutral tone. Under the old classes those two were forced
+ * apart in colour or not at all; with `currentColor` they share the tone the
+ * product already assigns them and are told apart by shape, which is exactly
+ * what the borrowed encoding is for.
+ */
+.noct .ax-priority-mark {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  display: inline-block;
+  background: currentColor;
+}
+
+/* Four shapes, most urgent first. A triangle reads as a warning sign, a star as
+   a flag, and the rounded rectangle and circle as the quiet end of the scale —
+   an order that survives greyscale, a printout and a photocopier. */
+.noct .ax-priority-critical .ax-priority-mark {
+  clip-path: polygon(50% 2%, 100% 92%, 0% 92%);
+}
+
+.noct .ax-priority-high .ax-priority-mark {
+  /* A five-pointed star. */
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.noct .ax-priority-medium .ax-priority-mark {
+  border-radius: 3px;
+  height: 10px;
+}
+
+.noct .ax-priority-low .ax-priority-mark {
+  border-radius: 50%;
+}
+
+/* ── the modal scrim ─────────────────────────────────────────────────────────
+   The dim behind a drawer or dialog. `bg-black/40` is wrong in one theme by
+   construction: on a light page a black wash is what you want, on a dark one it
+   barely reads and the panel above it floats on nothing. Mixing the GROUND with
+   black instead means the scrim deepens whichever ground it is covering.
+
+   Not `opacity` on a wrapper — that composites everything nested inside it, which
+   is how a card body once dimmed its own buttons to 3.54:1. */
+.noct .ax-scrim {
+  background: color-mix(in srgb, var(--color-bg) 35%, rgba(0, 0, 0, 0.55));
+}
+
+/* ── data-viz and status as FILLS ────────────────────────────────────────────
+   Class forms of the two palettes, for the places that paint a swatch rather
+   than text: a legend dot, a category stripe, a progress bar.
+
+   They exist because the alternative is an inline `style` at every one of the
+   forty-odd call sites the board screens have, and an inline style is where a
+   raw colour goes to hide from the lint. A class is greppable.
+
+   `ax-dv-*` is categorical — for values with no order, like a sponsorship type.
+   `ax-fill-*` is status — for values that mean good/bad, and which therefore also
+   carry a word wherever they appear. */
+.noct .ax-dv-bg-1 { background: var(--dv-cat-1); }
+.noct .ax-dv-bg-2 { background: var(--dv-cat-2); }
+.noct .ax-dv-bg-3 { background: var(--dv-cat-3); }
+.noct .ax-dv-bg-4 { background: var(--dv-cat-4); }
+.noct .ax-dv-bg-5 { background: var(--dv-cat-5); }
+.noct .ax-dv-bg-6 { background: var(--dv-cat-6); }
+
+.noct .ax-fill-critical { background: var(--ax-status-critical); }
+.noct .ax-fill-warning { background: var(--ax-status-warning); }
+.noct .ax-fill-ok { background: var(--ax-status-ok); }
+.noct .ax-fill-muted { background: var(--ax-muted); }
+
+/* A tinted panel in the accent, for the one card on a screen that is the answer
+   rather than one of the options. Text stays `--color-text`, so the emphasis is
+   the ground rather than a coloured foreground that has to be re-measured. */
+.noct .ax-accent-panel {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  border-radius: var(--radius-md);
+}
+
+/* Quiet text as a class, so a call site that already composes classNames does
+   not have to reach for an inline style to get the one token every quiet label
+   on the product uses. */
+.noct .ax-tone-muted { color: var(--ax-muted); }
+
+.noct .ax-tone-accent { color: var(--ax-accent-text); }
+.noct .ax-fill-accent { background: var(--color-accent); }
+
+/* Outlined status buttons, following the design system's own button treatment
+   rather than the solid green/red fills these screens used. A solid status fill
+   forces white text onto a mid-tone hue, which is where "save" buttons at 3:1
+   come from; outlining keeps the label on the page's own foreground and lets the
+   tone do its job on the border. */
+.noct .btn-success { color: var(--ax-status-ok); border-color: var(--ax-status-ok); }
+.noct .btn-success:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-ok) 12%, transparent); }
+.noct .btn-danger { color: var(--ax-status-critical); border-color: var(--ax-status-critical); }
+.noct .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ax-status-critical) 12%, transparent); }
+
+/* The selected assistant tab. A tint of the AI accent with the page's own
+   foreground on top, rather than the accent as text on a fill — the fill is what
+   marks it, and keeping the label on `--color-text` means the contrast does not
+   have to be re-solved for a hue the tenant cannot change. */
+.noct .ax-ai-tab-active {
+  background: color-mix(in srgb, var(--ax-ai-accent) 22%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ax-ai-accent);
+  color: var(--color-text);
+}
+
+/* A chip that is also a control, in its selected state. The ring is added to
+   whatever tone the chip already has rather than replacing it, so a filter chip
+   can say "this is the overdue filter" and "you have it selected" at the same
+   time without the two meanings fighting over one channel. Paired with
+   `aria-pressed` at every call site. */
+.noct .ax-chip-selected {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* The count riding inside a chip.
+ *
+ * It has NO ground of its own, and that is the point. The first version gave it
+ * an 18% tint of `currentColor`, which sounds harmless and is not: the chip is
+ * already a tint, so the count's ground composited tint-on-tint and lifted the
+ * background back toward the foreground — 3.7:1 in every tone, on both themes.
+ * A nested tint always costs contrast, because both layers are moving the same
+ * two colours together.
+ *
+ * Weight and a divider carry the separation instead, and the count inherits the
+ * chip's foreground, which is already measured against the chip's ground. */
+.noct .ax-chip-count {
+  font-variant-numeric: tabular-nums;
+  padding-inline-start: 7px;
+  margin-inline-start: 1px;
+  box-shadow: inset 1px 0 0 color-mix(in srgb, currentColor 40%, transparent);
+}
+
+/* ── the document surface ────────────────────────────────────────────────────
+   The paper an on-screen report is printed on. See the document palette in
+   tokens.css for why this does not follow the theme.
+
+   `color-scheme: light` matters: without it a reader whose OS is dark gets dark
+   form controls and scrollbars inside a white page. */
+.noct .ax-doc {
+  background: var(--ax-doc-paper);
+  color: var(--ax-doc-ink);
+  color-scheme: light;
+}
+
+.noct .ax-doc-rule { border-color: var(--ax-doc-rule); }
+.noct .ax-doc-quiet { color: var(--ax-doc-ink-quiet); }
+
+.noct .ax-doc-band { background: var(--ax-doc-band); color: var(--ax-doc-ink); }
+.noct .ax-doc-group { background: var(--ax-doc-group); color: var(--ax-doc-ink); }
+.noct .ax-doc-subtotal { background: var(--ax-doc-subtotal); color: var(--ax-doc-ink); }
+.noct .ax-doc-zebra { background: var(--ax-doc-zebra); }
+.noct .ax-doc-paper { background: var(--ax-doc-paper); }
+
+.noct .ax-doc-header {
+  background: var(--ax-doc-header);
+  color: var(--ax-doc-header-ink);
+}
+.noct .ax-doc-header-rule { border-color: var(--ax-doc-header); }
+
+.noct .ax-doc-attention {
+  background: var(--ax-doc-attention);
+  color: var(--ax-doc-attention-ink);
+}
+.noct .ax-doc-carried { background: var(--ax-doc-carried); }
+.noct .ax-doc-row-attention { background: var(--ax-doc-row-attention); }
+.noct .ax-doc-row-done { background: var(--ax-doc-row-done); }
+.noct .ax-doc-done { background: var(--ax-doc-done); color: var(--ax-doc-done-ink); }
+.noct .ax-doc-pending { background: var(--ax-doc-pending); color: var(--ax-doc-pending-ink); }
+
+/* Print: the fills ARE the information here — a subtotal row that prints white
+   is a different document. `print-color-adjust` is what stops a browser from
+   helpfully dropping them. */
+@media print {
+  .noct .ax-doc,
+  .noct .ax-doc * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Categorical chips — a chip whose tone identifies a KIND rather than a status.
+   Two of them exist because the task list distinguishes KPI work from decision
+   work, and neither is better or worse than the other; a status tone would have
+   said something false. They take the first two categorical swatches, tinted
+   into the surface like every other chip, with the page's own foreground on top
+   so the tint carries the identity and the label carries the meaning. */
+.noct .ax-chip-cat-1 { background: color-mix(in srgb, var(--dv-cat-1) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-2 { background: color-mix(in srgb, var(--dv-cat-2) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-3 { background: color-mix(in srgb, var(--dv-cat-3) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-4 { background: color-mix(in srgb, var(--dv-cat-4) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-5 { background: color-mix(in srgb, var(--dv-cat-5) 20%, var(--color-surface)); }
+.noct .ax-chip-cat-6 { background: color-mix(in srgb, var(--dv-cat-6) 20%, var(--color-surface)); }
+
+/* A left edge in a categorical colour, for a timeline entry or a list row whose
+   kind is already named in its own label. */
+.noct .ax-edge-cat-1 { box-shadow: inset 3px 0 0 var(--dv-cat-1); }
+.noct .ax-edge-cat-2 { box-shadow: inset 3px 0 0 var(--dv-cat-2); }
+.noct .ax-edge-cat-3 { box-shadow: inset 3px 0 0 var(--dv-cat-3); }
+.noct .ax-edge-cat-4 { box-shadow: inset 3px 0 0 var(--dv-cat-4); }
+.noct .ax-edge-critical { box-shadow: inset 3px 0 0 var(--ax-status-critical); }
+
+/* The AI feature marker as a square plate — the agent cards' icon tile. Same
+   reasoning as `.ax-ai-section`: this says "a machine does this work", which is
+   a property of the product rather than of the tenant, and it is always paired
+   with the agent's own name and glyph. */
+.noct .ax-ai-plate {
+  background: color-mix(in srgb, var(--ax-ai-accent) 18%, var(--color-surface));
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ax-ai-accent) 55%, transparent);
+}
+
+/* The knob on a switch, and anything else that needs to read as "raised" on a
+   coloured track. The surface rather than white: white on a light-theme track is
+   invisible, which is what `bg-white` was doing. */
+.noct .ax-fill-surface { background: var(--color-surface); }
+
+/* A nav item that is an ACTION rather than a destination — "Create item" sitting
+   among the pages it creates into. A standing tint rather than the active
+   treatment, so it reads as available without claiming to be where you are. */
+.noct .ax-nav-item-emphasis {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* ── the read-only watermark ─────────────────────────────────────────────────
+   Drawn as generated content, not as text.
+   
+   It is a 10%-opacity wash across the page, so it cannot meet a contrast floor
+   and should not be asked to — but as a live text node an audit measures it
+   (1.29:1) and a screen reader reads it out of the middle of the page with no
+   explanation of what it applies to. `aria-hidden` fixes the second and only
+   sometimes the first: the rule still evaluates visible text. Generated content
+   is not in the accessibility tree and is not evaluated at all, which is the
+   honest description of what this is.
+   
+   The copy stays in the component, passed in as `--ax-watermark-text`, so it can
+   still be translated. The state itself is announced by a visually-hidden
+   sentence beside it. */
+.noct .ax-watermark::after {
+  content: var(--ax-watermark-text, "");
+  font-size: 80px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6em;
+  color: var(--color-text);
+  opacity: 0.1;
+  transform: rotate(-12deg);
+  white-space: nowrap;
+}
+
+/* ── tokens promoted out of the legacy bridge (Gate F) ───────────────────────
+   `legacy-bridge.css` carried a handful of values that were not a rename of a
+   Nocturne token but a COMPOSITION of one — a tint, a mix, a softened divider.
+   Deleting the bridge meant those had to live somewhere real, so they live here,
+   with the names the rest of this file uses.
+
+   Declared in all three selector groups for the reason `--ax-muted` is: a
+   `color-mix()` is resolved where it is declared, so a nested theme island needs
+   its own declaration or it inherits the outer theme's computed literal. */
+.noct,
+.noct[data-theme="dark"],
+.noct [data-theme="dark"],
+.noct[data-theme="light"],
+.noct [data-theme="light"] {
+  /* Text one step quieter than the body, but not as quiet as `--ax-muted`. */
+  --ax-text-secondary: color-mix(in srgb, var(--color-text) 78%, transparent);
+  /* A divider that has to be seen rather than felt — a table rule, a focus edge. */
+  --ax-divider-strong: color-mix(in srgb, var(--color-text) 34%, transparent);
+  /* Row and control hover, and the alternating row wash. */
+  --ax-hover: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --ax-row-alt: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  /* A panel tinted in the accent, and the same for the ok status. */
+  --ax-accent-tint: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --ax-status-ok-tint: color-mix(in srgb, var(--ax-status-ok) 16%, transparent);
+  /* The nav's selected and hovered rows. */
+  --ax-nav-active: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  --ax-nav-hover: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+/* ── scrollbars ──────────────────────────────────────────────────────────────
+   Moved here from `app/globals.css` at Gate F, where they read the pre-reskin
+   `--border-strong`. Scoped to `.noct` like everything else, which is also what
+   makes them follow the theme: a thin dark thumb on a dark page rather than the
+   browser's default light one. */
+.noct {
+  scrollbar-color: var(--ax-divider-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.noct ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.noct ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.noct ::-webkit-scrollbar-thumb {
+  background: var(--ax-divider-strong);
+  border-radius: 3px;
+}

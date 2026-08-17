@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ActionItemStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 
@@ -39,11 +39,11 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
           data: { uploadedById: actor?.id ?? null },
         })
       : await tx.file.create({
-          data: {
+          data: tenantStamped({
             name: body.name,
             url: body.url,
             uploadedById: actor?.id ?? null,
-          },
+          }),
         });
 
     await tx.actionItemProof.upsert({
@@ -56,11 +56,11 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       update: {
         uploadedById: actor?.id ?? null,
       },
-      create: {
+      create: tenantStamped({
         actionItemId: actionItem.id,
         fileId: file.id,
         uploadedById: actor?.id ?? null,
-      },
+      }),
     });
 
     await tx.actionItem.update({

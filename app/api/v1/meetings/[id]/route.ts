@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermission, requireAnyPermissionAndDbUser, requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { deleteFile } from "@/lib/local-file-storage";
@@ -92,13 +92,13 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         await tx.meetingTopic.deleteMany({ where: { meetingId: id } });
         if (body.topics.length > 0) {
           await tx.meetingTopic.createMany({
-            data: body.topics
+            data: tenantStamped(body.topics
               .filter((t) => t.trim().length > 0)
               .map((t) => ({
                 meetingId: id,
                 topic: t.trim(),
                 createdById: actor?.id ?? null,
-              })),
+              }))),
           });
         }
       }

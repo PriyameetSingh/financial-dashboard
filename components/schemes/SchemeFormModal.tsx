@@ -51,9 +51,9 @@ function SchemeAssignmentRowsEditor({
   reference: SchemeReferenceData;
 }) {
   return (
-    <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">{title}</p>
-      <p className="text-xs text-[var(--text-muted)]">{hint}</p>
+    <div className="space-y-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
+      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">{title}</p>
+      <p className="text-xs text-[var(--ax-muted)]">{hint}</p>
       <button
         type="button"
         onClick={() =>
@@ -68,17 +68,17 @@ function SchemeAssignmentRowsEditor({
             },
           ])
         }
-        className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+        className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
       >
         Add assignment
       </button>
       {rows.map((item, index) => (
         <div
           key={`${title}-assignment-${index}`}
-          className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 md:flex-row md:flex-wrap md:items-center"
+          className="flex flex-col gap-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3 md:flex-row md:flex-wrap md:items-center"
         >
-          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-primary)]">
-            <span className="text-[var(--text-muted)]">Assign to</span>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text)]">
+            <span className="text-[var(--ax-muted)]">Assign to</span>
             <label className="flex cursor-pointer items-center gap-1.5">
               <input
                 type="radio"
@@ -91,7 +91,7 @@ function SchemeAssignmentRowsEditor({
                     ),
                   )
                 }
-                className="accent-[var(--text-primary)]"
+                className="accent-[var(--color-text)]"
               />
               User
             </label>
@@ -107,7 +107,7 @@ function SchemeAssignmentRowsEditor({
                     ),
                   )
                 }
-                className="accent-[var(--text-primary)]"
+                className="accent-[var(--color-text)]"
               />
               Role
             </label>
@@ -122,7 +122,7 @@ function SchemeAssignmentRowsEditor({
                   ),
                 )
               }
-              className="min-w-[12rem] flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+              className="min-w-[12rem] flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text)]"
             >
               <option value="">Select user</option>
               {reference.users.map((user) => (
@@ -141,7 +141,7 @@ function SchemeAssignmentRowsEditor({
                   ),
                 )
               }
-              className="min-w-[12rem] flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+              className="min-w-[12rem] flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text)]"
             >
               <option value="">Select role</option>
               {reference.roles.map((role) => (
@@ -154,7 +154,7 @@ function SchemeAssignmentRowsEditor({
           <button
             type="button"
             onClick={() => setRows((prev) => prev.filter((_, itemIndex) => itemIndex !== index))}
-            className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)] md:ml-auto"
+            className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)] md:ml-auto"
           >
             Remove
           </button>
@@ -354,7 +354,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="scheme-modal-title"
@@ -363,65 +363,65 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
       }}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 id="scheme-modal-title" className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 id="scheme-modal-title" className="text-lg font-semibold text-[var(--color-text)]">
               {title}
             </h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               Scheme code, vertical, dashboard/KPI/action ownership (multiple rows allowed), and optional subschemes.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:bg-[var(--bg-accent)]"
+            className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] transition hover:bg-[var(--ax-accent-tint)]"
           >
             Close
           </button>
         </div>
 
         {alert && (
-          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+          <div className="mb-4 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--ax-muted)]">
             {alert}
           </div>
         )}
 
         <div className="space-y-3">
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">
             Code
             <input
               value={form.code}
               onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
             />
           </label>
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">
             Name
             <input
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
             />
           </label>
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">
             Vertical
             <input
               value={form.verticalName}
               onChange={(event) => setForm((prev) => ({ ...prev, verticalName: event.target.value }))}
               placeholder="e.g. Housing, Water, SBM"
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
             />
           </label>
-          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">
+          <label className="block text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">
             Sponsorship Type
             <select
               value={form.sponsorshipType}
               onChange={(event) => setForm((prev) => ({ ...prev, sponsorshipType: event.target.value as SponsorshipType }))}
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              className="mt-2 w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
             >
               <option value="STATE">State sector</option>
               <option value="CENTRAL">Centrally sponsored</option>
@@ -431,20 +431,20 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
           </label>
 
           {!selectedId && (
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Optional subschemes (on create)</p>
+            <div className="space-y-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">Optional subschemes (on create)</p>
               <div className="grid gap-2 md:grid-cols-2">
                 <input
                   placeholder="Subscheme code"
                   value={subschemeDraft.code}
                   onChange={(event) => setSubschemeDraft((prev) => ({ ...prev, code: event.target.value }))}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 />
                 <input
                   placeholder="Subscheme name"
                   value={subschemeDraft.name}
                   onChange={(event) => setSubschemeDraft((prev) => ({ ...prev, name: event.target.value }))}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 />
               </div>
               <button
@@ -454,12 +454,12 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                   setSubschemes((prev) => [...prev, { code: subschemeDraft.code, name: subschemeDraft.name }]);
                   setSubschemeDraft({ code: "", name: "" });
                 }}
-                className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
               >
                 Add subscheme
               </button>
               {subschemes.length > 0 && (
-                <div className="space-y-1 text-xs text-[var(--text-muted)]">
+                <div className="space-y-1 text-xs text-[var(--ax-muted)]">
                   {subschemes.map((item, index) => (
                     <div key={`${item.code}-${index}`}>
                       {item.code} — {item.name}
@@ -471,36 +471,36 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
           )}
 
           {selectedId && (
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Add subscheme to this scheme</p>
+            <div className="space-y-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Add subscheme to this scheme</p>
               <div className="grid gap-2 md:grid-cols-2">
                 <input
                   placeholder="Subscheme code"
                   value={subschemeDraft.code}
                   onChange={(event) => setSubschemeDraft((prev) => ({ ...prev, code: event.target.value }))}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 />
                 <input
                   placeholder="Subscheme name"
                   value={subschemeDraft.name}
                   onChange={(event) => setSubschemeDraft((prev) => ({ ...prev, name: event.target.value }))}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)]"
+                  className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
                 />
               </div>
               <button
                 type="button"
                 disabled={saving}
                 onClick={handleAddSubschemeToExisting}
-                className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)] disabled:opacity-60"
+                className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)] disabled:opacity-60"
               >
                 Add subscheme
               </button>
             </div>
           )}
 
-          <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-primary)]">Dashboard owner assignments</p>
-            <p className="text-xs text-[var(--text-muted)]">Each row is a dashboard owner. Assign either a user or a role.</p>
+          <div className="space-y-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-text)]">Dashboard owner assignments</p>
+            <p className="text-xs text-[var(--ax-muted)]">Each row is a dashboard owner. Assign either a user or a role.</p>
             <button
               type="button"
               onClick={() =>
@@ -515,17 +515,17 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                   },
                 ])
               }
-              className="rounded-lg border border-[var(--border)] px-3 py-1 text-xs text-[var(--text-muted)]"
+              className="rounded-lg border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--ax-muted)]"
             >
               Add assignment
             </button>
             {assignments.map((item, index) => (
               <div
                 key={`assignment-${index}`}
-                className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 md:flex-row md:flex-wrap md:items-center"
+                className="flex flex-col gap-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3 md:flex-row md:flex-wrap md:items-center"
               >
-                <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-primary)]">
-                  <span className="text-[var(--text-muted)]">Assign to</span>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text)]">
+                  <span className="text-[var(--ax-muted)]">Assign to</span>
                   <label className="flex cursor-pointer items-center gap-1.5">
                     <input
                       type="radio"
@@ -538,7 +538,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                           ),
                         )
                       }
-                      className="accent-[var(--text-primary)]"
+                      className="accent-[var(--color-text)]"
                     />
                     User
                   </label>
@@ -554,7 +554,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                           ),
                         )
                       }
-                      className="accent-[var(--text-primary)]"
+                      className="accent-[var(--color-text)]"
                     />
                     Role
                   </label>
@@ -569,7 +569,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                         ),
                       )
                     }
-                    className="min-w-[12rem] flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+                    className="min-w-[12rem] flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text)]"
                   >
                     <option value="">Select user</option>
                     {reference.users.map((user) => (
@@ -588,7 +588,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                         ),
                       )
                     }
-                    className="min-w-[12rem] flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+                    className="min-w-[12rem] flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text)]"
                   >
                     <option value="">Select role</option>
                     {reference.roles.map((role) => (
@@ -601,7 +601,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                 <button
                   type="button"
                   onClick={() => setAssignments((prev) => prev.filter((_, itemIndex) => itemIndex !== index))}
-                  className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)] md:ml-auto"
+                  className="rounded-lg border border-[var(--color-divider)] px-2 py-1 text-xs text-[var(--ax-muted)] md:ml-auto"
                 >
                   Remove
                 </button>
@@ -643,7 +643,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
               type="button"
               disabled={saving}
               onClick={handleSave}
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-60"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-60"
             >
               {saving ? "Saving..." : selectedId ? "Update scheme" : "Create scheme"}
             </button>
@@ -652,7 +652,7 @@ export default function SchemeFormModal({ open, onClose, scheme, reference, onSa
                 type="button"
                 disabled={saving}
                 onClick={handleArchive}
-                className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-muted)] disabled:opacity-60"
+                className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm text-[var(--ax-muted)] disabled:opacity-60"
               >
                 Archive scheme
               </button>

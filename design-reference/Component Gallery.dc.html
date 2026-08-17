@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/styles.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="_ds/nocturne-6494dc40-8145-4703-99ea-8d6c8e984993/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; }
+  body:has([data-theme="light"]) { background: #eef0f8; }
+  @keyframes noct-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes noct-spin { to { transform: rotate(360deg); } }
+</style>
+</helmet>
+<div data-theme="{{ theme }}" data-density="{{ density }}" style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh;">
+
+  <header style="position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 28px; background: color-mix(in srgb, var(--color-bg) 90%, transparent); backdrop-filter: blur(10px); background-image: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); background-repeat: no-repeat; background-position: bottom; background-size: 100% 1px;">
+    <span style="display: block; width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--color-accent); background: linear-gradient(140deg, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%);"></span>
+    <span style="font-family: var(--font-heading); font-size: 15px;">Airawat design system</span>
+    <span class="text-muted" style="font-size: 12px;">tokens.css · every value swappable at runtime</span>
+    <span style="margin-left: auto; display: flex; gap: 8px;">
+      <button class="btn btn-secondary" onClick="{{ toggleDensity }}" style="font-size: 12px;">{{ densityLabel }}</button>
+      <button class="btn btn-secondary" onClick="{{ toggleTheme }}" style="font-size: 12px;">{{ themeLabel }}</button>
+      <a class="btn btn-secondary" href="Airawat Platform.dc.html" style="font-size: 12px;">Platform ↗</a>
+    </span>
+  </header>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 40px 28px 72px; display: grid; gap: 44px;">
+
+    <section>
+      <h6 style="color: var(--color-accent); margin-bottom: 12px;">Color roles</h6>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+        <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);"><div style="height: 52px; background: var(--color-bg);"></div><div style="padding: 8px 10px; font-size: 11px; background: var(--color-surface);">--color-bg<span class="text-muted" style="display: block; font-size: 10px;">page ground</span></div></div>
+        <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);"><div style="height: 52px; background: var(--color-surface);"></div><div style="padding: 8px 10px; font-size: 11px; background: var(--color-surface);">--color-surface<span class="text-muted" style="display: block; font-size: 10px;">cards, panels</span></div></div>
+        <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);"><div style="height: 52px; background: var(--color-text);"></div><div style="padding: 8px 10px; font-size: 11px; background: var(--color-surface);">--color-text<span class="text-muted" style="display: block; font-size: 10px;">primary text</span></div></div>
+        <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);"><div style="height: 52px; background: var(--color-accent);"></div><div style="padding: 8px 10px; font-size: 11px; background: var(--color-surface);">--color-accent<span class="text-muted" style="display: block; font-size: 10px;">tenant brand · lines and marks</span></div></div>
+        <div style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);"><div style="height: 52px; background: linear-gradient(to right, transparent, var(--color-divider) 30%, var(--color-divider) 70%, transparent), var(--color-surface);"></div><div style="padding: 8px 10px; font-size: 11px; background: var(--color-surface);">--color-divider<span class="text-muted" style="display: block; font-size: 10px;">rules fade at their ends</span></div></div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center;">
+        <span class="text-muted" style="font-size: 11px; margin-right: 4px;">Status is never hue alone:</span>
+        <span class="tag" style="background: var(--status-ok-bg); color: var(--status-ok-fg);">✓ On track</span>
+        <span class="tag" style="background: var(--status-risk-bg); color: var(--status-risk-fg);">△ At risk</span>
+        <span class="tag" style="border: 1px solid var(--status-breach-border); color: var(--status-breach-fg);">! Breached</span>
+      </div>
+    </section>
+
+    <section>
+      <h6 style="color: var(--color-accent); margin-bottom: 12px;">Data-viz palette</h6>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 10px;">Categorical · 6 series max</div>
+          <div style="display: flex; gap: 6px;">
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-1);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-2);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-3);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-4);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-5);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-cat-6);"></span>
+          </div>
+          <div class="text-muted" style="font-size: 10px; margin-top: 8px;">Series 1 follows the tenant accent; the rest stay fixed for recognition.</div>
+        </div>
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 10px;">Sequential · low → high</div>
+          <div style="display: flex; gap: 6px;">
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-seq-1);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-seq-2);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-seq-3);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-seq-4);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-seq-5);"></span>
+          </div>
+          <div class="text-muted" style="font-size: 10px; margin-top: 8px;">One-hue lightness ramp — order reads without color vision.</div>
+        </div>
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+          <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 10px;">Diverging · deficit → surplus</div>
+          <div style="display: flex; gap: 6px;">
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-div-neg);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--dv-div-neg) 45%, var(--dv-div-mid));"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-div-mid);"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--dv-div-pos) 45%, var(--dv-div-mid));"></span>
+            <span style="flex: 1; height: 34px; border-radius: var(--radius-sm); background: var(--dv-div-pos);"></span>
+          </div>
+          <div class="text-muted" style="font-size: 10px; margin-top: 8px;">Rose–teal pair, distinguishable under deutan and protan vision.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h6 style="color: var(--color-accent); margin-bottom: 12px;">Type, spacing, elevation</h6>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 6px;">
+          <span style="font-size: 42px; font-family: var(--font-heading); line-height: 1.1;">Display 42</span>
+          <span style="font-size: 25px; font-family: var(--font-heading);">Heading 25</span>
+          <span style="font-size: 17px; font-family: var(--font-heading);">Title 17</span>
+          <span style="font-size: 15px;">Body 15 — Inter over Inter; hierarchy is size and space, never weight past 500.</span>
+          <span style="font-size: 13px; opacity: 0.8;">Secondary 13</span>
+          <span class="text-muted" style="font-size: 11px;">Caption 11 · KPI KICKERS ARE 10 UPPERCASE TRACKED</span>
+        </div>
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 10px;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Spacing scale · density {{ density }}</div>
+          <div style="display: flex; align-items: flex-end; gap: 10px;">
+            <span style="width: var(--space-1); height: 34px; background: var(--color-accent-700); display: block;"></span>
+            <span style="width: var(--space-2); height: 34px; background: var(--color-accent-700); display: block;"></span>
+            <span style="width: var(--space-3); height: 34px; background: var(--color-accent-600); display: block;"></span>
+            <span style="width: var(--space-4); height: 34px; background: var(--color-accent-600); display: block;"></span>
+            <span style="width: var(--space-6); height: 34px; background: var(--color-accent); display: block;"></span>
+            <span style="width: var(--space-8); height: 34px; background: var(--color-accent); display: block;"></span>
+          </div>
+          <div class="text-muted" style="font-size: 10px;">Toggle density in the header — spacing moves, type sizes hold.</div>
+          <div style="display: flex; gap: 12px; margin-top: 6px;">
+            <span class="elev-sm" style="flex: 1; height: 44px; border-radius: var(--radius-md); background: var(--color-surface); display: grid; place-items: center; font-size: 10px;">elev-sm</span>
+            <span class="elev-md" style="flex: 1; height: 44px; border-radius: var(--radius-md); background: var(--color-surface); display: grid; place-items: center; font-size: 10px;">elev-md</span>
+            <span class="elev-lg" style="flex: 1; height: 44px; border-radius: var(--radius-md); background: var(--color-surface); display: grid; place-items: center; font-size: 10px;">elev-lg</span>
+          </div>
+        </div>
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 10px; align-content: start;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Buttons &amp; tags</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-ghost">Ghost</button>
+            <button class="btn btn-primary" disabled="{{ true }}">Disabled</button>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="tag tag-accent">Accent</span><span class="tag tag-neutral">Neutral</span><span class="tag tag-outline">Outline</span>
+          </div>
+          <div class="text-muted" style="font-size: 10px;">Primary is an accent outline, never a fill; focus is the 2px accent ring.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h6 style="color: var(--color-accent); margin-bottom: 12px;">Components &amp; states</h6>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 12px;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Form fields · default, error, disabled</div>
+          <div class="field"><label>Scheme name</label><input class="input" placeholder="e.g. Ward sanitation upgrade"></div>
+          <div class="field"><label>Sanctioned amount</label><input class="input" value="₹ 46,2O0" style="border-color: var(--color-accent);"><div style="font-size: 11px; color: var(--color-accent-300); margin-top: 5px;">! Contains a letter O — check the figure.</div></div>
+          <div class="field"><label>Head code (locked after approval)</label><input class="input" value="4217-60-051" disabled="{{ true }}"></div>
+          <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <span class="seg"><label class="seg-opt"><input type="radio" name="g-den" checked="{{ true }}">Comfortable</label><label class="seg-opt"><input type="radio" name="g-den">Compact</label></span>
+            <label class="radio"><input type="radio" checked="{{ true }}"><span class="dot"></span>Shared</label>
+            <label class="radio"><input type="radio"><span class="dot"></span>Isolated</label>
+          </div>
+        </div>
+
+        <div style="display: grid; gap: 16px;">
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 12px; font-family: var(--font-heading); margin-bottom: 10px;">KPI stat tile · default and at-risk</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Utilization</div>
+                <div style="font-family: var(--font-heading); font-size: 26px; margin-top: 4px;">68.4%</div>
+                <div style="height: 4px; border-radius: 2px; background: var(--color-neutral-800); margin-top: 10px;"><div style="width: 68%; height: 4px; border-radius: 2px; background: var(--color-accent);"></div></div>
+              </div>
+              <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: inset 2px 0 0 var(--color-accent), var(--shadow-sm);">
+                <div class="text-muted" style="font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;">Approvals age</div>
+                <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;"><span style="font-family: var(--font-heading); font-size: 26px;">19 d</span><span class="tag tag-outline">!</span></div>
+                <div class="text-muted" style="font-size: 10px; margin-top: 10px;">threshold 14 d</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+              <span style="font-size: 12px; font-family: var(--font-heading);">Chart card · categorical series</span>
+              <span class="text-muted" style="font-size: 10px;">₹ cr</span>
+            </div>
+            <svg viewBox="0 0 300 80" width="100%" height="90" role="img" aria-label="Two data series across six periods">
+              <line x1="0" y1="68" x2="300" y2="68" stroke="var(--color-divider)"></line>
+              <g><rect x="16" y="30" width="14" height="38" fill="var(--dv-cat-1)"></rect><rect x="32" y="44" width="14" height="24" fill="var(--dv-cat-2)"></rect></g>
+              <g><rect x="66" y="24" width="14" height="44" fill="var(--dv-cat-1)"></rect><rect x="82" y="38" width="14" height="30" fill="var(--dv-cat-2)"></rect></g>
+              <g><rect x="116" y="34" width="14" height="34" fill="var(--dv-cat-1)"></rect><rect x="132" y="42" width="14" height="26" fill="var(--dv-cat-2)"></rect></g>
+              <g><rect x="166" y="18" width="14" height="50" fill="var(--dv-cat-1)"></rect><rect x="182" y="30" width="14" height="38" fill="var(--dv-cat-2)"></rect></g>
+              <g><rect x="216" y="26" width="14" height="42" fill="var(--dv-cat-1)"></rect><rect x="232" y="22" width="14" height="46" fill="var(--dv-cat-2)"></rect></g>
+              <g><rect x="266" y="12" width="14" height="56" fill="var(--dv-cat-1)"></rect><rect x="282" y="18" width="14" height="50" fill="var(--dv-cat-2)"></rect></g>
+            </svg>
+          </div>
+        </div>
+
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 10px; align-content: start;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Filter bar + data table states</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <input class="input" placeholder="Search schemes…" style="max-width: 160px; min-height: 32px;">
+            <span class="tag tag-accent">Water works ×</span>
+            <span class="tag tag-neutral">FY 2026–27 ×</span>
+            <button class="btn btn-ghost" style="font-size: 12px;">Clear</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Scheme <span style="color: var(--color-accent);">↓</span></th><th>Released</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-size: 13px;">Riverfront embankment II</td><td style="font-size: 13px;">₹ 612 cr</td><td><span class="tag tag-neutral">✓ On track</span></td></tr>
+              <tr><td style="font-size: 13px;">Transit housing block C</td><td style="font-size: 13px;">₹ 176 cr</td><td><span class="tag tag-outline">! Lapse risk</span></td></tr>
+            </tbody>
+          </table>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+            <div style="padding: 14px 10px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); text-align: center;" class="text-muted">Empty — “No schemes match these filters.”</div>
+            <div style="padding: 14px 10px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; gap: 8px;" class="text-muted"><span style="width: 12px; height: 12px; border: 2px solid var(--color-divider); border-top-color: var(--color-accent); border-radius: 50%; display: inline-block; animation: noct-spin 0.9s linear infinite;"></span>Loading rows…</div>
+          </div>
+        </div>
+
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 12px; align-content: start;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Stepper, tabs, module toggle</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
+            <span style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-accent); color: var(--color-accent); display: grid; place-items: center; font-size: 10px;">✓</span>
+            <span style="flex: 1; height: 1px; background: var(--color-accent);"></span>
+            <span style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-accent); color: var(--color-accent); display: grid; place-items: center; font-size: 10px;">2</span>
+            <span style="flex: 1; height: 1px; background: var(--color-divider);"></span>
+            <span style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-divider); display: grid; place-items: center; font-size: 10px; opacity: 0.6;">3</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <span style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent);">Overview</span>
+            <span style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); opacity: 0.7;">Financials</span>
+            <span style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); opacity: 0.7;">KPIs</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <span style="flex: 1; font-size: 12px;">KPI Monitoring<span class="text-muted" style="display: block; font-size: 10px;">Thresholds and status</span></span>
+            <span style="width: 34px; height: 20px; border-radius: 999px; border: 1px solid var(--color-accent); background: color-mix(in srgb, var(--color-accent) 35%, transparent); position: relative; display: block;"><span style="position: absolute; top: 2px; left: 16px; width: 14px; height: 14px; border-radius: 50%; background: var(--color-accent);"></span></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); opacity: 0.75;">
+            <span style="flex: 1; font-size: 12px;">Single sign-on<span class="text-muted" style="display: block; font-size: 10px;">Above your tier</span></span>
+            <span class="btn btn-ghost" style="font-size: 11px;">Tier 3 ↗</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--dv-cat-2); border: 2px solid var(--color-text); box-shadow: 0 0 0 2px var(--color-accent);"></span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--dv-cat-3);"></span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--dv-cat-5);"></span>
+            <span class="tag tag-neutral" style="margin-left: 4px;">✓ 4.6:1</span>
+            <span class="text-muted" style="font-size: 10px;">color picker validates contrast live</span>
+          </div>
+        </div>
+
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: grid; gap: 12px; align-content: start;">
+          <div style="font-size: 12px; font-family: var(--font-heading);">Dialog, toast, file upload</div>
+          <div style="border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); padding: 18px; display: grid; place-items: center;">
+            <div class="dialog" style="width: 100%; padding: var(--space-4);">
+              <div class="dialog-title" style="font-size: 16px;">Remove sample data?</div>
+              <div class="dialog-body" style="font-size: 12px;">The demonstration portfolio is deleted permanently. Your own entries are untouched.</div>
+              <div class="dialog-actions"><button class="btn btn-secondary" style="font-size: 12px;">Cancel</button><button class="btn btn-primary" style="font-size: 12px;">Remove</button></div>
+            </div>
+          </div>
+          <div role="status" style="padding: 9px 12px; border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-lg); font-size: 12px;">✓ Theme saved. Your users see it on next sign-in.</div>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px dashed var(--color-divider); border-radius: var(--radius-md); font-size: 12px;">
+            <span style="width: 32px; height: 32px; border-radius: var(--radius-md); border: 1px solid var(--color-accent); display: grid; place-items: center; color: var(--color-accent); flex: none;">↑</span>
+            <span>Drop your logo here<span class="text-muted" style="display: block; font-size: 10px;">SVG or PNG · 2 MB max</span></span>
+          </div>
+          <div style="padding: 12px; border-radius: var(--radius-md); box-shadow: inset 2px 0 0 var(--color-accent); font-size: 12px;">
+            ! Couldn't reach the treasury feed. Figures show the last good sync. <a href="#" style="color: var(--color-accent);">Retry</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h6 style="color: var(--color-accent); margin-bottom: 12px;">Two reference themes · one component set</h6>
+      <p class="text-muted" style="font-size: 13px; max-width: 44rem; margin-bottom: 18px;">The same dashboard fragment, twice. Left: the neutral Airawat platform theme. Right: the Suryapur Development Authority tenant theme — a different accent, light default — applied only by switching token values.</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px;">
+
+        <div style="border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); background: #161826; color: #e9e9ed;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(233,233,237,0.16);">
+            <span style="width: 15px; height: 15px; border-radius: 4px; border: 1px solid #9184d9;"></span>
+            <span style="font-family: var(--font-heading); font-size: 12px;">Airawat platform</span>
+            <span style="font-size: 10px; opacity: 0.55; margin-left: auto;">dark default · #9184d9</span>
+          </div>
+          <div style="padding: 14px; display: grid; gap: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="padding: 11px; border-radius: 8px; box-shadow: 0 0 0 1px #3f424d;"><div style="font-size: 10px; opacity: 0.55; text-transform: uppercase; letter-spacing: 0.09em;">Utilization</div><div style="font-family: var(--font-heading); font-size: 22px; margin-top: 4px;">68.4%</div><div style="height: 4px; border-radius: 2px; background: #3f424d; margin-top: 8px;"><div style="width: 68%; height: 4px; border-radius: 2px; background: #9184d9;"></div></div></div>
+              <div style="padding: 11px; border-radius: 8px; box-shadow: 0 0 0 1px #3f424d;"><div style="font-size: 10px; opacity: 0.55; text-transform: uppercase; letter-spacing: 0.09em;">Released</div><div style="font-family: var(--font-heading); font-size: 22px; margin-top: 4px;">₹ 4,812 cr</div><div style="font-size: 10px; opacity: 0.55; margin-top: 8px;">of ₹ 7,040 cr</div></div>
+            </div>
+            <svg viewBox="0 0 300 54" width="100%" height="54" preserveAspectRatio="none"><path d="M0 44 L60 38 L120 33 L180 26 L240 18 L300 8 L300 54 L0 54 Z" fill="#9184d9" opacity="0.15"></path><path d="M0 44 L60 38 L120 33 L180 26 L240 18 L300 8" fill="none" stroke="#9184d9" stroke-width="2"></path></svg>
+            <div style="display: flex; gap: 8px;">
+              <span style="font-size: 12px; font-family: var(--font-heading); padding: 6px 12px; border-radius: 8px; border: 1px solid #9184d9; color: #9184d9;">Export report</span>
+              <span style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: #423a6a; color: #f5f4ff; align-self: center;">△ At risk</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); background: #eef0f8; color: #232532;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(35,37,50,0.16);">
+            <span style="width: 15px; height: 15px; border-radius: 4px; border: 1px solid #3f847c; background: #3f847c;"></span>
+            <span style="font-family: var(--font-heading); font-size: 12px;">Suryapur Development Authority</span>
+            <span style="font-size: 10px; opacity: 0.6; margin-left: auto;">light default · #3f847c</span>
+          </div>
+          <div style="padding: 14px; display: grid; gap: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="padding: 11px; border-radius: 8px; background: #f8f9fd; box-shadow: 0 0 0 1px #d9dde9;"><div style="font-size: 10px; color: #575a68; text-transform: uppercase; letter-spacing: 0.09em;">Utilization</div><div style="font-family: var(--font-heading); font-size: 22px; margin-top: 4px;">68.4%</div><div style="height: 4px; border-radius: 2px; background: #e4e7f5; margin-top: 8px;"><div style="width: 68%; height: 4px; border-radius: 2px; background: #3f847c;"></div></div></div>
+              <div style="padding: 11px; border-radius: 8px; background: #f8f9fd; box-shadow: 0 0 0 1px #d9dde9;"><div style="font-size: 10px; color: #575a68; text-transform: uppercase; letter-spacing: 0.09em;">Released</div><div style="font-family: var(--font-heading); font-size: 22px; margin-top: 4px;">₹ 4,812 cr</div><div style="font-size: 10px; color: #575a68; margin-top: 8px;">of ₹ 7,040 cr</div></div>
+            </div>
+            <svg viewBox="0 0 300 54" width="100%" height="54" preserveAspectRatio="none"><path d="M0 44 L60 38 L120 33 L180 26 L240 18 L300 8 L300 54 L0 54 Z" fill="#3f847c" opacity="0.15"></path><path d="M0 44 L60 38 L120 33 L180 26 L240 18 L300 8" fill="none" stroke="#3f847c" stroke-width="2"></path></svg>
+            <div style="display: flex; gap: 8px;">
+              <span style="font-size: 12px; font-family: var(--font-heading); padding: 6px 12px; border-radius: 8px; border: 1px solid #3f847c; color: #2b5a54;">Export report</span>
+              <span style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: #d9ecea; color: #2b5a54; align-self: center;">△ At risk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { theme: 'dark', density: 'comfortable' };
+  renderVals() {
+    const s = this.state;
+    return {
+      theme: s.theme, density: s.density,
+      themeLabel: s.theme === 'dark' ? 'Dark' : 'Light',
+      densityLabel: s.density === 'compact' ? 'Compact' : 'Comfortable',
+      toggleTheme: () => this.setState(p => ({ theme: p.theme === 'dark' ? 'light' : 'dark' })),
+      toggleDensity: () => this.setState(p => ({ density: p.density === 'compact' ? 'comfortable' : 'compact' })),
+      true: true
+    };
+  }
+}
+</script>
+</body>
+</html>

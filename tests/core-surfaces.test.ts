@@ -19,6 +19,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
+import { enterTenantScope } from "@/lib/tenant-context";
 import { resolveDataScopeForUser, type DataScope } from "@/lib/data-scope";
 import { schemeWhere, kpiDefinitionWhere } from "@/lib/data-access/scope-where";
 import { getCommandCentreDashboard } from "@/lib/command-centre-dashboard";
@@ -39,6 +41,10 @@ let fullDbUser: Awaited<ReturnType<typeof loadDbUserWithRbac>>;
 let restrictedDbUser: Awaited<ReturnType<typeof loadDbUserWithRbac>>;
 
 beforeAll(async () => {
+  // Phase 2: these suites exercise Odisha's data through the tenant-scoped
+  // client, so the process enters Odisha's scope first (test-only ergonomic
+  // form of withTenantContext).
+  await enterTenantScope(ODISHA_TENANT_ID);
   seed = await seedScope();
   fullDbUser = await loadDbUserWithRbac(seed.fullUser.id);
   restrictedDbUser = await loadDbUserWithRbac(seed.restrictedUser.id);

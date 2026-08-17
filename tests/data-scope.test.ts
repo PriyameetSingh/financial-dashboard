@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
+import { enterTenantScope } from "@/lib/tenant-context";
 import {
   resolveDataScopeForUser,
   resolveFinanceDataScope,
@@ -30,6 +32,10 @@ let fullScope: DataScope;
 let restrictedScope: DataScope;
 
 beforeAll(async () => {
+  // Phase 2: these suites exercise Odisha's data through the tenant-scoped
+  // client, so the process enters Odisha's scope first (test-only ergonomic
+  // form of withTenantContext).
+  await enterTenantScope(ODISHA_TENANT_ID);
   seed = await seedScope();
   const fullDbUser = await loadDbUserWithRbac(seed.fullUser.id);
   const restrictedDbUser = await loadDbUserWithRbac(seed.restrictedUser.id);

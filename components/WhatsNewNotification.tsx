@@ -22,22 +22,22 @@ type Release = {
 const TYPE_CONFIG = {
   NEW_FEATURE: {
     label: "New",
-    bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    bg: "ax-chip ax-chip-cat-2",
     icon: Rocket,
   },
   IMPROVEMENT: {
     label: "Refined",
-    bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    bg: "ax-chip ax-chip-cat-4",
     icon: Sparkles,
   },
   FIX: {
     label: "Fix",
-    bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    bg: "ax-chip ax-chip-cat-3",
     icon: Wrench,
   },
   BREAKING_CHANGE: {
     label: "Important",
-    bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+    bg: "ax-chip ax-chip-critical",
     icon: ShieldAlert,
   },
 };
@@ -106,25 +106,25 @@ export default function WhatsNewNotification() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-2xl animate-in slide-in-from-bottom duration-300"
+      className="fixed bottom-6 right-6 z-50 w-full max-w-sm rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-2xl animate-in slide-in-from-bottom duration-300"
       role="dialog"
       aria-labelledby="whats-new-title"
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--sidebar-active-bg)] text-white shadow-sm">
+          <span className="ax-ai-plate flex h-8 w-8 items-center justify-center rounded-lg">
             <Sparkles size={16} className="animate-pulse" />
           </span>
           <div>
-            <h3 id="whats-new-title" className="text-sm font-semibold text-[var(--text-primary)]">
+            <h3 id="whats-new-title" className="text-sm font-semibold text-[var(--color-text)]">
               What's New in HUDD
             </h3>
-            <p className="text-[11px] text-[var(--text-muted)]">Release v{currentRelease.version}</p>
+            <p className="text-[11px] text-[var(--ax-muted)]">Release v{currentRelease.version}</p>
           </div>
         </div>
         <button
           onClick={handleDismiss}
-          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--bg-primary)] transition"
+          className="text-[var(--ax-muted)] hover:text-[var(--color-text)] p-1 rounded-lg hover:bg-[var(--color-bg)] transition"
           aria-label="Close panel"
         >
           <X size={16} />
@@ -133,7 +133,7 @@ export default function WhatsNewNotification() {
 
       <div className="mt-4 max-h-60 overflow-y-auto space-y-3 pr-1">
         {currentRelease.entries.length === 0 ? (
-          <p className="text-xs text-[var(--text-muted)] italic">A new release has been deployed.</p>
+          <p className="text-xs text-[var(--ax-muted)] italic">A new release has been deployed.</p>
         ) : (
           currentRelease.entries.map((entry) => {
             const conf = TYPE_CONFIG[entry.type] || TYPE_CONFIG.IMPROVEMENT;
@@ -143,12 +143,12 @@ export default function WhatsNewNotification() {
                   <span className={`mt-0.5 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 ${conf.bg}`}>
                     {conf.label}
                   </span>
-                  <p className="text-xs font-semibold text-[var(--text-primary)] leading-normal">
+                  <p className="text-xs font-semibold text-[var(--color-text)] leading-normal">
                     {entry.title}
                   </p>
                 </div>
                 {entry.description && (
-                  <p className="text-[11px] text-[var(--text-secondary)] pl-2 leading-relaxed">
+                  <p className="text-[11px] text-[var(--ax-text-secondary)] pl-2 leading-relaxed">
                     {entry.description}
                   </p>
                 )}
@@ -158,17 +158,17 @@ export default function WhatsNewNotification() {
         )}
       </div>
 
-      <div className="mt-5 pt-3 border-t border-[var(--border)]/50 flex items-center justify-between gap-3">
+      <div className="mt-5 pt-3 border-t border-[var(--color-divider)]/50 flex items-center justify-between gap-3">
         <a
           href={withNextBasePath("/changelog")}
-          className="text-xs font-semibold text-[var(--accent)] hover:underline"
+          className="text-xs font-semibold text-[var(--color-accent)] hover:underline"
           onClick={() => setIsOpen(false)}
         >
           View all release notes &rarr;
         </a>
         <button
           onClick={handleDismiss}
-          className="rounded-lg bg-[var(--text-primary)] px-3.5 py-1.5 text-xs font-semibold text-[var(--bg-primary)] hover:opacity-90 transition shadow-sm"
+          className="rounded-lg bg-[var(--color-text)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-bg)] hover:opacity-90 transition shadow-sm"
         >
           Got it
         </button>

@@ -3,6 +3,7 @@ import Keycloak from "next-auth/providers/keycloak";
 import { authApiBasePath } from "@/lib/auth-api-path";
 import { withNextBasePath } from "@/lib/next-base-path";
 import { UserRole } from "@/types";
+import { getTenantContextSafe } from "@/lib/tenant-context";
 
 type KeycloakProfile = {
   preferred_username?: string;
@@ -87,8 +88,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: withNextBasePath("/auth/error"),
   },
   callbacks: {
-    jwt({ token, profile, account }) {
+    async jwt({ token, profile, account }) {
       const keycloakProfile = (profile ?? {}) as KeycloakProfile;
+
+      // Phase 2: bind the token to the tenant it was minted for. Stamped on
+      // sign-in (when `account` is present) from the tenant resolved for the
+      // sign-in request; preserved on subsequent refreshes. proxy.ts and the
+      // server guards reject a token whose tenant does not match the host's,
+      // so a session cannot be replayed against another tenant.
+      if (account) {
+        const { tenantId } = await getTenantContextSafe();
+        if (tenantId) token.tenantId = tenantId;
+      }
 
       token.preferred_username = keycloakProfile.preferred_username ?? token.preferred_username;
       token.email = keycloakProfile.email ?? token.email;
@@ -147,6 +158,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (typeof token.iat === "number") {
         session.user.iat = token.iat;
+      }
+
+      if (typeof token.tenantId === "string") {
+        session.user.tenantId = token.tenantId;
       }
 
       return session;

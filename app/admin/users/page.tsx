@@ -7,6 +7,7 @@ import { Permission, UserRole, hasPermission } from "@/lib/auth";
 import type { OfficerType } from "@/types";
 import RoleBadge from "@/src/components/ui/RoleBadge";
 import { withNextBasePath } from "@/lib/next-base-path";
+import { TableScroll } from "@/components/nocturne";
 
 type OverrideEffect = "allow" | "deny";
 
@@ -239,22 +240,22 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
   );
 
   return (
-    <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+    <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
       <span>
         {label}
-        {required && <span className="text-[var(--alert-critical)] ml-0.5">*</span>}
+        {required && <span className="text-[var(--ax-status-critical)] ml-0.5">*</span>}
       </span>
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 pr-8 text-left text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {selectedOption ? selectedOption.name : placeholder || "Select..."}
         </button>
         <svg
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]"
           width="16"
           height="16"
           viewBox="0 0 16 16"
@@ -265,7 +266,7 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
         </svg>
         {isOpen && (
           <div
-            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            className={`absolute z-50 w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
               }`}
           >
             <div className="p-2">
@@ -274,7 +275,7 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
+                className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-xs text-[var(--color-text)] outline-none"
                 autoFocus
               />
             </div>
@@ -287,7 +288,7 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
                     setIsOpen(false);
                     setSearch("");
                   }}
-                  className="w-full px-3 py-2 text-left text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
+                  className="w-full px-3 py-2 text-left text-xs text-[var(--ax-muted)] hover:bg-[var(--ax-hover)]"
                 >
                   (None)
                 </button>
@@ -301,14 +302,14 @@ function Combobox({ label, options, value, onChange, placeholder, disabled, requ
                     setIsOpen(false);
                     setSearch("");
                   }}
-                  className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${option.id === value ? "bg-[var(--bg-accent)] font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-[var(--ax-hover)] ${option.id === value ? "bg-[var(--ax-accent-tint)] font-medium text-[var(--color-text)]" : "text-[var(--ax-muted)]"
                     }`}
                 >
                   {option.name}
                 </button>
               ))}
               {filteredOptions.length === 0 && (
-                <div className="px-3 py-2 text-xs text-[var(--text-muted)]">No results</div>
+                <div className="px-3 py-2 text-xs text-[var(--ax-muted)]">No results</div>
               )}
             </div>
           </div>
@@ -374,21 +375,21 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
   };
 
   return (
-    <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+    <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
       {label}
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-left text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 pr-8 text-left text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {selectedOptions.length > 0
             ? selectedOptions.map((opt) => opt.name).join(", ")
             : placeholder || "Select..."}
         </button>
         <svg
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]"
           width="16"
           height="16"
           viewBox="0 0 16 16"
@@ -399,7 +400,7 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
         </svg>
         {isOpen && (
           <div
-            className={`absolute z-50 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            className={`absolute z-50 w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-lg ${openUpward ? "bottom-full mb-1" : "top-full mt-1"
               }`}
           >
             <div className="p-2">
@@ -408,7 +409,7 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
+                className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1 text-xs text-[var(--color-text)] outline-none"
                 autoFocus
               />
             </div>
@@ -418,7 +419,7 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
                   key={option.id}
                   type="button"
                   onClick={() => toggleOption(option.id)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)] ${values.includes(option.id) ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--ax-hover)] ${values.includes(option.id) ? "font-medium text-[var(--color-text)]" : "text-[var(--ax-muted)]"
                     }`}
                 >
                   <input
@@ -431,17 +432,17 @@ function MultiCombobox({ label, options, values, onChange, placeholder, disabled
                 </button>
               ))}
               {filteredOptions.length === 0 && (
-                <div className="px-3 py-2 text-xs text-[var(--text-muted)]">No results</div>
+                <div className="px-3 py-2 text-xs text-[var(--ax-muted)]">No results</div>
               )}
             </div>
-            <div className="border-t border-[var(--border)] p-2">
+            <div className="border-t border-[var(--color-divider)] p-2">
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
                   setSearch("");
                 }}
-                className="w-full rounded border border-[var(--border)] px-2 py-1 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                className="w-full rounded border border-[var(--color-divider)] px-2 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--ax-hover)]"
               >
                 Done
               </button>
@@ -469,28 +470,28 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-lg flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl">
+      <div className="flex w-full max-w-lg flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-2xl">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+        <div className="flex items-start justify-between border-b border-[var(--color-divider)] px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Permissions</p>
-            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">{user.name}</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Permissions</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--color-text)]">{user.name}</h2>
             <div className="mt-1 flex items-center gap-3">
               <RoleBadge role={user.roles[0] ?? UserRole.NODAL_OFFICER} />
-              <span className="text-xs text-[var(--text-muted)]">
+              <span className="text-xs text-[var(--ax-muted)]">
                 {grantedCount} granted
                 {overrideCount > 0 && (
-                  <> · <span className="text-[var(--alert-warning)]">{overrideCount} override{overrideCount > 1 ? "s" : ""}</span></>
+                  <> · <span className="text-[var(--ax-status-warning)]">{overrideCount} override{overrideCount > 1 ? "s" : ""}</span></>
                 )}
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -500,17 +501,17 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 border-b border-[var(--border)] px-6 py-2.5">
-          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--text-primary)] bg-[var(--text-primary)]" />
+        <div className="flex items-center gap-4 border-b border-[var(--color-divider)] px-6 py-2.5">
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--ax-muted)]">
+            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--color-text)] bg-[var(--color-text)]" />
             Granted
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)]" />
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--ax-muted)]">
+            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_12%,_transparent)]" />
             Denied (override)
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--border)] bg-transparent" />
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--ax-muted)]">
+            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--color-divider)] bg-transparent" />
             Not granted
           </span>
         </div>
@@ -526,10 +527,10 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
                   key={`modal-${user.code ?? user.email}-${permission.code}`}
                   onClick={() => onToggle(user.code ?? "", permission.code)}
                   className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors whitespace-nowrap ${override?.effect === "deny"
-                    ? "border-[var(--alert-critical)] bg-[rgba(255,59,59,0.12)] text-[var(--alert-critical)]"
+                    ? "border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_12%,_transparent)] text-[var(--ax-status-critical)]"
                     : granted
-                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]"
-                      : "border-[var(--border)] bg-transparent text-[var(--text-muted)] hover:border-[var(--text-muted)]"
+                      ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                      : "border-[var(--color-divider)] bg-transparent text-[var(--ax-muted)] hover:border-[var(--ax-muted)]"
                     }`}
                   title={
                     override
@@ -548,16 +549,16 @@ function PermissionsModal({ user, permissionCatalog, onToggle, onClose, alert }:
 
         {/* Alert */}
         {alert && (
-          <div className="border-t border-[var(--border)] px-6 py-3">
-            <p className="text-xs text-[var(--alert-critical)]">{alert}</p>
+          <div className="border-t border-[var(--color-divider)] px-6 py-3">
+            <p className="text-xs text-[var(--ax-status-critical)]">{alert}</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="border-t border-[var(--border)] px-6 py-4">
+        <div className="border-t border-[var(--color-divider)] px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card)]"
+            className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface)]"
           >
             Done
           </button>
@@ -627,21 +628,21 @@ function CreateUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-2xl max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-[var(--color-divider)] px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
-            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Create User</h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Administration</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--color-text)]">Create User</h2>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               Creates the user in Keycloak and syncs local RBAC in one action.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--ax-hover)] hover:text-[var(--color-text)]"
             aria-label="Close create user dialog"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -652,29 +653,29 @@ function CreateUserModal({
 
         <div className="flex-1 overflow-y-auto px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              <span>Name <span className="text-[var(--alert-critical)]">*</span></span>
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
+              <span>Name <span className="text-[var(--ax-status-critical)]">*</span></span>
               <input
                 value={form.name}
                 onChange={(e) => onChange("name", e.target.value)}
                 placeholder="Officer name"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              <span>Email <span className="text-[var(--alert-critical)]">*</span></span>
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
+              <span>Email <span className="text-[var(--ax-status-critical)]">*</span></span>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => onChange("email", e.target.value)}
                 placeholder="name@example.org"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              <span>Phone number <span className="text-[var(--alert-critical)]">*</span></span>
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
+              <span>Phone number <span className="text-[var(--ax-status-critical)]">*</span></span>
               <input
                 type="tel"
                 inputMode="tel"
@@ -686,25 +687,25 @@ function CreateUserModal({
                 }}
                 onBlur={() => setPhoneTouched(true)}
                 placeholder="e.g. 9876543210"
-                className={`rounded-lg border bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none ${isPhoneInvalid
-                  ? "border-[var(--alert-critical)] focus:border-[var(--alert-critical)]"
-                  : "border-[var(--border)] focus:border-[var(--text-muted)]"
+                className={`rounded-lg border bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none ${isPhoneInvalid
+                  ? "border-[var(--ax-status-critical)] focus:border-[var(--ax-status-critical)]"
+                  : "border-[var(--color-divider)] focus:border-[var(--ax-muted)]"
                   }`}
               />
-              <span className="text-[10px] text-[var(--text-muted)]">
+              <span className="text-[10px] text-[var(--ax-muted)]">
                 {phoneUsernamePreview.length >= 10
                   ? `Login username (digits): ${phoneUsernamePreview}`
                   : "Enter exactly 10 digits; non-digits are stripped for the username."}
               </span>
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Department (optional)
               <input
                 value={form.department}
                 onChange={(e) => onChange("department", e.target.value)}
                 placeholder="Department"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
 
@@ -749,14 +750,14 @@ function CreateUserModal({
               required
             />
 
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-              <span>Default Password <span className="text-[var(--alert-critical)]">*</span></span>
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
+              <span>Default Password <span className="text-[var(--ax-status-critical)]">*</span></span>
               <input
                 type="password"
                 value={form.defaultPassword}
                 onChange={(e) => onChange("defaultPassword", e.target.value)}
                 placeholder="Temporary password"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
 
@@ -772,24 +773,24 @@ function CreateUserModal({
         </div>
 
         {alert && (
-          <div className="border-t border-[var(--border)] bg-[var(--bg-primary)] px-6 py-3">
-            <div className="rounded-lg border border-[var(--alert-critical)]/20 bg-[var(--alert-critical)]/10 px-4 py-2.5">
-              <p className="text-xs font-medium text-[var(--alert-critical)]">{alert}</p>
+          <div className="border-t border-[var(--color-divider)] bg-[var(--color-bg)] px-6 py-3">
+            <div className="rounded-lg border border-[var(--ax-status-critical)]/20 bg-[var(--ax-status-critical)]/10 px-4 py-2.5">
+              <p className="text-xs font-medium text-[var(--ax-status-critical)]">{alert}</p>
             </div>
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 bg-[var(--bg-primary)]">
+        <div className="flex gap-3 border-t border-[var(--color-divider)] px-6 py-4 bg-[var(--color-bg)]">
           <button
             onClick={onClose}
-            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+            className="flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)]"
           >
             Cancel
           </button>
           <button
             onClick={onSubmit}
             disabled={isCreatingUser}
-            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isCreatingUser ? "Creating..." : "Create User"}
           </button>
@@ -845,22 +846,22 @@ function EditUserProfileModal({
 }: EditUserProfileModalProps) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl max-h-[90vh]">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-2xl max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-[var(--color-divider)] px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
-            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Edit profile</h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Administration</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--color-text)]">Edit profile</h2>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               Update directory fields for {user.name}. Login username (phone code) is unchanged here.
             </p>
           </div>
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--ax-hover)] hover:text-[var(--color-text)] disabled:opacity-50"
             aria-label="Close edit profile dialog"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -871,29 +872,29 @@ function EditUserProfileModal({
 
         <div className="flex-1 overflow-y-auto px-6 py-5 pb-28" data-dropdown-boundary>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Name
               <input
                 value={form.name}
                 onChange={(e) => onChange("name", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Email
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => onChange("email", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Department
               <input
                 value={form.department}
                 onChange={(e) => onChange("department", e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
             <Combobox
@@ -924,19 +925,19 @@ function EditUserProfileModal({
               onChange={onSectionsChange}
               placeholder="Select sections"
             />
-            <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Officer type
               <div className="relative">
                 <select
                   value={form.officerType}
                   onChange={(e) => onChange("officerType", e.target.value as OfficerType)}
-                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                  className="w-full appearance-none rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 pr-8 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
                 >
                   <option value="GOVERNMENT">Government</option>
                   <option value="PMU">PMU</option>
                 </select>
                 <svg
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]"
                   width="16"
                   height="16"
                   viewBox="0 0 16 16"
@@ -951,25 +952,25 @@ function EditUserProfileModal({
         </div>
 
         {alert && (
-          <div className="border-t border-[var(--border)] bg-[var(--bg-primary)] px-6 py-3">
-            <div className="rounded-lg border border-[var(--alert-critical)]/20 bg-[var(--alert-critical)]/10 px-4 py-2.5">
-              <p className="text-xs font-medium text-[var(--alert-critical)]">{alert}</p>
+          <div className="border-t border-[var(--color-divider)] bg-[var(--color-bg)] px-6 py-3">
+            <div className="rounded-lg border border-[var(--ax-status-critical)]/20 bg-[var(--ax-status-critical)]/10 px-4 py-2.5">
+              <p className="text-xs font-medium text-[var(--ax-status-critical)]">{alert}</p>
             </div>
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-[var(--border)] px-6 py-4 bg-[var(--bg-primary)]">
+        <div className="flex gap-3 border-t border-[var(--color-divider)] px-6 py-4 bg-[var(--color-bg)]">
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             onClick={() => void onSubmit()}
             disabled={isSaving}
-            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? "Saving..." : "Save changes"}
           </button>
@@ -1605,12 +1606,12 @@ export default function AdminUsersPage() {
   return (
     <AppShell title="Admin · Users">
       <div className="space-y-5 px-6 py-6">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-              <h1 className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">User Directory</h1>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+              <h1 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">User Directory</h1>
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">
                 Manage users, roles, and access visibility
                 {canManagePermissions ? ", including permission overrides" : ""}.
               </p>
@@ -1618,7 +1619,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => { setCreateUserAlert(""); setIsCreateUserOpen(true); }}
               disabled={!canMutateUsers}
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Create User
             </button>
@@ -1626,48 +1627,48 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Active Users</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{filteredUsers.length}</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">of {users.length} total</p>
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Active Users</p>
+            <p className="mt-3 text-2xl font-semibold text-[var(--color-text)]">{filteredUsers.length}</p>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">of {users.length} total</p>
           </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Pending Role Saves</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{pendingRoleSaveCount}</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">Unsaved role changes in this view</p>
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Pending Role Saves</p>
+            <p className="mt-3 text-2xl font-semibold text-[var(--color-text)]">{pendingRoleSaveCount}</p>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">Unsaved role changes in this view</p>
           </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Can Manage Permissions</p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">{managePermissionCount}</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">Users with effective grant</p>
+          <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Can Manage Permissions</p>
+            <p className="mt-3 text-2xl font-semibold text-[var(--color-text)]">{managePermissionCount}</p>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">Users with effective grant</p>
           </div>
         </div>
 
         {alert && !selectedUser && !profileEditUser && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-[rgba(255,59,59,0.08)] px-4 py-3">
-            <p className="text-sm text-[var(--alert-critical)]">{alert}</p>
+          <div className="rounded-xl border border-[var(--ax-status-critical)] bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] px-4 py-3">
+            <p className="text-sm text-[var(--ax-status-critical)]">{alert}</p>
           </div>
         )}
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-          <p className="mb-3 text-xs uppercase tracking-[0.24em] text-[var(--text-muted)]">Search & Filter</p>
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+          <p className="mb-3 text-xs uppercase tracking-[0.24em] text-[var(--ax-muted)]">Search & Filter</p>
           <div className="flex flex-col gap-3 md:flex-row md:items-end">
-            <label className="flex flex-1 flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex flex-1 flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Search users
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, email, phone/code, designation, department, organisation, section, officer type, scheme"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
               />
             </label>
-            <label className="flex min-w-[220px] flex-col gap-1 text-xs text-[var(--text-muted)]">
+            <label className="flex min-w-[220px] flex-col gap-1 text-xs text-[var(--ax-muted)]">
               Filter by role
               <div className="relative">
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value as RoleFilterValue)}
-                  className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)]"
+                  className="w-full appearance-none rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 pr-8 text-sm text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)]"
                 >
                   <option value="ALL">All roles</option>
                   {roleOptions.map((role) => (
@@ -1677,7 +1678,7 @@ export default function AdminUsersPage() {
                   ))}
                 </select>
                 <svg
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]"
                   width="16"
                   height="16"
                   viewBox="0 0 16 16"
@@ -1690,17 +1691,17 @@ export default function AdminUsersPage() {
             </label>
             <button
               onClick={() => { setSearchTerm(""); setRoleFilter("ALL"); }}
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+              className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)]"
             >
               Reset
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
-          <div className="overflow-x-auto overflow-y-visible">
+        <div className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
+          <TableScroll label="User directory" className="overflow-x-auto overflow-y-visible">
             <table className="min-w-[1000px] w-full text-left text-sm">
-              <thead className="bg-[var(--bg-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+              <thead className="bg-[var(--color-surface)] text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
                 <tr>
                   <th className="px-4 py-3">Officer</th>
                   <th className="px-4 py-3">Designation</th>
@@ -1725,17 +1726,17 @@ export default function AdminUsersPage() {
                   const shownSchemes = user.assignedSchemes?.slice(0, 2) ?? [];
                   const hiddenSchemeCount = Math.max((user.assignedSchemes?.length ?? 0) - shownSchemes.length, 0);
                   return (
-                    <tr key={user.code ?? user.email} className="border-t border-[var(--border)] align-top transition-colors hover:bg-[var(--bg-hover)]">
+                    <tr key={user.code ?? user.email} className="border-t border-[var(--color-divider)] align-top transition-colors hover:bg-[var(--ax-hover)]">
                       <td className="px-4 py-4">
-                        <p className="font-medium text-[var(--text-primary)]">{user.name}</p>
-                        <p className="mt-0.5 text-xs text-[var(--text-muted)]">{user.email}</p>
+                        <p className="font-medium text-[var(--color-text)]">{user.name}</p>
+                        <p className="mt-0.5 text-xs text-[var(--ax-muted)]">{user.email}</p>
                         {user.code && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--ax-muted)]">
                             {user.code}
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-sm text-[var(--text-muted)]">
+                      <td className="px-4 py-4 text-sm text-[var(--ax-muted)]">
                         {user.designationName?.trim() ? user.designationName : "—"}
                       </td>
                       <td className="px-4 py-4">
@@ -1743,10 +1744,11 @@ export default function AdminUsersPage() {
                           <RoleBadge role={currentRole} />
                           <div className="relative">
                             <select
+                              aria-label={`Role for ${user.name ?? user.email ?? "this user"}`}
                               value={selectedRole}
                               onChange={(e) => handleRoleDraftChange(userCode, e.target.value as UserRole)}
                               disabled={!userCode || isUpdatingRole || isDeleting || !canMutateUsers}
-                              className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2.5 py-1.5 pr-6 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="w-full appearance-none rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-2.5 py-1.5 pr-6 text-xs text-[var(--color-text)] outline-none focus:border-[var(--ax-muted)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {roleOptions.map((role) => (
                                 <option key={`row-role-${userCode}-${role}`} value={role}>
@@ -1755,7 +1757,7 @@ export default function AdminUsersPage() {
                               ))}
                             </select>
                             <svg
-                              className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                              className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--ax-muted)]"
                               width="12"
                               height="12"
                               viewBox="0 0 16 16"
@@ -1766,66 +1768,66 @@ export default function AdminUsersPage() {
                             </svg>
                           </div>
                           {roleChanged && (
-                            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--alert-warning)]">
+                            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ax-status-warning)]">
                               Unsaved change
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.department || "—"}</td>
+                      <td className="px-4 py-4 text-[var(--ax-muted)]">{user.department || "—"}</td>
                       <td className="px-4 py-4">
                         {user.organisations && user.organisations.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
                             {user.organisations.map((organisation) => (
                               <span
                                 key={`${userCode}-org-${organisation.id}`}
-                                className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]"
+                                className="rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1 text-[10px] font-medium text-[var(--ax-muted)]"
                               >
                                 {organisation.name}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[var(--text-muted)]">—</span>
+                          <span className="text-[var(--ax-muted)]">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{user.ulbName?.trim() ? user.ulbName : "—"}</td>
+                      <td className="px-4 py-4 text-[var(--ax-muted)]">{user.ulbName?.trim() ? user.ulbName : "—"}</td>
                       <td className="px-4 py-4">
                         {user.sections && user.sections.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
                             {user.sections.map((section) => (
                               <span
                                 key={`${userCode}-section-${section.id}`}
-                                className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]"
+                                className="rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1 text-[10px] font-medium text-[var(--ax-muted)]"
                               >
                                 {section.name}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[var(--text-muted)]">—</span>
+                          <span className="text-[var(--ax-muted)]">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-[var(--text-muted)]">{formatOfficerTypeLabel(user.officerType)}</td>
+                      <td className="px-4 py-4 text-[var(--ax-muted)]">{formatOfficerTypeLabel(user.officerType)}</td>
                       <td className="px-4 py-4">
                         {shownSchemes.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
                             {shownSchemes.map((schemeCode) => (
                               <span
                                 key={`${userCode}-scheme-${schemeCode}`}
-                                className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]"
+                                className="rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1 text-[10px] font-medium text-[var(--ax-muted)]"
                               >
                                 {schemeCode}
                               </span>
                             ))}
                             {hiddenSchemeCount > 0 && (
-                              <span className="rounded-full border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+                              <span className="rounded-full border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1 text-[10px] font-medium text-[var(--ax-muted)]">
                                 +{hiddenSchemeCount} more
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-[var(--text-muted)]">—</span>
+                          <span className="text-[var(--ax-muted)]">—</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -1833,14 +1835,14 @@ export default function AdminUsersPage() {
                           <button
                             id={`actions-button-${userCode}`}
                             onClick={() => setOpenDropdownCode(openDropdownCode === userCode ? null : userCode)}
-                            className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+                            className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--ax-muted)]"
                           >
                             •••
                           </button>
                           {openDropdownCode === userCode && (
                             <div
                               id={`actions-dropdown-${userCode}`}
-                              className="absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg"
+                              className="absolute right-0 top-full z-[100] mt-1 w-48 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-lg"
                             >
                               <div className="flex flex-col py-1">
                                 {canManagePermissions && (
@@ -1850,7 +1852,7 @@ export default function AdminUsersPage() {
                                       setSelectedUser(user);
                                       setOpenDropdownCode(null);
                                     }}
-                                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--color-text)] hover:bg-[var(--ax-hover)]"
                                   >
                                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                       <circle cx="6" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
@@ -1870,7 +1872,7 @@ export default function AdminUsersPage() {
                                         setOpenDropdownCode(null);
                                       }}
                                       disabled={!userCode || isDeleting || isUpdatingRole || Boolean(profileSaveLoadingCodes[userCode])}
-                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--color-text)] hover:bg-[var(--ax-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Edit profile
                                     </button>
@@ -1883,7 +1885,7 @@ export default function AdminUsersPage() {
                                         setOpenDropdownCode(null);
                                       }}
                                       disabled={!userCode || isDeleting || isUpdatingRole}
-                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--color-text)] hover:bg-[var(--ax-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Reset password
                                     </button>
@@ -1895,7 +1897,7 @@ export default function AdminUsersPage() {
                                     setOpenDropdownCode(null);
                                   }}
                                   disabled={!canMutateUsers || !roleChanged || !userCode || isUpdatingRole || isDeleting}
-                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--color-text)] hover:bg-[var(--ax-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {isUpdatingRole ? "Saving..." : "Save Role"}
                                 </button>
@@ -1905,7 +1907,7 @@ export default function AdminUsersPage() {
                                     setOpenDropdownCode(null);
                                   }}
                                   disabled={!canMutateUsers || !userCode || isDeleting || isUpdatingRole}
-                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--alert-critical)] hover:bg-[rgba(255,59,59,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="flex items-center gap-2 px-3 py-2 text-left text-xs text-[var(--ax-status-critical)] hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {isDeleting ? "Deleting..." : "Delete"}
                                 </button>
@@ -1918,15 +1920,15 @@ export default function AdminUsersPage() {
                   );
                 })}
                 {filteredUsers.length === 0 && (
-                  <tr className="border-t border-[var(--border)]">
-                    <td colSpan={10} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+                  <tr className="border-t border-[var(--color-divider)]">
+                    <td colSpan={10} className="px-4 py-10 text-center text-sm text-[var(--ax-muted)]">
                       No users match the current search/filter criteria.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
         </div>
       </div>
 
@@ -2046,21 +2048,21 @@ function ResetPasswordModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center ax-scrim p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex w-full max-w-md flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl overflow-y-auto">
-        <div className="flex items-start justify-between border-b border-[var(--border)] px-6 py-5 bg-[var(--bg-primary)]">
+      <div className="flex w-full max-w-md flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-bg)] shadow-2xl overflow-y-auto">
+        <div className="flex items-start justify-between border-b border-[var(--color-divider)] px-6 py-5 bg-[var(--color-bg)]">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Administration</p>
-            <h2 className="mt-0.5 text-lg font-semibold text-[var(--text-primary)]">Reset Password</h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Administration</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[var(--color-text)]">Reset Password</h2>
+            <p className="mt-1 text-xs text-[var(--ax-muted)]">
               Reset account password for {user.name} ({user.code}).
             </p>
           </div>
           <button
             onClick={onClose}
-            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+            className="ml-4 mt-0.5 rounded-lg p-1.5 text-[var(--ax-muted)] transition-colors hover:bg-[var(--ax-hover)] hover:text-[var(--color-text)]"
             aria-label="Close reset password dialog"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2072,31 +2074,31 @@ function ResetPasswordModal({
         <div className="px-6 py-5">
           {successPwd ? (
             <div className="space-y-4">
-              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs text-green-500">
+              <div className="rounded-lg ax-fill-ok/10 border border-[var(--ax-status-ok)]/20 p-3 text-xs ax-tone-ok">
                 Password reset successfully!
               </div>
 
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">New Temporary Password</p>
-                <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm font-mono text-[var(--text-primary)]">
+              <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)]">New Temporary Password</p>
+                <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2 text-sm font-mono text-[var(--color-text)]">
                   <span>{successPwd}</span>
                   <button
                     onClick={handleCopy}
-                    className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-1 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                    className="rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--ax-hover)] transition-colors"
                   >
                     {copied ? "Copied!" : "Copy"}
                   </button>
                 </div>
               </div>
 
-              <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-                <strong className="text-[var(--text-primary)]">Important:</strong> Since email service is not set up, copy and share this password with the user manually. Keycloak will force the user to change this password upon their next login.
+              <p className="text-xs leading-relaxed text-[var(--ax-muted)]">
+                <strong className="text-[var(--color-text)]">Important:</strong> Since email service is not set up, copy and share this password with the user manually. Keycloak will force the user to change this password upon their next login.
               </p>
 
               <div className="flex justify-end pt-2">
                 <button
                   onClick={onClose}
-                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition"
+                  className="rounded-xl bg-[var(--color-text)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)] hover:opacity-90 transition"
                 >
                   Done
                 </button>
@@ -2105,13 +2107,13 @@ function ResetPasswordModal({
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               {alert && (
-                <div className="rounded-lg bg-[rgba(255,59,59,0.1)] border border-[rgba(255,59,59,0.2)] p-3 text-xs text-[var(--alert-critical)]">
+                <div className="rounded-lg bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--ax-status-critical)_20%,_transparent)] p-3 text-xs text-[var(--ax-status-critical)]">
                   {alert}
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-2">
                   New Password
                 </label>
                 <input
@@ -2119,9 +2121,9 @@ function ResetPasswordModal({
                   required
                   value={passwordVal}
                   onChange={(e) => setPasswordVal(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--text-muted)] focus:outline-none font-mono"
+                  className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:border-[var(--ax-muted)] focus:outline-none font-mono"
                 />
-                <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+                <p className="mt-1 text-[10px] text-[var(--ax-muted)]">
                   A secure random password has been generated. You can modify it if needed.
                 </p>
               </div>
@@ -2131,14 +2133,14 @@ function ResetPasswordModal({
                   type="button"
                   onClick={onClose}
                   disabled={isResetting}
-                  className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-surface)] transition disabled:opacity-50"
+                  className="rounded-xl border border-[var(--color-divider)] px-4 py-2.5 text-sm font-semibold text-[var(--ax-muted)] hover:bg-[var(--color-surface)] transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isResetting}
-                  className="rounded-xl bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--bg-primary)] hover:opacity-90 transition disabled:opacity-50"
+                  className="rounded-xl bg-[var(--color-text)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)] hover:opacity-90 transition disabled:opacity-50"
                 >
                   {isResetting ? "Resetting..." : "Reset Password"}
                 </button>

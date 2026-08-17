@@ -178,29 +178,29 @@ export default function AdminMastersDataPage() {
     <AppShell title="Masters Data">
       <div className="space-y-6 px-6 py-6 max-w-6xl mx-auto">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--border)] pb-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--color-divider)] pb-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mt-1">Masters Data</h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text)] mt-1">Masters Data</h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               Configure master directories used across workflows, user metadata, and profiles.
             </p>
-            <Link href="/admin" className="mt-3 inline-flex items-center text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] underline-offset-4 hover:underline">
+            <Link href="/admin" className="mt-3 inline-flex items-center text-sm text-[var(--ax-muted)] hover:text-[var(--color-text)] underline-offset-4 hover:underline">
               ← Back to Administration
             </Link>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-px">
+        <div className="flex flex-wrap gap-2 border-b border-[var(--color-divider)] pb-px">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 text-sm font-semibold border-b-2 transition -mb-px ${
                 activeTab === tab.id
-                  ? "border-[var(--text-primary)] text-[var(--text-primary)] font-bold"
-                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                  ? "border-[var(--color-text)] text-[var(--color-text)] font-bold"
+                  : "border-transparent text-[var(--ax-muted)] hover:text-[var(--color-text)] hover:border-[var(--ax-divider-strong)]"
               }`}
             >
               {tab.label}
@@ -209,25 +209,25 @@ export default function AdminMastersDataPage() {
         </div>
 
         {/* Info Box */}
-        <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-sm">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">{activeTabMeta.label} Directory</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">{activeTabMeta.description}</p>
+        <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-divider)] shadow-sm">
+          <h2 className="text-base font-semibold text-[var(--color-text)]">{activeTabMeta.label} Directory</h2>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">{activeTabMeta.description}</p>
         </div>
 
         {/* Notification Feedback */}
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 flex items-center justify-between" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-critical)]/30 ax-fill-critical/10 px-4 py-3 text-sm flex items-center justify-between" role="alert">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-red-200 hover:text-white">
+            <button onClick={() => setError(null)} className="hover:">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {success && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200 flex items-center justify-between" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-ok)]/30 ax-fill-ok/10 px-4 py-3 text-sm flex items-center justify-between" role="alert">
             <span>{success}</span>
-            <button onClick={() => setSuccess(null)} className="text-emerald-200 hover:text-white">
+            <button onClick={() => setSuccess(null)} className="hover:">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -236,23 +236,23 @@ export default function AdminMastersDataPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Add Form */}
           <div className="lg:col-span-1">
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
-                <Plus className="w-5 h-5 text-[var(--text-primary)]" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+            <section className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 border-b border-[var(--color-divider)] pb-3">
+                <Plus className="w-5 h-5 text-[var(--color-text)]" />
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text)]">
                   Add {activeTabMeta.label.slice(0, -1)}
                 </h3>
               </div>
               <form onSubmit={onCreate} className="space-y-4">
                 {activeTab === "verticals" && (
                   <div className="flex flex-col gap-1">
-                    <label htmlFor="new-code" className="text-sm font-medium text-[var(--text-primary)]">
-                      Code <span className="text-red-500">*</span>
+                    <label htmlFor="new-code" className="text-sm font-medium text-[var(--color-text)]">
+                      Code <span className="ax-tone-critical">*</span>
                     </label>
                     <input
                       id="new-code"
                       type="text"
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)] focus:border-[var(--text-primary)] focus:ring-1 focus:ring-[var(--text-primary)] outline-none transition"
+                      className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-text)] outline-none transition"
                       value={newCode}
                       onChange={(e) => setNewCode(e.target.value)}
                       placeholder="e.g. WATER"
@@ -261,13 +261,13 @@ export default function AdminMastersDataPage() {
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="new-name" className="text-sm font-medium text-[var(--text-primary)]">
-                    Name <span className="text-red-500">*</span>
+                  <label htmlFor="new-name" className="text-sm font-medium text-[var(--color-text)]">
+                    Name <span className="ax-tone-critical">*</span>
                   </label>
                   <input
                     id="new-name"
                     type="text"
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)] focus:border-[var(--text-primary)] focus:ring-1 focus:ring-[var(--text-primary)] outline-none transition"
+                    className="w-full rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-text)] outline-none transition"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder={`e.g. ${activeTab === "verticals" ? "Water Supply" : activeTab === "ulbs" ? "Bhubaneswar MC" : "New Entry"}`}
@@ -277,7 +277,7 @@ export default function AdminMastersDataPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full h-10 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full h-10 rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create
@@ -290,47 +290,47 @@ export default function AdminMastersDataPage() {
           <div className="lg:col-span-2 space-y-4">
             {/* Search Box */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ax-muted)]" />
               <input
                 type="text"
                 placeholder={`Search ${activeTabMeta.label.toLowerCase()} by name${activeTab === "verticals" ? " or code" : ""}...`}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:border-[var(--text-primary)] focus:ring-1 focus:ring-[var(--text-primary)] outline-none transition shadow-sm text-sm"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text)] focus:border-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-text)] outline-none transition shadow-sm text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
             {/* Items Card */}
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
+            <section className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-[var(--text-muted)]" />
-                  <p className="text-sm text-[var(--text-muted)]">Loading directory items...</p>
+                  <Loader2 className="w-8 h-8 animate-spin text-[var(--ax-muted)]" />
+                  <p className="text-sm text-[var(--ax-muted)]">Loading directory items...</p>
                 </div>
               ) : filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-sm text-[var(--text-muted)]">
+                <div className="text-center py-12 text-sm text-[var(--ax-muted)]">
                   {items.length === 0 ? `No ${activeTabMeta.label.toLowerCase()} registered in the system.` : "No matches found."}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[var(--border)] text-[var(--text-muted)]">
+                      <tr className="border-b border-[var(--color-divider)] text-[var(--ax-muted)]">
                         {activeTab === "verticals" && <th className="pb-3 pr-4 font-semibold uppercase tracking-wider text-xs">Code</th>}
                         <th className="pb-3 pr-4 font-semibold uppercase tracking-wider text-xs">Name</th>
                         <th className="pb-3 font-semibold uppercase tracking-wider text-xs text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[var(--border)]/40">
+                    <tbody className="divide-y divide-[var(--color-divider)]/40">
                       {filteredItems.map((item) => (
-                        <tr key={item.id} className="group hover:bg-[var(--bg-primary)]/30 transition-colors">
+                        <tr key={item.id} className="group hover:bg-[var(--color-bg)]/30 transition-colors">
                           {editingId === item.id ? (
                             <>
                               {activeTab === "verticals" && (
                                 <td className="py-3 pr-2">
                                   <input
                                     type="text"
-                                    className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1.5 text-sm uppercase"
+                                    className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm uppercase"
                                     value={editCode}
                                     onChange={(e) => setEditCode(e.target.value)}
                                   />
@@ -339,7 +339,7 @@ export default function AdminMastersDataPage() {
                               <td className="py-3 pr-2">
                                 <input
                                   type="text"
-                                  className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1.5 text-sm"
+                                  className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1.5 text-sm"
                                   value={editName}
                                   onChange={(e) => setEditName(e.target.value)}
                                 />
@@ -349,7 +349,7 @@ export default function AdminMastersDataPage() {
                                   <button
                                     type="button"
                                     disabled={busy}
-                                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 p-1.5 text-white disabled:opacity-50 transition"
+                                    className="rounded-lg ax-fill-ok hover:ax-fill-ok p-1.5 disabled:opacity-50 transition"
                                     onClick={() => void onSaveEdit(item.id)}
                                     title="Save changes"
                                   >
@@ -357,7 +357,7 @@ export default function AdminMastersDataPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition"
+                                    className="rounded-lg border border-[var(--color-divider)] p-1.5 text-[var(--ax-muted)] hover:bg-[var(--color-bg)] transition"
                                     onClick={() => setEditingId(null)}
                                     title="Cancel"
                                   >
@@ -369,17 +369,17 @@ export default function AdminMastersDataPage() {
                           ) : (
                             <>
                               {activeTab === "verticals" && (
-                                <td className="py-3.5 pr-4 font-mono font-semibold text-[var(--text-primary)]">
+                                <td className="py-3.5 pr-4 font-mono font-semibold text-[var(--color-text)]">
                                   {item.code}
                                 </td>
                               )}
-                              <td className="py-3.5 pr-4 text-[var(--text-primary)] font-medium">
+                              <td className="py-3.5 pr-4 text-[var(--color-text)] font-medium">
                                 {item.name}
                               </td>
                               <td className="py-3.5 text-right">
                                 <button
                                   type="button"
-                                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-primary)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 hover:bg-[var(--bg-primary)] hover:border-[var(--border-strong)] transition"
+                                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text)] border border-[var(--color-divider)] rounded-lg px-2.5 py-1.5 hover:bg-[var(--color-bg)] hover:border-[var(--ax-divider-strong)] transition"
                                   onClick={() => startEdit(item)}
                                 >
                                   <Edit2 className="w-3 h-3" />

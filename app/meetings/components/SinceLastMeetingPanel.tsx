@@ -83,7 +83,7 @@ export default function SinceLastMeetingPanel({
 
   if (!prevMeeting) {
     return (
-      <p className="text-sm text-[var(--text-muted)]">
+      <p className="text-sm text-[var(--ax-muted)]">
         There is no earlier meeting on the calendar, so progress &ldquo;since last meeting&rdquo; cannot be
         computed.
       </p>
@@ -92,7 +92,7 @@ export default function SinceLastMeetingPanel({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center gap-2 py-8 text-sm text-[var(--ax-muted)]">
         <Loader2 className="animate-spin" size={18} />
         Comparing finance snapshots…
       </div>
@@ -100,12 +100,12 @@ export default function SinceLastMeetingPanel({
   }
 
   if (err) {
-    return <p className="text-sm text-[var(--alert-critical)]">{err}</p>;
+    return <p className="text-sm text-[var(--ax-status-critical)]">{err}</p>;
   }
 
   if (deltaIfms === null || deltaSo === null) {
     return (
-      <p className="text-sm text-[var(--text-muted)]">
+      <p className="text-sm text-[var(--ax-muted)]">
         Not enough snapshot history to compare against the period ending {prevMeeting.meetingDate} (
         {prevMeeting.title ?? "Previous meeting"}).
       </p>
@@ -114,27 +114,27 @@ export default function SinceLastMeetingPanel({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-[var(--text-muted)]">
+      <p className="text-xs text-[var(--ax-muted)]">
         FY {fy ?? "—"} · Baseline snapshot on or before last meeting ({prevMeeting.meetingDate}
         ): <strong>{baselineDate}</strong> · Current: <strong>{currentDate}</strong>
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Δ IFMS (Cr)</p>
+        <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">Δ IFMS (Cr)</p>
           <p
             className={`mt-1 text-xl font-semibold tabular-nums ${
-              deltaIfms >= 0 ? "text-[var(--accent)]" : "text-[var(--alert-critical)]"
+              deltaIfms >= 0 ? "text-[var(--color-accent)]" : "text-[var(--ax-status-critical)]"
             }`}
           >
             {deltaIfms >= 0 ? "+" : ""}
             {deltaIfms.toFixed(2)}
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Δ SO (Cr)</p>
+        <div className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--ax-muted)]">Δ SO (Cr)</p>
           <p
             className={`mt-1 text-xl font-semibold tabular-nums ${
-              deltaSo >= 0 ? "text-[var(--text-primary)]" : "text-[var(--alert-critical)]"
+              deltaSo >= 0 ? "text-[var(--color-text)]" : "text-[var(--ax-status-critical)]"
             }`}
           >
             {deltaSo >= 0 ? "+" : ""}
@@ -142,7 +142,7 @@ export default function SinceLastMeetingPanel({
           </p>
         </div>
       </div>
-      <p className="text-xs text-[var(--text-muted)]">
+      <p className="text-xs text-[var(--ax-muted)]">
         Compares latest finance summary totals at two snapshot dates (same approach as Financial Overview
         &ldquo;since last meeting&rdquo;, anchored to the meeting before this one).
       </p>

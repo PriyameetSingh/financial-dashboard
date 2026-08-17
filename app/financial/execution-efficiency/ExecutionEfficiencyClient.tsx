@@ -18,6 +18,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CATEGORICAL, CHART_AXIS, CHART_GRID, CHART_REFERENCE_LINE } from "@/src/lib/chart-tokens";
 
 type SchemeFilter =
   | "all"
@@ -311,20 +312,20 @@ function tierFromScore(score: number | null): EfficiencyTier {
 function tierBarClass(tier: EfficiencyTier): string {
   switch (tier) {
     case "efficient":
-      return "bg-emerald-600 dark:bg-emerald-500";
+      return "ax-fill-ok";
     case "balanced":
-      return "bg-amber-500 dark:bg-amber-500";
+      return "ax-fill-warning";
     case "inefficient":
-      return "bg-rose-600 dark:bg-rose-500";
+      return "ax-fill-critical";
     default:
-      return "bg-rose-500/80";
+      return "ax-fill-critical opacity-80";
   }
 }
 
 function costTierValueClass(tier: CostCard["tier"]): string {
-  if (tier === "good") return "text-emerald-600 dark:text-emerald-400";
-  if (tier === "mid") return "text-amber-600 dark:text-amber-400";
-  return "text-rose-600 dark:text-rose-400";
+  if (tier === "good") return "ax-tone-ok";
+  if (tier === "mid") return "ax-tone-warning";
+  return "ax-tone-critical";
 }
 
 function formatExpenditureCr(value: number | null): string {
@@ -354,9 +355,9 @@ type ScatterPoint = {
 
 function scatterColor(score: number | null): string {
   const t = tierFromScore(score);
-  if (t === "efficient") return "#059669";
-  if (t === "balanced") return "#f59e0b";
-  return "#e11d48";
+  if (t === "efficient") return "var(--ax-status-ok)";
+  if (t === "balanced") return "var(--ax-status-warning)";
+  return "var(--ax-status-critical)";
 }
 
 export default function ExecutionEfficiencyClient() {
@@ -439,9 +440,9 @@ export default function ExecutionEfficiencyClient() {
       return <ArrowUpDown className="size-3.5 opacity-40" aria-hidden />;
     }
     return sortDir === "asc" ? (
-      <ArrowUp className="size-3.5 text-[var(--sidebar-active-bg)]" aria-hidden />
+      <ArrowUp className="size-3.5 text-[var(--ax-nav-active)]" aria-hidden />
     ) : (
-      <ArrowDown className="size-3.5 text-[var(--sidebar-active-bg)]" aria-hidden />
+      <ArrowDown className="size-3.5 text-[var(--ax-nav-active)]" aria-hidden />
     );
   };
 
@@ -449,18 +450,18 @@ export default function ExecutionEfficiencyClient() {
     <AppShell title="Execution Efficiency">
       <div className="relative space-y-8 px-6 py-6">
         {isViewer && (
-          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[var(--ax-muted)]">
             Read-only
           </div>
         )}
 
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[var(--text-muted)]">Financial vs physical</p>
-          <h1 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-            <Gauge className="size-7 shrink-0 text-[var(--sidebar-active-bg)]" aria-hidden />
+          <p className="text-xs uppercase tracking-[0.35em] text-[var(--ax-muted)]">Financial vs physical</p>
+          <h1 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-[var(--color-text)]">
+            <Gauge className="size-7 shrink-0 text-[var(--ax-nav-active)]" aria-hidden />
             Execution Efficiency
           </h1>
-          <p className="mt-2 max-w-3xl text-sm text-[var(--text-muted)]">
+          <p className="mt-2 max-w-3xl text-sm text-[var(--ax-muted)]">
             Financial vs Physical Progress · 2025-26 ·{" "}
             <span className="italic">Combined metric methodology under discussion</span>
           </p>
@@ -477,8 +478,8 @@ export default function ExecutionEfficiencyClient() {
                 className={[
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                   active
-                    ? "border-[var(--sidebar-active-bg)] bg-[var(--sidebar-active-bg)] text-[var(--bg-card)] dark:text-white"
-                    : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:border-[var(--text-muted)]/40 hover:text-[var(--text-primary)]",
+                    ? "ax-accent-panel"
+                    : "border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-muted)] hover:border-[var(--ax-muted)]/40 hover:text-[var(--color-text)]",
                 ].join(" ")}
               >
                 {f.label}
@@ -487,53 +488,53 @@ export default function ExecutionEfficiencyClient() {
           })}
         </div>
 
-        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
+        <section className="overflow-hidden rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">Financial vs Physical Progress</h2>
-              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+              <h2 className="text-sm font-semibold text-[var(--color-text)]">Financial vs Physical Progress</h2>
+              <p className="mt-0.5 text-xs text-[var(--ax-muted)]">
                 X-axis: physical % · Y-axis: financial % · Reference lines at 50%
               </p>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-[var(--text-muted)]">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-[var(--ax-muted)]">
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-600" aria-hidden />
+                <span className="ax-fill-ok size-2 rounded-full" aria-hidden />
                 Efficient (Score ≥ 1.2)
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-amber-500" aria-hidden />
+                <span className="ax-fill-warning size-2 rounded-full" aria-hidden />
                 Balanced (Score 0.8 – 1.2)
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-rose-600" aria-hidden />
+                <span className="ax-fill-critical size-2 rounded-full" aria-hidden />
                 Inefficient (Score &lt; 0.8)
               </span>
             </div>
           </div>
 
           <div className="relative min-h-[380px] w-full">
-            <div className="pointer-events-none absolute left-12 right-4 top-10 z-10 grid h-[calc(100%-4.5rem)] grid-cols-2 grid-rows-2 gap-0 text-[10px] font-medium leading-snug text-[var(--text-muted)]">
+            <div className="pointer-events-none absolute left-12 right-4 top-10 z-10 grid h-[calc(100%-4.5rem)] grid-cols-2 grid-rows-2 gap-0 text-[10px] font-medium leading-snug text-[var(--ax-muted)]">
               <div className="flex items-start justify-start pr-2 pt-0">
                 <span className="inline-flex max-w-[9rem] items-start gap-1">
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0 text-amber-600" aria-hidden />
+                  <TriangleAlert className="ax-tone-warning mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>High Spend Low Progress</span>
                 </span>
               </div>
               <div className="flex items-start justify-end pl-2 pt-0 text-right">
                 <span className="inline-flex max-w-[9rem] flex-row-reverse items-start gap-1">
-                  <Star className="mt-0.5 size-3 shrink-0 text-emerald-600" aria-hidden />
+                  <Star className="ax-tone-ok mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>High Spend High Progress</span>
                 </span>
               </div>
               <div className="flex items-end justify-start pr-2 pb-0">
                 <span className="inline-flex max-w-[9rem] items-start gap-1">
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0 text-amber-600" aria-hidden />
+                  <TriangleAlert className="ax-tone-warning mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>Low Spend Low Progress</span>
                 </span>
               </div>
               <div className="flex items-end justify-end pl-2 pb-0 text-right">
                 <span className="inline-flex max-w-[9rem] flex-row-reverse items-start gap-1">
-                  <Star className="mt-0.5 size-3 shrink-0 text-emerald-600" aria-hidden />
+                  <Star className="ax-tone-ok mt-0.5 size-3 shrink-0" aria-hidden />
                   <span>Low Spend High Progress</span>
                 </span>
               </div>
@@ -541,7 +542,7 @@ export default function ExecutionEfficiencyClient() {
 
             <ResponsiveContainer width="100%" height={380}>
               <ScatterChart margin={{ top: 16, right: 24, bottom: 36, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.6} />
                 <XAxis
                   type="number"
                   dataKey="physicalPct"
@@ -549,8 +550,8 @@ export default function ExecutionEfficiencyClient() {
                   unit="%"
                   domain={[0, 105]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-                  label={{ value: "Physical Progress (%)", position: "bottom", offset: 18, fill: "var(--text-muted)", fontSize: 12 }}
+                  tick={{ fontSize: 11, fill: CHART_AXIS }}
+                  label={{ value: "Physical Progress (%)", position: "bottom", offset: 18, fill: CHART_AXIS, fontSize: 12 }}
                 />
                 <YAxis
                   type="number"
@@ -559,18 +560,18 @@ export default function ExecutionEfficiencyClient() {
                   unit="%"
                   domain={[0, 105]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 11, fill: CHART_AXIS }}
                   label={{
                     value: "Financial (%)",
                     angle: -90,
                     position: "insideLeft",
                     offset: 10,
-                    fill: "var(--text-muted)",
+                    fill: CHART_AXIS,
                     fontSize: 12,
                   }}
                 />
-                <ReferenceLine x={50} stroke="#94a3b8" strokeDasharray="4 4" strokeOpacity={0.7} />
-                <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="4 4" strokeOpacity={0.7} />
+                <ReferenceLine x={50} stroke={CHART_REFERENCE_LINE} strokeDasharray="4 4" strokeOpacity={0.7} />
+                <ReferenceLine y={50} stroke={CHART_REFERENCE_LINE} strokeDasharray="4 4" strokeOpacity={0.7} />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
@@ -578,45 +579,45 @@ export default function ExecutionEfficiencyClient() {
                     const p = payload[0].payload as ScatterPoint;
                     return (
                       <div
-                        className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs shadow-md"
-                        style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}
+                        className="rounded-lg border border-[var(--color-divider)] px-3 py-2 text-xs shadow-md"
+                        style={{ background: "var(--color-surface)", color: "var(--color-text)" }}
                       >
                         <p className="font-semibold">{p.name}</p>
-                        <p className="mt-1 tabular-nums text-[var(--text-muted)]">
+                        <p className="mt-1 tabular-nums text-[var(--ax-muted)]">
                           Physical: {p.physicalPct.toFixed(2)}%
                         </p>
-                        <p className="tabular-nums text-[var(--text-muted)]">Financial: {p.financialPct.toFixed(2)}%</p>
+                        <p className="tabular-nums text-[var(--ax-muted)]">Financial: {p.financialPct.toFixed(2)}%</p>
                       </div>
                     );
                   }}
                 />
-                <Scatter data={scatterData} fill="#8884d8">
+                <Scatter data={scatterData} fill={CATEGORICAL[0]}>
                   {scatterData.map((entry) => (
                     <Cell key={entry.key} fill={entry.fill} />
                   ))}
-                  <LabelList dataKey="name" position="top" offset={6} fill="var(--text-primary)" fontSize={10} />
+                  <LabelList dataKey="name" position="top" offset={6} fill="var(--color-text)" fontSize={10} />
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm">
-          <div className="border-b border-[var(--border)] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Scheme Execution Efficiency</h2>
-            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+        <section className="overflow-hidden rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-sm">
+          <div className="border-b border-[var(--color-divider)] px-5 py-4">
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">Scheme Execution Efficiency</h2>
+            <p className="mt-0.5 text-xs text-[var(--ax-muted)]">
               Score = Physical% ÷ Financial% · &gt; 1.2 Efficient · 0.8 – 1.2 Balanced · &lt; 0.8 Inefficient
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-[var(--bg-primary)]/30 text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
+                <tr className="border-b border-[var(--color-divider)] bg-[var(--color-bg)]/30 text-[11px] uppercase tracking-wide text-[var(--ax-muted)]">
                   <th className="px-4 py-3 font-semibold">
                     <button
                       type="button"
                       onClick={() => toggleSort("scheme")}
-                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--text-primary)]"
+                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--color-text)]"
                     >
                       Scheme
                       <SortIcon column="scheme" />
@@ -626,7 +627,7 @@ export default function ExecutionEfficiencyClient() {
                     <button
                       type="button"
                       onClick={() => toggleSort("expenditure")}
-                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--text-primary)]"
+                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--color-text)]"
                     >
                       Expend. (Cr)
                       <SortIcon column="expenditure" />
@@ -636,7 +637,7 @@ export default function ExecutionEfficiencyClient() {
                     <button
                       type="button"
                       onClick={() => toggleSort("financial")}
-                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--text-primary)]"
+                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--color-text)]"
                     >
                       Financial%
                       <SortIcon column="financial" />
@@ -646,7 +647,7 @@ export default function ExecutionEfficiencyClient() {
                     <button
                       type="button"
                       onClick={() => toggleSort("physical")}
-                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--text-primary)]"
+                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--color-text)]"
                     >
                       Physical%
                       <SortIcon column="physical" />
@@ -656,7 +657,7 @@ export default function ExecutionEfficiencyClient() {
                     <button
                       type="button"
                       onClick={() => toggleSort("score")}
-                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--text-primary)]"
+                      className="inline-flex items-center gap-1 font-semibold hover:text-[var(--color-text)]"
                     >
                       Score
                       <SortIcon column="score" />
@@ -668,48 +669,48 @@ export default function ExecutionEfficiencyClient() {
                 {tableRows.map((row) => {
                   const physDisplayTier = row.tier === "na" ? "inefficient" : row.tier;
                   return (
-                    <tr key={row.key} className="border-b border-[var(--border)]/80 last:border-0">
+                    <tr key={row.key} className="border-b border-[var(--color-divider)]/80 last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-[var(--text-primary)]">{row.scheme}</div>
-                        <div className="text-xs text-[var(--text-muted)]">{row.programme}</div>
+                        <div className="font-semibold text-[var(--color-text)]">{row.scheme}</div>
+                        <div className="text-xs text-[var(--ax-muted)]">{row.programme}</div>
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-[var(--text-primary)]">{formatExpenditureCr(row.expenditureCr)}</td>
+                      <td className="px-4 py-3 tabular-nums text-[var(--color-text)]">{formatExpenditureCr(row.expenditureCr)}</td>
                       <td className="px-4 py-3">
                         <div className="flex min-w-[140px] flex-col gap-1">
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--bg-primary)]">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-bg)]">
                             <div
-                              className="h-full rounded-full bg-zinc-600 dark:bg-zinc-400"
+                              className="ax-fill-muted h-full rounded-full"
                               style={{ width: `${Math.min(100, row.financialPct)}%` }}
                             />
                           </div>
-                          <span className="text-xs tabular-nums text-[var(--text-muted)]">
+                          <span className="text-xs tabular-nums text-[var(--ax-muted)]">
                             {row.financialPct <= 0 ? "0%" : formatPct(row.financialPct)}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex min-w-[140px] flex-col gap-1">
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--bg-primary)]">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-bg)]">
                             <div
                               className={["h-full rounded-full", tierBarClass(physDisplayTier)].join(" ")}
                               style={{ width: `${Math.min(100, row.physicalPct)}%` }}
                             />
                           </div>
-                          <span className="text-xs tabular-nums text-[var(--text-muted)]">{formatPct(row.physicalPct)}</span>
+                          <span className="text-xs tabular-nums text-[var(--ax-muted)]">{formatPct(row.physicalPct)}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         {row.score === null ? (
-                          <span className="inline-flex rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
+                          <span className="inline-flex rounded-full border border-[var(--color-divider)] px-2.5 py-0.5 text-xs font-medium text-[var(--ax-muted)]">
                             N/A
                           </span>
                         ) : (
                           <span
                             className={[
                               "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums",
-                              row.tier === "efficient" && "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
-                              row.tier === "balanced" && "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-                              row.tier === "inefficient" && "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200",
+                              row.tier === "efficient" && "ax-chip ax-chip-ok",
+                              row.tier === "balanced" && "ax-chip ax-chip-warning",
+                              row.tier === "inefficient" && "ax-chip ax-chip-critical",
                             ]
                               .filter(Boolean)
                               .join(" ")}
@@ -726,40 +727,40 @@ export default function ExecutionEfficiencyClient() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
-          <h2 className="text-base font-bold text-[var(--text-primary)]">Cost Efficiency Indicators</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Cost per output unit = Total Expenditure ÷ Physical Output</p>
+        <section className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
+          <h2 className="text-base font-bold text-[var(--color-text)]">Cost Efficiency Indicators</h2>
+          <p className="mt-1 text-sm text-[var(--ax-muted)]">Cost per output unit = Total Expenditure ÷ Physical Output</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {COST_CARDS.map((c) => (
               <div
                 key={c.key}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/20 px-4 py-4 shadow-sm"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)]/20 px-4 py-4 shadow-sm"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">{c.label}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">{c.label}</p>
                 <p className={["mt-2 text-2xl font-bold tabular-nums", costTierValueClass(c.tier)].join(" ")}>{c.valueDisplay}</p>
-                <p className="mt-1 text-sm text-[var(--text-primary)]">{c.unit}</p>
-                <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-muted)]">{c.footer}</p>
+                <p className="mt-1 text-sm text-[var(--color-text)]">{c.unit}</p>
+                <p className="mt-3 text-[11px] leading-relaxed text-[var(--ax-muted)]">{c.footer}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
+        <section className="rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg ax-chip ax-chip-warning">
               <Lightbulb className="size-5" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Execution Risk Insights</h2>
-              <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-[var(--text-muted)]">
+              <h2 className="text-sm font-bold">Execution Risk Insights</h2>
+              <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-[var(--ax-muted)]">
                 {RISK_INSIGHTS.map((item) => (
                   <li key={item.id} className="flex gap-3">
                     <span
                       className={[
                         "mt-2 size-2 shrink-0 rounded-full",
-                        item.tier === "risk" && "bg-rose-500",
-                        item.tier === "good" && "bg-emerald-500",
-                        item.tier === "watch" && "bg-amber-400",
+                        item.tier === "risk" && "ax-fill-critical",
+                        item.tier === "good" && "ax-fill-ok",
+                        item.tier === "watch" && "ax-fill-warning",
                       ]
                         .filter(Boolean)
                         .join(" ")}

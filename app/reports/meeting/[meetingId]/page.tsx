@@ -130,12 +130,12 @@ export default function MeetingReportPage() {
   return (
     <AppShell title="Meeting report">
       <div className="print:px-4 print:py-4">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] px-6 py-4 print:hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-divider)] px-6 py-4 print:hidden">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Reports</p>
-            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Dashboard meeting pack</h1>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--ax-muted)]">Reports</p>
+            <h1 className="text-xl font-semibold text-[var(--color-text)]">Dashboard meeting pack</h1>
             {data && (
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <p className="mt-1 text-sm text-[var(--ax-muted)]">
                 Meeting date {data.meeting.meetingDate}
                 {data.meeting.title ? ` · ${data.meeting.title}` : ""}
               </p>
@@ -144,13 +144,13 @@ export default function MeetingReportPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/reports"
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text-primary)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm font-medium text-[var(--color-text)]"
             >
               Back
             </Link>
             <button
               type="button"
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
+              className="rounded-xl border border-[var(--color-divider)] px-4 py-2 text-sm font-semibold text-[var(--color-text)]"
               disabled={!data}
               onClick={() => window.print()}
             >
@@ -158,7 +158,7 @@ export default function MeetingReportPage() {
             </button>
             <button
               type="button"
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50"
               disabled={!data || pdfLoading}
               onClick={() => void handleDownloadPdf()}
             >
@@ -166,7 +166,7 @@ export default function MeetingReportPage() {
             </button>
             <button
               type="button"
-              className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-semibold text-[var(--bg-primary)] disabled:opacity-50"
+              className="rounded-xl bg-[var(--color-text)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] disabled:opacity-50"
               disabled={!data || xlsxLoading}
               onClick={() => void handleDownloadXlsx()}
             >
@@ -176,14 +176,14 @@ export default function MeetingReportPage() {
         </div>
 
         {/* Filters Panel */}
-        <div className="flex flex-wrap items-end gap-4 border-b border-[var(--border)] bg-[var(--bg-card)] px-6 py-4 print:hidden">
+        <div className="flex flex-wrap items-end gap-4 border-b border-[var(--color-divider)] bg-[var(--color-surface)] px-6 py-4 print:hidden">
           <div className="min-w-[150px] flex-1">
-            <label htmlFor="filter-monitoring-level" className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+            <label htmlFor="filter-monitoring-level" className="block text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1.5">
               Monitoring Level
             </label>
             <select
               id="filter-monitoring-level"
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-primary)] transition-colors"
+              className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-text)] transition-colors"
               value={monitoringLevel}
               onChange={(e) => setMonitoringLevel(e.target.value)}
             >
@@ -195,12 +195,12 @@ export default function MeetingReportPage() {
           </div>
 
           <div className="min-w-[150px] flex-1">
-            <label htmlFor="filter-priority" className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+            <label htmlFor="filter-priority" className="block text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1.5">
               Priority
             </label>
             <select
               id="filter-priority"
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-primary)] transition-colors"
+              className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-text)] transition-colors"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
             >
@@ -213,12 +213,12 @@ export default function MeetingReportPage() {
           </div>
 
           <div className="min-w-[150px] flex-1">
-            <label htmlFor="filter-status" className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+            <label htmlFor="filter-status" className="block text-xs font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1.5">
               Status
             </label>
             <select
               id="filter-status"
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--text-primary)] transition-colors"
+              className="w-full rounded-xl border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-text)] transition-colors"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -236,7 +236,7 @@ export default function MeetingReportPage() {
                 setPriority("ALL");
                 setStatus("ALL");
               }}
-              className="rounded-xl border border-[var(--border)] hover:border-red-500 hover:text-red-500 px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors h-[38px] flex items-center justify-center"
+              className="rounded-xl border border-[var(--color-divider)] hover:border-[var(--ax-status-critical)] hover:ax-tone-critical px-4 py-2 text-sm font-medium text-[var(--ax-muted)] transition-colors h-[38px] flex items-center justify-center"
             >
               Reset
             </button>
@@ -244,15 +244,15 @@ export default function MeetingReportPage() {
         </div>
 
         <div className="space-y-8 px-6 py-6">
-          {loading && <p className="text-sm text-[var(--text-muted)]">Building report…</p>}
+          {loading && <p className="text-sm text-[var(--ax-muted)]">Building report…</p>}
           {error && (
-            <p className="rounded-lg border border-[var(--alert-critical)] bg-[var(--alert-critical)]/10 px-4 py-3 text-sm text-[var(--alert-critical)]">
+            <p className="rounded-lg border border-[var(--ax-status-critical)] bg-[var(--ax-status-critical)]/10 px-4 py-3 text-sm text-[var(--ax-status-critical)]">
               {error}
             </p>
           )}
 
           {filteredData && (
-            <div className="mx-auto max-w-[210mm] bg-white print:max-w-none">
+            <div className="ax-doc mx-auto max-w-[210mm] print:max-w-none">
               <MeetingReportContent data={filteredData} logoSrc={logoSrc} />
             </div>
           )}

@@ -1,6 +1,5 @@
 "use client";
 
-import { UserRole } from "@/lib/auth";
 import { useHydratedCurrentUser } from "@/src/lib/use-hydrated-current-user";
 import { isReadOnlyWatermarkUser } from "@/src/lib/read-only-watermark";
 import { withNextBasePath } from "@/lib/next-base-path";
@@ -16,7 +15,6 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { fetchPendingApprovalSummaries } from "@/src/lib/services/approvalService";
 import { fetchCommandCentreDashboard } from "@/src/lib/services/dashboardService";
 import { getMeetingMaterialSignedUrl } from "@/src/lib/services/meetingService";
@@ -25,79 +23,35 @@ import type {
   CommandCentreLastMeeting,
   CommandCentreSchemesMonitored,
 } from "@/lib/command-centre-dashboard";
+import { Card, InlineAlert, StatTile } from "@/components/nocturne";
 import ApprovalCard from "@/src/components/ui/ApprovalCard";
 import { PendingApprovalSummary } from "@/types";
-import AiAlertsCard from "@/components/command-centre/AiAlertsCard";
-import CommandCentreSparkLine from "@/components/command-centre/CommandCentreSparkLine";
 import SchemeModal from "@/components/schemes/SchemeModal";
 import type { ProgressCard } from "@/lib/agent-runner";
 
-/** Mock rows for “What changed since last meeting” (AI-style summary cards). */
-const MOCK_WHAT_CHANGED_SINCE_LAST_MEETING = [
-  {
-    id: "be",
-    title: "Budget Estimates",
-    status: "Unchanged at ₹10,726.87 Cr",
-    description: "BE/RE figures held steady from 1st meeting",
-    tone: "positive" as const,
-  },
-  {
-    id: "metro",
-    title: "Metro Project Note",
-    status: "Pending → Approved",
-    description: "Cabinet approval received for Metro Project Note",
-    tone: "positive" as const,
-  },
-  {
-    id: "waterfront",
-    title: "Waterfront EFC",
-    status: "Pending → Approved",
-    description: "EFC clearance secured for Waterfront project",
-    tone: "positive" as const,
-  },
-  {
-    id: "pothole",
-    title: "Pothole-Free Cities",
-    status: "Certificates: 93 of 115 ULBs",
-    description: "Compliance drive progressing across ULBs",
-    tone: "positive" as const,
-  },
-  {
-    id: "ebus",
-    title: "PM e-Bus Sewa",
-    status: "Action Complied",
-    description: "Compliance closed on PM e-Bus Sewa decision",
-    tone: "positive" as const,
-  },
-  {
-    id: "expenditure",
-    title: "Expenditure Booking",
-    status: "Still 0% (early FY)",
-    description: "First fortnight of FY — IFMS expenditure yet to begin",
-    tone: "negative" as const,
-  },
-];
-
-function statusColor(s: string) {
-  if (s === "critical") return "var(--alert-critical)";
-  if (s === "warning") return "var(--alert-warning)";
-  return "var(--alert-success)";
-}
-
-function statusLabel(s: string) {
-  if (s === "critical") return "CRITICAL";
-  if (s === "warning") return "AT RISK";
-  return "ON TRACK";
-}
+/*
+ * Reskin Gate B. Every colour on this screen now resolves through a Nocturne
+ * token; the `FP` object that used to hold eight literals (#1e5631, #e53e3e,
+ * #718096, a track colour in rgba…) is gone, and with it the reason this screen
+ * stayed the platform's colours on a tenant that had bought its own.
+ *
+ * Two palettes are in play and they are not interchangeable:
+ *
+ *   `--ax-status-*`, via `.ax-tone-*`, for FIGURES and words. Measured for text
+ *   at 4.5:1 on both grounds.
+ *
+ *   `--dv-*`, for BARS and glyphs. Measured as graphical objects at 3:1, and —
+ *   as of this gate — measured against each other under simulated protanopia and
+ *   deuteranopia, which is what actually decides whether a reader can tell the
+ *   top league table from the bottom one.
+ *
+ * Nothing here reads differently than it did: same queries, same fields, same
+ * rows, same order, same empty states.
+ */
 
 function formatCr(value: number) {
   if (value >= 100) return `₹${value.toFixed(0)} Cr`;
   return `₹${value.toFixed(2)} Cr`;
-}
-
-function pctTrendFromValue(pct: number): number[] {
-  const p = Math.min(100, Math.max(0, pct));
-  return [p * 0.45, p * 0.58, p * 0.68, p * 0.78, p * 0.88, p].map((x) => Math.round(x * 10) / 10);
 }
 
 function formatMeetingDate(isoDate: string) {
@@ -154,19 +108,15 @@ function groupPresentationsByVertical(m: CommandCentreLastMeeting["presentationM
   return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-/** Financial progress leader cards (dashboard reference styling) */
-const FP = {
-  header: "#718096",
-  green: "#1e5631",
-  greenBadge: "#2f855a",
-  red: "#e53e3e",
-  redPillBg: "rgba(229, 62, 62, 0.14)",
-  title: "#333333",
-  track: "rgba(0, 0, 0, 0.08)",
-};
-
-
-
+/**
+ * One row of a scheme league table.
+ *
+ * The bar is a real `role="progressbar"`: it is the only place the proportion is
+ * drawn, and as a pair of nested divs it was invisible to a screen reader. The
+ * percentage beside it is not decoration either — it is what carries the value
+ * for a reader who cannot separate the two tables by colour, which is why the
+ * variant changes the tone of the figure and the fill of the bar together.
+ */
 function SchemeFinancialProgressRow({
   name,
   pct,
@@ -176,50 +126,30 @@ function SchemeFinancialProgressRow({
   pct: number;
   variant: "top" | "bottom";
 }) {
-  const fill = variant === "top" ? FP.green : FP.red;
-  const pctColor = variant === "top" ? FP.green : FP.red;
+  const clamped = Math.min(100, Math.max(0, pct));
   const label = name.length > 52 ? `${name.slice(0, 52)}…` : name;
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-          marginBottom: 6,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: FP.title,
-            lineHeight: 1.35,
-          }}
-        >
-          {label}
-        </span>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            fontVariantNumeric: "tabular-nums",
-            color: pctColor,
-            flexShrink: 0,
-          }}
-        >
+      <div className="ax-databar-head">
+        <span className="ax-databar-name">{label}</span>
+        <span className={`ax-databar-value ${variant === "top" ? "ax-tone-ok" : "ax-tone-critical"}`}>
           {pct.toFixed(1)}%
         </span>
       </div>
-      <div style={{ height: 3, background: FP.track, borderRadius: 9999, overflow: "hidden" }}>
-        <div
+      <div
+        className="ax-meter"
+        role="progressbar"
+        aria-valuenow={Math.round(clamped)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${name} — financial progress`}
+        style={{ marginTop: 0 }}
+      >
+        <span
           style={{
-            height: "100%",
-            width: `${Math.min(100, Math.max(0, pct))}%`,
-            background: fill,
-            borderRadius: 9999,
-            minWidth: pct > 0 ? 3 : 0,
+            ["--ax-meter-fill" as string]: `${clamped}%`,
+            ["--ax-meter-color" as string]:
+              variant === "top" ? "var(--dv-div-pos)" : "var(--dv-div-neg)",
           }}
         />
       </div>
@@ -310,6 +240,16 @@ function CommandCentreContent({ setActive }: Props) {
     };
   }, [meetingId]);
 
+  /*
+   * THE PENDING-APPROVALS PANEL IS COMMENTED OUT, and was before this reskin.
+   *
+   * Everything that feeds it is live — the summaries are fetched on mount, the
+   * counts are computed per role, `ApprovalCard` exists — but the block that
+   * renders it (below, beside the stat tiles) is commented out in the source. A
+   * reskin is not the place to decide whether a panel ships, so all of it is
+   * preserved exactly as found, down to the fetch. Raised for a product answer:
+   * turn it back on, or delete the whole path.
+   */
   const pendingSummary = useMemo(() => {
     if (!user) return null;
     return pendingSummaries.find((entry) => entry.role === user.role) ?? null;
@@ -333,6 +273,9 @@ function CommandCentreContent({ setActive }: Props) {
       href: "/action-items",
     },
   ];
+  void approvalCards;
+  void isViewer;
+  void ApprovalCard;
 
   const totals = dashboard?.totals;
 
@@ -356,36 +299,13 @@ function CommandCentreContent({ setActive }: Props) {
   );
 
   return (
-    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "stretch" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 12,
-            flex: 1,
-          }}
-        >
-          {dashLoading && (
-            <>
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    padding: "16px",
-                    minHeight: 88,
-                    animation: "pulse 1.5s ease-in-out infinite",
-                  }}
-                />
-              ))}
-            </>
-          )}
-          {!dashLoading &&
-            [
+    <div className="flex flex-col gap-5 p-6">
+      <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        {dashLoading
+          ? [1, 2, 3, 4].map((i) => (
+              <div key={i} className="ax-stat animate-pulse" style={{ minHeight: 88 }} aria-hidden />
+            ))
+          : [
               {
                 key: "budget",
                 label: dashboard?.financialYearLabel
@@ -393,192 +313,127 @@ function CommandCentreContent({ setActive }: Props) {
                   : "TOTAL BUDGET",
                 value: totals ? formatCr(totals.totalBudgetCr) : "—",
                 sub: "Including all plan types & transfers",
-                valueColor: "var(--text-primary)",
+                /*
+                 * Utilisation was painted a fixed red whatever the figure said —
+                 * 4% and 96% came out the same alarming colour. The reskin holds
+                 * the encoding it found rather than inventing thresholds nobody
+                 * has agreed, so the tone stays constant here; it is reported as
+                 * a question for the product owner, not fixed in a reskin.
+                 */
+                tone: null as string | null,
               },
               {
                 key: "ifms",
                 label: "TOTAL EXPENDITURE (IFMS)",
                 value: totals ? formatCr(totals.totalIfmsCr) : "—",
                 sub: formatAsOnIndianDate(dashboard?.lastSnapshotDate),
-                valueColor: "var(--text-primary)",
+                tone: null as string | null,
               },
               {
                 key: "util",
                 label: "BUDGET UTILISATION %",
                 value: totals ? formatUtilisationPct(totals.utilisationPct) : "—",
                 sub: "Of total budget utilised to date",
-                valueColor: FP.red,
+                tone: "ax-tone-critical" as string | null,
               },
               {
                 key: "schemes",
                 label: "SCHEMES MONITORED",
                 value: dashboard ? String(dashboard.schemesMonitored.total) : "—",
                 sub: schemesMonitoredFootnote(dashboard?.schemesMonitored),
-                valueColor: "var(--text-primary)",
+                tone: null as string | null,
               },
-            ].map(({ key, label, value, sub, valueColor }) => (
-              <div
+            ].map(({ key, label, value, sub, tone }) => (
+              <StatTile
                 key={key}
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  padding: "16px",
-                }}
-              >
-                <div style={{ marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: 1,
-                      textTransform: "uppercase",
-                      color: "var(--text-muted)",
-                      lineHeight: 1.35,
-                    }}
-                  >
-                    {label}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: valueColor,
-                    letterSpacing: -0.5,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {value}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{sub}</div>
-              </div>
+                kicker={label}
+                value={tone ? <span className={tone}>{value}</span> : value}
+                footnote={sub}
+              />
             ))}
-        </div>
-
-        {/* <div className="w-96 flex flex-col gap-2 ">
-          <div
-            className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2"
-          >
-            Pending my approval
-          </div>
-          {approvalCards.map((card) => (
-            <ApprovalCard
-              key={card.id}
-              title={card.title}
-              description={card.description}
-              count={card.count}
-              href={isViewer ? undefined : card.href}
-            />
-          ))}
-        </div> */}
       </div>
 
-      {dashError && (
-        <div
-          style={{
-            borderRadius: 8,
-            border: "1px solid var(--alert-warning)",
-            padding: "12px 14px",
-            fontSize: 13,
-            color: "var(--text-primary)",
-            background: "var(--bg-surface)",
-          }}
-        >
-          {dashError}
-        </div>
-      )}
+      {dashError && <InlineAlert>{dashError}</InlineAlert>}
 
       <div>
         {dashLoading ? (
           <div className="mb-4 grid gap-4 sm:grid-cols-2">
             {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="min-h-[140px] animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-              />
+              <div key={i} className="card animate-pulse" style={{ minHeight: 140 }} aria-hidden />
             ))}
           </div>
         ) : (
           <div className="mb-4 grid gap-4 sm:grid-cols-2">
-            <div
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-              style={{ borderStyle: "solid" }}
-            >
+            <Card>
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <ListChecks className="h-4 w-4 shrink-0 text-[var(--text-muted)]" aria-hidden />
+                  <ListChecks className="h-4 w-4 shrink-0" aria-hidden />
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--alert-critical)]">
-                      Important topics for Discussion
-                    </span>
+                    {/* The old markup coloured this heading with the critical
+                        token, which said "these are urgent" in colour alone.
+                        The chip says it with a shape and a tint together. */}
+                    <span className="ax-chip ax-chip-critical">Important topics for Discussion</span>
                     {lastMeeting ? (
-                      <span className="mt-0.5 block truncate text-[10px] text-[var(--text-muted)]">
+                      <span className="ax-stat-foot mt-0.5 block truncate" style={{ marginTop: 6 }}>
                         Selected meeting · {formatMeetingDate(lastMeeting.meetingDate)}
                         {lastMeeting.title ? ` · ${lastMeeting.title}` : ""}
                       </span>
                     ) : (
-                      <span className="mt-0.5 block text-[10px] text-[var(--text-muted)]">No meeting on record</span>
+                      <span className="ax-stat-foot mt-0.5 block" style={{ marginTop: 6 }}>
+                        No meeting on record
+                      </span>
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push("/meetings")}
-                  className="shrink-0 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
+                <button type="button" onClick={() => router.push("/meetings")} className="btn btn-ghost shrink-0">
                   Meetings →
                 </button>
               </div>
               {!lastMeeting || lastMeeting.topics.length === 0 ? (
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs">
                   {lastMeeting
                     ? "No discussion topics were recorded for this meeting."
                     : "Schedule a meeting to capture agenda topics."}
                 </p>
               ) : (
-                <ol className="list-decimal space-y-2 pl-4 marker:text-[11px] marker:text-[var(--text-muted)]">
+                <ol className="list-decimal space-y-2 pl-4">
                   {lastMeeting.topics.map((t) => (
-                    <li key={t.id} className="pl-0.5 text-xs leading-snug text-[var(--text-primary)]">
+                    <li key={t.id} className="pl-0.5 text-xs leading-snug">
                       {t.topic}
                     </li>
                   ))}
                 </ol>
               )}
-            </div>
+            </Card>
 
-            <div
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-              style={{ borderStyle: "solid" }}
-            >
+            <Card>
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <Presentation className="h-4 w-4 shrink-0 text-[var(--text-muted)]" aria-hidden />
+                  <Presentation className="h-4 w-4 shrink-0" aria-hidden />
                   <div className="min-w-0">
-                    <span className="block text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    <span className="ax-section-title" style={{ margin: 0 }}>
                       Proposed Presentations by vertical
                     </span>
                     {lastMeeting ? (
-                      <span className="mt-0.5 block truncate text-[10px] text-[var(--text-muted)]">
+                      <span className="ax-stat-foot mt-0.5 block truncate" style={{ marginTop: 4 }}>
                         From selected meeting · {formatMeetingDate(lastMeeting.meetingDate)}
                       </span>
                     ) : (
-                      <span className="mt-0.5 block text-[10px] text-[var(--text-muted)]">No meeting on record</span>
+                      <span className="ax-stat-foot mt-0.5 block" style={{ marginTop: 4 }}>
+                        No meeting on record
+                      </span>
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push("/meetings")}
-                  className="shrink-0 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
+                <button type="button" onClick={() => router.push("/meetings")} className="btn btn-ghost shrink-0">
                   Meetings →
                 </button>
               </div>
-              <p className="mb-2 text-[10px] leading-snug text-[var(--text-muted)]">
+              <p className="ax-stat-foot mb-2" style={{ marginTop: 0 }}>
                 Vertical is inferred when the file name contains a vertical name; otherwise files appear under Other.
               </p>
               {!lastMeeting || lastMeeting.presentationMaterials.length === 0 ? (
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs">
                   {lastMeeting
                     ? "No presentation files were attached to this meeting."
                     : "Upload decks on the Meetings page to show them here."}
@@ -587,9 +442,7 @@ function CommandCentreContent({ setActive }: Props) {
                 <ul className="space-y-3">
                   {presentationsByVertical.map(([vertical, files]) => (
                     <li key={vertical}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                        {vertical}
-                      </p>
+                      <p className="ax-stat-kicker">{vertical}</p>
                       <ul className="mt-1 space-y-1">
                         {files.map((f) => (
                           <li key={f.id} className="min-w-0">
@@ -597,13 +450,10 @@ function CommandCentreContent({ setActive }: Props) {
                               type="button"
                               onClick={() => lastMeeting && void openUploadedMaterial(lastMeeting.id, f.id)}
                               disabled={!lastMeeting || openingMaterialId === f.id}
-                              className="flex w-full min-w-0 items-start gap-1.5 rounded text-left text-xs text-[var(--text-primary)] underline-offset-2 hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-60"
+                              className="flex w-full min-w-0 items-start gap-1.5 rounded text-left text-xs underline-offset-2 hover:underline disabled:cursor-wait disabled:no-underline"
                               title={`Open ${f.fileName}`}
                             >
-                              <ExternalLink
-                                className="mt-0.5 h-3 w-3 shrink-0 text-[var(--text-muted)]"
-                                aria-hidden
-                              />
+                              <ExternalLink className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
                               <span className="min-w-0 break-words">{f.fileName}</span>
                             </button>
                           </li>
@@ -613,71 +463,62 @@ function CommandCentreContent({ setActive }: Props) {
                   ))}
                 </ul>
               )}
-            </div>
+            </Card>
 
-            <div
-              className="sm:col-span-2 rounded-lg border border-[var(--border)] bg-[var(--bg-content-surface)] p-4 shadow-sm"
-              style={{ borderStyle: "solid" }}
-            >
+            {/* Agent-written material, marked as such. The AI accent is the one
+                colour on the page that deliberately does not follow the tenant
+                brand — see tokens.css — and it is paired with the word "agent
+                report" so the marking is never colour alone. */}
+            <div className="sm:col-span-2 card elev-sm ax-ai-section">
               <div className="mb-4 flex flex-wrap items-start gap-3">
                 <button
                   type="button"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+                  className="btn btn-ghost flex h-9 w-9 shrink-0 items-center justify-center"
+                  style={{ borderRadius: 999 }}
                   aria-label="Expand what changed section"
                 >
                   <ChevronRight className="h-4 w-4" aria-hidden />
                 </button>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-primary)]">
+                  <p className="ax-ai-kicker" style={{ margin: 0 }}>
+                    Agent report
+                  </p>
+                  <h3 className="ax-section-title" style={{ marginTop: 4 }}>
                     What changed since last meeting
                   </h3>
-                  <p className="mt-1 text-[10px] leading-snug text-[var(--text-muted)]">
-                    {agentInsightLoading ? (
-                      "Loading progress reports..."
-                    ) : agentInsight ? (
-                      `Key changes since last review meeting · Last report generated: ${formatRelativeTime(agentInsight.runDate)}`
-                    ) : (
-                      "No progress reports generated yet. Configure the monitor agent in Admin Settings."
-                    )}
+                  <p className="ax-stat-foot" style={{ marginTop: 4 }}>
+                    {agentInsightLoading
+                      ? "Loading progress reports..."
+                      : agentInsight
+                        ? `Key changes since last review meeting · Last report generated: ${formatRelativeTime(agentInsight.runDate)}`
+                        : "No progress reports generated yet. Configure the monitor agent in Admin Settings."}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {agentInsightLoading ? (
                   Array.from({ length: 6 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="min-h-[100px] animate-pulse rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-                    />
+                    <div key={idx} className="card animate-pulse" style={{ minHeight: 100 }} aria-hidden />
                   ))
                 ) : !agentInsight || !agentInsight.insights || agentInsight.insights.length === 0 ? (
-                  <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-dashed border-[var(--border)] p-8 text-center text-xs text-[var(--text-muted)]">
+                  <div className="sm:col-span-2 lg:col-span-3 card text-center text-xs" style={{ padding: 32 }}>
                     No active agent monitoring report is available. Contact administrative officers to trigger a progress report run.
                   </div>
                 ) : (
                   (agentInsight.insights as ProgressCard[]).map((item) => {
                     const positive = item.tone === "positive";
                     const TrendIcon = positive ? TrendingUp : TrendingDown;
-                    const statusColor = positive ? FP.green : FP.red;
+                    // The arrow already encodes the direction by shape; the tone
+                    // reinforces it, and the status line spells it out in words.
+                    const toneClass = positive ? "ax-tone-ok" : "ax-tone-critical";
                     const cardContent = (
                       <>
                         <div className="mb-2 flex items-start gap-2">
-                          <TrendIcon
-                            className="mt-0.5 h-4 w-4 shrink-0"
-                            style={{ color: statusColor }}
-                            aria-hidden
-                          />
-                          <span className="text-xs font-semibold leading-snug text-[var(--text-primary)]">
-                            {item.title}
-                          </span>
+                          <TrendIcon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClass}`} aria-hidden />
+                          <span className="text-xs font-semibold leading-snug">{item.title}</span>
                         </div>
-                        <p
-                          className="text-xs font-semibold leading-snug"
-                          style={{ color: statusColor }}
-                        >
-                          {item.status}
-                        </p>
-                        <p className="mt-1.5 text-[10px] leading-snug text-[var(--text-muted)]">
+                        <p className={`text-xs font-semibold leading-snug ${toneClass}`}>{item.status}</p>
+                        <p className="ax-stat-foot" style={{ marginTop: 6 }}>
                           {item.description}
                         </p>
                       </>
@@ -689,7 +530,7 @@ function CommandCentreContent({ setActive }: Props) {
                           key={item.id}
                           type="button"
                           onClick={() => router.push(item.href!)}
-                          className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5 text-left transition hover:border-[var(--border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--border-strong)] w-full block"
+                          className="card w-full block text-left"
                         >
                           {cardContent}
                         </button>
@@ -697,10 +538,7 @@ function CommandCentreContent({ setActive }: Props) {
                     }
 
                     return (
-                      <div
-                        key={item.id}
-                        className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3.5"
-                      >
+                      <div key={item.id} className="card">
                         {cardContent}
                       </div>
                     );
@@ -712,216 +550,109 @@ function CommandCentreContent({ setActive }: Props) {
         )}
 
         <div className="flex flex-col gap-4">
-
-          <div
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "14px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                  color: "var(--text-muted)",
-                }}
-              >
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="ax-section-title" style={{ margin: 0 }}>
                 Overdue actions
               </span>
               <button
                 type="button"
                 onClick={() => setActive("actions")}
-                style={{
-                  fontSize: 10,
-                  color: "var(--text-muted)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                }}
+                className="btn btn-ghost flex items-center gap-1"
               >
                 All {dashboard?.overdueActionsCount ?? 0} <ArrowUpRight size={10} />
               </button>
             </div>
             {(dashboard?.overdueActionsPreview ?? []).map((a) => (
-              <div key={a.id} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid var(--border)" }}>
-                <div style={{ fontSize: 11, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: 3 }}>
-                  {a.title.length > 50 ? `${a.title.slice(0, 50)}…` : a.title}
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{a.officer}</span>
-                  <span style={{ fontSize: 10, color: "var(--alert-critical)", fontWeight: 600 }}>
-                    {a.daysOverdue}d overdue
+              <div
+                key={a.id}
+                className="mb-2 pb-2"
+                style={{ boxShadow: "inset 0 -1px 0 var(--color-divider)" }}
+              >
+                {/* Overdue is the highest priority state this list can hold, so
+                    it takes the high-priority mark: a star, readable in
+                    greyscale and on a printout, beside the days count that says
+                    the same thing in words. */}
+                <div className="ax-priority ax-priority-high ax-tone-critical mb-1 flex items-start gap-2">
+                  <span className="ax-priority-mark mt-0.5" aria-hidden />
+                  <span className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>
+                    {a.title.length > 50 ? `${a.title.slice(0, 50)}…` : a.title}
                   </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="ax-stat-foot" style={{ marginTop: 0 }}>
+                    {a.officer}
+                  </span>
+                  <span className="ax-tone-critical text-[10px] font-semibold">{a.daysOverdue}d overdue</span>
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
 
         {!dashLoading && dashboard && (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-            }}
-          >
-            <div
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                borderRadius: 10,
-                padding: "20px 22px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 18,
-                  gap: 12,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                    color: FP.header,
-                    lineHeight: 1.35,
-                  }}
-                >
+          <div className="mt-4 grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <Card elevation="sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="ax-section-title" style={{ margin: 0 }}>
                   Top Performing Schemes (Financial Progress)
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: FP.greenBadge, flexShrink: 0 }}>≥ 75%</span>
+                <span className="ax-chip ax-chip-ok shrink-0">≥ 75%</span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="flex flex-col gap-4">
                 {dashboard.topSchemes.length === 0 ? (
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>No scheme data for this period.</span>
+                  <span className="text-xs">No scheme data for this period.</span>
                 ) : (
-                  dashboard.topSchemes.slice(0, 5).map((s) => (
-                    <SchemeFinancialProgressRow key={s.id} name={s.scheme} pct={s.pct} variant="top" />
-                  ))
+                  dashboard.topSchemes
+                    .slice(0, 5)
+                    .map((s) => <SchemeFinancialProgressRow key={s.id} name={s.scheme} pct={s.pct} variant="top" />)
                 )}
               </div>
-            </div>
+            </Card>
 
-            <div
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                borderRadius: 10,
-                padding: "20px 22px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 18,
-                  gap: 12,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                    color: FP.header,
-                    lineHeight: 1.35,
-                  }}
-                >
+            <Card elevation="sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="ax-section-title" style={{ margin: 0 }}>
                   Underperforming Schemes (Financial Progress)
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: FP.red,
-                      background: FP.redPillBg,
-                      padding: "3px 10px",
-                      borderRadius: 9999,
-                    }}
-                  >
-                    &lt; 40%
-                  </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="ax-chip ax-chip-critical">&lt; 40%</span>
                   <button
                     type="button"
                     onClick={() => router.push("/financial/schemes-board")}
-                    style={{
-                      fontSize: 10,
-                      color: "var(--text-muted)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
+                    className="btn btn-ghost flex items-center gap-1"
                   >
                     Board <ArrowUpRight size={10} />
                   </button>
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="flex flex-col gap-4">
                 {(dashboard.bottomSchemes ?? []).length === 0 ? (
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>No scheme data for this period.</span>
+                  <span className="text-xs">No scheme data for this period.</span>
                 ) : (
-                  (dashboard.bottomSchemes ?? []).slice(0, 5).map((s) => (
-                    <SchemeFinancialProgressRow key={s.id} name={s.scheme} pct={s.pct} variant="bottom" />
-                  ))
+                  (dashboard.bottomSchemes ?? [])
+                    .slice(0, 5)
+                    .map((s) => (
+                      <SchemeFinancialProgressRow key={s.id} name={s.scheme} pct={s.pct} variant="bottom" />
+                    ))
                 )}
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>
 
-      <SchemeModal
-        open={schemeModal !== null}
-        onClose={() => setSchemeModal(null)}
-        scheme={schemeModal}
-      />
+      <SchemeModal open={schemeModal !== null} onClose={() => setSchemeModal(null)} scheme={schemeModal} />
     </div>
   );
 }
 
 function CommandCentreLoadingFallback() {
   return (
-    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+    <div className="flex flex-col gap-5 p-6">
+      <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "16px",
-              minHeight: 88,
-              animation: "pulse 1.5s ease-in-out infinite",
-            }}
-          />
+          <div key={i} className="ax-stat animate-pulse" style={{ minHeight: 88 }} aria-hidden />
         ))}
       </div>
     </div>

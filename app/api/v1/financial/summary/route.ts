@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import {
   FINANCE_YEAR_BUDGET_CATEGORY_LABELS,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const fyLabel = searchParams.get("financialYearLabel");
 
     let fy = fyLabel
-      ? await prisma.financialYear.findUnique({ where: { label: fyLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: fyLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
     if (!fy && fyLabel) {
       fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Body;
     const fy = body.financialYearLabel
-      ? await prisma.financialYear.findUnique({ where: { label: body.financialYearLabel } })
+      ? await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } })
       : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
 
     if (!fy) {
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
               asOfDate,
             },
           },
-          create: {
+          create: tenantStamped({
             financialYearId: fy.id,
             headCode: row.headCode,
             asOfDate,
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
             soExpenditureCr: row.soExpenditureCr,
             ifmsExpenditureCr: row.ifmsExpenditureCr,
             createdById: actor?.id ?? null,
-          },
+          }),
           update: {
             budgetEstimateCr: row.budgetEstimateCr,
             soExpenditureCr: row.soExpenditureCr,

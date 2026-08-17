@@ -273,48 +273,48 @@ export default function SchemesOrderPage() {
       <div className="space-y-6 px-6 py-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Priority Reordering</h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-text)]">Priority Reordering</h1>
+            <p className="mt-1 text-sm text-[var(--ax-muted)]">
               Arrange the display order of schemes on the dashboard, and sorting orders of subschemes inside them.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="rounded-xl border border-[var(--alert-critical)] bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-[var(--alert-critical)]">
+          <div className="ax-chip ax-chip-critical block w-full px-4 py-3 text-sm">
             {error}
           </div>
         )}
 
         {schemesSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-ok)]">
             Scheme order saved successfully.
           </div>
         )}
 
         {subschemesSuccess && (
-          <div className="rounded-xl border border-[var(--alert-success)] bg-[rgba(0,200,83,0.1)] px-4 py-3 text-sm text-[var(--alert-success)]">
+          <div className="rounded-xl border border-[var(--ax-status-ok)] bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] px-4 py-3 text-sm text-[var(--ax-status-ok)]">
             Subscheme order saved successfully.
           </div>
         )}
 
         {loading ? (
-          <div className="text-sm text-[var(--text-muted)]">Loading registry items...</div>
+          <div className="text-sm text-[var(--ax-muted)]">Loading registry items...</div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Left Column: Schemes */}
-            <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+            <div className="flex flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] pb-4">
                 <div>
-                  <h3 className="font-semibold text-[var(--text-primary)]">Schemes Order</h3>
-                  <p className="text-xs text-[var(--text-muted)]">Move schemes up and down to change priority.</p>
+                  <h3 className="font-semibold text-[var(--color-text)]">Schemes Order</h3>
+                  <p className="text-xs text-[var(--ax-muted)]">Move schemes up and down to change priority.</p>
                 </div>
                 <button
                   type="button"
                   onClick={handleSaveSchemesOrder}
                   disabled={schemesSaving || !schemesOrderChanged}
-                  className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-[var(--accent-text)] shadow transition-all hover:opacity-90 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-2 text-xs font-semibold text-[var(--ax-on-accent)] shadow transition-all hover:opacity-90 disabled:opacity-50"
                 >
                   {schemesSaving ? "Saving..." : schemesSuccess ? (
                     <>
@@ -328,14 +328,14 @@ export default function SchemesOrderPage() {
                 </button>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-document)] px-3 py-2">
-                <Search className="h-4 w-4 text-[var(--text-muted)]" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2">
+                <Search className="h-4 w-4 text-[var(--ax-muted)]" />
                 <input
                   type="text"
                   placeholder="Filter schemes by name, code or vertical..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
+                  className="flex-1 bg-transparent text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] outline-none"
                 />
               </div>
 
@@ -351,20 +351,20 @@ export default function SchemesOrderPage() {
                       }}
                       className={`group flex items-center justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${
                         isSelected
-                          ? "border-[var(--accent)] bg-[var(--bg-content-surface)] ring-1 ring-[var(--accent)]"
-                          : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-document)]"
+                          ? "border-[var(--color-accent)] bg-[var(--color-surface)] ring-1 ring-[var(--color-accent)]"
+                          : "border-[var(--color-divider)] hover:border-[var(--ax-divider-strong)] hover:bg-[var(--color-bg)]"
                       }`}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--bg-surface-text)]">
+                          <span className="rounded bg-[var(--color-surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-text)]">
                             {idx + 1}
                           </span>
-                          <span className="font-semibold text-sm truncate text-[var(--text-primary)]">
+                          <span className="font-semibold text-sm truncate text-[var(--color-text)]">
                             {scheme.name}
                           </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-[var(--text-muted)] pl-7">
+                        <p className="mt-1 text-[11px] text-[var(--ax-muted)] pl-7">
                           {scheme.verticalName} · Code: {scheme.code}
                         </p>
                       </div>
@@ -377,7 +377,7 @@ export default function SchemesOrderPage() {
                             e.stopPropagation();
                             handleMoveScheme(idx, "up");
                           }}
-                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-text)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] disabled:hover:text-[var(--text-secondary)]"
+                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-accent)] hover:text-[var(--ax-on-accent)] disabled:opacity-30 disabled:hover:bg-[var(--color-surface)] disabled:hover:text-[var(--ax-text-secondary)]"
                           aria-label="Move Up"
                         >
                           <ArrowUp className="h-4 w-4" />
@@ -389,7 +389,7 @@ export default function SchemesOrderPage() {
                             e.stopPropagation();
                             handleMoveScheme(idx, "down");
                           }}
-                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-text)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] disabled:hover:text-[var(--text-secondary)]"
+                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-accent)] hover:text-[var(--ax-on-accent)] disabled:opacity-30 disabled:hover:bg-[var(--color-surface)] disabled:hover:text-[var(--ax-text-secondary)]"
                           aria-label="Move Down"
                         >
                           <ArrowDown className="h-4 w-4" />
@@ -400,17 +400,17 @@ export default function SchemesOrderPage() {
                 })}
 
                 {filteredSchemes.length === 0 && (
-                  <p className="py-8 text-center text-xs text-[var(--text-muted)]">No schemes match search query.</p>
+                  <p className="py-8 text-center text-xs text-[var(--ax-muted)]">No schemes match search query.</p>
                 )}
               </div>
             </div>
 
             {/* Right Column: Subschemes */}
-            <div className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+            <div className="flex flex-col rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] pb-4">
                 <div>
-                  <h3 className="font-semibold text-[var(--text-primary)]">Subschemes inside Scheme</h3>
-                  <p className="text-xs text-[var(--text-muted)]">
+                  <h3 className="font-semibold text-[var(--color-text)]">Subschemes inside Scheme</h3>
+                  <p className="text-xs text-[var(--ax-muted)]">
                     {activeScheme ? `Adjusting order for: ${activeScheme.name}` : "Select a scheme from the left list."}
                   </p>
                 </div>
@@ -419,7 +419,7 @@ export default function SchemesOrderPage() {
                     type="button"
                     onClick={handleSaveSubschemesOrder}
                     disabled={subschemesSaving || !subschemesOrderChanged}
-                    className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-[var(--accent-text)] shadow transition-all hover:opacity-90 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-2 text-xs font-semibold text-[var(--ax-on-accent)] shadow transition-all hover:opacity-90 disabled:opacity-50"
                   >
                     {subschemesSaving ? "Saving..." : subschemesSuccess ? (
                       <>
@@ -435,11 +435,11 @@ export default function SchemesOrderPage() {
               </div>
 
               {!activeScheme ? (
-                <div className="flex flex-1 flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                <div className="flex flex-1 flex-col items-center justify-center py-12 text-[var(--ax-muted)]">
                   <p className="text-sm">Please select a scheme on the left to see and reorder its subschemes.</p>
                 </div>
               ) : activeSubschemes.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                <div className="flex flex-1 flex-col items-center justify-center py-12 text-[var(--ax-muted)]">
                   <p className="text-sm">This scheme has no subschemes.</p>
                   <p className="text-xs mt-1">Sorting is only available for schemes with nested components.</p>
                 </div>
@@ -448,18 +448,18 @@ export default function SchemesOrderPage() {
                   {activeSubschemes.map((sub, idx) => (
                     <div
                       key={sub.id}
-                      className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3.5 transition-all hover:border-[var(--border-strong)]"
+                      className="flex items-center justify-between rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-3.5 transition-all hover:border-[var(--ax-divider-strong)]"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded bg-[var(--bg-document)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
+                          <span className="rounded bg-[var(--color-bg)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ax-text-secondary)]">
                             {idx + 1}
                           </span>
-                          <span className="font-semibold text-sm text-[var(--text-primary)]">
+                          <span className="font-semibold text-sm text-[var(--color-text)]">
                             {sub.name}
                           </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-[var(--text-muted)] pl-7">
+                        <p className="mt-1 text-[11px] text-[var(--ax-muted)] pl-7">
                           Code: {sub.code}
                         </p>
                       </div>
@@ -469,7 +469,7 @@ export default function SchemesOrderPage() {
                           type="button"
                           disabled={idx === 0}
                           onClick={() => handleMoveSubscheme(idx, "up")}
-                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-text)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] disabled:hover:text-[var(--text-secondary)]"
+                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-accent)] hover:text-[var(--ax-on-accent)] disabled:opacity-30 disabled:hover:bg-[var(--color-surface)] disabled:hover:text-[var(--ax-text-secondary)]"
                           aria-label="Move Up"
                         >
                           <ArrowUp className="h-4 w-4" />
@@ -478,7 +478,7 @@ export default function SchemesOrderPage() {
                           type="button"
                           disabled={idx === activeSubschemes.length - 1}
                           onClick={() => handleMoveSubscheme(idx, "down")}
-                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-text)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] disabled:hover:text-[var(--text-secondary)]"
+                          className="flex h-7 w-7 items-center justify-center rounded border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--ax-text-secondary)] hover:bg-[var(--color-accent)] hover:text-[var(--ax-on-accent)] disabled:opacity-30 disabled:hover:bg-[var(--color-surface)] disabled:hover:text-[var(--ax-text-secondary)]"
                           aria-label="Move Down"
                         >
                           <ArrowDown className="h-4 w-4" />

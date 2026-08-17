@@ -110,30 +110,30 @@ export default function AdminFinancialYearsPage() {
     <AppShell title="Financial years">
       <div className="space-y-6 px-6 py-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--text-muted)]">Administration</p>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Financial years</h1>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--text-muted)]">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--ax-muted)]">Administration</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">Financial years</h1>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--ax-muted)]">
             Years are stored in the database. Most screens use the year with the latest end date as the default when no
             FY is selected. Changing dates or adding a new year affects which FY is treated as current.
           </p>
-          <Link href="/admin" className="mt-3 inline-block text-sm text-[var(--text-primary)] underline-offset-2 hover:underline">
+          <Link href="/admin" className="mt-3 inline-block text-sm text-[var(--color-text)] underline-offset-2 hover:underline">
             ← Administration
           </Link>
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200" role="alert">
+          <div className="rounded-xl border border-[var(--ax-status-critical)]/40 ax-fill-critical/10 px-4 py-3 text-sm" role="alert">
             {error}
           </div>
         )}
 
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Add financial year</h2>
+        <section className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--ax-muted)]">Add financial year</h2>
           <form onSubmit={onCreate} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-[var(--text-muted)]">Label</span>
+              <span className="text-[var(--ax-muted)]">Label</span>
               <input
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)]"
                 value={createLabel}
                 onChange={(e) => setCreateLabel(e.target.value)}
                 placeholder="2026-27"
@@ -141,20 +141,20 @@ export default function AdminFinancialYearsPage() {
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-[var(--text-muted)]">Start (YYYY-MM-DD)</span>
+              <span className="text-[var(--ax-muted)]">Start (YYYY-MM-DD)</span>
               <input
                 type="date"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)]"
                 value={createStart}
                 onChange={(e) => setCreateStart(e.target.value)}
                 required
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-[var(--text-muted)]">End (YYYY-MM-DD)</span>
+              <span className="text-[var(--ax-muted)]">End (YYYY-MM-DD)</span>
               <input
                 type="date"
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]"
+                className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-bg)] px-3 py-2 text-[var(--color-text)]"
                 value={createEnd}
                 onChange={(e) => setCreateEnd(e.target.value)}
                 required
@@ -163,24 +163,24 @@ export default function AdminFinancialYearsPage() {
             <button
               type="submit"
               disabled={busy}
-              className="h-10 rounded-lg bg-[var(--sidebar-active-bg)] px-4 text-sm font-medium text-white disabled:opacity-50"
+              className="h-10 rounded-lg bg-[var(--ax-nav-active)] px-4 text-sm font-medium disabled:opacity-50"
             >
               Create
             </button>
           </form>
         </section>
 
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Existing years</h2>
+        <section className="rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--ax-muted)]">Existing years</h2>
           {loading ? (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">Loading…</p>
+            <p className="mt-4 text-sm text-[var(--ax-muted)]">Loading…</p>
           ) : items.length === 0 ? (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">No financial years yet.</p>
+            <p className="mt-4 text-sm text-[var(--ax-muted)]">No financial years yet.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-left text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border)] text-[var(--text-muted)]">
+                  <tr className="border-b border-[var(--color-divider)] text-[var(--ax-muted)]">
                     <th className="py-2 pr-4 font-medium">Label</th>
                     <th className="py-2 pr-4 font-medium">Start</th>
                     <th className="py-2 pr-4 font-medium">End</th>
@@ -190,12 +190,12 @@ export default function AdminFinancialYearsPage() {
                 </thead>
                 <tbody>
                   {items.map((row) => (
-                    <tr key={row.id} className="border-b border-[var(--border)]/60">
+                    <tr key={row.id} className="border-b border-[var(--color-divider)]/60">
                       {editingId === row.id ? (
                         <>
                           <td className="py-2 pr-2">
                             <input
-                              className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1"
+                              className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1"
                               value={editLabel}
                               onChange={(e) => setEditLabel(e.target.value)}
                             />
@@ -203,7 +203,7 @@ export default function AdminFinancialYearsPage() {
                           <td className="py-2 pr-2">
                             <input
                               type="date"
-                              className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1"
+                              className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1"
                               value={editStart}
                               onChange={(e) => setEditStart(e.target.value)}
                             />
@@ -211,25 +211,25 @@ export default function AdminFinancialYearsPage() {
                           <td className="py-2 pr-2">
                             <input
                               type="date"
-                              className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1"
+                              className="w-full rounded border border-[var(--color-divider)] bg-[var(--color-bg)] px-2 py-1"
                               value={editEnd}
                               onChange={(e) => setEditEnd(e.target.value)}
                             />
                           </td>
-                          <td className="py-2 pr-2 text-[var(--text-muted)]">—</td>
+                          <td className="py-2 pr-2 text-[var(--ax-muted)]">—</td>
                           <td className="py-2">
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 disabled={busy}
-                                className="rounded-md bg-[var(--sidebar-active-bg)] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+                                className="rounded-md bg-[var(--ax-nav-active)] px-3 py-1 text-xs font-medium disabled:opacity-50"
                                 onClick={() => void onSaveEdit(row.id)}
                               >
                                 Save
                               </button>
                               <button
                                 type="button"
-                                className="rounded-md border border-[var(--border)] px-3 py-1 text-xs"
+                                className="rounded-md border border-[var(--color-divider)] px-3 py-1 text-xs"
                                 onClick={() => setEditingId(null)}
                               >
                                 Cancel
@@ -239,20 +239,20 @@ export default function AdminFinancialYearsPage() {
                         </>
                       ) : (
                         <>
-                          <td className="py-2 pr-4 text-[var(--text-primary)]">{row.label}</td>
-                          <td className="py-2 pr-4 tabular-nums text-[var(--text-muted)]">{row.startDate}</td>
-                          <td className="py-2 pr-4 tabular-nums text-[var(--text-muted)]">{row.endDate}</td>
+                          <td className="py-2 pr-4 text-[var(--color-text)]">{row.label}</td>
+                          <td className="py-2 pr-4 tabular-nums text-[var(--ax-muted)]">{row.startDate}</td>
+                          <td className="py-2 pr-4 tabular-nums text-[var(--ax-muted)]">{row.endDate}</td>
                           <td className="py-2 pr-4">
                             {row.isDefaultForApis ? (
-                              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">Yes</span>
+                              <span className="rounded-full ax-fill-ok/20 px-2 py-0.5 text-xs">Yes</span>
                             ) : (
-                              <span className="text-[var(--text-muted)]">No</span>
+                              <span className="text-[var(--ax-muted)]">No</span>
                             )}
                           </td>
                           <td className="py-2">
                             <button
                               type="button"
-                              className="text-xs font-medium text-[var(--text-primary)] underline-offset-2 hover:underline"
+                              className="text-xs font-medium text-[var(--color-text)] underline-offset-2 hover:underline"
                               onClick={() => startEdit(row)}
                             >
                               Edit

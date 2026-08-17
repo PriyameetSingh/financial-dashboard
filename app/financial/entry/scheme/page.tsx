@@ -54,7 +54,7 @@ const horizontalLinePlugin = {
         ctx.beginPath();
         ctx.setLineDash([5, 5]);
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#95a5a6"; // gray dashed line
+        ctx.strokeStyle = "var(--ax-muted)"; // gray dashed line
         ctx.moveTo(chartArea.left, yPixel);
         ctx.lineTo(chartArea.right, yPixel);
         ctx.stroke();
@@ -107,11 +107,11 @@ function appendSupplementToEntry(
 type SubmitIntent = "draft" | "submitted" | "supplement" | "revise" | "so";
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted_this_week: "#2ecc71",
-  submitted_pending: "#2ecc71",
-  draft: "#3498db",
-  overdue: "#e74c3c",
-  not_started: "#95a5a6",
+  submitted_this_week: "var(--ax-status-ok)",
+  submitted_pending: "var(--ax-status-ok)",
+  draft: "var(--color-accent)",
+  overdue: "var(--ax-status-critical)",
+  not_started: "var(--ax-muted)",
 };
 
 /** IFMS vs effective budget — same basis as main-panel utilisation; used for sidebar bars. */
@@ -123,15 +123,15 @@ function getSubschemeBudgetProgress(sub: {
   const eff = sub.effectiveBudgetCr ?? sub.annualBudget ?? 0;
   const ifms = sub.ifms ?? 0;
   if (eff <= 0) {
-    return { fillPct: 0, color: "#95a5a6" };
+    return { fillPct: 0, color: "var(--ax-muted)" };
   }
   const ratio = ifms / eff;
   const fillPct = Math.min(100, ratio * 100);
   let color: string;
-  if (ratio > 1) color = "#e74c3c";
-  else if (ratio >= 0.85) color = "#f39c12";
-  else if (ratio >= 0.5) color = "#2ecc71";
-  else color = "#3498db";
+  if (ratio > 1) color = "var(--ax-status-critical)";
+  else if (ratio >= 0.85) color = "var(--ax-status-warning)";
+  else if (ratio >= 0.5) color = "var(--ax-status-ok)";
+  else color = "var(--color-accent)";
   return { fillPct, color };
 }
 
@@ -686,7 +686,7 @@ export default function SchemeEntryPage() {
       {
         label: "IFMS Actual",
         data: activeHistory.map(h => h.ifms),
-        backgroundColor: "rgba(46, 204, 113, 0.8)",
+        backgroundColor: "color-mix(in srgb, var(--ax-status-ok) 80%, transparent)",
         borderRadius: 4,
       }
     ]
@@ -713,16 +713,16 @@ export default function SchemeEntryPage() {
 
   return (
     <AppShell title="Financial Data Entry">
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-document)]">
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--color-bg)]">
         {/* SCHEME SELECTOR SIDEBAR */}
-        <div className={`w-full md:w-72 flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-card)] flex flex-col ${selected ? "hidden md:flex" : "flex"}`}>
-          <div className="p-4 border-b border-[var(--border)]">
+        <div className={`w-full md:w-72 flex-shrink-0 border-r border-[var(--color-divider)] bg-[var(--color-surface)] flex flex-col ${selected ? "hidden md:flex" : "flex"}`}>
+          <div className="p-4 border-b border-[var(--color-divider)]">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-muted)]" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--ax-muted)]" />
               <input
                 type="text"
                 placeholder="Search scheme..."
-                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-document)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-lg text-sm text-[var(--color-text)] placeholder:text-[var(--ax-muted)] focus:outline-none focus:border-[var(--color-accent)]"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
@@ -736,16 +736,16 @@ export default function SchemeEntryPage() {
                 <div key={entry.id} className="space-y-1">
                   <button
                     onClick={() => applyEntry(entry)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-left rounded-lg transition-colors ${isActive ? 'bg-[var(--bg-content-surface)] border border-[var(--accent)] shadow-sm' : 'hover:bg-[var(--bg-content-surface)] border border-transparent'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-left rounded-lg transition-colors ${isActive ? 'bg-[var(--color-surface)] border border-[var(--color-accent)] shadow-sm' : 'hover:bg-[var(--color-surface)] border border-transparent'}`}
                   >
-                    <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{entry.scheme}</span>
+                    <span className={`text-sm font-medium truncate pr-2 ${isActive ? 'text-[var(--color-text)]' : 'text-[var(--ax-text-secondary)]'}`}>{entry.scheme}</span>
                     <span
                       className="flex-shrink-0 w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: STATUS_COLORS[entry.status] || '#95a5a6' }}
+                      style={{ backgroundColor: STATUS_COLORS[entry.status] || 'var(--ax-muted)' }}
                     />
                   </button>
                   {isActive && hasSubs && (
-                    <div className="ml-4 pl-3 border-l-2 border-[var(--accent)] space-y-1">
+                    <div className="ml-4 pl-3 border-l-2 border-[var(--color-accent)] space-y-1">
                       {entry.subschemes?.map(sub => {
                         const isActiveSub = sub.code === selectedSubschemeCode;
                         const progress = getSubschemeBudgetProgress(sub);
@@ -753,12 +753,12 @@ export default function SchemeEntryPage() {
                           <button
                             key={sub.code}
                             onClick={() => applySubscheme(sub.code, entry)}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors ${isActiveSub ? 'bg-[var(--bg-content-surface)] font-medium text-[var(--text-primary)] border border-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent hover:bg-[var(--bg-content-surface)]'}`}
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors ${isActiveSub ? 'bg-[var(--color-surface)] font-medium text-[var(--color-text)] border border-[var(--color-accent)] shadow-sm' : 'text-[var(--ax-muted)] hover:text-[var(--color-text)] border border-transparent hover:bg-[var(--color-surface)]'}`}
                           >
                             <span className="block font-semibold">{sub.code}</span>
                             <span className="block truncate opacity-80">{sub.name}</span>
                             <div
-                              className="mt-1.5 h-1 w-full rounded-full bg-[var(--border)] overflow-hidden"
+                              className="mt-1.5 h-1 w-full rounded-full bg-[var(--color-divider)] overflow-hidden"
                               aria-hidden
                             >
                               <div
@@ -786,9 +786,9 @@ export default function SchemeEntryPage() {
           {/* ALERTS */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
             {alertInfo && (
-              <div className={`px-4 py-3 rounded-lg shadow-lg border text-sm flex items-center gap-2 transition-all ${alertInfo.type === 'error' ? 'bg-[rgba(200,30,30,0.1)] border-[#f8b4b4] text-[#e74c3c]' :
-                alertInfo.type === 'success' ? 'bg-[rgba(46,204,113,0.1)] border-[#b0e8ce] text-[#2ecc71]' :
-                  'bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-primary)]'
+              <div className={`px-4 py-3 rounded-lg shadow-lg border text-sm flex items-center gap-2 transition-all ${alertInfo.type === 'error' ? 'bg-[color-mix(in_srgb,_var(--ax-status-critical)_10%,_transparent)] border-[var(--ax-status-critical)] ax-tone-critical' :
+                alertInfo.type === 'success' ? 'bg-[color-mix(in_srgb,_var(--ax-status-ok)_10%,_transparent)] border-[var(--ax-status-ok)] ax-tone-ok' :
+                  'bg-[var(--color-surface)] border-[var(--color-divider)] text-[var(--color-text)]'
                 }`}>
                 <span>{alertInfo.message}</span>
               </div>
@@ -798,17 +798,17 @@ export default function SchemeEntryPage() {
           {!loading && !loadError && selected && (
             <>
               {/* HEADER */}
-              <div className="px-4 py-4 sm:px-8 sm:py-6 border-b border-[var(--border)] bg-[var(--bg-document)]">
+              <div className="px-4 py-4 sm:px-8 sm:py-6 border-b border-[var(--color-divider)] bg-[var(--color-bg)]">
                 <button
                   type="button"
                   onClick={() => applyEntry(null)}
-                  className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
+                  className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--ax-muted)] hover:text-[var(--color-text)] md:hidden"
                 >
                   ← Back to Schemes List
                 </button>
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-[var(--color-text)] flex items-center gap-3">
                       {selected.scheme}
                     </h1>
                     {hasSubschemes && selectedSubschemeCode && (
@@ -817,7 +817,7 @@ export default function SchemeEntryPage() {
                           <button
                             key={sub.code}
                             onClick={() => applySubscheme(sub.code, selected)}
-                            className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition ${sub.code === selectedSubschemeCode ? 'bg-[var(--bg-hover)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border)]'}`}
+                            className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition ${sub.code === selectedSubschemeCode ? 'bg-[var(--ax-hover)]' : 'bg-[var(--color-surface)] text-[var(--ax-muted)] hover:text-[var(--color-text)] border border-[var(--color-divider)]'}`}
                           >
                             {sub.code}
                           </button>
@@ -826,7 +826,7 @@ export default function SchemeEntryPage() {
                     )}
                   </div>
                   {isBudgetLocked && (
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1.5 rounded-full border border-[var(--border)]">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--ax-muted)] bg-[var(--color-surface)] px-3 py-1.5 rounded-full border border-[var(--color-divider)]">
                       <Lock className="w-3.5 h-3.5" />
                       Locked
                     </div>
@@ -838,18 +838,18 @@ export default function SchemeEntryPage() {
               <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-8 sm:py-6 space-y-6">
 
                 {/* CARD 1: Annual Budget */}
-                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-content-surface)]">
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-divider)] shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[var(--color-divider)] flex justify-between items-center bg-[var(--color-surface)]">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-semibold text-[var(--text-primary)]">Annual Budget</h2>
+                      <h2 className="text-sm font-semibold text-[var(--color-text)]">Annual Budget</h2>
                       {!canManageFinancials && (
-                        <span className="text-[10px] font-medium text-[var(--text-muted)] bg-[var(--bg-document)] px-2 py-0.5 rounded border border-[var(--border)]">View Only</span>
+                        <span className="text-[10px] font-medium text-[var(--ax-muted)] bg-[var(--color-bg)] px-2 py-0.5 rounded border border-[var(--color-divider)]">View Only</span>
                       )}
                     </div>
                     {!isBudgetLocked && canManageFinancials && (
                       <button
                         onClick={() => setRevisingBudget(true)}
-                        className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--bg-card)] px-3 py-1 rounded border border-[var(--border)]"
+                        className="text-xs font-medium text-[var(--ax-muted)] hover:text-[var(--color-text)] bg-[var(--color-surface)] px-3 py-1 rounded border border-[var(--color-divider)]"
                       >
                         Revise Budget
                       </button>
@@ -859,23 +859,23 @@ export default function SchemeEntryPage() {
 
                     {/* Revise Form */}
                     {revisingBudget && (
-                      <div className="mb-5 p-4 rounded-lg bg-[rgba(0,0,0,0.02)] border border-[var(--border)]">
+                      <div className="mb-5 p-4 rounded-lg bg-[color-mix(in_srgb,var(--color-text)_4%,transparent)] border border-[var(--color-divider)]">
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Revise Budget Estimate</h3>
-                          <button onClick={() => setRevisingBudget(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">Cancel</button>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text)]">Revise Budget Estimate</h3>
+                          <button onClick={() => setRevisingBudget(false)} className="text-xs text-[var(--ax-muted)] hover:text-[var(--color-text)]">Cancel</button>
                         </div>
                         <div className="flex gap-4">
                           <div className="flex-1">
-                            <input type="number" step="0.01" min="0" placeholder="New Budget (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md" value={reviseBudgetAmount} onChange={e => setReviseBudgetAmount(e.target.value ? Number(e.target.value) : "")} />
+                            <input type="number" step="0.01" min="0" placeholder="New Budget (₹ Cr)" className="w-full text-sm p-2 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded-md" value={reviseBudgetAmount} onChange={e => setReviseBudgetAmount(e.target.value ? Number(e.target.value) : "")} />
                           </div>
                           <div className="flex-[2]">
-                            <input type="text" placeholder="Reason (optional)" className="w-full text-sm p-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md" value={reviseBudgetReason} onChange={e => setReviseBudgetReason(e.target.value)} />
+                            <input type="text" placeholder="Reason (optional)" className="w-full text-sm p-2 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded-md" value={reviseBudgetReason} onChange={e => setReviseBudgetReason(e.target.value)} />
                           </div>
                           <button
                             type="button"
                             onClick={handleReviseBudget}
                             disabled={isSubmitting}
-                            className="inline-flex items-center justify-center gap-2 min-h-9 min-w-[5.5rem] bg-[var(--text-primary)] text-[var(--bg-document)] font-semibold text-sm px-4 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="inline-flex items-center justify-center gap-2 min-h-9 min-w-[5.5rem] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm px-4 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
                           >
                             {pendingSubmit === "revise" ? (
                               <>
@@ -892,31 +892,31 @@ export default function SchemeEntryPage() {
 
                     <div className="grid grid-cols-3 gap-6">
                       <div>
-                        <div className="text-xs text-[var(--text-muted)] mb-1">Original</div>
+                        <div className="text-xs text-[var(--ax-muted)] mb-1">Original</div>
                         <div className="text-2xl font-semibold">₹ {activeOriginalBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                       </div>
                       <div>
-                        <div className="text-xs text-[var(--text-muted)] mb-1">Supplementary</div>
-                        <div className={`text-2xl font-semibold ${activeTotalSupplementCr > 0 ? 'text-[#2ecc71]' : activeTotalSupplementCr < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-primary)]'}`}>
+                        <div className="text-xs text-[var(--ax-muted)] mb-1">Supplementary</div>
+                        <div className={`text-2xl font-semibold ${activeTotalSupplementCr > 0 ? 'ax-tone-ok' : activeTotalSupplementCr < 0 ? 'ax-tone-critical' : 'text-[var(--color-text)]'}`}>
                           {activeTotalSupplementCr > 0 ? '+' : ''}{activeTotalSupplementCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                         </div>
-                        <div className="text-[11px] text-[var(--text-muted)] mt-1 font-medium">{supCountText}</div>
+                        <div className="text-[11px] text-[var(--ax-muted)] mt-1 font-medium">{supCountText}</div>
                       </div>
-                      <div className="bg-[var(--bg-content-surface)] border border-[var(--border)] p-3 rounded-lg flex flex-col justify-center shadow-sm">
-                        <div className="text-[11px] text-[#3498db] font-semibold mb-1 uppercase tracking-wider">Effective</div>
-                        <div className="text-2xl font-bold text-[#3498db]">₹ {activeEffectiveBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                      <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] p-3 rounded-lg flex flex-col justify-center shadow-sm">
+                        <div className="text-[11px] ax-tone-accent font-semibold mb-1 uppercase tracking-wider">Effective</div>
+                        <div className="text-2xl font-bold ax-tone-accent">₹ {activeEffectiveBudgetCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                       </div>
                     </div>
 
                     {activeSupplements.length > 0 && (
                       <div className="mt-6">
-                        <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-3 border-b border-[var(--border)] pb-2">Recent Adjustments</div>
+                        <div className="text-[10px] uppercase tracking-wider text-[var(--ax-muted)] font-semibold mb-3 border-b border-[var(--color-divider)] pb-2">Recent Adjustments</div>
                         <div className="space-y-2.5">
                           {activeSupplements.map(sup => (
-                            <div key={sup.id} className="flex items-start justify-between bg-[var(--bg-content-surface)] p-2.5 rounded border border-[var(--border)]">
+                            <div key={sup.id} className="flex items-start justify-between bg-[var(--color-surface)] p-2.5 rounded border border-[var(--color-divider)]">
                               <div>
-                                <div className="font-medium text-sm text-[var(--text-primary)]">{sup.reason}</div>
-                                <div className="text-[11px] text-[var(--text-muted)] mt-0.5 flex gap-2">
+                                <div className="font-medium text-sm text-[var(--color-text)]">{sup.reason}</div>
+                                <div className="text-[11px] text-[var(--ax-muted)] mt-0.5 flex gap-2">
                                   <span>{new Date(sup.createdAt).toLocaleDateString(tenantLocale())}</span>
                                   <span>•</span>
                                   <span>{sup.createdByName}</span>
@@ -925,7 +925,7 @@ export default function SchemeEntryPage() {
                                   )}
                                 </div>
                               </div>
-                              <div className={`text-sm font-bold ${sup.amountCr > 0 ? 'text-[#2ecc71]' : 'text-[#e74c3c]'}`}>
+                              <div className={`text-sm font-bold ${sup.amountCr > 0 ? 'ax-tone-ok' : 'ax-tone-critical'}`}>
                                 {sup.amountCr > 0 ? '+' : ''}{sup.amountCr.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr
                               </div>
                             </div>
@@ -937,38 +937,38 @@ export default function SchemeEntryPage() {
                     {!isBudgetLocked && canManageFinancials && !addingSupplement && (
                       <button
                         onClick={() => setAddingSupplement(true)}
-                        className="mt-5 text-sm font-medium text-[var(--text-primary)] flex items-center gap-1.5 hover:underline"
+                        className="mt-5 text-sm font-medium text-[var(--color-text)] flex items-center gap-1.5 hover:underline"
                       >
                         <Plus className="w-4 h-4" /> Add supplement
                       </button>
                     )}
 
                     {addingSupplement && (
-                      <div className="mt-5 p-4 rounded-lg bg-[var(--bg-document)] border border-[var(--border)] shadow-inner">
+                      <div className="mt-5 p-4 rounded-lg bg-[var(--color-bg)] border border-[var(--color-divider)] shadow-inner">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Add Supplement</h3>
+                          <h3 className="text-sm font-semibold text-[var(--color-text)]">Add Supplement</h3>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div>
-                            <label className="block text-xs text-[var(--text-muted)] mb-1">Amount (₹ Cr) — accepts negative</label>
-                            <input type="number" step="0.01" className="w-full text-sm p-2.5 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md" value={supplementAmount} onChange={e => setSupplementAmount(e.target.value ? Number(e.target.value) : "")} />
+                            <label className="block text-xs text-[var(--ax-muted)] mb-1">Amount (₹ Cr) — accepts negative</label>
+                            <input type="number" step="0.01" className="w-full text-sm p-2.5 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded-md" value={supplementAmount} onChange={e => setSupplementAmount(e.target.value ? Number(e.target.value) : "")} />
                           </div>
                           <div>
-                            <label className="block text-xs text-[var(--text-muted)] mb-1">Reference No. (optional)</label>
-                            <input type="text" className="w-full text-sm p-2.5 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md" value={supplementRefNo} onChange={e => setSupplementRefNo(e.target.value)} />
+                            <label className="block text-xs text-[var(--ax-muted)] mb-1">Reference No. (optional)</label>
+                            <input type="text" className="w-full text-sm p-2.5 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded-md" value={supplementRefNo} onChange={e => setSupplementRefNo(e.target.value)} />
                           </div>
                         </div>
                         <div className="mb-4">
-                          <label className="block text-xs text-[var(--text-muted)] mb-1">Reason</label>
-                          <textarea className="w-full text-sm p-2.5 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md resize-none h-20" value={supplementReason} onChange={e => setSupplementReason(e.target.value)} />
+                          <label className="block text-xs text-[var(--ax-muted)] mb-1">Reason</label>
+                          <textarea className="w-full text-sm p-2.5 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded-md resize-none h-20" value={supplementReason} onChange={e => setSupplementReason(e.target.value)} />
                         </div>
                         <div className="flex items-center justify-end gap-3">
-                          <button onClick={() => setAddingSupplement(false)} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium px-4 py-2">Cancel</button>
+                          <button onClick={() => setAddingSupplement(false)} className="text-sm text-[var(--ax-muted)] hover:text-[var(--color-text)] font-medium px-4 py-2">Cancel</button>
                           <button
                             type="button"
                             disabled={isSubmitting}
                             onClick={handleAddSupplement}
-                            className="inline-flex items-center justify-center gap-2 min-h-9 min-w-[7rem] bg-[#2ecc71] hover:bg-[#27ae60] text-white font-semibold text-sm px-6 rounded-md shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#2ecc71]"
+                            className="btn btn-success min-h-9 min-w-[7rem] px-6 text-sm font-semibold disabled:cursor-not-allowed"
                           >
                             {pendingSubmit === "supplement" ? (
                               <>
@@ -987,45 +987,45 @@ export default function SchemeEntryPage() {
                 </div>
 
                 {/* CARD 2: Expenditure Status */}
-                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden flex flex-col">
-                  <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--bg-content-surface)]">
-                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">Expenditure Status</h2>
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-divider)] shadow-sm overflow-hidden flex flex-col">
+                  <div className="px-5 py-4 border-b border-[var(--color-divider)] bg-[var(--color-surface)]">
+                    <h2 className="text-sm font-semibold text-[var(--color-text)]">Expenditure Status</h2>
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="grid grid-cols-2 gap-8 flex-1">
                       {/* Left: SO */}
-                      <div className="flex flex-col border-r border-[var(--border)] pr-8">
+                      <div className="flex flex-col border-r border-[var(--color-divider)] pr-8">
                         {!isEditingSO ? (
-                          <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border)]">
+                          <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--color-divider)]">
                             <div>
-                              <div className="text-xs text-[var(--text-muted)] mb-1">SO Sanction Amount</div>
-                              <div className="text-3xl font-light text-[var(--text-primary)]">₹ {currentSO.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
+                              <div className="text-xs text-[var(--ax-muted)] mb-1">SO Sanction Amount</div>
+                              <div className="text-3xl font-light text-[var(--color-text)]">₹ {currentSO.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr</div>
                             </div>
                             {canManageFinancials && (
-                              <button onClick={() => setIsEditingSO(true)} className="px-4 py-1.5 rounded border border-[var(--border)] text-sm font-medium hover:bg-[var(--bg-content-surface)]">Edit</button>
+                              <button onClick={() => setIsEditingSO(true)} className="px-4 py-1.5 rounded border border-[var(--color-divider)] text-sm font-medium hover:bg-[var(--color-surface)]">Edit</button>
                             )}
                           </div>
                         ) : (
-                          <div className="bg-[rgba(52,152,219,0.05)] border border-[rgba(52,152,219,0.2)] p-4 rounded-lg mb-8">
-                            <div className="text-xs font-semibold text-[#2980b9] uppercase tracking-wider mb-1">Add to Sanction Amount</div>
-                            <div className="text-[10px] text-[#2980b9] mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString(tenantLocale())} Cr</div>
+                          <div className="bg-[color-mix(in_srgb,_var(--color-accent)_5%,_transparent)] border border-[color-mix(in_srgb,_var(--color-accent)_20%,_transparent)] p-4 rounded-lg mb-8">
+                            <div className="text-xs font-semibold ax-tone-accent uppercase tracking-wider mb-1">Add to Sanction Amount</div>
+                            <div className="text-[10px] ax-tone-accent mb-3 opacity-80">Value will be added to the current total of ₹ {currentSO.toLocaleString(tenantLocale())} Cr</div>
                             <div className="space-y-3">
                               <div className="relative">
-                                <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
+                                <input type="number" step="0.01" min="0" placeholder="Amount to add (₹ Cr)" className="w-full text-sm p-2 bg-[var(--color-bg)] border border-[var(--color-accent)] rounded-md shadow-sm text-[var(--color-text)]" value={editSoValue} onChange={e => setEditSoValue(e.target.value ? Number(e.target.value) : "")} />
                                 {editSoValue !== "" && Number(editSoValue) !== 0 && (
-                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#2980b9]">
+                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold ax-tone-accent">
                                     → Total: ₹ {(currentSO + Number(editSoValue)).toFixed(2)} Cr
                                   </div>
                                 )}
                               </div>
-                              <input type="text" placeholder="Remarks or Reference" className="w-full text-sm p-2 bg-[var(--bg-primary)] border border-[#b3d4ec] rounded-md shadow-sm text-[var(--text-primary)]" value={editSoRemarks} onChange={e => setEditSoRemarks(e.target.value)} />
+                              <input type="text" placeholder="Remarks or Reference" className="w-full text-sm p-2 bg-[var(--color-bg)] border border-[var(--color-accent)] rounded-md shadow-sm text-[var(--color-text)]" value={editSoRemarks} onChange={e => setEditSoRemarks(e.target.value)} />
                               <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={() => setIsEditingSO(false)} className="text-xs font-medium text-[#2980b9] px-3 py-1.5 hover:bg-[rgba(52,152,219,0.1)] rounded">Cancel</button>
+                                <button onClick={() => setIsEditingSO(false)} className="text-xs font-medium ax-tone-accent px-3 py-1.5 hover:bg-[color-mix(in_srgb,_var(--color-accent)_10%,_transparent)] rounded">Cancel</button>
                                 <button
                                   type="button"
                                   onClick={handleUpdateSO}
                                   disabled={isSubmitting || !ifmsMeetingId.trim()}
-                                  className="inline-flex items-center justify-center gap-1.5 min-w-[5.25rem] text-xs font-semibold text-white bg-[#3498db] px-4 py-1.5 rounded shadow-sm hover:bg-[#2980b9] transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3498db]"
+                                  className="btn btn-primary min-w-[5.25rem] px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed"
                                 >
                                   {pendingSubmit === "so" ? (
                                     <>
@@ -1044,21 +1044,21 @@ export default function SchemeEntryPage() {
                         <div className="mt-auto pt-4">
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <div className="flex justify-between text-xs text-[var(--text-muted)]">
+                              <div className="flex justify-between text-xs text-[var(--ax-muted)]">
                                 <span>SO Sanctioned</span>
-                                <span className="font-semibold text-[var(--text-primary)]">{soPercent}% of Effective Budget</span>
+                                <span className="font-semibold text-[var(--color-text)]">{soPercent}% of Effective Budget</span>
                               </div>
-                              <div className="h-1.5 w-full bg-[var(--bg-content-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#3498db] transition-all" style={{ width: `${Math.min(100, Number(soPercent))}%` }} />
+                              <div className="h-1.5 w-full bg-[var(--color-surface)] rounded-full overflow-hidden">
+                                <div className="h-full ax-fill-accent transition-all" style={{ width: `${Math.min(100, Number(soPercent))}%` }} />
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <div className="flex justify-between text-xs text-[var(--text-muted)]">
+                              <div className="flex justify-between text-xs text-[var(--ax-muted)]">
                                 <span>IFMS Actual</span>
-                                <span className="font-semibold text-[var(--text-primary)]">{utilisation}% of Effective Budget</span>
+                                <span className="font-semibold text-[var(--color-text)]">{utilisation}% of Effective Budget</span>
                               </div>
-                              <div className="h-1.5 w-full bg-[var(--bg-content-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#2ecc71] transition-all" style={{ width: `${Math.min(100, Number(utilisation))}%` }} />
+                              <div className="h-1.5 w-full bg-[var(--color-surface)] rounded-full overflow-hidden">
+                                <div className="h-full ax-fill-ok transition-all" style={{ width: `${Math.min(100, Number(utilisation))}%` }} />
                               </div>
                             </div>
                           </div>
@@ -1068,17 +1068,17 @@ export default function SchemeEntryPage() {
                       {/* Right: Chart */}
                       <div className="flex flex-col">
                         <div className="mb-4 flex items-center justify-between">
-                          <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">IFMS Spending History</h3>
-                          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded bg-[rgba(46,204,113,0.8)]" /> IFMS</span>
-                            <span className="flex items-center gap-1.5"><div className="w-3 h-0 border-t-2 border-dashed border-[#95a5a6]" /> Current SO</span>
+                          <h3 className="text-xs font-semibold text-[var(--ax-muted)] uppercase tracking-wider">IFMS Spending History</h3>
+                          <div className="flex items-center gap-3 text-xs text-[var(--ax-muted)]">
+                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded bg-[color-mix(in_srgb,_var(--ax-status-ok)_80%,_transparent)]" /> IFMS</span>
+                            <span className="flex items-center gap-1.5"><div className="w-3 h-0 border-t-2 border-dashed border-[var(--ax-muted)]" /> Current SO</span>
                           </div>
                         </div>
                         <div className="flex-1 relative min-h-[160px]">
                           {activeHistory.length > 0 ? (
                             <Bar data={chartData} options={chartOptions as any} />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-sm text-[var(--text-muted)] font-medium">No IFMS history available.</div>
+                            <div className="absolute inset-0 flex items-center justify-center text-sm text-[var(--ax-muted)] font-medium">No IFMS history available.</div>
                           )}
                         </div>
                       </div>
@@ -1086,38 +1086,38 @@ export default function SchemeEntryPage() {
                   </div>
 
                   {/* Bottom strip */}
-                  <div className="bg-[var(--bg-content-surface)] border-t border-[var(--border)] p-4 flex items-center gap-6">
-                    <div className="flex-1 flex items-center gap-4 bg-[var(--bg-primary)] p-2 border border-[var(--border)] rounded-lg">
-                      <div className="w-12 h-12 rounded-full border-4 border-[#2ecc71] flex items-center justify-center font-bold text-sm text-[#2ecc71]">{utilisation}%</div>
+                  <div className="bg-[var(--color-surface)] border-t border-[var(--color-divider)] p-4 flex items-center gap-6">
+                    <div className="flex-1 flex items-center gap-4 bg-[var(--color-bg)] p-2 border border-[var(--color-divider)] rounded-lg">
+                      <div className="w-12 h-12 rounded-full border-4 border-[var(--ax-status-ok)] flex items-center justify-center font-bold text-sm ax-tone-ok">{utilisation}%</div>
                       <div>
-                        <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Utilisation</div>
-                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{currentIFMS.toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> / ₹{activeEffectiveBudgetCr.toLocaleString(tenantLocale())}</div>
+                        <div className="text-[10px] text-[var(--ax-muted)] uppercase tracking-wider font-semibold">Utilisation</div>
+                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--color-text)]">₹{currentIFMS.toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> / ₹{activeEffectiveBudgetCr.toLocaleString(tenantLocale())}</div>
                       </div>
                     </div>
-                    <div className="flex-1 flex items-center gap-4 bg-[var(--bg-primary)] p-2 border border-[var(--border)] rounded-lg">
-                      <div className="w-12 h-12 rounded-full border-4 border-[#e74c3c] flex items-center justify-center font-bold text-sm text-[#e74c3c]">{lapseRisk}%</div>
+                    <div className="flex-1 flex items-center gap-4 bg-[var(--color-bg)] p-2 border border-[var(--color-divider)] rounded-lg">
+                      <div className="w-12 h-12 rounded-full border-4 border-[var(--ax-status-critical)] flex items-center justify-center font-bold text-sm ax-tone-critical">{lapseRisk}%</div>
                       <div>
-                        <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Lapse Risk</div>
-                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--text-primary)]">₹{(activeEffectiveBudgetCr - currentIFMS).toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> remaining</div>
+                        <div className="text-[10px] text-[var(--ax-muted)] uppercase tracking-wider font-semibold">Lapse Risk</div>
+                        <div className="text-xs mt-0.5"><span className="font-semibold text-[var(--color-text)]">₹{(activeEffectiveBudgetCr - currentIFMS).toLocaleString(tenantLocale(), { minimumFractionDigits: 2 })}</span> remaining</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* CARD 3: Update IFMS */}
-                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm">
-                  <div className="px-5 py-4 border-b border-[var(--border)]">
-                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">Add IFMS Update</h2>
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-divider)] shadow-sm">
+                  <div className="px-5 py-4 border-b border-[var(--color-divider)]">
+                    <h2 className="text-sm font-semibold text-[var(--color-text)]">Add IFMS Update</h2>
                   </div>
                   <div className="p-5 flex flex-col gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">
-                        Meeting <span className="text-[var(--alert-critical)]">*</span>
+                      <label className="block text-xs font-medium text-[var(--ax-muted)] mb-2">
+                        Meeting <span className="text-[var(--ax-status-critical)]">*</span>
                       </label>
                       <select
                         value={ifmsMeetingId}
                         onChange={(e) => setIfmsMeetingId(e.target.value)}
-                        className="w-full max-w-md p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]"
+                        className="w-full max-w-md p-2.5 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm shadow-sm focus:border-[var(--color-text)] focus:outline-none text-[var(--color-text)]"
                       >
                         <option value="">Select meeting…</option>
                         {meetings.map((m) => (
@@ -1127,52 +1127,52 @@ export default function SchemeEntryPage() {
                         ))}
                       </select>
                       {meetings.length === 0 && (
-                        <p className="mt-1 text-[11px] text-[var(--text-muted)]">Create a meeting under Meetings before recording IFMS progress.</p>
+                        <p className="mt-1 text-[11px] text-[var(--ax-muted)]">Create a meeting under Meetings before recording IFMS progress.</p>
                       )}
                     </div>
                     <div className="flex gap-4 items-end flex-wrap">
                       <div className="flex-1 min-w-[8rem]">
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2 flex justify-between items-center">
+                        <label className="block text-xs font-medium text-[var(--ax-muted)] mb-2 flex justify-between items-center">
                           <span>Add IFMS Expenditure (₹ Cr)</span>
                           {ifmsValue !== "" && Number(ifmsValue) !== 0 && (
-                            <span className="text-[10px] font-bold text-[#2ecc71]">
+                            <span className="text-[10px] font-bold ax-tone-ok">
                               New Total: ₹ {(currentIFMS + Number(ifmsValue)).toFixed(2)} Cr
                             </span>
                           )}
                         </label>
-                        <input type="number" min="0" step="0.01" placeholder="Amount to add..." className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
+                        <input type="number" min="0" step="0.01" placeholder="Amount to add..." className="w-full p-2.5 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm font-semibold shadow-sm focus:border-[var(--color-text)] focus:outline-none text-[var(--color-text)]" value={ifmsValue} onChange={e => setIfmsValue(e.target.value ? Number(e.target.value) : "")} />
                       </div>
                       <div className="w-48">
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Data as of Date</label>
-                        <input type="date" className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" value={asOfDate} onChange={e => setAsOfDate(e.target.value)} />
+                        <label className="block text-xs font-medium text-[var(--ax-muted)] mb-2">Data as of Date</label>
+                        <input type="date" className="w-full p-2.5 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm shadow-sm focus:border-[var(--color-text)] focus:outline-none text-[var(--color-text)]" value={asOfDate} onChange={e => setAsOfDate(e.target.value)} />
                       </div>
                       <div className="flex-[2] min-w-[12rem]">
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">Remarks</label>
-                        <textarea rows={1} className="w-full p-2.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm resize-none shadow-sm focus:border-[var(--text-primary)] focus:outline-none text-[var(--text-primary)]" placeholder="Provide context..." value={remarks} onChange={e => setRemarks(e.target.value)} />
+                        <label className="block text-xs font-medium text-[var(--ax-muted)] mb-2">Remarks</label>
+                        <textarea rows={1} className="w-full p-2.5 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm resize-none shadow-sm focus:border-[var(--color-text)] focus:outline-none text-[var(--color-text)]" placeholder="Provide context..." value={remarks} onChange={e => setRemarks(e.target.value)} />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* CARD 4: Update History */}
-                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--bg-content-surface)]">
-                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">Update History</h2>
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-divider)] shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[var(--color-divider)] bg-[var(--color-surface)]">
+                    <h2 className="text-sm font-semibold text-[var(--color-text)]">Update History</h2>
                   </div>
                   {activeHistory.length === 0 ? (
-                    <div className="px-5 py-8 text-center text-sm text-[var(--text-muted)]">No updates recorded yet.</div>
+                    <div className="px-5 py-8 text-center text-sm text-[var(--ax-muted)]">No updates recorded yet.</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-[var(--border)] bg-[var(--bg-content-surface)]">
-                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">#</th>
-                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">As of Date</th>
-                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS (₹ Cr)</th>
-                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">SO (₹ Cr)</th>
-                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">IFMS Change</th>
+                          <tr className="border-b border-[var(--color-divider)] bg-[var(--color-surface)]">
+                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">#</th>
+                            <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">As of Date</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">IFMS (₹ Cr)</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">SO (₹ Cr)</th>
+                            <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">IFMS Change</th>
                             {canEditFinancialEntries && (
-                              <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Actions</th>
+                              <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)]">Actions</th>
                             )}
                           </tr>
                         </thead>
@@ -1186,26 +1186,26 @@ export default function SchemeEntryPage() {
                             return (
                               <Fragment key={`${h.id}-${h.asOfDate}-${idx}`}>
                                 <tr
-                                  className={`border-b border-[var(--border)] last:border-0 ${isLatest ? 'bg-[rgba(46,204,113,0.04)]' : 'hover:bg-[var(--bg-content-surface)]'} transition-colors`}
+                                  className={`border-b border-[var(--color-divider)] last:border-0 ${isLatest ? 'bg-[color-mix(in_srgb,_var(--ax-status-ok)_4%,_transparent)]' : 'hover:bg-[var(--color-surface)]'} transition-colors`}
                                 >
-                                  <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{activeHistory.length - idx}</td>
-                                  <td className="px-5 py-3 font-medium text-[var(--text-primary)]">
+                                  <td className="px-5 py-3 text-[var(--ax-muted)] text-xs">{activeHistory.length - idx}</td>
+                                  <td className="px-5 py-3 font-medium text-[var(--color-text)]">
                                     {new Date(h.asOfDate).toLocaleDateString(tenantLocale(), { day: '2-digit', month: 'short', year: 'numeric' })}
                                     {isLatest && (
-                                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-[#2ecc71] bg-[rgba(46,204,113,0.12)] px-1.5 py-0.5 rounded">Latest</span>
+                                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider ax-tone-ok bg-[color-mix(in_srgb,_var(--ax-status-ok)_12%,_transparent)] px-1.5 py-0.5 rounded">Latest</span>
                                     )}
                                   </td>
-                                  <td className="px-5 py-3 text-right font-semibold text-[var(--text-primary)]">
+                                  <td className="px-5 py-3 text-right font-semibold text-[var(--color-text)]">
                                     {h.ifms.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
-                                  <td className="px-5 py-3 text-right text-[var(--text-secondary)]">
+                                  <td className="px-5 py-3 text-right text-[var(--ax-text-secondary)]">
                                     {h.so.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                   <td className="px-5 py-3 text-right">
                                     {delta === null ? (
-                                      <span className="text-[var(--text-muted)] text-xs">—</span>
+                                      <span className="text-[var(--ax-muted)] text-xs">—</span>
                                     ) : (
-                                      <span className={`text-xs font-semibold ${delta > 0 ? 'text-[#2ecc71]' : delta < 0 ? 'text-[#e74c3c]' : 'text-[var(--text-muted)]'}`}>
+                                      <span className={`text-xs font-semibold ${delta > 0 ? 'ax-tone-ok' : delta < 0 ? 'ax-tone-critical' : 'text-[var(--ax-muted)]'}`}>
                                         {delta > 0 ? '+' : ''}{delta.toLocaleString(tenantLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                       </span>
                                     )}
@@ -1218,7 +1218,7 @@ export default function SchemeEntryPage() {
                                           onClick={() => startEditSnapshot(h)}
                                           disabled={isSubmitting || isEditing}
                                           title="Correct entry"
-                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-content-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--color-divider)] text-[var(--ax-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <Pencil className="h-3.5 w-3.5" aria-hidden />
                                         </button>
@@ -1227,7 +1227,7 @@ export default function SchemeEntryPage() {
                                           onClick={() => requestDeleteSnapshot(h)}
                                           disabled={isSubmitting || isEditing}
                                           title="Remove entry"
-                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--border)] text-[#e74c3c] hover:bg-[rgba(231,76,60,0.08)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                          className="inline-flex items-center justify-center h-7 w-7 rounded border border-[var(--color-divider)] ax-tone-critical hover:bg-[color-mix(in_srgb,_var(--ax-status-critical)_8%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                                         </button>
@@ -1236,35 +1236,35 @@ export default function SchemeEntryPage() {
                                   )}
                                 </tr>
                                 {isEditing && (
-                                  <tr key={`${h.id}-edit`} className="border-b border-[var(--border)] bg-[var(--bg-document)]">                                    <td colSpan={colCount} className="px-5 py-4">
+                                  <tr key={`${h.id}-edit`} className="border-b border-[var(--color-divider)] bg-[var(--color-bg)]">                                    <td colSpan={colCount} className="px-5 py-4">
                                       <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
                                         <div className="flex-1 min-w-[8rem]">
-                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">IFMS (₹ Cr)</label>
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1">IFMS (₹ Cr)</label>
                                           <input
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            className="w-full p-2 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm text-[var(--color-text)]"
                                             value={editSnapIfms}
                                             onChange={(e) => setEditSnapIfms(e.target.value ? Number(e.target.value) : "")}
                                           />
                                         </div>
                                         <div className="flex-1 min-w-[8rem]">
-                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">SO (₹ Cr)</label>
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1">SO (₹ Cr)</label>
                                           <input
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            className="w-full p-2 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm text-[var(--color-text)]"
                                             value={editSnapSo}
                                             onChange={(e) => setEditSnapSo(e.target.value ? Number(e.target.value) : "")}
                                           />
                                         </div>
                                         <div className="flex-[2] min-w-[12rem]">
-                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Remarks</label>
+                                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--ax-muted)] mb-1">Remarks</label>
                                           <input
                                             type="text"
-                                            className="w-full p-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md text-sm text-[var(--text-primary)]"
+                                            className="w-full p-2 bg-[var(--color-bg)] border border-[var(--color-divider)] rounded-md text-sm text-[var(--color-text)]"
                                             value={editSnapRemarks}
                                             onChange={(e) => setEditSnapRemarks(e.target.value)}
                                           />
@@ -1274,7 +1274,7 @@ export default function SchemeEntryPage() {
                                             type="button"
                                             onClick={cancelEditSnapshot}
                                             disabled={isSubmitting}
-                                            className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] px-3 py-1.5"
+                                            className="text-xs font-medium text-[var(--ax-muted)] hover:text-[var(--color-text)] px-3 py-1.5"
                                           >
                                             Cancel
                                           </button>
@@ -1282,7 +1282,7 @@ export default function SchemeEntryPage() {
                                             type="button"
                                             onClick={() => void executeCorrectSnapshot(h.id)}
                                             disabled={isSubmitting}
-                                            className="inline-flex items-center justify-center gap-1.5 min-w-[6rem] bg-[var(--text-primary)] text-[var(--bg-document)] font-semibold text-sm px-4 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="inline-flex items-center justify-center gap-1.5 min-w-[6rem] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm px-4 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
                                           >
                                             {pendingCorrection === "correct" ? (
                                               <>
@@ -1310,9 +1310,9 @@ export default function SchemeEntryPage() {
               </div>
 
               {/* FOOTER BAR */}
-              <div className="h-16 border-t border-[var(--border)] bg-[var(--bg-content-surface)] px-8 flex items-center justify-between shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] z-10 relative">
-                <div className="text-xs text-[var(--text-muted)]">
-                  Last updated {selected.lastUpdated} by <span className="font-medium text-[var(--text-primary)]">{selected.submitter || "Finance Desk"}</span>
+              <div className="h-16 border-t border-[var(--color-divider)] bg-[var(--color-surface)] px-8 flex items-center justify-between shrink-0 z-10 relative">
+                <div className="text-xs text-[var(--ax-muted)]">
+                  Last updated {selected.lastUpdated} by <span className="font-medium text-[var(--color-text)]">{selected.submitter || "Finance Desk"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   {/* // draft commented for now* */}
@@ -1320,7 +1320,7 @@ export default function SchemeEntryPage() {
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting || !ifmsMeetingId.trim()}
-                    className="inline-flex items-center justify-center gap-2 min-w-[7.5rem] px-5 py-2 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-primary)] hover:bg-[rgba(0,0,0,0.02)] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 min-w-[7.5rem] px-5 py-2 rounded-lg text-sm font-medium border border-[var(--color-divider)] text-[var(--color-text)] hover:bg-[color-mix(in_srgb,var(--color-text)_4%,transparent)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {pendingSubmit === "draft" ? (
                       <>
@@ -1335,7 +1335,7 @@ export default function SchemeEntryPage() {
                     type="button"
                     onClick={handleSaveSubmit}
                     disabled={isSubmitting || !ifmsMeetingId.trim()}
-                    className="inline-flex items-center justify-center gap-2 min-w-[8.5rem] px-6 py-2 rounded-lg text-sm font-semibold border border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-text)] shadow hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:opacity-90"
+                    className="inline-flex items-center justify-center gap-2 min-w-[8.5rem] px-6 py-2 rounded-lg text-sm font-semibold border border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--ax-on-accent)] shadow hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:opacity-90"
                   >
                     {pendingSubmit === "submitted" ? (
                       <>
@@ -1352,22 +1352,22 @@ export default function SchemeEntryPage() {
           )}
 
           {!loading && !loadError && !selected && (
-            <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-sm text-[var(--text-muted)] bg-[var(--bg-document)]">
+            <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-sm text-[var(--ax-muted)] bg-[var(--color-bg)]">
               Select a scheme from the list to view or edit financial progress.
             </div>
           )}
 
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-[var(--text-muted)]">
+            <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-[var(--ax-muted)]">
               Loading data...
             </div>
           )}
           {!loading && loadError && !selected && (
-            <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-[var(--bg-document)]">
-              <div className="max-w-md w-full bg-[var(--bg-surface)] border border-[#f8b4b4] rounded-xl p-6 shadow-sm">
-                <h3 className="text-[#c81e1e] font-semibold mb-2">Initialization Error</h3>
-                <p className="text-sm text-[var(--text-muted)]">{loadError}</p>
-                <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border)] rounded text-sm font-medium hover:bg-[var(--bg-surface)] transition">Retry</button>
+            <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-[var(--color-bg)]">
+              <div className="max-w-md w-full bg-[var(--color-surface)] border border-[var(--ax-status-critical)] rounded-xl p-6 shadow-sm">
+                <h3 className="ax-tone-critical font-semibold mb-2">Initialization Error</h3>
+                <p className="text-sm text-[var(--ax-muted)]">{loadError}</p>
+                <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-divider)] rounded text-sm font-medium hover:bg-[var(--color-surface)] transition">Retry</button>
               </div>
             </div>
           )}

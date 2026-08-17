@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, tenantStamped } from "@/lib/prisma";
+import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
+import { withTenantContext } from "@/lib/tenant-context";
 import {
   ActionItemPriority,
   ActionItemStatus,
@@ -52,7 +54,11 @@ export type ScopeSeed = {
 };
 
 /** Delete every row created by this seed (idempotent). */
-export async function cleanupScopeSeed(): Promise<void> {
+export async function cleanupScopeSeed(tenantId: string = ODISHA_TENANT_ID): Promise<void> {
+  return withTenantContext(tenantId, () => cleanupScopeSeedInner());
+}
+
+async function cleanupScopeSeedInner(): Promise<void> {
   const like = `${PREFIX}%`;
   await prisma.kpiMeasurement.deleteMany({ where: { kpiTarget: { kpiDefinition: { scheme: { code: { startsWith: PREFIX } } } } } }).catch(() => {});
   await prisma.kpiTarget.deleteMany({ where: { kpiDefinition: { scheme: { code: { startsWith: PREFIX } } } } }).catch(() => {});
@@ -81,16 +87,25 @@ async function ensurePermission(code: string, name: string) {
   });
 }
 
-async function ensureRole(code: string, name: string) {
+async function ensureRole(code: string, name: string, tenantId: string) {
   return prisma.role.upsert({
-    where: { code },
+    where: { tenantId_code: { tenantId, code } },
     update: { name },
-    create: { code, name },
+    create: tenantStamped({ code, name }),
   });
 }
 
-export async function seedScope(): Promise<ScopeSeed> {
-  await cleanupScopeSeed();
+/**
+ * Seed the fixture for one tenant. Runs inside an explicit tenant scope, so
+ * every write goes through the Gate D chokepoint and is stamped with that
+ * tenant — the seed itself exercises the production write path.
+ */
+export async function seedScope(tenantId: string = ODISHA_TENANT_ID): Promise<ScopeSeed> {
+  return withTenantContext(tenantId, () => seedScopeInner(tenantId));
+}
+
+async function seedScopeInner(tenantId: string): Promise<ScopeSeed> {
+  await cleanupScopeSeedInner();
 
   // Use the REAL permission codes — resolveDataScopeForUser checks effective.has("VIEW_ALL_DATA")
   // / "VIEW_ASSIGNED_DATA". We upsert the real permission rows (idempotent) and link them to
@@ -98,123 +113,123 @@ export async function seedScope(): Promise<ScopeSeed> {
   const permAll = await ensurePermission("VIEW_ALL_DATA", "View all data");
   const permAssigned = await ensurePermission("VIEW_ASSIGNED_DATA", "View assigned data");
   const permEnterFinancial = await ensurePermission("ENTER_FINANCIAL_DATA", "Enter financial data");
-  const roleFull = await ensureRole(`${PREFIX}ACS`, "Test ACS");
-  const roleAssigned = await ensureRole(`${PREFIX}NODAL`, "Test Nodal");
-  const roleFinance = await ensureRole(`${PREFIX}FINANCE`, "Test Finance Nodal");
+  const roleFull = await ensureRole(`${PREFIX}ACS`, "Test ACS", tenantId);
+  const roleAssigned = await ensureRole(`${PREFIX}NODAL`, "Test Nodal", tenantId);
+  const roleFinance = await ensureRole(`${PREFIX}FINANCE`, "Test Finance Nodal", tenantId);
 
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleFull.id, permissionId: permAll.id } },
     update: {},
-    create: { roleId: roleFull.id, permissionId: permAll.id },
+    create: tenantStamped({ roleId: roleFull.id, permissionId: permAll.id }),
   });
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleAssigned.id, permissionId: permAssigned.id } },
     update: {},
-    create: { roleId: roleAssigned.id, permissionId: permAssigned.id },
+    create: tenantStamped({ roleId: roleAssigned.id, permissionId: permAssigned.id }),
   });
   // Finance role: VIEW_ASSIGNED_DATA (restricted for KPI/action items) + ENTER_FINANCIAL_DATA
   // (full scope for finance reads, via resolveFinanceDataScope) — no SchemeAssignment rows at all.
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleFinance.id, permissionId: permAssigned.id } },
     update: {},
-    create: { roleId: roleFinance.id, permissionId: permAssigned.id },
+    create: tenantStamped({ roleId: roleFinance.id, permissionId: permAssigned.id }),
   });
   await prisma.rolePermission.upsert({
     where: { roleId_permissionId: { roleId: roleFinance.id, permissionId: permEnterFinancial.id } },
     update: {},
-    create: { roleId: roleFinance.id, permissionId: permEnterFinancial.id },
+    create: tenantStamped({ roleId: roleFinance.id, permissionId: permEnterFinancial.id }),
   });
 
   const fullUser = await prisma.user.create({
-    data: {
+    data: tenantStamped({
       email: `${PREFIX}full@hudd.test`,
       name: `${PREFIX} Full Access`,
       code: `${PREFIX}FULL`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleFull.id }] },
-    },
+      userRoles: { create: [{ roleId: roleFull.id, tenantId }] },
+    }),
   });
   const restrictedUser = await prisma.user.create({
-    data: {
+    data: tenantStamped({
       email: `${PREFIX}restricted@hudd.test`,
       name: `${PREFIX} Restricted`,
       code: `${PREFIX}RESTRICTED`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleAssigned.id }] },
-    },
+      userRoles: { create: [{ roleId: roleAssigned.id, tenantId }] },
+    }),
   });
   const financeUser = await prisma.user.create({
-    data: {
+    data: tenantStamped({
       email: `${PREFIX}finance@hudd.test`,
       name: `${PREFIX} Finance Nodal`,
       code: `${PREFIX}FINANCE`,
       isActive: true,
-      userRoles: { create: [{ roleId: roleFinance.id }] },
-    },
+      userRoles: { create: [{ roleId: roleFinance.id, tenantId }] },
+    }),
   });
 
   const fyStart = FY_START;
   const fyEnd = FY_END;
   const financialYear = await prisma.financialYear.create({
-    data: { label: `${PREFIX}FY`, startDate: fyStart, endDate: fyEnd },
+    data: tenantStamped({ label: `${PREFIX}FY`, startDate: fyStart, endDate: fyEnd }),
   });
 
   const schemeA = await prisma.scheme.create({
-    data: {
+    data: tenantStamped({
       code: `${PREFIX}SCH_A`,
       name: `${PREFIX} Scheme Alpha`,
       verticalName: "Test Vertical",
       sponsorshipType: SponsorshipType.STATE,
-    },
+    }),
   });
   const schemeB = await prisma.scheme.create({
-    data: {
+    data: tenantStamped({
       code: `${PREFIX}SCH_B`,
       name: `${PREFIX} Scheme Beta`,
       verticalName: "Test Vertical",
       sponsorshipType: SponsorshipType.STATE,
-    },
+    }),
   });
   const schemeC = await prisma.scheme.create({
-    data: {
+    data: tenantStamped({
       code: `${PREFIX}SCH_C`,
       name: `${PREFIX} Scheme Gamma`,
       verticalName: "Test Vertical",
       sponsorshipType: SponsorshipType.STATE,
-    },
+    }),
   });
 
   // Restricted user is assigned to schemeA only (dashboard_owner).
   await prisma.schemeAssignment.create({
-    data: {
+    data: tenantStamped({
       schemeId: schemeA.id,
       assignmentKind: SchemeAssignmentKind.dashboard_owner,
       userId: restrictedUser.id,
       sortOrder: 0,
-    },
+    }),
   });
 
   const meetingDate = MEETING_DATE;
   const meeting = await prisma.dashboardMeeting.create({
-    data: {
+    data: tenantStamped({
       meetingDate,
       title: `${PREFIX} Meeting`,
       financialYearId: financialYear.id,
       createdById: fullUser.id,
-    },
+    }),
   });
 
   for (const s of [schemeA, schemeB]) {
     await prisma.financeBudget.create({
-      data: {
+      data: tenantStamped({
         schemeId: s.id,
         subschemeId: null,
         financialYearId: financialYear.id,
         budgetEstimateCr: 100,
-      },
+      }),
     });
     await prisma.financeExpenditureSnapshot.create({
-      data: {
+      data: tenantStamped({
         schemeId: s.id,
         subschemeId: null,
         financialYearId: financialYear.id,
@@ -223,57 +238,57 @@ export async function seedScope(): Promise<ScopeSeed> {
         soExpenditureCr: 40,
         ifmsExpenditureCr: 50,
         workflowStatus: FinancialWorkflowStatus.submitted,
-      },
+      }),
     });
   }
 
   const kpiDefA = await prisma.kpiDefinition.create({
-    data: {
+    data: tenantStamped({
       schemeId: schemeA.id,
       category: KPICategory.STATE,
       description: `${PREFIX} KPI Alpha`,
       kpiType: KPIType.OUTPUT,
-      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: restrictedUser.id, sortOrder: 0 })] },
+    }),
   });
   const kpiDefB = await prisma.kpiDefinition.create({
-    data: {
+    data: tenantStamped({
       schemeId: schemeB.id,
       category: KPICategory.STATE,
       description: `${PREFIX} KPI Beta`,
       kpiType: KPIType.OUTPUT,
-      performers: { create: [{ userId: fullUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: fullUser.id, sortOrder: 0 })] },
+    }),
   });
   // No SchemeAssignment exists for schemeC — restrictedUser sees this only via
   // the direct performer relation, never via scheme-level assignment.
   const kpiDefC = await prisma.kpiDefinition.create({
-    data: {
+    data: tenantStamped({
       schemeId: schemeC.id,
       category: KPICategory.STATE,
       description: `${PREFIX} KPI Gamma`,
       kpiType: KPIType.OUTPUT,
-      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: restrictedUser.id, sortOrder: 0 })] },
+    }),
   });
   for (const def of [kpiDefA, kpiDefB, kpiDefC]) {
     const target = await prisma.kpiTarget.create({
-      data: { kpiDefinitionId: def.id, financialYearId: financialYear.id, denominatorValue: 100 },
+      data: tenantStamped({ kpiDefinitionId: def.id, financialYearId: financialYear.id, denominatorValue: 100 }),
     });
     await prisma.kpiMeasurement.create({
-      data: {
+      data: tenantStamped({
         kpiTargetId: target.id,
         meetingId: meeting.id,
         measuredAt: meetingDate,
         numeratorValue: 60,
         progressStatus: KPIProgressStatus.on_track,
         workflowStatus: KPIWorkflowStatus.reviewed,
-      },
+      }),
     });
   }
 
   const actionItemA = await prisma.actionItem.create({
-    data: {
+    data: tenantStamped({
       meetingId: meeting.id,
       schemeId: schemeA.id,
       itemType: ActionItemType.action_item,
@@ -283,11 +298,11 @@ export async function seedScope(): Promise<ScopeSeed> {
       dueDate: meetingDate,
       status: ActionItemStatus.OPEN,
       createdById: fullUser.id,
-      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: restrictedUser.id, sortOrder: 0 })] },
+    }),
   });
   const actionItemB = await prisma.actionItem.create({
-    data: {
+    data: tenantStamped({
       meetingId: meeting.id,
       schemeId: schemeB.id,
       itemType: ActionItemType.action_item,
@@ -297,13 +312,13 @@ export async function seedScope(): Promise<ScopeSeed> {
       dueDate: meetingDate,
       status: ActionItemStatus.OPEN,
       createdById: fullUser.id,
-      performers: { create: [{ userId: fullUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: fullUser.id, sortOrder: 0 })] },
+    }),
   });
   // No SchemeAssignment exists for schemeC — restrictedUser sees this only via
   // the direct performer relation, never via scheme-level assignment.
   const actionItemC = await prisma.actionItem.create({
-    data: {
+    data: tenantStamped({
       meetingId: meeting.id,
       schemeId: schemeC.id,
       itemType: ActionItemType.action_item,
@@ -313,8 +328,8 @@ export async function seedScope(): Promise<ScopeSeed> {
       dueDate: meetingDate,
       status: ActionItemStatus.OPEN,
       createdById: fullUser.id,
-      performers: { create: [{ userId: restrictedUser.id, sortOrder: 0 }] },
-    },
+      performers: { create: [tenantStamped({ userId: restrictedUser.id, sortOrder: 0 })] },
+    }),
   });
 
   return {
@@ -336,7 +351,11 @@ export async function seedScope(): Promise<ScopeSeed> {
 }
 
 /** Load a DbUserWithRbac (with the role/permission graph) for a seeded user. */
-export async function loadDbUserWithRbac(userId: string) {
+export async function loadDbUserWithRbac(userId: string, tenantId: string = ODISHA_TENANT_ID) {
+  return withTenantContext(tenantId, () => loadDbUserWithRbacInner(userId));
+}
+
+async function loadDbUserWithRbacInner(userId: string) {
   return prisma.user.findUniqueOrThrow({
     where: { id: userId },
     include: {
