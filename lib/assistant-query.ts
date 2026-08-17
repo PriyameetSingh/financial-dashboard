@@ -9,6 +9,7 @@ import {
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
 import type { DataScope } from "@/lib/data-scope";
 import { actionItemWhere, kpiDefinitionWhere } from "@/lib/data-access/scope-where";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -31,9 +32,9 @@ function mapKpiWorkflow(workflowStatus?: string | null): string {
 async function resolveFy(label?: string | null) {
   let fy = label
     ? await prisma.financialYear.findFirst({ where: { label } })
-    : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    : await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
   if (!fy && label) {
-    fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
   }
   return fy;
 }
@@ -95,7 +96,7 @@ async function answerFinancial(fyLabel?: string | null): Promise<string> {
 }
 
 async function answerKpi(scope: DataScope): Promise<string> {
-  const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+  const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
   if (!fy) return "No financial year configured — KPI targets are unavailable.";
   const definitions = await prisma.kpiDefinition.findMany({
     where: {

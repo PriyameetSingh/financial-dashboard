@@ -6,6 +6,7 @@ import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server
 import { resolveDataScope } from "@/lib/data-scope";
 import { financeBudgetWhere, financeSnapshotWhere, schemeWhere, userWhere } from "@/lib/data-access/scope-where";
 import { UserRole } from "@/types";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -156,7 +157,7 @@ export async function GET(request: NextRequest) {
     : schemeWhere(scope);
 
   const fy = await prisma.financialYear.findFirst({
-    orderBy: { endDate: "desc" },
+    orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
   });
 
   const [schemesRaw, reference, budgets, snapshots] = await Promise.all([

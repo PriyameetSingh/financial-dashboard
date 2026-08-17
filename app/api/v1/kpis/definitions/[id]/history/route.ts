@@ -47,7 +47,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
             },
           },
         },
-        orderBy: { financialYear: { endDate: "desc" } },
+        // Same tie-break as CURRENT_FINANCIAL_YEAR_ORDER, expressed through the
+        // relation: two targets on years that share an endDate must not swap
+        // places between requests.
+        orderBy: [
+          { financialYear: { endDate: "desc" } },
+          { financialYear: { createdAt: "desc" } },
+          { financialYearId: "desc" },
+        ],
       },
     },
   });

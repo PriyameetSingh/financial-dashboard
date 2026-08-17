@@ -26,15 +26,84 @@
  *     'http://localhost:3000/api/dev/session?tenant=odisha'
  *   # With NEXT_PUBLIC_BASE_PATH=/hudd-dashboard, prefix the path:
  *   #   http://localhost:3000/hudd-dashboard/api/dev/session?tenant=odisha
+ *   # A specific person, when the default is not who you want:
+ *   #   ...?tenant=odisha&user=finance.desk@hudd.bootstrap
+ *
+ * Without `?user=`, the session is minted for a TENANT ADMINISTRATOR — see
+ * `findDefaultUser` for why that is the default rather than "whoever was seeded
+ * first".
  */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { withTenantContext } from "@/lib/tenant-context";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
 
 export const runtime = "nodejs";
+
+/** The permission that marks a user as able to administer their own tenant. */
+const TENANT_ADMIN_PERMISSION = "MANAGE_TENANT_CONFIG";
+
+/** Selected columns — everything the minted token needs, and nothing else. */
+const USER_FIELDS = { code: true, email: true, name: true } as const;
+
+/**
+ * Total order over users. `createdAt` alone is not one: two users seeded in the
+ * same script share a timestamp often enough to matter, and the resolution is
+ * milliseconds. `id` is unique, so this picks the same person every time.
+ */
+const USER_ORDER: Prisma.UserOrderByWithRelationInput[] = [{ createdAt: "asc" }, { id: "asc" }];
+
+/**
+ * Users who would actually pass `requirePermission(MANAGE_TENANT_CONFIG)`:
+ * granted through a role or an explicit allow override, and not taken away by a
+ * deny override. Mirrors how lib/server-rbac.ts resolves a permission, so this
+ * cannot drift into offering a session that the RBAC layer then refuses.
+ */
+const TENANT_ADMIN_WHERE: Prisma.UserWhereInput = {
+  OR: [
+    {
+      userRoles: {
+        some: { role: { rolePermissions: { some: { permission: { code: TENANT_ADMIN_PERMISSION } } } } },
+      },
+    },
+    { permissionOverrides: { some: { effect: "allow", permission: { code: TENANT_ADMIN_PERMISSION } } } },
+  ],
+  NOT: {
+    permissionOverrides: { some: { effect: "deny", permission: { code: TENANT_ADMIN_PERMISSION } } },
+  },
+};
+
+/**
+ * Who a session is minted for when the caller does not name anyone.
+ *
+ * This used to be "the oldest user in the tenant", which is not a choice at all
+ * — it is whatever the seed scripts happened to insert first. That held only by
+ * accident until the finance-desk user was added to the Odisha seed (35ad9dc):
+ * `db:seed` creates it, `db:seed:roles` creates the TASU admin afterwards, so on
+ * every FRESHLY seeded database the default session became a finance officer
+ * holding no administrative permission, and every tenant-admin surface answered
+ * 403. Databases seeded before that commit kept working, which is exactly what
+ * made it hard to see.
+ *
+ * A tenant administrator is the useful default: it can reach the admin surfaces
+ * AND everything below them, so one default serves both the smoke leg and a
+ * developer poking at the app. Anyone else is still one `?user=` away.
+ */
+async function findDefaultUser() {
+  const admin = await prisma.user.findFirst({
+    where: TENANT_ADMIN_WHERE,
+    orderBy: USER_ORDER,
+    select: USER_FIELDS,
+  });
+  if (admin) return admin;
+
+  // A tenant with no administrator at all is still worth a session — an
+  // onboarding-in-progress workspace, say. Deterministic, just not privileged.
+  return prisma.user.findFirst({ orderBy: USER_ORDER, select: USER_FIELDS });
+}
 
 function devAuthEnabled(): boolean {
   return process.env.NODE_ENV !== "production" && process.env.DEV_AUTH_ENABLED === "1";
@@ -75,13 +144,18 @@ export async function GET(request: NextRequest) {
   // conservative, so the wording here stays indirect.)
   const wanted = request.nextUrl.searchParams.get("user");
   const user = await withTenantContext(tenant.id, () =>
-    prisma.user.findFirst({
-      where: wanted
-        ? { OR: [{ code: { equals: wanted, mode: "insensitive" } }, { email: { equals: wanted, mode: "insensitive" } }] }
-        : {},
-      orderBy: { createdAt: "asc" },
-      select: { code: true, email: true, name: true },
-    }),
+    wanted
+      ? prisma.user.findFirst({
+          where: {
+            OR: [
+              { code: { equals: wanted, mode: "insensitive" } },
+              { email: { equals: wanted, mode: "insensitive" } },
+            ],
+          },
+          orderBy: USER_ORDER,
+          select: USER_FIELDS,
+        })
+      : findDefaultUser(),
   );
   if (!user) {
     return NextResponse.json(

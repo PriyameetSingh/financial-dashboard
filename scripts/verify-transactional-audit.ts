@@ -20,6 +20,7 @@ import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { Prisma } from "@prisma/client";
 import { prismaUnscoped as prisma } from "../lib/prisma";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "../lib/financial-year-order";
 import type { TenantTransactionClient } from "../lib/prisma";
 
 /** This verification script runs outside any tenant scope by design (it audits
@@ -36,7 +37,7 @@ async function fixture() {
   if (!actor) throw new Error("No active user found in test DB for fixture");
   const scheme = await prisma.scheme.findFirst({ select: { id: true, tenantId: true } });
   if (!scheme) throw new Error("No scheme found in test DB for fixture");
-  const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" }, select: { id: true } });
+  const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER, select: { id: true } });
   if (!fy) throw new Error("No financial year found in test DB for fixture");
   const role = await prisma.role.findFirst({ select: { id: true } });
   if (!role) throw new Error("No role found in test DB for fixture");

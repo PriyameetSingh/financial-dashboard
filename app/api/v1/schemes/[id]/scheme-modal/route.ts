@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/financial-budget-entries";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -135,7 +136,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   }
 
   const fy = await prisma.financialYear.findFirst({
-    orderBy: { endDate: "desc" },
+    orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
   });
 
   const fyLabel = fy?.label ?? null;

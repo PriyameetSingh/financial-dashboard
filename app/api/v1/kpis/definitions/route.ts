@@ -18,6 +18,7 @@ import { resolveDataScope } from "@/lib/data-scope";
 import { kpiDefinitionWhere } from "@/lib/data-access/scope-where";
 import { NotificationService } from "@/lib/services/NotificationService";
 import { ActionItemPriority } from "@prisma/client";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     const archivedParam = searchParams.get("archived");
     const archivedFilter = archivedParam === "true";
 
-    const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
 
     const latestMeeting = await prisma.dashboardMeeting.findFirst({
       orderBy: { meetingDate: "desc" },
@@ -377,7 +378,7 @@ export async function POST(request: NextRequest) {
 
     const auditContext = getAuditRequestContext(request);
 
-    const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
 
     const monitoringLevel = parseMonitoringLevel(body.monitoringLevel);
 

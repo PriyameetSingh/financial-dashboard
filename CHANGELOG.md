@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dashboard could report figures for the wrong financial year**: When an office had two financial years recorded that finish on the same date — which happens when a year is re-entered to correct a mistake, leaving the original in place — the dashboard had no settled rule for deciding which of the two was the current one. Budget and expenditure totals, the year shown on the financial screens, KPI targets and report packs could each land on a different one of the two, and the same screen could answer differently from one visit to the next. The dashboard now always treats the most recently entered of the tied years as the current one, on every screen, so the figures agree with each other and stay put. Offices with no duplicated year — which is nearly all of them — see no change at all.
+
 ### Changed
 - Officers can now open the dashboard at the website's front door (for example `http://odisha.airawat.test:3000/`) instead of only under the old `/hudd-dashboard` path. Administrators who still host the dashboard under `/hudd-dashboard` keep that address by setting one configuration value before starting the application.
 

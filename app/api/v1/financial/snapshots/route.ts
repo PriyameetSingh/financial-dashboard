@@ -4,6 +4,7 @@ import { prisma, tenantStamped } from "@/lib/prisma";
 import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const fy = body.financialYearLabel
       ? await prisma.financialYear.findFirst({ where: { label: body.financialYearLabel } })
-      : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+      : await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
 
     if (!fy) {
       return NextResponse.json({ detail: "Financial year not found" }, { status: 404 });

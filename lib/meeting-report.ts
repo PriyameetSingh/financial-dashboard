@@ -23,6 +23,7 @@ import {
   kpiDefinitionWhere,
   schemeWhere,
 } from "@/lib/data-access/scope-where";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -153,7 +154,7 @@ async function resolveFinancialYear(meeting: {
   const ranged =
     (await prisma.financialYear.findFirst({
       where: { startDate: { lte: md }, endDate: { gte: md } },
-    })) ?? (await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } }));
+    })) ?? (await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER }));
   return ranged;
 }
 
