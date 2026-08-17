@@ -14,7 +14,15 @@
  * Note this is a PLATFORM env var, not tenant config: it does not belong in
  * `lib/tenant-config/registry.ts`, because it is not a property of any tenant.
  */
+import { devPathRoutingEnabled } from "@/lib/dev-path-routing";
 import { withNextBasePath } from "@/lib/next-base-path";
+
+/**
+ * The slug `prisma/seed_demo_tenant.js` writes for the demonstration workspace
+ * (Suryapur Development Authority). Only used to build the local demo link —
+ * production still addresses the demo by its own host, via `AIRAWAT_DEMO_URL`.
+ */
+const DEMO_TENANT_SLUG = "demo";
 
 /** Only absolute http(s) URLs are accepted; anything else is ignored. */
 function externalUrl(value: string | undefined): string | null {
@@ -39,9 +47,14 @@ export type LandingLinks = {
 
 export function landingLinks(): LandingLinks {
   const demo = externalUrl(process.env.AIRAWAT_DEMO_URL);
+  // Locally there are no per-tenant hosts, so the demo is a path entry point:
+  // `/demo` mints a sandboxed session for the demonstration tenant and lands in
+  // its dashboard. An explicitly configured AIRAWAT_DEMO_URL still wins — a
+  // developer who set one meant it.
+  const localDemo = devPathRoutingEnabled() ? withNextBasePath(`/${DEMO_TENANT_SLUG}`) : null;
   return {
     platform: withNextBasePath("/platform"),
-    demo: demo ?? withNextBasePath("/login"),
+    demo: demo ?? localDemo ?? withNextBasePath("/login"),
     demoIsExternal: demo !== null,
     onboarding: withNextBasePath("/onboarding"),
     signIn: withNextBasePath("/login"),

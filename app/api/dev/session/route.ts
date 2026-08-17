@@ -37,6 +37,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import type { Prisma } from "@prisma/client";
+import { withNextBasePath } from "@/lib/next-base-path";
 import { prisma } from "@/lib/prisma";
 import { withTenantContext } from "@/lib/tenant-context";
 import { findActiveTenant } from "@/lib/tenant-resolve-db";
@@ -183,12 +184,23 @@ export async function GET(request: NextRequest) {
     maxAge: 60 * 60,
   });
 
-  const response = NextResponse.json({
-    minted: true,
-    tenant: { id: tenant.id, slug: tenant.slug },
-    user: { code: user.code, email: user.email },
-    cookie: cookieName,
-  });
+  // `?redirect=` is how the dev path-routing branch in proxy.ts hands off: it
+  // sends `/{slug}/rest` here to be minted and then continues to `/rest` with
+  // the cookie already set. Only a same-origin ABSOLUTE PATH is accepted —
+  // never a full URL — so this cannot be turned into an open redirect by
+  // anyone who finds the endpoint on a developer's machine.
+  const redirectTo = request.nextUrl.searchParams.get("redirect");
+  const safeRedirect =
+    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : null;
+
+  const response = safeRedirect
+    ? NextResponse.redirect(new URL(withNextBasePath(safeRedirect), request.nextUrl.origin))
+    : NextResponse.json({
+        minted: true,
+        tenant: { id: tenant.id, slug: tenant.slug },
+        user: { code: user.code, email: user.email },
+        cookie: cookieName,
+      });
   response.cookies.set(cookieName, token, {
     httpOnly: true,
     sameSite: "lax",
