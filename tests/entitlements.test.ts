@@ -39,6 +39,7 @@ import {
   resolveRouteModule,
 } from "@/lib/entitlements/route-modules";
 import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
+import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { GLOBAL_MODELS, TENANT_SCOPED_MODELS } from "@/lib/tenant-scope-registry";
 import { resolveDataScopeForUser } from "@/lib/data-scope";
 import { getEffectivePermissionCodesFromUserId } from "@/lib/server-rbac";
@@ -100,17 +101,18 @@ describe("Route → module map", () => {
 
   it("normalises basePath, trailing slash and query before matching", () => {
     for (const p of [
-      "/hudd-dashboard/api/v1/kpis",
+      withNextBasePath("/api/v1/kpis"),
       "/api/v1/kpis/",
       "/api/v1/kpis?foo=1",
-      "/hudd-dashboard/api/v1/kpis/",
+      `${withNextBasePath("/api/v1/kpis")}/`,
     ]) {
       expect(normalizeRoutePath(p)).toBe("/api/v1/kpis");
       expect(resolveRouteModule(p)?.module).toBe("MOD-KPI");
     }
     // The app root survives normalisation as "/" rather than collapsing to "".
-    expect(normalizeRoutePath("/hudd-dashboard")).toBe("/");
-    expect(resolveRouteModule("/hudd-dashboard")?.module).toBe("MOD-AUTH");
+    const root = NEXTJS_BASE_PATH || "/";
+    expect(normalizeRoutePath(root)).toBe("/");
+    expect(resolveRouteModule(root)?.module).toBe("MOD-AUTH");
   });
 
   it("matches on segment boundaries, not raw string prefixes", () => {

@@ -1,10 +1,23 @@
 /**
  * Single source of truth for Next.js `basePath` (must match `next.config.ts`).
- * Env vars are not always present at runtime on the server, so we hard-code it.
+ *
+ * Derived from `NEXT_PUBLIC_BASE_PATH` so a deployment can sit at the domain
+ * root (empty / unset — the default) or under the historical Odisha sub-path
+ * (`/hudd-dashboard`) without a code change. Next inlines `NEXT_PUBLIC_*` at
+ * `next build` / `next dev` start, so this is available in every runtime that
+ * the previous hardcoded constant was.
+ *
  * Used by Auth.js setup and the auth route handler to re-add the basePath that
  * Next.js 16 strips from `req.url` inside App Router route handlers.
  */
-export const NEXTJS_BASE_PATH = "/hudd-dashboard" as const;
+export function normalizeNextBasePath(raw: string | undefined | null): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed || trimmed === "/") return "";
+  const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return withSlash.replace(/\/+$/, "");
+}
+
+export const NEXTJS_BASE_PATH = normalizeNextBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
 
 /**
  * Public pathname including Next.js `basePath`.

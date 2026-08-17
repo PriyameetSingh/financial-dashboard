@@ -52,12 +52,13 @@ import { createRequire } from "node:module";
 import { setTimeout as sleep } from "node:timers/promises";
 import { chromium } from "playwright-core";
 import { PrismaClient } from "@prisma/client";
+import { nextBasePath } from "./lib/next-base-path.mjs";
 
 const require = createRequire(import.meta.url);
 
 const PORT = Number(process.env.A11Y_PORT ?? 8798);
 const HOST = "odisha.airawat.test";
-const BASE_PATH = "/hudd-dashboard";
+const BASE_PATH = nextBasePath();
 const WATCHDOG_MS = Number(process.env.A11Y_WATCHDOG_MS ?? 600_000);
 
 /** The browser this environment preinstalls. `playwright-core` ships none. */

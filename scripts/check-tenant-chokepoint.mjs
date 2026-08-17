@@ -22,7 +22,7 @@ import { join, relative } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", ".cursor", ".continue"]);
+const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", ".cursor", ".continue", ".docker-data"]);
 const CODE_EXTS = new Set([".ts", ".tsx", ".js", ".cjs", ".mjs", ".jsx"]);
 
 /** Files/prefixes allowed to import the unscoped client. */

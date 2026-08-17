@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
 import { NEXTJS_BASE_PATH } from "./lib/next-base-path";
 
+/**
+ * `basePath` is the supported way to host under a sub-path (Next.js docs:
+ * do not use `assetPrefix` for that). Empty `NEXT_PUBLIC_BASE_PATH` → app at
+ * `/`. Set `NEXT_PUBLIC_BASE_PATH=/hudd-dashboard` at `next dev` / `next build`
+ * to restore the historical Odisha nginx location. `assetPrefix` stays unset:
+ * Next already serves `/_next/*` under `basePath` when one is configured.
+ */
 const nextConfig: NextConfig = {
   /* config options here */
-  basePath: NEXTJS_BASE_PATH,
+  ...(NEXTJS_BASE_PATH ? { basePath: NEXTJS_BASE_PATH } : {}),
   trailingSlash: false,
   /**
    * @react-pdf/renderer is ESM-only and must not be bundled by webpack/turbopack.

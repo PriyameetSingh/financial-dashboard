@@ -24,6 +24,7 @@ import { prismaUnscoped } from "@/lib/prisma";
 import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
 import { TENANT_HEADER, TENANT_ID_HEADER } from "@/lib/tenant-config/resolution";
 import { verifyTenantSession, isTenantSessionRejected } from "@/lib/tenant-session";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 const B_SLUG = "sessiontenant-b";
 const A_HOST = "odisha.airawat.test";
@@ -32,7 +33,7 @@ const B_HOST = `${B_SLUG}.airawat.test`;
 let tenantBId: string;
 
 function request(host: string, path: string): NextRequest {
-  return new NextRequest(new URL(`https://${host}${path}`), {
+  return new NextRequest(new URL(`https://${host}${withNextBasePath(path)}`), {
     headers: { host, "x-forwarded-proto": "https" },
   });
 }
@@ -93,7 +94,7 @@ afterAll(async () => {
 describe("Cross-tenant session replay is rejected (both directions)", () => {
   it("a session minted for Odisha, replayed against tenant B's host, is rejected on the API surface", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request(B_HOST, "/api/v1/schemes"));
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ detail: "tenant_mismatch" });
@@ -104,7 +105,7 @@ describe("Cross-tenant session replay is rejected (both directions)", () => {
 
   it("a session minted for tenant B, replayed against Odisha's host, is rejected", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(A_HOST, "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request(A_HOST, "/api/v1/schemes"));
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ detail: "tenant_mismatch" });
@@ -113,11 +114,11 @@ describe("Cross-tenant session replay is rejected (both directions)", () => {
 
   it("a replayed session on a PAGE route is bounced to login and its cookies cleared", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/dashboard"));
+    const res = await proxy(request(B_HOST, "/dashboard"));
 
     expect(res.status).toBe(307);
     const location = new URL(res.headers.get("location")!);
-    expect(location.pathname).toBe("/hudd-dashboard/login");
+    expect(location.pathname).toBe(withNextBasePath("/login"));
     expect(location.searchParams.get("error")).toBe("tenant_mismatch");
     // Session cookies are expired so the replay cannot simply be retried.
     const setCookie = res.headers.get("set-cookie") ?? "";
@@ -128,7 +129,7 @@ describe("Cross-tenant session replay is rejected (both directions)", () => {
 describe("Same-tenant sessions still work", () => {
   it("an Odisha session on Odisha's host is forwarded with the tenant header set", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const res = await proxy(request(A_HOST, "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request(A_HOST, "/api/v1/schemes"));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
@@ -137,7 +138,7 @@ describe("Same-tenant sessions still work", () => {
 
   it("a tenant B session on tenant B's host is forwarded", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request(B_HOST, "/api/v1/schemes"));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
@@ -161,7 +162,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
   const FORGED_ID = "00000000-0000-4000-8000-0000000000ff";
 
   function forgedRequest(host: string, path: string, headers: Record<string, string>) {
-    return new NextRequest(new URL(`https://${host}${path}`), {
+    return new NextRequest(new URL(`https://${host}${withNextBasePath(path)}`), {
       headers: { host, "x-forwarded-proto": "https", ...headers },
     });
   }
@@ -169,7 +170,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
   it("a forged tenant-id header is replaced by the host-resolved tenant", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_ID_HEADER]: FORGED_ID }),
+      forgedRequest(A_HOST, "/api/v1/schemes", { [TENANT_ID_HEADER]: FORGED_ID }),
     );
 
     expect(res.status).toBe(200);
@@ -182,7 +183,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
     // The strongest form: a valid Odisha session, forging tenant B's REAL id.
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_ID_HEADER]: tenantBId }),
+      forgedRequest(A_HOST, "/api/v1/schemes", { [TENANT_ID_HEADER]: tenantBId }),
     );
 
     expect(res.status).toBe(200);
@@ -193,7 +194,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
   it("a forged tenant SLUG header is replaced by the host-derived slug (Phase 2, still true)", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", { [TENANT_HEADER]: B_SLUG }),
+      forgedRequest(A_HOST, "/api/v1/schemes", { [TENANT_HEADER]: B_SLUG }),
     );
 
     expect(res.status).toBe(200);
@@ -203,7 +204,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
   it("forging BOTH headers at once still resolves to the host's tenant", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/api/v1/schemes", {
+      forgedRequest(A_HOST, "/api/v1/schemes", {
         [TENANT_HEADER]: B_SLUG,
         [TENANT_ID_HEADER]: tenantBId,
       }),
@@ -227,7 +228,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
    */
   it("a forged id is stripped on a forwarded path that never resolves a tenant (/api/health)", async () => {
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/api/health", { [TENANT_ID_HEADER]: FORGED_ID }),
+      forgedRequest(A_HOST, "/api/health", { [TENANT_ID_HEADER]: FORGED_ID }),
     );
 
     expect(res.headers.get("x-middleware-next")).toBe("1"); // forwarded, not denied
@@ -236,7 +237,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
 
   it("a forged id is stripped on a public static path", async () => {
     const res = await proxy(
-      forgedRequest(A_HOST, "/hudd-dashboard/images/logo.svg", { [TENANT_ID_HEADER]: FORGED_ID }),
+      forgedRequest(A_HOST, "/images/logo.svg", { [TENANT_ID_HEADER]: FORGED_ID }),
     );
 
     expect(res.headers.get("x-middleware-next")).toBe("1");
@@ -248,7 +249,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
     // Otherwise a forged header would be the only tenant signal left.
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
     const res = await proxy(
-      forgedRequest("unknown-tenant.airawat.test", "/hudd-dashboard/api/v1/schemes", {
+      forgedRequest("unknown-tenant.airawat.test", "/api/v1/schemes", {
         [TENANT_ID_HEADER]: ODISHA_TENANT_ID,
       }),
     );
@@ -268,7 +269,7 @@ describe("Client-supplied tenant headers cannot forge scope", () => {
 describe("Entitlement gate (Phase 3) at the real proxy", () => {
   it("a DISABLED module 404s on the API surface, for a fully valid session", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/notifications"));
+    const res = await proxy(request(B_HOST, "/api/v1/notifications"));
 
     // The session is valid and bound to the right tenant — this is not a 401.
     expect(res.status).toBe(404);
@@ -277,7 +278,7 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
 
   it("a DISABLED module 404s by direct URL on the page surface — deny, not hide", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/admin/notifications"));
+    const res = await proxy(request(B_HOST, "/admin/notifications"));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("content-type")).toContain("text/html");
@@ -287,7 +288,7 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
 
   it("an ENABLED module is forwarded normally", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/kpis/definitions"));
+    const res = await proxy(request(B_HOST, "/api/v1/kpis/definitions"));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
@@ -296,7 +297,7 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
   it("the SAME path is allowed for a tenant that has the module — the gate is per-tenant", async () => {
     // Odisha is all-on by the Phase 3 backfill.
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const res = await proxy(request(A_HOST, "/hudd-dashboard/api/v1/notifications"));
+    const res = await proxy(request(A_HOST, "/api/v1/notifications"));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
@@ -311,13 +312,13 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
     });
     try {
       getTokenMock.mockResolvedValue(tokenFor(bare.id));
-      const ok = await proxy(request("sessiontenant-bare.airawat.test", "/hudd-dashboard/api/v1/rbac/me"));
+      const ok = await proxy(request("sessiontenant-bare.airawat.test", "/api/v1/rbac/me"));
       expect(ok.status).toBe(200);
       expect(ok.headers.get("x-middleware-next")).toBe("1");
 
       // ...while every gated module is denied for that same tenant.
       const denied = await proxy(
-        request("sessiontenant-bare.airawat.test", "/hudd-dashboard/api/v1/kpis/definitions"),
+        request("sessiontenant-bare.airawat.test", "/api/v1/kpis/definitions"),
       );
       expect(denied.status).toBe(404);
     } finally {
@@ -327,7 +328,7 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
 
   it("an unmapped path fails closed even with a valid session", async () => {
     getTokenMock.mockResolvedValue(tokenFor(tenantBId));
-    const res = await proxy(request(B_HOST, "/hudd-dashboard/api/v1/not-a-real-endpoint"));
+    const res = await proxy(request(B_HOST, "/api/v1/not-a-real-endpoint"));
     expect(res.status).toBe(404);
   });
 });
@@ -335,7 +336,7 @@ describe("Entitlement gate (Phase 3) at the real proxy", () => {
 describe("Tokens that are not bound to a tenant", () => {
   it("a pre-Phase-2 token with no tenant claim is rejected, not trusted", async () => {
     getTokenMock.mockResolvedValue(tokenFor(undefined));
-    const res = await proxy(request(A_HOST, "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request(A_HOST, "/api/v1/schemes"));
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ detail: "session_not_bound_to_tenant" });
@@ -345,7 +346,7 @@ describe("Tokens that are not bound to a tenant", () => {
     // Two tenants are active, so an unresolvable host must deny rather than
     // fall back to a default tenant (plan §7c transition rule).
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const res = await proxy(request("unknown-tenant.airawat.test", "/hudd-dashboard/api/v1/schemes"));
+    const res = await proxy(request("unknown-tenant.airawat.test", "/api/v1/schemes"));
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ detail: "tenant_not_resolved" });
@@ -353,7 +354,7 @@ describe("Tokens that are not bound to a tenant", () => {
 
   it("a client-supplied tenant header cannot forge the tenant", async () => {
     getTokenMock.mockResolvedValue(tokenFor(ODISHA_TENANT_ID));
-    const req = new NextRequest(new URL(`https://${B_HOST}/hudd-dashboard/api/v1/schemes`), {
+    const req = new NextRequest(new URL(`https://${B_HOST}${withNextBasePath("/api/v1/schemes")}`), {
       headers: { host: B_HOST, "x-forwarded-proto": "https", [TENANT_HEADER]: "odisha" },
     });
     const res = await proxy(req);

@@ -8,7 +8,7 @@
  * production defects have now lived exactly there:
  *
  *   1. The app root never entered proxy.ts at all (the matcher's trailing group
- *      is required, so `/hudd-dashboard` matched nothing) — it bypassed the
+ *      is required, so the bare `{basePath}` / `/` matched nothing) — it bypassed the
  *      Phase 2 tenant-session binding.
  *   2. The request-scoped holder is backed by React `cache()`, which does not
  *      memoise outside a render scope. In Route Handlers the resolver primed a
@@ -40,6 +40,7 @@
  *
  * Run: node scripts/check-http-smoke.mjs
  */
+import { nextBasePath } from "./lib/next-base-path.mjs";
 import { spawn } from "node:child_process";
 import { request } from "node:http";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -48,7 +49,7 @@ import { PrismaClient } from "@prisma/client";
 import { extractPdfText } from "./lib/pdf-text.mjs";
 
 const PORT = Number(process.env.SMOKE_PORT ?? 8799);
-const BASE = `http://127.0.0.1:${PORT}/hudd-dashboard`;
+const BASE_PATH = nextBasePath();
 const ODISHA_HOST = "odisha.airawat.test";
 const DEMO_HOST = "demo.airawat.test";
 /** Disabled for the demo tenant by prisma/seed_demo_tenant.js. */
@@ -169,6 +170,11 @@ async function get(path, opts = {}) {
   throw lastError;
 }
 
+function requestPath(path) {
+  if (!path || path === "/") return BASE_PATH || "/";
+  return `${BASE_PATH}${path}`;
+}
+
 function getOnce(path, { host, cookie, method = "GET", json } = {}) {
   const headers = { host: host ?? ODISHA_HOST };
   if (cookie) headers.cookie = cookie;
@@ -180,7 +186,7 @@ function getOnce(path, { host, cookie, method = "GET", json } = {}) {
   }
   return new Promise((resolve, reject) => {
     const req = request(
-      { hostname: "127.0.0.1", port: PORT, path: `/hudd-dashboard${path}`, method, headers },
+      { hostname: "127.0.0.1", port: PORT, path: requestPath(path), method, headers },
       (res) => {
         // latin1, not utf8: PDF/XLSX bodies are binary, and latin1 keeps
         // every byte addressable so embedded ASCII text stays greppable.

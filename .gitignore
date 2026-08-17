@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.test.example
 
 # vercel
 .vercel
@@ -43,6 +44,9 @@ next-env.d.ts
 
 # local file uploads
 /data/
+
+# Docker bind-mount data (dev/demo compose)
+.docker-data/
 
 # Accessibility-leg screenshots — a review artefact, regenerated on every run.
 .a11y-screenshots/
