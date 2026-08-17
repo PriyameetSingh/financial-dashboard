@@ -7,6 +7,7 @@ import type { DbUserWithRbac } from "@/lib/server-rbac";
 import type { DataScope } from "@/lib/data-scope";
 import { actionItemWhere, financeSnapshotWhere } from "@/lib/data-access/scope-where";
 import type { FinancialEntry } from "@/types";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export type CommandCentreSchemeSummary = {
   id: string;
@@ -141,7 +142,7 @@ export async function getCommandCentreDashboard(
   options?: CommandCentreDashboardOptions,
 ): Promise<CommandCentreDashboard> {
   const [fyRow, verticalRows] = await Promise.all([
-    prisma.financialYear.findFirst({ orderBy: { endDate: "desc" }, select: { id: true } }),
+    prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER, select: { id: true } }),
     prisma.vertical.findMany({ select: { name: true } }),
   ]);
 

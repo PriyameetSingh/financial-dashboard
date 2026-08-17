@@ -18,6 +18,7 @@ import {
   schemeWhere,
 } from "@/lib/data-access/scope-where";
 import type { FinancialEntry, FinanceSummaryRow } from "@/types";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -124,7 +125,7 @@ export async function getFinancialBudgetEntriesOverview(
   const [priority, fy] = await Promise.all([
     getDashboardPrioritySchemeIds(resolved?.id, roleIds),
     prisma.financialYear.findFirst({
-      orderBy: { endDate: "desc" },
+      orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
     }),
   ]);
 

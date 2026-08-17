@@ -4,6 +4,7 @@ import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { revalidateFinancialCaches } from "@/lib/cached-financial-metadata";
 import { ensureFyBudgetAllocationWithLines } from "@/lib/server/ensure-fy-budget-allocation";
 import { requireAnyPermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,7 @@ export async function GET() {
     await requireAnyPermissionAndDbUser(PERM);
 
     const rows = await prisma.financialYear.findMany({
-      orderBy: { endDate: "desc" },
+      orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
       select: { id: true, label: true, startDate: true, endDate: true, createdAt: true, updatedAt: true },
     });
     const maxEnd = rows.reduce((m, r) => (r.endDate > m ? r.endDate : m), rows[0]?.endDate ?? new Date(0));

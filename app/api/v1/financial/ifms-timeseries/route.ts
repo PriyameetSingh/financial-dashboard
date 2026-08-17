@@ -3,6 +3,7 @@ import { asOfDateToYmd, getCachedIfmsTimeseriesGroupBy } from "@/lib/cached-fina
 import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/lib/financial-budget-entries";
 import { requireAnyPermission, toAuthErrorResponse } from "@/lib/server-rbac";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -16,9 +17,9 @@ export async function GET(request: NextRequest) {
 
     let fy = fyLabel
       ? await prisma.financialYear.findFirst({ where: { label: fyLabel } })
-      : await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+      : await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
     if (!fy && fyLabel) {
-      fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+      fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
     }
     if (!fy) {
       return NextResponse.json({ financialYearLabel: null, points: [] });

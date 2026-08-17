@@ -5,6 +5,7 @@ import { getAuditRequestContext, logAudit } from "@/lib/audit";
 import { requirePermissionAndDbUser, toAuthErrorResponse } from "@/lib/server-rbac";
 import { NotificationService } from "@/lib/services/NotificationService";
 import { ActionItemPriority } from "@prisma/client";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -45,7 +46,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const { id } = await ctx.params;
     const body = (await request.json()) as PatchBody;
 
-    const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
 
     const existing = await prisma.kpiDefinition.findUnique({
       where: { id },

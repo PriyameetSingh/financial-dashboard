@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDbUserBySession, toAuthErrorResponse } from "@/lib/server-rbac";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export async function GET() {
 
     console.log("API: Fetching financial years from database");
     const rows = await prisma.financialYear.findMany({
-      orderBy: { endDate: "desc" },
+      orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
       select: { id: true, label: true, startDate: true, endDate: true },
     });
     

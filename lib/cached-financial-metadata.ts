@@ -16,6 +16,7 @@
  */
 import { revalidateTag, unstable_cache } from "next/cache";
 import { prismaUnscoped, requireTenantScope } from "@/lib/prisma";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 /** `unstable_cache` JSON round-trips Prisma `Date` fields as ISO strings — normalize for API output. */
 export function asOfDateToYmd(asOfDate: Date | string): string {
@@ -51,7 +52,7 @@ export async function getActiveFinancialYearCached() {
     async () =>
       prismaUnscoped.financialYear.findFirst({
         where: { tenantId },
-        orderBy: { endDate: "desc" },
+        orderBy: CURRENT_FINANCIAL_YEAR_ORDER,
         select: { id: true, label: true },
       }),
     ["cached-active-financial-year", tenantId],

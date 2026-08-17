@@ -4,6 +4,7 @@ import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
 import { FINANCE_YEAR_BUDGET_CATEGORY_ORDER } from "@/lib/finance-year-budget-allocation";
 import type { DataScope } from "@/lib/data-scope";
+import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
 
 /** Agent runs are admin-only (MANAGE_PERMISSIONS) and produce system-wide insights. */
 const AGENT_FULL_SCOPE: DataScope = { kind: "full" };
@@ -455,7 +456,7 @@ export async function runAgentWorkflow(modeOverride?: string): Promise<{ success
     }
 
     // 2. Fetch the latest financial year
-    const fy = await prisma.financialYear.findFirst({ orderBy: { endDate: "desc" } });
+    const fy = await prisma.financialYear.findFirst({ orderBy: CURRENT_FINANCIAL_YEAR_ORDER });
     if (!fy) {
       throw new Error("No financial year configured in the system.");
     }
