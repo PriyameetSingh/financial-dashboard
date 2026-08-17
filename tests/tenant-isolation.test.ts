@@ -403,8 +403,12 @@ describe("Chokepoint invariants", () => {
   //            would be circular. It holds a hash, a tier, an expiry and, once
   //            spent, the id of the tenant it produced — no tenant data).
   //            47/6 → 47/7.
-  it("47 models are tenant-scoped and 7 are deliberately global", () => {
-    expect(TENANT_SCOPED_MODELS.size).toBe(47);
+  //   RBAC Gate A: +UserUlb (scoped, by its tenantId column — a user's ULB
+  //            membership SET, backfilled from the single User.ulbId so scope
+  //            can generalize to "same ULB as me" without pinning a value on a
+  //            role). Nothing became global. 47/7 → 48/7.
+  it("48 models are tenant-scoped and 7 are deliberately global", () => {
+    expect(TENANT_SCOPED_MODELS.size).toBe(48);
     expect(GLOBAL_MODELS.size).toBe(7);
   });
 

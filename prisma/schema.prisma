@@ -78,6 +78,32 @@ enum PermissionEffect {
   deny
 }
 
+/// How much of the tenant's data a role may READ.
+///
+/// This is the generalization of the two coarse permissions the product shipped
+/// with: `VIEW_ALL_DATA` → `ALL`, `VIEW_ASSIGNED_DATA` → `ASSIGNED`. Those
+/// permissions still exist and still decide scope at Gate A — this column
+/// records the same fact in a form the resolver can generalize from later.
+///
+/// The `SAME_<dimension>` members are SELF-RELATIVE: they mean "rows whose
+/// <dimension> is one of the ones the LOGGED-IN USER belongs to", resolved from
+/// the user's own memberships at request time. A role never stores which ULB or
+/// section it is about — widening someone's reach is adding a membership to the
+/// USER, never pinning a value onto the role.
+///
+/// Declared in full here so the vocabulary is fixed in one place; only `ALL` and
+/// `ASSIGNED` are honoured by the resolver until Gate B teaches it the rest.
+/// A dimension is usable only once it exists on BOTH users and scoped rows —
+/// see lib/rbac/scope-dimensions.ts, which records that readiness per member.
+enum DataScopePolicy {
+  ALL
+  ASSIGNED
+  SAME_ULB
+  SAME_ORGANISATION
+  SAME_VERTICAL
+  SAME_SECTION
+}
+
 enum KPICategory {
   STATE
   CENTRAL
@@ -192,6 +218,7 @@ model User {
 
   userSections      UserSection[]
   userOrganisations UserOrganisation[]
+  userUlbs          UserUlb[]
 
   userRoles                  UserRole[]
   createdPermissionOverrides UserPermissionOverride[] @relation("CreatedOverrides")
@@ -241,12 +268,36 @@ model User {
   @@map("users")
 }
 
+/// A role is per-tenant DATA: tenants re-bundle the code-owned permission
+/// catalog, they never invent a permission. `code` is the stable key and `name`
+/// the display name — they already play those parts, so this cut adds no
+/// duplicate columns for them.
+///
+/// Enforcement checks PERMISSIONS, never role names. The one place a role code
+/// is read is the legacy session fallback in lib/server-rbac.ts, for users with
+/// no explicit user_roles row.
 model Role {
   id        String   @id @default(uuid()) @db.Uuid
   code      String
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  /// Defaults to the NARROWEST policy: a role created without an explicit scope
+  /// must not silently see everything. The seeds set it per role, derived from
+  /// the view permission each role already held.
+  dataScopePolicy DataScopePolicy @default(ASSIGNED)
+
+  /// Optional hierarchy, for a tenant that wants "everything the parent has,
+  /// plus these". Declared here so the shape is settled; nothing walks it until
+  /// a gate needs it, and enforcement still reads effective permissions.
+  parentRoleId String? @db.Uuid
+  parentRole   Role?   @relation("RoleHierarchy", fields: [parentRoleId], references: [id], onDelete: SetNull)
+  childRoles   Role[]  @relation("RoleHierarchy")
+
+  /// Seeded roles the product depends on. The no-lockout guardrail refuses to
+  /// delete these or to strip their administrative permissions.
+  isSystem Boolean @default(false)
 
   rolePermissions   RolePermission[]
   userRoles         UserRole[]
@@ -261,12 +312,30 @@ model Role {
   @@map("roles")
 }
 
+/// The permission CATALOG — code-owned and deliberately NOT tenant-scoped.
+///
+/// Tenants re-bundle these into roles; they cannot invent one, because a new
+/// permission means new code to enforce it. `name` is the human label; `group`
+/// and `owningModule` are catalog metadata for a configurator UI to organise by
+/// and for the entitlement ceiling to check against.
+///
+/// lib/rbac/permission-catalog.ts is the source of truth for all three, and
+/// tests/rbac-permission-catalog.test.ts fails if this table, that catalog and
+/// the TypeScript enum ever disagree.
 model Permission {
   id        String   @id @default(uuid()) @db.Uuid
   code      String   @unique
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  /// Grouping for display, e.g. "Financial", "KPI", "Administration".
+  group String?
+
+  /// The module code that owns this permission, e.g. "MOD-FIN". A tenant not
+  /// entitled to the module cannot be granted the permission — the ceiling.
+  /// Null means the permission belongs to the always-on core.
+  owningModule String?
 
   rolePermissions         RolePermission[]
   userPermissionOverrides UserPermissionOverride[]
@@ -403,7 +472,8 @@ model Ulb {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users    User[]
+  userUlbs UserUlb[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
   tenantId String @db.Uuid
@@ -428,6 +498,31 @@ model UserSection {
   @@id([userId, sectionId])
   @@index([tenantId])
   @@map("user_sections")
+}
+
+/// A user's ULB membership SET.
+///
+/// `User.ulbId` is a single FK and stays as the user's primary/home ULB, which
+/// is what the directory screens display. Data scope needs a SET: an officer who
+/// covers three ULBs holds three memberships, and `SAME_ULB` resolves against
+/// all of them. This mirrors how organisation and section memberships already
+/// work (UserOrganisation, UserSection) rather than inventing a third shape.
+///
+/// The Gate A migration backfills one row per user from `ulbId`, so today's
+/// single value is preserved exactly as a one-element set.
+model UserUlb {
+  userId String @db.Uuid
+  ulbId  String @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ulb  Ulb  @relation(fields: [ulbId], references: [id], onDelete: Cascade)
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@id([userId, ulbId])
+  @@index([tenantId])
+  @@map("user_ulbs")
 }
 
 model UserOrganisation {
@@ -1317,10 +1412,10 @@ enum TenantStatus {
 
 /// Phase 2: tenant organizations. Odisha is tenant #1 (backfilled by migration).
 model Tenant {
-  id        String       @id @default(uuid()) @db.Uuid
-  slug      String       @unique
-  name      String
-  status    TenantStatus @default(active)
+  id     String       @id @default(uuid()) @db.Uuid
+  slug   String       @unique
+  name   String
+  status TenantStatus @default(active)
 
   /// The commercial tier this organization bought — the CEILING on what its own
   /// administrators may switch on.
@@ -1338,8 +1433,8 @@ model Tenant {
   /// fail-closed direction. Set from the onboarding token at provisioning.
   planTier ModuleTier?
 
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   configEntries                  TenantConfigEntry[]
   users                          User[]
@@ -1363,6 +1458,7 @@ model Tenant {
   userPermissionOverrides        UserPermissionOverride[]
   userSections                   UserSection[]
   userOrganisations              UserOrganisation[]
+  userUlbs                       UserUlb[]
   subschemes                     Subscheme[]
   schemeAssignments              SchemeAssignment[]
   schemeWorkflowConfigs          SchemeWorkflowConfig[]

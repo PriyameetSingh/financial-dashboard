@@ -10,16 +10,26 @@
  */
 const TENANT_ID = process.env.SEED_TENANT_ID || "00000000-0000-4000-8000-000000000001";
 
+/**
+ * The permission catalog, mirrored from lib/rbac/permission-catalog.ts.
+ *
+ * This file is CommonJS and runs under plain node for seeding, so it cannot
+ * import the TypeScript catalog. The two are kept in step by
+ * tests/rbac-permission-catalog.test.ts, which fails on any difference in code,
+ * label, group or owning module — the same mirror-plus-guard arrangement
+ * scripts/lib/next-base-path.mjs uses for the base path.
+ *
+ * Edit lib/rbac/permission-catalog.ts first; this array follows it.
+ */
 const PERMISSIONS = [
-  { code: "VIEW_ALL_DATA", name: "View all data" },
-  { code: "VIEW_ASSIGNED_DATA", name: "View assigned data" },
-  { code: "ENTER_FINANCIAL_DATA", name: "Enter financial data" },
-  { code: "MANAGE_FINANCIAL_DATA", name: "Manage financial data" },
-  { code: "EDIT_FINANCIAL_ENTRIES", name: "Edit financial entries" },
-  { code: "ENTER_KPI_DATA", name: "Enter KPI data" },
-  { code: "CREATE_ACTION_ITEMS", name: "Create action items" },
-  { code: "UPDATE_ACTION_ITEMS", name: "Update action items" },
-  { code: "UPLOAD_PROOF", name: "Upload proof" },
+  // Data access — never module-gated; these decide row visibility itself.
+  { code: "VIEW_ALL_DATA", name: "View all data", group: "Data access", owningModule: null },
+  { code: "VIEW_ASSIGNED_DATA", name: "View assigned data", group: "Data access", owningModule: null },
+
+  // Financial.
+  { code: "ENTER_FINANCIAL_DATA", name: "Enter financial data", group: "Financial", owningModule: "MOD-FIN" },
+  { code: "MANAGE_FINANCIAL_DATA", name: "Manage financial data", group: "Financial", owningModule: "MOD-FIN" },
+  { code: "EDIT_FINANCIAL_ENTRIES", name: "Edit financial entries", group: "Financial", owningModule: "MOD-FIN" },
   /*
    * DELIBERATELY HELD BY NO ROLE. Unlike APPROVE_KPI — which drives three route
    * handlers against KPIWorkflowStatus (draft|submitted|reviewed|rejected) —
@@ -32,21 +42,34 @@ const PERMISSIONS = [
    * because granting a capability that cannot be exercised is worse than not
    * having it. Assign it when a financial approval workflow exists.
    */
-  { code: "APPROVE_FINANCIAL", name: "Approve financial" },
-  { code: "APPROVE_KPI", name: "Approve KPI" },
-  { code: "APPROVE_ACTION_ITEMS", name: "Approve action items" },
-  { code: "MANAGE_USERS", name: "Manage users" },
-  { code: "MANAGE_SCHEMES", name: "Manage schemes" },
-  { code: "EXPORT_REPORTS", name: "Export reports" },
-  { code: "VIEW_COMMAND_CENTRE", name: "View command centre" },
-  { code: "VIEW_ANALYTICS", name: "View analytics" },
-  { code: "MANAGE_PERMISSIONS", name: "Manage permissions" },
-  { code: "MANAGE_FINANCIAL_YEARS", name: "Manage financial years" },
-  { code: "FLAG_KPI_ESCALATION", name: "Flag KPI escalation / bottleneck" },
-  { code: "REORDER_SCHEMES", name: "Reorder schemes for all users" },
-  { code: "MANAGE_NOTIFICATION_CONFIG", name: "Manage notification configs" },
-  { code: "SEND_MANUAL_NOTIFICATIONS", name: "Send manual notifications" },
-  { code: "MANAGE_TENANT_CONFIG", name: "Manage tenant configuration" },
+  { code: "APPROVE_FINANCIAL", name: "Approve financial", group: "Financial", owningModule: "MOD-FIN" },
+  { code: "MANAGE_FINANCIAL_YEARS", name: "Manage financial years", group: "Financial", owningModule: "MOD-FIN" },
+
+  // KPI.
+  { code: "ENTER_KPI_DATA", name: "Enter KPI data", group: "KPI", owningModule: "MOD-KPI" },
+  { code: "APPROVE_KPI", name: "Approve KPI", group: "KPI", owningModule: "MOD-KPI" },
+  { code: "UPLOAD_PROOF", name: "Upload proof", group: "KPI", owningModule: "MOD-KPI" },
+  { code: "FLAG_KPI_ESCALATION", name: "Flag KPI escalation / bottleneck", group: "KPI", owningModule: "MOD-KPI" },
+
+  // Action items.
+  { code: "CREATE_ACTION_ITEMS", name: "Create action items", group: "Action items", owningModule: "MOD-ACT" },
+  { code: "UPDATE_ACTION_ITEMS", name: "Update action items", group: "Action items", owningModule: "MOD-ACT" },
+  { code: "APPROVE_ACTION_ITEMS", name: "Approve action items", group: "Action items", owningModule: "MOD-ACT" },
+
+  // Meetings & reports.
+  { code: "EXPORT_REPORTS", name: "Export reports", group: "Meetings & reports", owningModule: null },
+  { code: "VIEW_COMMAND_CENTRE", name: "View command centre", group: "Meetings & reports", owningModule: "MOD-CC" },
+  { code: "VIEW_ANALYTICS", name: "View analytics", group: "Meetings & reports", owningModule: null },
+
+  // Administration — MANAGE_USERS / MANAGE_PERMISSIONS stay core, or an
+  // un-entitled tenant could not administer itself.
+  { code: "MANAGE_USERS", name: "Manage users", group: "Administration", owningModule: null },
+  { code: "MANAGE_PERMISSIONS", name: "Manage permissions", group: "Administration", owningModule: null },
+  { code: "MANAGE_SCHEMES", name: "Manage schemes", group: "Administration", owningModule: null },
+  { code: "REORDER_SCHEMES", name: "Reorder schemes for all users", group: "Administration", owningModule: null },
+  { code: "MANAGE_NOTIFICATION_CONFIG", name: "Manage notification configs", group: "Administration", owningModule: "MOD-NOTIF" },
+  { code: "SEND_MANUAL_NOTIFICATIONS", name: "Send manual notifications", group: "Administration", owningModule: "MOD-NOTIF" },
+  { code: "MANAGE_TENANT_CONFIG", name: "Manage tenant configuration", group: "Administration", owningModule: null },
 ];
 
 /** Merged former AS / PS HUDD / similar desk roles — permission set aligned with Nodal Officer. */
@@ -174,20 +197,47 @@ async function migrateLegacyRoles(prisma) {
   }
 }
 
+/**
+ * A role's data scope, derived from the view permission it already holds.
+ *
+ * This is the same rule lib/data-scope.ts applies at request time — VIEW_ALL_DATA
+ * wins, VIEW_ASSIGNED_DATA otherwise — so seeding the column cannot change what
+ * any role can see. Deriving it rather than hand-writing a policy next to each
+ * role is the point: the two can never disagree, and
+ * tests/rbac-data-scope-policy.test.ts asserts exactly this correspondence.
+ *
+ * A role holding neither permission gets ASSIGNED, the narrow default. Its
+ * effective scope is empty today (data-scope.ts returns EMPTY_SCOPE without a
+ * view permission) and stays empty — the policy column does not grant anything
+ * on its own.
+ */
+function dataScopePolicyFor(permissions) {
+  if (permissions.includes("VIEW_ALL_DATA")) return "ALL";
+  return "ASSIGNED";
+}
+
 async function seedRolesAndPermissions(prisma) {
   for (const p of PERMISSIONS) {
+    const catalog = { name: p.name, group: p.group ?? null, owningModule: p.owningModule ?? null };
     await prisma.permission.upsert({
       where: { code: p.code },
-      update: { name: p.name },
-      create: { code: p.code, name: p.name },
+      update: catalog,
+      create: { code: p.code, ...catalog },
     });
   }
 
   for (const r of ROLES) {
+    // isSystem: every role defined here ships with the product, so the
+    // no-lockout guardrail must refuse to delete it or strip its admin rights.
+    const shape = {
+      name: r.name,
+      dataScopePolicy: dataScopePolicyFor(r.permissions),
+      isSystem: true,
+    };
     const role = await prisma.role.upsert({
       where: { tenantId_code: { tenantId: TENANT_ID, code: r.code } },
-      update: { name: r.name },
-      create: { tenantId: TENANT_ID, code: r.code, name: r.name },
+      update: shape,
+      create: { tenantId: TENANT_ID, code: r.code, ...shape },
     });
 
     const permissionRows = await prisma.permission.findMany({ where: { code: { in: r.permissions } } });
@@ -305,6 +355,7 @@ module.exports = {
   PERMISSIONS,
   ROLES,
   NODAL_LIKE_PERMISSIONS,
+  dataScopePolicyFor,
   migrateLegacyRoles,
   seedRolesAndPermissions,
   ensureBootstrapTasuAdmin,
