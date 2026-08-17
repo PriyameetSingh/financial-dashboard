@@ -229,8 +229,12 @@ async function main() {
   });
   console.log(`✅  Financial year: ${fy.label} (calendar-year cycle — a different fiscal calendar from Odisha's)`);
 
+  // Keep the created rows: schemes below link to them by RELATION, not by
+  // re-matching the display name.
+  const verticalsByName = {};
   for (const v of VERTICALS) {
-    await prisma.vertical.create({ data: { tenantId: DEMO_TENANT_ID, ...v } });
+    const row = await prisma.vertical.create({ data: { tenantId: DEMO_TENANT_ID, ...v } });
+    verticalsByName[row.name] = row.id;
   }
 
   const roleIds = {};
@@ -315,6 +319,8 @@ async function main() {
         code: s.code,
         name: s.name,
         verticalName: s.verticalName,
+        // Native dimension, same as a scheme created through the API.
+        verticalId: verticalsByName[s.verticalName] ?? null,
         sponsorshipType: s.sponsorshipType,
         sortOrder: i,
         createdById: users[`${PREFIX}DIR`].id,

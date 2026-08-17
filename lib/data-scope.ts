@@ -28,6 +28,19 @@ export type DataScope =
       subschemeIds: string[];
       /** User-directory scoping only — does NOT scope scheme data. */
       userIds: string[];
+      /**
+       * Verticals the caller belongs to, for a `SAME_VERTICAL` role.
+       *
+       * Additive and OR-ed with the assignment lists above: a caller reaches a
+       * row if it belongs to one of their schemes OR sits in one of their
+       * verticals. Absent (undefined) for every scope resolved from the two
+       * legacy permissions, which is what keeps their `where` fragments byte
+       * identical to what they were before this existed.
+       *
+       * An empty array is NOT the same as absent: it means a vertical-scoped
+       * caller with no memberships, who reaches nothing by vertical.
+       */
+      verticalIds?: string[];
     };
 
 /** Empty restricted scope — the deny-by-default result. Never widens access. */
@@ -86,7 +99,22 @@ export async function resolveDataScopeForUser(
   if (effective.size === 0) return EMPTY_SCOPE;
   if (effective.has("VIEW_ALL_DATA")) return { kind: "full" };
   if (options?.fullAccessPermissions?.some((code) => effective.has(code))) return { kind: "full" };
-  if (!effective.has("VIEW_ASSIGNED_DATA")) return EMPTY_SCOPE;
+
+  // The role-policy union, resolved from the caller's roles. Runs BEFORE the
+  // VIEW_ASSIGNED_DATA gate below because a SAME_<dimension> role is a way of
+  // seeing data in its own right — it does not also require the legacy assigned
+  // permission. `ALL` anywhere in the union wins outright: union means most
+  // permissive.
+  const policies = user.userRoles.map((ur) => ur.role?.dataScopePolicy).filter(Boolean);
+  if (policies.includes("ALL")) return { kind: "full" };
+
+  const verticalIds = policies.includes("SAME_VERTICAL")
+    ? await verticalMembershipsOf(user.id)
+    : undefined;
+
+  // No legacy assigned permission and no dimension policy → nothing to see.
+  // A caller with ONLY SAME_VERTICAL still proceeds, carrying their verticals.
+  if (!effective.has("VIEW_ASSIGNED_DATA") && verticalIds === undefined) return EMPTY_SCOPE;
 
   const roleIds = user.userRoles.map((ur) => ur.roleId);
   const or: Array<{ userId: string } | { roleId: { in: string[] } }> = [];
@@ -114,7 +142,13 @@ export async function resolveDataScopeForUser(
   // constant here — as this used to — silently drops `userIds` too and was the
   // root cause of "assigned data" nodal officers seeing nothing.
   if (rows.length === 0) {
-    return { kind: "restricted", schemeIds: [], subschemeIds: [], userIds: [user.id] };
+    return {
+      kind: "restricted",
+      schemeIds: [],
+      subschemeIds: [],
+      userIds: [user.id],
+      ...(verticalIds !== undefined ? { verticalIds } : {}),
+    };
   }
 
   const schemeIds = new Set<string>();
@@ -129,7 +163,35 @@ export async function resolveDataScopeForUser(
     schemeIds: [...schemeIds],
     subschemeIds: [...subschemeIds],
     userIds: [user.id],
+    // Spread rather than always-present: a scope with no vertical policy must
+    // be structurally identical to what this returned before SAME_VERTICAL
+    // existed, so the where-fragments it produces cannot drift.
+    ...(verticalIds !== undefined ? { verticalIds } : {}),
   };
+}
+
+/**
+ * The verticals a user belongs to — the subject side of `SAME_VERTICAL`.
+ *
+ * Read from the user at request time, never from the role or the assignment:
+ * that is what makes the policy self-relative. Moving someone between verticals
+ * changes what they see without touching a role.
+ *
+ * Deny-by-default on failure: an empty set means "reaches nothing by vertical",
+ * which is the safe direction. It never widens.
+ */
+async function verticalMembershipsOf(userId: string): Promise<string[]> {
+  try {
+    const rows = await prisma.userVertical.findMany({
+      where: { userId },
+      select: { verticalId: true },
+    });
+    return rows.map((r) => r.verticalId);
+  } catch (e) {
+    const mapped = asDatabaseUnavailableError(e);
+    if (mapped) throw mapped;
+    throw e;
+  }
 }
 
 /**

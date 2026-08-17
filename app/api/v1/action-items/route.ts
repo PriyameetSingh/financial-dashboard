@@ -261,14 +261,11 @@ export async function POST(request: NextRequest) {
 
     const dueDate = new Date(`${body.dueDate}T00:00:00.000Z`);
 
-    let verticalId: string | null = null;
-    if (scheme) {
-      const v = await prisma.vertical.findFirst({
-        where: { name: scheme.verticalName },
-        select: { id: true },
-      });
-      verticalId = v?.id ?? null;
-    }
+    // The scheme's vertical, read from its RELATION rather than re-derived by
+    // matching its display string against the vertical catalog. The string match
+    // this replaces would silently yield null on any spelling drift between the
+    // two tables, quietly dropping the item out of every vertical-scoped view.
+    const verticalId: string | null = scheme?.verticalId ?? null;
 
     const created = await prisma.$transaction(async (tx) => {
       const actionItem = await tx.actionItem.create({

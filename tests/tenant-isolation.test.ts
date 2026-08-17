@@ -407,8 +407,12 @@ describe("Chokepoint invariants", () => {
   //            membership SET, backfilled from the single User.ulbId so scope
   //            can generalize to "same ULB as me" without pinning a value on a
   //            role). Nothing became global. 47/7 → 48/7.
-  it("48 models are tenant-scoped and 7 are deliberately global", () => {
-    expect(TENANT_SCOPED_MODELS.size).toBe(48);
+  //   RBAC Gate B: +UserVertical (scoped, by its tenantId column — the subject
+  //            side of SAME_VERTICAL, so a role can say "the verticals this
+  //            officer belongs to" without naming one). Nothing became global.
+  //            48/7 → 49/7.
+  it("49 models are tenant-scoped and 7 are deliberately global", () => {
+    expect(TENANT_SCOPED_MODELS.size).toBe(49);
     expect(GLOBAL_MODELS.size).toBe(7);
   });
 

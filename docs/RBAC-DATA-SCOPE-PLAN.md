@@ -81,14 +81,102 @@ carry almost nothing** — `Scheme` has `verticalName` as a plain string, and on
 adds the row side. A policy that cannot be resolved must be impossible to save —
 never silently "everything" and never silently "nothing".
 
-## Gate B — resolver
+## Gate B — resolver and the vertical dimension — DONE
 
-Generalize `DataScope` in `lib/data-scope.ts`; teach the twelve `scope-where.ts`
-builders the new variant; add the row-side dimension fields, including
-`Scheme.verticalId` backfilled from `verticalName` (failing loudly on any
-unmatched value rather than nulling it). `ALL` and `ASSIGNED` must compile to
-byte-identical `where` fragments so Odisha cannot move. Resolver tests including
-a two-membership user and a cross-tenant case.
+### Per-entity dimension map
+
+| Entity | How it carries the vertical |
+|---|---|
+| `Scheme.verticalId` | **Directly** — new FK beside the existing `verticalName` text |
+| `ActionItem.verticalId` | **Directly** — already existed; now fed from the scheme's relation |
+| `Subscheme`, `FinanceBudget`, `FinanceBudgetSupplement`, `FinanceExpenditureSnapshot`, `KpiDefinition`, `KpiTarget`, `KpiMeasurement` | **Inherited via `schemeId`** |
+| `DashboardMeeting` | No dimension — it has no scheme link at all |
+| `User` | The *subject* side: `UserVertical` membership set |
+
+Inheritance rather than duplication is deliberate: copying the vertical onto
+seven more tables creates seven more things to keep in step, and `scope-where.ts`
+already reaches them through the scheme.
+
+### The write path, not just a backfill
+
+A row created after this change carries its dimension natively:
+
+- `app/api/v1/schemes/route.ts` — resolves and persists `verticalId` on create.
+- `app/api/v1/schemes/[id]/route.ts` — re-resolves it when the name changes, so
+  a rename cannot leave the FK pointing at the old vertical (a silent data-scope
+  drift no screen would show).
+- `app/api/v1/action-items/route.ts` — reads `scheme.verticalId` instead of
+  re-deriving it by matching the scheme's display string against the vertical
+  catalog, which yielded null on any spelling drift.
+- `prisma/seed_dashboards.ts`, `prisma/seed_demo_tenant.js`,
+  `tests/data-scope-vertical.test.ts` — seeded and fixture rows likewise.
+
+### The backfill fails loud, and that is proven
+
+The migration matches `verticalName` → `verticalId` **per tenant** (a global name
+match could point a scheme at another tenant's vertical) and then aborts if any
+scheme is left unmatched, naming the offending values and their tenant.
+
+Verified by inserting a scheme with an unmatched vertical and running the guard:
+
+```
+ERROR: Cannot backfill schemes.verticalId: 1 scheme(s) name a vertical with no
+matching row. Unmatched: No Such Vertical (tenant 00000000-…-0000000000d0).
+Create the missing vertical(s) or correct the scheme name, then re-run.
+```
+
+This matters because local Odisha has **no schemes** to exercise the backfill
+against — the guard is what protects a production run this container cannot
+rehearse.
+
+### Resolver
+
+`DataScope` gains an optional `verticalIds`. Optional, not always-present: a
+scope with no vertical policy is structurally identical to what the resolver
+returned before, so legacy fragments cannot drift. An **empty** array is not the
+same as absent — it means a vertical-scoped caller with no memberships, who
+reaches nothing.
+
+Union across roles takes the most permissive: `ALL` anywhere wins outright, and a
+`SAME_VERTICAL` role grants reach on its own without also needing
+`VIEW_ASSIGNED_DATA`. Memberships are read from the USER at request time, never
+from the role — that is what makes widening someone's reach an act on the person,
+not on everyone sharing their role.
+
+### Coverage
+
+`tests/data-scope-vertical.test.ts`, 11 assertions: self-relative resolution;
+the **two-membership** user seeing both verticals; adding a membership widening
+reach without touching the role; a meeting-level action item reached through its
+own vertical; the union case; and **two cross-tenant** assertions — the chokepoint
+refuses to record a membership pointing at another tenant's vertical, and a scope
+forged with a foreign vertical id still returns nothing, because isolation does
+not depend on the data-scope layer being correct.
+
+### Odisha equivalence
+
+No seeded role uses `SAME_VERTICAL`, so no request resolves differently. The
+legacy shapes are asserted explicitly to produce the same fragments they always
+did.
+
+## Gates C–F
+
+### The other three dimensions are still unready, deliberately
+
+ULB, organisation and section have a user side (`UserUlb`, `UserOrganisation`,
+`UserSection`) but **no defensible row side**, and none was invented. Each needs
+a product answer first:
+
+- **ULB** — schemes here are state-level; nothing in the model says a scheme,
+  budget or KPI *belongs to* a ULB. A `Scheme.ulbId` would be an engineering
+  decision standing in for a product one.
+- **Organisation** — users hold memberships, but no row records which
+  organisation owns it.
+- **Section** — looks like an internal desk split rather than a data partition.
+
+`lib/rbac/scope-dimensions.ts` records this per member with the specific blocker,
+so a configurator can refuse the policy and say why, rather than saving a scope
+that silently resolves to nothing.
 
 ## Gates C–F
 

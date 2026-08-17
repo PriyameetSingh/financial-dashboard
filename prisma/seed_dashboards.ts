@@ -121,6 +121,10 @@ async function main() {
         code: s.code,
         name: s.name,
         verticalName: vertical.name,
+        // The relation as well as the display string: a seeded scheme must
+        // carry its dimension natively, exactly like one created through the
+        // API, or the seeds would produce rows only a backfill could rescue.
+        verticalId: vertical.id,
         sponsorshipType: s.sponsorshipType,
       }),
     });

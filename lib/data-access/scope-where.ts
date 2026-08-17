@@ -15,6 +15,26 @@ import { isFullScope } from "@/lib/data-scope";
  * on report builders makes omitting scope a compile error.
  */
 
+/**
+ * Vertical-membership OR-fragments, for a `SAME_VERTICAL` role.
+ *
+ * Returns [] when the scope carries no vertical policy (`verticalIds`
+ * undefined), which is every scope resolved from the two legacy permissions —
+ * so those fragments come out exactly as they did before this existed.
+ *
+ * An EMPTY array of verticals is different: the caller has the policy but no
+ * memberships, so they reach nothing by vertical. `{ in: [] }` matches no row,
+ * which is the deny-by-default answer, and it must never be mistaken for "no
+ * narrowing".
+ */
+function verticalFragments<TWhere>(
+  scope: Extract<DataScope, { kind: "restricted" }>,
+  build: (verticalIdIn: string[]) => TWhere,
+): TWhere[] {
+  if (scope.verticalIds === undefined) return [];
+  return [build(scope.verticalIds)];
+}
+
 const EMPTY = {};
 
 /** Combine a base `where` with a scope fragment (AND). */
@@ -26,15 +46,30 @@ function and<TWhere>(base: TWhere, scopeFragment: object): TWhere {
 /** Schemes the caller may see. */
 export function schemeWhere(scope: DataScope): Prisma.SchemeWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) return { id: { in: [] } };
-  return { id: { in: scope.schemeIds } };
+  const or: Prisma.SchemeWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ id: { in: scope.schemeIds } });
+  or.push(
+    ...verticalFragments<Prisma.SchemeWhereInput>(scope, (verticalIds) => ({
+      verticalId: { in: verticalIds },
+    })),
+  );
+  if (or.length === 0) return { id: { in: [] } };
+  return or.length === 1 ? or[0] : { OR: or };
 }
 
 /** Subschemes the caller may see (by parent scheme). */
 export function subschemeWhere(scope: DataScope): Prisma.SubschemeWhereInput {
   if (isFullScope(scope)) return EMPTY;
-  if (scope.schemeIds.length === 0) return { id: { in: [] } };
-  return { schemeId: { in: scope.schemeIds } };
+  const or: Prisma.SubschemeWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  // Inherited through the parent scheme rather than duplicated onto the row.
+  or.push(
+    ...verticalFragments<Prisma.SubschemeWhereInput>(scope, (verticalIds) => ({
+      scheme: { verticalId: { in: verticalIds } },
+    })),
+  );
+  if (or.length === 0) return { id: { in: [] } };
+  return or.length === 1 ? or[0] : { OR: or };
 }
 
 /** Finance budgets for a given FY, narrowed to the caller's schemes. */
@@ -44,8 +79,15 @@ export function financeBudgetWhere(
 ): Prisma.FinanceBudgetWhereInput {
   const base: Prisma.FinanceBudgetWhereInput = { financialYearId: fyId };
   if (isFullScope(scope)) return base;
-  if (scope.schemeIds.length === 0) return { ...base, schemeId: { in: [] } };
-  return { ...base, schemeId: { in: scope.schemeIds } };
+  const or: Prisma.FinanceBudgetWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...verticalFragments<Prisma.FinanceBudgetWhereInput>(scope, (verticalIds) => ({
+      scheme: { verticalId: { in: verticalIds } },
+    })),
+  );
+  if (or.length === 0) return { ...base, schemeId: { in: [] } };
+  return or.length === 1 ? { ...base, ...or[0] } : { ...base, OR: or };
 }
 
 /** Finance budget supplements for a given FY, narrowed to the caller's schemes. */
@@ -55,8 +97,15 @@ export function financeBudgetSupplementWhere(
 ): Prisma.FinanceBudgetSupplementWhereInput {
   const base: Prisma.FinanceBudgetSupplementWhereInput = { financialYearId: fyId };
   if (isFullScope(scope)) return base;
-  if (scope.schemeIds.length === 0) return { ...base, schemeId: { in: [] } };
-  return { ...base, schemeId: { in: scope.schemeIds } };
+  const or: Prisma.FinanceBudgetSupplementWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...verticalFragments<Prisma.FinanceBudgetSupplementWhereInput>(scope, (verticalIds) => ({
+      scheme: { verticalId: { in: verticalIds } },
+    })),
+  );
+  if (or.length === 0) return { ...base, schemeId: { in: [] } };
+  return or.length === 1 ? { ...base, ...or[0] } : { ...base, OR: or };
 }
 
 /** Finance expenditure snapshots for a given FY, narrowed to the caller's schemes. */
@@ -66,8 +115,15 @@ export function financeSnapshotWhere(
 ): Prisma.FinanceExpenditureSnapshotWhereInput {
   const base: Prisma.FinanceExpenditureSnapshotWhereInput = { financialYearId: fyId };
   if (isFullScope(scope)) return base;
-  if (scope.schemeIds.length === 0) return { ...base, schemeId: { in: [] } };
-  return { ...base, schemeId: { in: scope.schemeIds } };
+  const or: Prisma.FinanceExpenditureSnapshotWhereInput[] = [];
+  if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...verticalFragments<Prisma.FinanceExpenditureSnapshotWhereInput>(scope, (verticalIds) => ({
+      scheme: { verticalId: { in: verticalIds } },
+    })),
+  );
+  if (or.length === 0) return { ...base, schemeId: { in: [] } };
+  return or.length === 1 ? { ...base, ...or[0] } : { ...base, OR: or };
 }
 
 /**
@@ -91,6 +147,9 @@ export function kpiDefinitionWhere(scope: DataScope): Prisma.KpiDefinitionWhereI
   const or: Prisma.KpiDefinitionWhereInput[] = [];
   if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
   or.push(
+    ...verticalFragments<Prisma.KpiDefinitionWhereInput>(scope, (verticalIds) => ({ scheme: { verticalId: { in: verticalIds } } })),
+  );
+  or.push(
     ...assignedDirectlyFragments<Prisma.KpiDefinitionWhereInput>(scope, (userIds) => [
       { performers: { some: { userId: { in: userIds }, isActive: true } } },
       { reviewerUsers: { some: { userId: { in: userIds } } } },
@@ -106,6 +165,9 @@ export function kpiTargetWhere(scope: DataScope): Prisma.KpiTargetWhereInput {
   const or: Prisma.KpiTargetWhereInput[] = [];
   if (scope.schemeIds.length > 0) or.push({ kpiDefinition: { schemeId: { in: scope.schemeIds } } });
   or.push(
+    ...verticalFragments<Prisma.KpiTargetWhereInput>(scope, (verticalIds) => ({ kpiDefinition: { scheme: { verticalId: { in: verticalIds } } } })),
+  );
+  or.push(
     ...assignedDirectlyFragments<Prisma.KpiTargetWhereInput>(scope, (userIds) => [
       { kpiDefinition: { performers: { some: { userId: { in: userIds }, isActive: true } } } },
       { kpiDefinition: { reviewerUsers: { some: { userId: { in: userIds } } } } },
@@ -120,6 +182,9 @@ export function kpiMeasurementWhere(scope: DataScope): Prisma.KpiMeasurementWher
   if (isFullScope(scope)) return EMPTY;
   const or: Prisma.KpiMeasurementWhereInput[] = [];
   if (scope.schemeIds.length > 0) or.push({ kpiTarget: { kpiDefinition: { schemeId: { in: scope.schemeIds } } } });
+  or.push(
+    ...verticalFragments<Prisma.KpiMeasurementWhereInput>(scope, (verticalIds) => ({ kpiTarget: { kpiDefinition: { scheme: { verticalId: { in: verticalIds } } } } })),
+  );
   or.push(
     ...assignedDirectlyFragments<Prisma.KpiMeasurementWhereInput>(scope, (userIds) => [
       { kpiTarget: { kpiDefinition: { performers: { some: { userId: { in: userIds }, isActive: true } } } } },
@@ -137,6 +202,16 @@ export function actionItemWhere(scope: DataScope): Prisma.ActionItemWhereInput {
   if (isFullScope(scope)) return EMPTY;
   const or: Prisma.ActionItemWhereInput[] = [];
   if (scope.schemeIds.length > 0) or.push({ schemeId: { in: scope.schemeIds } });
+  or.push(
+    ...verticalFragments<Prisma.ActionItemWhereInput>(scope, (verticalIds) => ({
+      // The row's OWN vertical, not the scheme's: a meeting-level action item
+      // has no scheme but does carry a vertical, and it must stay reachable.
+      OR: [
+        { verticalId: { in: verticalIds } },
+        { scheme: { verticalId: { in: verticalIds } } },
+      ],
+    })),
+  );
   or.push(
     ...assignedDirectlyFragments<Prisma.ActionItemWhereInput>(scope, (userIds) => [
       { performers: { some: { userId: { in: userIds }, isActive: true } } },

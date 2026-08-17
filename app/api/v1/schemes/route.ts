@@ -100,12 +100,27 @@ export async function POST(request: NextRequest) {
     }
     const auditContext = getAuditRequestContext(request);
 
+    // Resolve the vertical RELATION alongside the display string, so a scheme
+    // created from now on carries its dimension natively — data scope reads the
+    // FK, and a row that only had the text would be invisible to every
+    // SAME_VERTICAL role. Tenant scoping comes from the chokepoint, so this
+    // cannot match another tenant's vertical.
+    const vertical = await prisma.vertical.findFirst({
+      where: { name: verticalName },
+      select: { id: true },
+    });
+
     const created = await prisma.$transaction(async (tx) => {
       const scheme = await tx.scheme.create({
         data: tenantStamped({
           code,
           name,
           verticalName,
+          // Null when the text names no vertical row. Deliberately not an
+          // error: creating a scheme is not the place to force the vertical
+          // catalog to be complete, and null means "out of reach" to a
+          // self-relative scope, never "visible to everyone".
+          verticalId: vertical?.id ?? null,
           sponsorshipType,
           createdById: actor?.id ?? null,
         }),

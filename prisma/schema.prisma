@@ -219,6 +219,7 @@ model User {
   userSections      UserSection[]
   userOrganisations UserOrganisation[]
   userUlbs          UserUlb[]
+  userVerticals     UserVertical[]
 
   userRoles                  UserRole[]
   createdPermissionOverrides UserPermissionOverride[] @relation("CreatedOverrides")
@@ -404,6 +405,11 @@ model Vertical {
   updatedAt DateTime @updatedAt
 
   actionItems ActionItem[]
+  schemes     Scheme[]     @relation("SchemeVertical")
+
+  /// A user's vertical membership SET — the subject side of `SAME_VERTICAL`.
+  /// Without it the policy has a row side and nothing to compare it against.
+  userVerticals UserVertical[]
 
   /// Phase 2 multi-tenancy: nullable at Gate B (backfilled to Odisha), NOT NULL at Gate D.
   tenantId String @db.Uuid
@@ -500,6 +506,27 @@ model UserSection {
   @@map("user_sections")
 }
 
+/// A user's VERTICAL membership SET — the subject side of `SAME_VERTICAL`.
+///
+/// There is no single-valued predecessor to migrate from: a user's vertical was
+/// only ever implied by the schemes they were assigned to. So this starts empty,
+/// and a role with `SAME_VERTICAL` sees nothing until someone is given a
+/// membership — deny-by-default, which is the correct direction to fail in.
+model UserVertical {
+  userId     String @db.Uuid
+  verticalId String @db.Uuid
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vertical Vertical @relation(fields: [verticalId], references: [id], onDelete: Cascade)
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@id([userId, verticalId])
+  @@index([tenantId])
+  @@map("user_verticals")
+}
+
 /// A user's ULB membership SET.
 ///
 /// `User.ulbId` is a single FK and stays as the user's primary/home ULB, which
@@ -567,10 +594,26 @@ model FinancialYear {
 }
 
 model Scheme {
-  id              String          @id @default(uuid()) @db.Uuid
-  code            String
-  name            String
-  verticalName    String
+  id   String @id @default(uuid()) @db.Uuid
+  code String
+  name String
+
+  /// The vertical, as free text. Kept as the display value every screen and
+  /// report already reads, and kept in step with `verticalId` by the write paths
+  /// — dropping it would touch a dozen read sites for no gain in this cut.
+  verticalName String
+
+  /// The vertical, as a RELATION. This is the half data scope needs: a
+  /// `SAME_VERTICAL` role matches rows against the verticals the caller belongs
+  /// to, and a string cannot be matched against a membership set reliably.
+  ///
+  /// Nullable because a scheme may name a vertical that has no row (the
+  /// migration refuses to guess — it aborts and names the mismatches rather than
+  /// nulling them). A null here means "no vertical", which a self-relative scope
+  /// treats as out of reach, never as wildcard.
+  verticalId String?   @db.Uuid
+  vertical   Vertical? @relation("SchemeVertical", fields: [verticalId], references: [id], onDelete: SetNull)
+
   sponsorshipType SponsorshipType
   archived        Boolean         @default(false)
   sortOrder       Int             @default(0)
@@ -1459,6 +1502,7 @@ model Tenant {
   userSections                   UserSection[]
   userOrganisations              UserOrganisation[]
   userUlbs                       UserUlb[]
+  userVerticals                  UserVertical[]
   subschemes                     Subscheme[]
   schemeAssignments              SchemeAssignment[]
   schemeWorkflowConfigs          SchemeWorkflowConfig[]

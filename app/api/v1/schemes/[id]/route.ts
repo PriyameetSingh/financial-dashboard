@@ -89,13 +89,28 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       return NextResponse.json({ detail: "verticalName cannot be empty" }, { status: 400 });
     }
 
+    // Keep the vertical RELATION in step with the display string. Without this
+    // a rename would leave the FK pointing at the old vertical, and the scheme
+    // would stay visible to the wrong officers — a silent data-scope drift that
+    // no screen would show.
+    const nextVerticalName = body.verticalName?.trim();
+    let verticalIdUpdate: { verticalId: string | null } | Record<string, never> = {};
+    if (nextVerticalName) {
+      const vertical = await prisma.vertical.findFirst({
+        where: { name: nextVerticalName },
+        select: { id: true },
+      });
+      verticalIdUpdate = { verticalId: vertical?.id ?? null };
+    }
+
     const after = await prisma.$transaction(async (tx) => {
       await tx.scheme.update({
         where: { id },
         data: {
           code: body.code?.trim().toUpperCase(),
           name: body.name?.trim(),
-          verticalName: body.verticalName?.trim(),
+          verticalName: nextVerticalName,
+          ...verticalIdUpdate,
           ...(sponsorshipType !== undefined && sponsorshipType !== null ? { sponsorshipType } : {}),
           ...(body.archived !== undefined ? { archived: body.archived } : {}),
         },
