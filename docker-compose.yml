@@ -8,9 +8,9 @@ services:
       POSTGRES_PASSWORD: hudd_password
       POSTGRES_DB: hudd_nexus
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - hudd_postgres_data:/var/lib/postgresql/data
+      - /data/priyameet/dev/financial-dashboard/.docker-data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hudd_user -d hudd_nexus"]
       interval: 10s
@@ -25,9 +25,52 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@gmail.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     depends_on:
       - postgres
 
-volumes:
-  hudd_postgres_data:
+  init:
+    image: financial-dashboard:dev
+    build: .
+    container_name: hudd_init
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://hudd_user:hudd_password@postgres:5432/hudd_nexus
+      DIRECT_URL: postgresql://hudd_user:hudd_password@postgres:5432/hudd_nexus
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["node", "scripts/docker-init.mjs"]
+    restart: "no"
+
+  app:
+    image: financial-dashboard:dev
+    build: .
+    container_name: hudd_app
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://hudd_user:hudd_password@postgres:5432/hudd_nexus
+      DIRECT_URL: postgresql://hudd_user:hudd_password@postgres:5432/hudd_nexus
+      NODE_ENV: development
+      DEV_AUTH_ENABLED: "1"
+      NEXT_PUBLIC_BASE_PATH: ""
+      AUTH_URL: http://localhost:3000/api/auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s

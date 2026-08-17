@@ -5,6 +5,11 @@ All notable changes to the HUDD Dashboard will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Officers can now open the dashboard at the website's front door (for example `http://odisha.airawat.test:3000/`) instead of only under the old `/hudd-dashboard` path. Administrators who still host the dashboard under `/hudd-dashboard` keep that address by setting one configuration value before starting the application.
+
 ## [1.6.0] - 2026-08-16
 
 ### Added

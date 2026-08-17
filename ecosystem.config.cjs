@@ -11,6 +11,9 @@ module.exports = {
       max_memory_restart: "1G",
       env: {
         NODE_OPTIONS: "--max-http-header-size=65536",
+        // Restore the historical sub-path. Empty (the new default) would serve at `/`.
+        // Must be set at `next build` time; this documents the production value.
+        NEXT_PUBLIC_BASE_PATH: "/hudd-dashboard",
       },
     },
     {
@@ -30,6 +33,8 @@ module.exports = {
         // it takes precedence over what Next.js loads from .env at startup.
         AUTH_URL: "http://13.203.18.97:8766/hudd-dashboard/api/auth",
         KEYCLOAK_POST_LOGOUT_REDIRECT_URI: "http://13.203.18.97:8766/hudd-dashboard/login",
+        // Restore the historical sub-path. Empty (the new default) would serve at `/`.
+        NEXT_PUBLIC_BASE_PATH: "/hudd-dashboard",
       },
     },
     {

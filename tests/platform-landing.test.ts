@@ -12,6 +12,7 @@ import {
   TOUR_MODULES,
 } from "@/lib/platform/landing";
 import { landingLinks } from "@/lib/platform/links";
+import { withNextBasePath } from "@/lib/next-base-path";
 
 /**
  * S1 — the public landing.
@@ -187,7 +188,7 @@ describe("landing links", () => {
   it("falls back to this deployment's sign-in when no demo host is configured", () => {
     withDemoUrl(undefined, () => {
       const links = landingLinks();
-      expect(links.demo).toBe("/hudd-dashboard/login");
+      expect(links.demo).toBe(withNextBasePath("/login"));
       expect(links.demoIsExternal).toBe(false);
     });
   });
@@ -207,7 +208,7 @@ describe("landing links", () => {
     for (const bad of ["javascript:alert(1)", "not a url", "/relative/path", "data:text/html,x"]) {
       withDemoUrl(bad, () => {
         const links = landingLinks();
-        expect(links.demo, bad).toBe("/hudd-dashboard/login");
+        expect(links.demo, bad).toBe(withNextBasePath("/login"));
         expect(links.demoIsExternal, bad).toBe(false);
       });
     }
@@ -216,10 +217,10 @@ describe("landing links", () => {
   it("puts the base path on every same-origin link", () => {
     withDemoUrl(undefined, () => {
       const links = landingLinks();
-      for (const [name, value] of Object.entries(links)) {
-        if (typeof value !== "string") continue;
-        expect(value.startsWith("/hudd-dashboard/"), `${name}: ${value}`).toBe(true);
-      }
+      expect(links.platform).toBe(withNextBasePath("/platform"));
+      expect(links.demo).toBe(withNextBasePath("/login"));
+      expect(links.onboarding).toBe(withNextBasePath("/onboarding"));
+      expect(links.signIn).toBe(withNextBasePath("/login"));
     });
   });
 });

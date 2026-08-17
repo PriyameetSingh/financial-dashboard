@@ -22,8 +22,10 @@
  *
  * Usage:
  *   DEV_AUTH_ENABLED=1 npm run dev
- *   curl -c jar -H 'Host: odisha.example.test' \
- *     'http://localhost:8765/hudd-dashboard/api/dev/session?tenant=odisha'
+ *   curl -c jar -H 'Host: odisha.airawat.test' \
+ *     'http://localhost:3000/api/dev/session?tenant=odisha'
+ *   # With NEXT_PUBLIC_BASE_PATH=/hudd-dashboard, prefix the path:
+ *   #   http://localhost:3000/hudd-dashboard/api/dev/session?tenant=odisha
  */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";

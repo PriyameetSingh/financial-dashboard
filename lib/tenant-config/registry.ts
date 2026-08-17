@@ -11,7 +11,7 @@
  * Storage classes:
  *   - "storable":  may live in tenant_config_entries.
  *   - "env-only":  MUST NOT be stored in the DB. basePath is build-bound
- *     (compiled into Next.js); the keycloak keys and seedAdminEmail stay
+ *     (compiled into Next.js from NEXT_PUBLIC_BASE_PATH); the keycloak keys and seedAdminEmail stay
  *     env-backed in Phase 2. Secret-class values (credentials) are always
  *     env-only — at most a secretRef would ever be storable, never material.
  *

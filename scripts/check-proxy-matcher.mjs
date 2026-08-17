@@ -15,14 +15,15 @@
  * them. If Next changes how it compiles matchers, this check follows.
  *
  * It caught a real gap: the catch-all `/((?!…).*)` compiles with a REQUIRED
- * trailing group, so the app root (`/hudd-dashboard`) matched nothing, and
- * `trailingSlash: false` redirects `/hudd-dashboard/` back to it — the root was
- * unreachable through the proxy in either spelling.
+ * trailing group, so the app root (`{basePath}` or `/`) matched nothing, and
+ * `trailingSlash: false` redirects the trailing-slash spelling back to it — the
+ * root was unreachable through the proxy in either spelling.
  *
  * Requires a prior `next build` (golden leg 1 provides it).
  *
  * Run: node scripts/check-proxy-matcher.mjs
  */
+import { nextBasePath } from "./lib/next-base-path.mjs";
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -84,14 +85,15 @@ function routePathnames() {
   });
 }
 
-const BASE_PATH = "/hudd-dashboard"; // mirrors lib/next-base-path.ts
+const BASE_PATH = nextBasePath(); // mirrors lib/next-base-path.ts / NEXT_PUBLIC_BASE_PATH
 
 const routes = routePathnames();
 const unmatched = [];
 for (const { file, pathname } of routes) {
-  // The compiled regexes include basePath, and Next normalises the app root to
-  // the bare basePath (no trailing slash) because `trailingSlash: false`.
-  const requested = pathname === "/" ? BASE_PATH : `${BASE_PATH}${pathname}`;
+  // The compiled regexes include basePath when one is set, and Next normalises
+  // the app root to the bare basePath (no trailing slash) because
+  // `trailingSlash: false`. With an empty basePath the root is `/`.
+  const requested = pathname === "/" ? BASE_PATH || "/" : `${BASE_PATH}${pathname}`;
   if (!regexes.some(({ re }) => re.test(requested))) unmatched.push({ file, requested });
 }
 

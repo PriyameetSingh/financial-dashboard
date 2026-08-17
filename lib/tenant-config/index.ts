@@ -13,6 +13,7 @@
  * capability flags only. This file is the single source of truth for those keys.
  */
 import type { ThemeOverrides } from "@/components/nocturne/theme";
+import { NEXTJS_BASE_PATH } from "@/lib/next-base-path";
 import { activeHolder } from "./request-store";
 
 export type TenantLabels = {
@@ -32,7 +33,11 @@ export type TenantLabels = {
 };
 
 export type TenantConfig = {
-  /** Next.js `basePath`. Default = today's `/hudd-dashboard`. */
+  /**
+   * Next.js `basePath`. Env-only (not stored in the DB). Follows
+   * `NEXT_PUBLIC_BASE_PATH` — empty at the domain root, `/hudd-dashboard`
+   * for the historical Odisha sub-path deploy.
+   */
   basePath: string;
   /** Public logo asset path (served from /public). */
   logoPublicPath: string;
@@ -81,7 +86,7 @@ export type TenantConfig = {
  * Changing a default here is a behavior change caught by the golden net.
  */
 export const ODISHA_DEFAULTS: TenantConfig = {
-  basePath: "/hudd-dashboard",
+  basePath: NEXTJS_BASE_PATH,
   logoPublicPath: "/Frame 1.svg",
   timezone: "Asia/Kolkata",
   locale: "en-IN",

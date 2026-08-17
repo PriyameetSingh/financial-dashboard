@@ -42,6 +42,7 @@ const SKIP_DIRS = new Set([
   "build",
   ".continue",
   ".cursor",
+  ".docker-data",
 ]);
 
 const CODE_EXTS = new Set([".ts", ".tsx", ".js", ".cjs", ".mjs", ".jsx"]);

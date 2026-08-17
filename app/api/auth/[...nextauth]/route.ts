@@ -5,14 +5,15 @@ import { NEXTJS_BASE_PATH } from "@/lib/next-base-path";
 /**
  * Next.js 16 strips the configured `basePath` from the request URL inside App Router
  * route handlers, so `req.url` here is `/api/auth/<action>` even though the public
- * URL is `/hudd-dashboard/api/auth/<action>`.
+ * URL is `{basePath}/api/auth/<action>` (or `/api/auth/<action>` when `basePath` is
+ * empty).
  *
  * Auth.js (`@auth/core`) parses the action from `new URL(req.url).pathname` and
  * matches it against `config.basePath`. We must keep `config.basePath` set to the
- * full public prefix (`/hudd-dashboard/api/auth`) because `@auth/core`'s
+ * full public prefix (`{basePath}/api/auth`) because `@auth/core`'s
  * `createActionURL` builds OAuth callback URLs as `<AUTH_URL.origin>/<basePath>/<action>` —
- * shrinking it would produce a callback URL without `/hudd-dashboard` and break the
- * Keycloak flow.
+ * shrinking it would produce a callback URL without the Next.js `basePath` and break
+ * the Keycloak flow.
  *
  * To bridge the two, we re-add the Next.js basePath to the incoming request's URL
  * before delegating to NextAuth's handlers.

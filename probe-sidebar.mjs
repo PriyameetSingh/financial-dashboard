@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { request } from "node:http";
 import { chromium } from "playwright-core";
-const PORT = 8797, HOST = "odisha.airawat.test", BASE = "/hudd-dashboard";
+const PORT = 8797, HOST = "odisha.airawat.test", BASE = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/+$/, "") || "";
 const server = spawn("npx", ["next", "dev", "-p", String(PORT)], { detached: true, stdio: ["ignore","pipe","pipe"] });
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const get = (p) => new Promise((res, rej) => {
