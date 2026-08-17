@@ -52,6 +52,12 @@ const PORT = Number(process.env.SMOKE_PORT ?? 8799);
 const BASE_PATH = nextBasePath();
 const ODISHA_HOST = "odisha.airawat.test";
 const DEMO_HOST = "demo.airawat.test";
+/**
+ * A host that names NO tenant. `tenantSlugFromHost` returns null for a bare
+ * name, which is exactly the condition the dev path-routing branch keys off —
+ * this is what a developer actually types locally.
+ */
+const LOCAL_HOST = "localhost";
 /** Disabled for the demo tenant by prisma/seed_demo_tenant.js. */
 const DISABLED_API = "/api/v1/notifications";
 const DISABLED_PAGE = "/admin/notifications";
@@ -735,6 +741,123 @@ try {
     `${N * 2} interleaved cross-tenant requests stay scoped`,
     bled.length === 0,
     `${bled.length} response(s) carried the wrong tenant's user`,
+  );
+
+  // ── DEV PATH ROUTING ──────────────────────────────────────────────────────
+  //
+  // Everything above drives the PRODUCTION shape: a tenant per host, and the
+  // host↔session binding those assertions exist to prove. Those hosts stay
+  // exactly as they were — this section adds the local shape beside them, one
+  // host with no subdomain, where the tenant comes from the first path segment.
+  //
+  // `LOCAL_HOST` is deliberately a bare host: `tenantSlugFromHost` returns null
+  // for it, which is the condition the dev branch keys off.
+  console.log("  · dev path routing (single host, no subdomain)");
+
+  const landing = await get("/", { host: LOCAL_HOST });
+  check(
+    "the root serves the public landing, not a login redirect",
+    landing.status === 200 && landing.body.includes("Airawat"),
+    `status ${landing.status}`,
+  );
+
+  const onboardingPublic = await get("/onboarding", { host: LOCAL_HOST });
+  check(
+    "onboarding stays public and reachable from the landing",
+    onboardingPublic.status === 200,
+    `status ${onboardingPublic.status}`,
+  );
+
+  // `/odisha/dashboard` with no session at all: the proxy must hand off to the
+  // dev-session route rather than to Keycloak or /login.
+  const entry = await get("/odisha/dashboard", { host: LOCAL_HOST });
+  const entryTarget = entry.location ?? "";
+  check(
+    "an unauthenticated /{slug}/… hands off to dev-session minting, never to Keycloak",
+    entry.status === 307 &&
+      entryTarget.includes("/api/dev/session") &&
+      entryTarget.includes("tenant=odisha") &&
+      !/keycloak|\/login/i.test(entryTarget),
+    `${entry.status} → ${entryTarget}`,
+  );
+
+  // Follow the hand-off by hand so the minted cookie can be carried onward.
+  const minted = await get("/api/dev/session?tenant=odisha&redirect=/dashboard", {
+    host: LOCAL_HOST,
+  });
+  const mintedCookie = (minted.setCookie[0] ?? "").split(";")[0];
+  check(
+    "the hand-off mints a session and continues to the unprefixed path",
+    minted.status === 307 &&
+      (minted.location ?? "").endsWith("/dashboard") &&
+      mintedCookie.startsWith("authjs.session-token="),
+    `${minted.status} → ${minted.location ?? "(none)"}`,
+  );
+
+  const onPath = await get("/dashboard", { host: LOCAL_HOST, cookie: mintedCookie });
+  check(
+    "the session carries the tenant on a host that names none",
+    onPath.status === 200,
+    `status ${onPath.status}`,
+  );
+
+  const whoOnPath = await get("/api/v1/rbac/me", { host: LOCAL_HOST, cookie: mintedCookie });
+  const whoBody = whoOnPath.json() ?? {};
+  check(
+    "…and the API scopes to that tenant, not to a default one",
+    whoOnPath.status === 200 && whoBody?.user?.dbId === meOdisha.user.dbId,
+    `status ${whoOnPath.status}, user ${whoBody?.user?.dbId ?? "(none)"}`,
+  );
+
+  // The demonstration tenant, reached the way the landing's CTA reaches it.
+  const demoMint = await get(`/api/dev/session?tenant=demo&redirect=/dashboard`, {
+    host: LOCAL_HOST,
+  });
+  const demoCookie = (demoMint.setCookie[0] ?? "").split(";")[0];
+  const whoDemo = await get("/api/v1/rbac/me", { host: LOCAL_HOST, cookie: demoCookie });
+  const whoDemoBody = whoDemo.json() ?? {};
+  check(
+    "the demo entry lands in the demonstration tenant, not in Odisha",
+    whoDemo.status === 200 && whoDemoBody?.user?.dbId === meDemo.user.dbId,
+    `status ${whoDemo.status}, user ${whoDemoBody?.user?.dbId ?? "(none)"}`,
+  );
+
+  // Isolation is unchanged by any of this: the path chose which tenant to mint,
+  // and the session binding plus the Prisma chokepoint still decide the scope.
+  const demoCookieOnOdishaPath = await get("/api/v1/rbac/me", {
+    host: LOCAL_HOST,
+    cookie: demoCookie,
+  });
+  const crossBody = demoCookieOnOdishaPath.json() ?? {};
+  check(
+    "a demo session stays demo — the path never widens a session's scope",
+    crossBody?.user?.dbId === meDemo.user.dbId,
+    `user ${crossBody?.user?.dbId ?? "(none)"}`,
+  );
+
+  const unknownSlug = await get("/not-a-tenant/dashboard", {
+    host: LOCAL_HOST,
+  });
+  check(
+    "an unknown first segment falls back to the landing, not to a tenant",
+    unknownSlug.status === 307 && (unknownSlug.location ?? "").endsWith("/"),
+    `${unknownSlug.status} → ${unknownSlug.location ?? "(none)"}`,
+  );
+
+  const reservedRoot = await get("/onboarding", { host: LOCAL_HOST });
+  check(
+    "a reserved root is never read as a tenant slug",
+    reservedRoot.status === 200,
+    `status ${reservedRoot.status}`,
+  );
+
+  // The production shape must survive in the same process: a tenant host still
+  // resolves by host, and still refuses a session minted for another tenant.
+  const hostStillBinds = await get("/api/v1/rbac/me", { host: ODISHA_HOST, cookie: demo });
+  check(
+    "host-based binding still rejects a replayed session while path mode is on",
+    hostStillBinds.status === 401,
+    `status ${hostStillBinds.status}`,
   );
 } catch (error) {
   failures.push(String(error?.message ?? error));

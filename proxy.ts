@@ -4,11 +4,16 @@ import { getToken } from "next-auth/jwt";
 import { isModuleRejected, moduleVerdict } from "@/lib/entitlements/guard";
 import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
 import { resolveRouteModule } from "@/lib/entitlements/route-modules";
+import {
+  DEV_TENANT_ENTRY_PATH,
+  devPathRoutingEnabled,
+  splitTenantPath,
+} from "@/lib/dev-path-routing";
 import { NEXTJS_BASE_PATH, withNextBasePath } from "@/lib/next-base-path";
 import { PUBLIC_AUTH_PATHS, PUBLIC_CONTENT_PATHS } from "@/lib/entitlements/public-paths";
 import { prismaUnscoped } from "@/lib/prisma";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
-import { findActiveTenant } from "@/lib/tenant-resolve-db";
+import { findActiveTenant, type ResolvedTenantRow } from "@/lib/tenant-resolve-db";
 import { TENANT_HEADER, TENANT_ID_HEADER, tenantSlugFromHost } from "@/lib/tenant-config/resolution";
 import {
   isTenantSessionRejected,
@@ -191,6 +196,88 @@ async function entitlementDenial(
   );
 }
 
+/**
+ * DEV ONLY — the tenant a session claims, validated against the tenants table.
+ *
+ * On one host with no subdomain there is no slug to derive, so once a dev-auth
+ * session exists the session itself is what says which tenant the request is
+ * for. The claim is never trusted as given: the id must match an ACTIVE row,
+ * and the token's signature was already verified by `getToken`. The result is
+ * the same shape of fact the host branch produces — a tenant id the proxy
+ * derived, not one a caller supplied.
+ */
+async function devTenantFromSession(request: NextRequest): Promise<ResolvedTenantRow | null> {
+  const token = await readToken(request);
+  const claimed = typeof token?.tenantId === "string" ? token.tenantId : null;
+  if (!claimed) return null;
+  try {
+    return await prismaUnscoped.tenant.findFirst({
+      where: { id: claimed, status: "active" },
+      select: { id: true, slug: true },
+    });
+  } catch (error) {
+    console.error("[proxy] dev tenant-from-session lookup failed:", error);
+    return null;
+  }
+}
+
+/**
+ * DEV ONLY — handle the two path shapes that exist solely in development.
+ *
+ *   `/`            → the public landing. In production the root belongs to the
+ *                    tenant workspace and redirects to `/dashboard`; locally
+ *                    there is no tenant at the root, so it serves the platform
+ *                    landing instead. A rewrite, not a redirect, so the address
+ *                    bar keeps saying `/`.
+ *
+ *   `/{slug}/rest` → enter that tenant. If the current session already belongs
+ *                    to it, redirect straight to `/rest`. Otherwise hand off to
+ *                    the dev-session route to mint one and redirect onward.
+ *                    Keycloak is never involved.
+ *
+ * Returns null when the request is neither, leaving the normal flow untouched.
+ */
+async function devPathEntry(
+  request: NextRequest,
+  pathname: string,
+  hostSlug: string | null,
+): Promise<NextResponse | null> {
+  // A host that names a tenant is the production shape, and it wins outright:
+  // on `odisha.airawat.test` the root belongs to Odisha's workspace and a first
+  // path segment is just a path. Path-based entry is what happens when the host
+  // says nothing — `localhost`, `127.0.0.1`, a bare domain.
+  if (hostSlug) return null;
+
+  const origin = request.nextUrl.origin;
+
+  if (pathname === "/" || pathname === NEXTJS_BASE_PATH) {
+    return NextResponse.rewrite(new URL(withNextBasePath("/platform"), origin));
+  }
+
+  const bare = NEXTJS_BASE_PATH && pathname.startsWith(`${NEXTJS_BASE_PATH}/`)
+    ? pathname.slice(NEXTJS_BASE_PATH.length)
+    : pathname;
+  const { slugCandidate, rest } = splitTenantPath(bare);
+  if (!slugCandidate) return null;
+
+  const tenant = await findActiveTenant(slugCandidate);
+  // An unknown first segment is not a tenant and not a page: send it to the
+  // landing rather than to a login screen it has no business seeing.
+  if (!tenant) return NextResponse.redirect(new URL(withNextBasePath("/"), origin));
+
+  const target = rest === "/" ? DEV_TENANT_ENTRY_PATH : rest;
+  const token = await readToken(request);
+  if (token?.tenantId === tenant.id) {
+    // Already inside this tenant — nothing to mint, just drop the prefix.
+    return NextResponse.redirect(new URL(withNextBasePath(target), origin));
+  }
+
+  const mint = new URL(withNextBasePath("/api/dev/session"), origin);
+  mint.searchParams.set("tenant", tenant.slug);
+  mint.searchParams.set("redirect", target);
+  return NextResponse.redirect(mint);
+}
+
 function logoutRedirect(request: NextRequest, pathname?: string, errorCode?: string) {
   const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
   if (pathname && pathname !== "/login") {
@@ -214,7 +301,20 @@ export async function proxy(request: NextRequest) {
   let resolved: string | null | undefined;
   const tenantId = async () => {
     if (resolved === undefined) {
-      resolved = (await findActiveTenant(forwardHeaders.get(TENANT_HEADER)))?.id ?? null;
+      const hostSlug = forwardHeaders.get(TENANT_HEADER);
+      resolved = (await findActiveTenant(hostSlug))?.id ?? null;
+      // DEV ONLY, and only when the host yielded nothing: fall back to the
+      // tenant the session claims. This is what makes one host work for several
+      // tenants locally. It is deliberately subordinate to the host — when a
+      // subdomain IS present it decides, so the host↔session binding below stays
+      // exercised (the smoke leg drives it that way on purpose).
+      if (!resolved && !hostSlug && devPathRoutingEnabled()) {
+        const fromSession = await devTenantFromSession(request);
+        if (fromSession) {
+          resolved = fromSession.id;
+          forwardHeaders.set(TENANT_HEADER, fromSession.slug);
+        }
+      }
       // Stamp the resolved id for the server runtime. This is what lets the
       // Prisma chokepoint find a tenant inside Route Handlers, where the
       // React-cache-backed holder cannot hold one. Set on `forwardHeaders`, so
@@ -230,6 +330,15 @@ export async function proxy(request: NextRequest) {
     PUBLIC_STATIC_EXT.test(pathname)
   ) {
     return forward();
+  }
+
+  // DEV ONLY. Runs before every other branch so the landing and the `/{slug}`
+  // entry points are decided before the entitlement gate or the session check
+  // sees a path that is not a real route. Returns null in production, and in
+  // development for every path that is neither.
+  if (devPathRoutingEnabled()) {
+    const devEntry = await devPathEntry(request, pathname, forwardHeaders.get(TENANT_HEADER));
+    if (devEntry) return devEntry;
   }
 
   // API surface. `/api/v1/**` requires a verified session token; everything
@@ -302,6 +411,13 @@ export async function proxy(request: NextRequest) {
 
   const token = await readToken(request);
   if (!token) {
+    // DEV ONLY, and only on a host that names no tenant: there is no login
+    // screen in that mode and no tenant in the path to mint for, so the landing
+    // is the honest destination — it is where the workspaces are listed. A
+    // tenant host keeps the Keycloak-backed /login, as production does.
+    if (devPathRoutingEnabled() && !forwardHeaders.get(TENANT_HEADER)) {
+      return NextResponse.redirect(new URL(withNextBasePath("/"), request.nextUrl.origin));
+    }
     const loginUrl = new URL(withNextBasePath("/login"), request.nextUrl.origin);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

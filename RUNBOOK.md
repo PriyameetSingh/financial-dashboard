@@ -56,6 +56,34 @@ On **hudd_test** (golden / vitest):
 
 The app is at the **site root** (no `/hudd-dashboard`).
 
+### The short way: one host, no /etc/hosts, no sign-in
+
+With `DEV_AUTH_ENABLED=1` in development, a tenant can be addressed by the FIRST
+PATH SEGMENT on plain `localhost`. Nothing to add to `/etc/hosts`, no login
+screen, no Keycloak.
+
+| What | URL |
+|---|---|
+| Public Airawat landing | http://localhost:3000/ |
+| Odisha workspace | http://localhost:3000/odisha/dashboard |
+| Suryapur (the demo) | http://localhost:3000/demo/dashboard |
+| Onboarding (public) | http://localhost:3000/onboarding |
+
+The prefix is an ENTRY POINT, not a permanent address: `/odisha/dashboard` mints
+a dev session for Odisha's tenant-administrator and redirects to `/dashboard`,
+after which the session cookie carries the tenant and the URLs are the ordinary
+ones. Visit `/demo/…` to switch — the mint replaces the session. Any deep link
+works the same way (`/odisha/financial`, `/demo/kpis`).
+
+An unknown first segment lands on the landing. Reserved roots (`/onboarding`,
+`/api`, `/_next`, and every top-level page) are never read as tenant slugs.
+
+### The production shape: a host per tenant
+
+This is what a deployment actually does, and it still works locally with
+`/etc/hosts` entries. Per-tenant hosts take precedence: on `odisha.airawat.test`
+the first path segment is just a path, and `/` belongs to Odisha's workspace.
+
 | Tenant | Open in a browser | Sign in (dev-auth, no Keycloak) |
 |---|---|---|
 | Odisha | http://odisha.airawat.test:3000/ | http://odisha.airawat.test:3000/api/dev/session?tenant=odisha |
