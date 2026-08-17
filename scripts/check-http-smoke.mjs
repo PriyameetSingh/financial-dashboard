@@ -62,7 +62,14 @@ const LOCAL_HOST = "localhost";
 const DISABLED_API = "/api/v1/notifications";
 const DISABLED_PAGE = "/admin/notifications";
 const ALLOWED_API = "/api/v1/kpis/definitions";
-const WATCHDOG_MS = Number(process.env.SMOKE_WATCHDOG_MS ?? 300_000);
+/**
+ * Overall abort for the leg. MUST stay comfortably above READY_TIMEOUT_MS plus
+ * the time the assertions themselves take — at 300s it would have killed the
+ * run mid-boot no matter how patient `waitForReady` was, so raising one without
+ * the other would have fixed nothing. A leg must fail rather than stall the
+ * harness, but it must not fail a healthy run either.
+ */
+const WATCHDOG_MS = Number(process.env.SMOKE_WATCHDOG_MS ?? 900_000);
 
 /**
  * A direct database handle, for the onboarding leg only.
@@ -258,9 +265,32 @@ async function mint(host, tenant) {
   return value;
 }
 
+/**
+ * Wait for `next dev` to serve /api/health.
+ *
+ * The budget is deliberately generous. This leg runs LAST-but-one in the golden,
+ * immediately after `next build` has saturated the machine, and `next dev`
+ * compiles every route on first hit — so the very first request is a cold
+ * compile competing with whatever the build left running. At 180s this timed out
+ * on a loaded container with the server visibly mid-compile
+ * (`○ Compiling /api/health ...` was the last line of its log), and passed on a
+ * quiet re-run. Passing on a re-run is not passing.
+ *
+ * The distinction that matters: a SLOW compile is not a HUNG server, and the two
+ * are told apart by the checks below, not by the clock. A server that dies is
+ * caught immediately by `exitCode`, and progress is logged so a genuine stall is
+ * visible rather than silent. The budget only decides how long a healthy-but-slow
+ * boot may take, and nothing is gained by cutting that close.
+ */
+const READY_TIMEOUT_MS = Number(process.env.SMOKE_READY_TIMEOUT_MS ?? 420_000);
+
 async function waitForReady() {
-  const deadline = Date.now() + 180_000;
+  const startedAt = Date.now();
+  const deadline = startedAt + READY_TIMEOUT_MS;
+  let nextNoteAt = startedAt + 30_000;
   while (Date.now() < deadline) {
+    // A server that exits is a real failure and is reported at once — the long
+    // budget above never delays a genuine crash.
     if (server.exitCode !== null) throw new Error(`next dev exited early:\n${serverLog.slice(-2000)}`);
     try {
       const res = await getOnce("/api/health");
@@ -268,9 +298,16 @@ async function waitForReady() {
     } catch {
       /* not listening yet */
     }
+    if (Date.now() >= nextNoteAt) {
+      const waited = Math.round((Date.now() - startedAt) / 1000);
+      console.log(`  · still waiting for next dev (${waited}s, compiling on first hit)`);
+      nextNoteAt = Date.now() + 30_000;
+    }
     await sleep(1000);
   }
-  throw new Error(`next dev did not become ready on :${PORT}\n${serverLog.slice(-2000)}`);
+  throw new Error(
+    `next dev did not become ready on :${PORT} within ${READY_TIMEOUT_MS / 1000}s\n${serverLog.slice(-2000)}`,
+  );
 }
 
 try {
