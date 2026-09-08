@@ -5,6 +5,11 @@
  * which is the source of truth for this content. Ids, names, descriptions and
  * lifecycle status are the designer's, not invented here.
  *
+ * STATUS TIE-BREAKER: when a capability's `status` here disagrees with reality,
+ * `docs/audit/hudd-v1-verification.md` (the independent code-sweep audit) is
+ * the tie-breaker, not this file — it found MTG-05 marked `live` with no
+ * closure mechanism actually built, and this file was corrected to match.
+ *
  * PRESENTATIONAL, DELIBERATELY. Entitlement in this product is granted per
  * MODULE, not per capability: `TenantEntitlement` has one row per module and
  * the request-time guard resolves a route to a module. These rows say what a
@@ -16,9 +21,26 @@
  * exactly the reconciliation recorded in `lib/entitlements/catalog.ts`: `TASK`
  * folds into the core shell (it aggregates over whatever else is enabled) and
  * `EXP` folds into Reports (an export is a report format, not a purchase).
- * `tests/menu-card.test.ts` asserts every group still names a real module.
+ * `tests/configurators.test.ts` (describe("the capability catalogue")) asserts
+ * every group still names a real module — folded into that file, not a
+ * separate `tests/menu-card.test.ts`, when S3 combined both tenant-admin
+ * configurators' tests into one suite.
+ *
+ * `category` is a presentational classification axis, separate from
+ * `ModuleTier` (`lib/entitlements/catalog.ts`) which is the sole COMMERCIAL
+ * tier field (core/standard/premium/addon) and the only one the entitlement
+ * guard or plan ceiling ever reads. `category` answers "what kind of
+ * capability is this" (foundational workflow vs AI-driven vs process
+ * automation vs advanced/enterprise-scale) for menu-card presentation only —
+ * it gates nothing and is not read by `lib/entitlements/plan.ts`.
  */
 import { moduleByCode } from "@/lib/entitlements/catalog";
+
+/**
+ * Presentational category, distinct from the commercial `ModuleTier`. See the
+ * file header for why these are two separate axes.
+ */
+export type CapabilityCategory = "core" | "intelligence" | "automation" | "enterprise";
 
 /**
  * Where a capability is in its life. Shown as a legend, never as a control —
@@ -41,6 +63,8 @@ export type CapabilityGroup = {
   moduleCode: string;
   name: string;
   summary: string;
+  /** Presentational classification — see the file header. Never gates. */
+  category: CapabilityCategory;
   capabilities: readonly Capability[];
 };
 
@@ -68,6 +92,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-CC",
     name: "Command Centre",
     summary: "Leadership landing dashboard",
+    category: "core",
     capabilities: [
       { id: "CC-01", name: "Command Centre / Overview Dashboard", description: "Utilisation, IFMS trend, lapse risk, meeting summary, pending approvals, AI alerts, and scheme drill-down.", status: "live" },
       { id: "CC-02", name: "Dashboard Quick Filters", description: "One-tap This Month / Quarter / FY filters across the landing dashboard.", status: "plan" },
@@ -79,6 +104,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-FIN",
     name: "Financial Progress",
     summary: "Budget, SO, IFMS and utilisation",
+    category: "core",
     capabilities: [
       { id: "FIN-01", name: "Financial Overview Dashboard", description: "FY totals, funding-source chart, IFMS timeseries, period comparison, per-scheme utilisation table.", status: "live" },
       { id: "FIN-02", name: "Scheme-wise Financial Entry", description: "Enter scheme/subscheme SO and IFMS expenditure as dated snapshots linked to a meeting.", status: "live" },
@@ -94,6 +120,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-KPI",
     name: "KPIs",
     summary: "Definition, entry, review, monitoring",
+    category: "core",
     capabilities: [
       { id: "KPI-01", name: "KPI Definition Create & Edit", description: "Define KPIs on a scheme with type, units, monitoring level, performers and reviewers.", status: "live" },
       { id: "KPI-02", name: "KPI Measurement Entry", description: "Assignees enter numerators, remarks, or yes/no for the selected meeting and submit for review.", status: "live" },
@@ -109,6 +136,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-SR",
     name: "Scheme Registry",
     summary: "Schemes, subschemes, ownership",
+    category: "core",
     capabilities: [
       { id: "SR-01", name: "Scheme Registry List & Overview", description: "Browse schemes with budget/SO/IFMS summary, KPI counts, and Active/Archived filters.", status: "live" },
       { id: "SR-02", name: "Scheme Create & Edit", description: "Create or edit a scheme with default owner assignments and optional subschemes.", status: "live" },
@@ -125,6 +153,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-ACT",
     name: "Decision Tracker",
     summary: "Action items and decisions (TASU)",
+    category: "core",
     capabilities: [
       { id: "ACT-01", name: "Action Item List & Tracker", description: "Searchable master list with status, priority, assignee, and vertical filters.", status: "live" },
       { id: "ACT-02", name: "Action Item Create", description: "Create form with scheme, priority, due date, performers, reviewers, and meeting link.", status: "live" },
@@ -138,12 +167,13 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-MTG",
     name: "Meeting Organizer",
     summary: "Review meetings and live mode",
+    category: "core",
     capabilities: [
       { id: "MTG-01", name: "Meeting Calendar & CRUD", description: "Schedule and manage dashboard meetings with topics and financial year.", status: "live" },
       { id: "MTG-02", name: "Materials & Presentations", description: "Upload, preview, and manage meeting presentation files.", status: "live" },
       { id: "MTG-03", name: "Active Meeting Mode", description: "Full-screen live overlay with timer, agenda, finance/KPI/action panels, and assistant.", status: "live" },
       { id: "MTG-04", name: "Create Action Item from Meeting", description: "Raise an action item pre-linked to the running meeting.", status: "live" },
-      { id: "MTG-05", name: "Data-Entry Window & Closure", description: "Admin-set closure time locks entry after the meeting; override permission for backdating.", status: "live" },
+      { id: "MTG-05", name: "Data-Entry Window & Closure", description: "Admin-set closure time locks entry after the meeting; override permission for backdating.", status: "plan" },
     ],
   },
   {
@@ -151,6 +181,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-SHELL",
     name: "My Tasks",
     summary: "Personal work hub",
+    category: "core",
     capabilities: [
       { id: "TASK-01", name: "My Tasks Hub", description: "Personal landing with pending KPI entry/review, tracker work, and entry shortcuts.", status: "live" },
       { id: "TASK-02", name: "Inline Pendance (Vertical Head)", description: "Embedded meeting-scoped task table for working pending reviews.", status: "live" },
@@ -161,6 +192,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-RPT",
     name: "Reports",
     summary: "Packs and adoption reporting",
+    category: "core",
     capabilities: [
       { id: "RPT-01", name: "Meeting Report Pack (Web + PDF)", description: "Printable briefing pack with topics, finance, schemes, KPIs, and decisions.", status: "live" },
       { id: "RPT-02", name: "Pendance / Adoption Report", description: "Per-meeting officer completion and update activity, web and PDF.", status: "live" },
@@ -174,6 +206,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-AI",
     name: "AI Insights",
     summary: "Assistant and progress agents",
+    category: "intelligence",
     capabilities: [
       { id: "AI-01", name: "Conversational Urban Assistant", description: "In-app Q&A answering from live financial, KPI, action-item, and meeting data.", status: "live" },
       { id: "AI-02", name: "AI Alerts / Progress Monitor", description: "Latest agent insights surfaced on the Command Centre as administrative alerts.", status: "live" },
@@ -185,6 +218,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-ANOM",
     name: "Anomaly Detection",
     summary: "Rule-based and AI checks",
+    category: "intelligence",
     capabilities: [
       { id: "ANOM-01", name: "Rule-Based Anomaly Checks", description: "Duplicate entries, 2× average deviation, and window-violation checks.", status: "plan" },
       { id: "ANOM-02", name: "Nightly Batch Job", description: "Scheduled nightly run of rule-based and AI-augmented anomaly checks.", status: "plan" },
@@ -196,6 +230,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-LAPSE",
     name: "Lapse Risk",
     summary: "Year-end fund lapse prevention",
+    category: "enterprise",
     capabilities: [
       { id: "LAPSE-01", name: "Lapse-Risk Alert Generation", description: "Threshold-based lapse detection across financial, KPI, and task data.", status: "plan" },
       { id: "LAPSE-02", name: "Grace-Period Escalation", description: "Escalates unresolved lapse-risk items to the next authority after a grace period.", status: "plan" },
@@ -207,6 +242,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-NOTIF",
     name: "Notifications",
     summary: "Event-based alerting",
+    category: "automation",
     capabilities: [
       { id: "NOTIF-01", name: "Event-Based Triggers", description: "Notification engine firing on overdue tasks, flags, and pending approvals.", status: "dev" },
       { id: "NOTIF-02", name: "User Notification Preferences", description: "Per-officer channel and frequency preferences.", status: "plan" },
@@ -217,6 +253,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-RPT",
     name: "Data Export",
     summary: "Structured outputs",
+    category: "automation",
     capabilities: [
       { id: "EXP-01", name: "CSV / XLSX Export", description: "Export tables and charts in structured formats across modules.", status: "dev" },
       { id: "EXP-02", name: "Dashboard PDF Export", description: "One-click PDF of any dashboard view.", status: "plan" },
@@ -227,6 +264,7 @@ export const CAPABILITY_GROUPS: readonly CapabilityGroup[] = [
     moduleCode: "MOD-APR",
     name: "Approval Workflows",
     summary: "Configurable approval chains",
+    category: "automation",
     capabilities: [
       { id: "APR-01", name: "Configurable Approval Chains", description: "Per-module and per-scheme chains — who approves what, in what order.", status: "plan" },
       { id: "APR-02", name: "Sequential Enforcement", description: "Approvers act in defined order; skipping is blocked.", status: "plan" },

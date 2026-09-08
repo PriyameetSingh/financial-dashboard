@@ -1,10 +1,11 @@
-import { prisma, tenantStamped } from "@/lib/prisma";
+import { prisma, tenantStamped, requireTenantScope } from "@/lib/prisma";
 import { callLocalLLM } from "@/lib/llm";
 import { syncSchemeFyCategoryLines } from "@/lib/sync-scheme-fy-category-lines";
 import { aggregateSnapshotTotalsBySchemeBucket } from "@/lib/finance-summary-asof";
 import { FINANCE_YEAR_BUDGET_CATEGORY_ORDER } from "@/lib/finance-year-budget-allocation";
 import type { DataScope } from "@/lib/data-scope";
 import { CURRENT_FINANCIAL_YEAR_ORDER } from "@/lib/financial-year-order";
+import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
 
 /** Agent runs are admin-only (MANAGE_PERMISSIONS) and produce system-wide insights. */
 const AGENT_FULL_SCOPE: DataScope = { kind: "full" };
@@ -446,6 +447,20 @@ function getCandidatePriority(type?: string): number {
 export async function runAgentWorkflow(modeOverride?: string): Promise<{ success: boolean; insightId?: string; error?: string }> {
   const executionSteps: Array<{ name: string; details?: string; prompt?: string; response?: string; success?: boolean }> = [];
   try {
+    // 0. Entitlement gate — the AI Insights module (MOD-AI) must be enabled for
+    // this tenant. `proxy.ts` already denies the admin trigger route
+    // (`/api/v1/admin/agent/run`) when MOD-AI is off, but that only covers
+    // requests that go through the route; this is the only defense for any
+    // other caller of this function (a future cron job, a script run outside a
+    // request) — the route map cannot see those. `requireTenantScope` throws
+    // if called outside a resolved/explicit tenant scope, which is the correct
+    // fail-closed behaviour here (no ambient "run for whichever tenant").
+    const tenantId = requireTenantScope("runAgentWorkflow");
+    const enabledModules = await loadEnabledModuleCodes(tenantId);
+    if (!enabledModules.has("MOD-AI")) {
+      return { success: false, error: "AI Insights module is not enabled for this tenant" };
+    }
+
     // 1. Fetch agent configuration
     const config = await prisma.agentConfig.findFirst();
     const enabled = config ? config.enabled : true;

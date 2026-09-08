@@ -19,9 +19,12 @@
  * scripts/check-route-module-map.ts (every route maps to a module).
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma, prismaUnscoped } from "@/lib/prisma";
+import { ActionItemPriority } from "@prisma/client";
+import { prisma, prismaUnscoped, tenantStamped } from "@/lib/prisma";
 import { ODISHA_TENANT_ID } from "@/lib/tenant-config";
 import { withTenantContext } from "@/lib/tenant-context";
+import { runAgentWorkflow } from "@/lib/agent-runner";
+import { NotificationService } from "@/lib/services/NotificationService";
 import {
   GATED_MODULE_CODES,
   MODULE_CATALOG,
@@ -87,6 +90,42 @@ describe("Catalog shape", () => {
       expect(PROVISIONABLE_MODULE_CODES).not.toContain(code);
     }
     expect(PROVISIONABLE_MODULE_CODES.length).toBe(15);
+  });
+});
+
+describe("Capability dependency graph", () => {
+  // Vitest mirror of scripts/check-capability-deps.ts (golden leg 8), the same
+  // relationship check-route-module-map.ts has to its own "every rule names a
+  // real module" test just above. See lib/entitlements/catalog.ts's
+  // `ModuleDef.dependsOn` doc comment for why every entry is empty today.
+  it("every dependsOn id resolves to a real, non-roadmap module", () => {
+    for (const mod of MODULE_CATALOG) {
+      for (const depCode of mod.dependsOn ?? []) {
+        const dep = moduleByCode(depCode);
+        expect(dep, `${mod.code} depends on unknown code ${depCode}`).toBeDefined();
+        expect(dep!.enforcement, `${mod.code} depends on roadmap module ${depCode}`).not.toBe("roadmap");
+        expect(depCode, `${mod.code} must not depend on itself`).not.toBe(mod.code);
+      }
+    }
+  });
+
+  it("has no cycles", () => {
+    const color = new Map<string, "white" | "gray" | "black">(MODULE_CATALOG.map((m) => [m.code, "white"]));
+    function visit(code: string): boolean {
+      color.set(code, "gray");
+      for (const depCode of moduleByCode(code)?.dependsOn ?? []) {
+        const c = color.get(depCode);
+        if (c === "gray") return true;
+        if (c === "white" && visit(depCode)) return true;
+      }
+      color.set(code, "black");
+      return false;
+    }
+    for (const mod of MODULE_CATALOG) {
+      if (color.get(mod.code) === "white") {
+        expect(visit(mod.code), `cycle reachable from ${mod.code}`).toBe(false);
+      }
+    }
   });
 });
 
@@ -430,5 +469,103 @@ describe("Tenant isolation of entitlements", () => {
         prisma.tenantEntitlement.updateMany({ where: { moduleId: mod.id }, data: { enabled: true } }),
       );
     }
+  });
+});
+
+// ─── Job-scheduler entitlement gating ───────────────────────────────────────
+//
+// The one enforcement layer route/nav gating cannot reach: NotificationService
+// is called from KPI/action-item routes (their OWN gated modules), not from a
+// MOD-NOTIF route, so proxy.ts never sees those call sites at all. And
+// runAgentWorkflow has no caller today besides the already-gated admin trigger
+// route — this proves the function refuses on its own regardless, so a future
+// caller (a cron, a script) cannot bypass entitlement by skipping the route.
+describe("Job-scheduler entitlement gating", () => {
+  let jobGateUserId: string;
+
+  beforeAll(async () => {
+    const user = await withTenantContext(tenantCId, () =>
+      prisma.user.create({
+        data: tenantStamped({
+          email: "TESTSCOPE_jobgate@hudd.test",
+          name: "Job Gate Test User",
+          code: "TESTSCOPE_JOBGATE",
+        }),
+      }),
+    );
+    jobGateUserId = user.id;
+  }, 30_000);
+
+  afterAll(async () => {
+    await prismaUnscoped.notificationDispatch.deleteMany({ where: { notification: { userId: jobGateUserId } } }).catch(() => {});
+    await prismaUnscoped.notification.deleteMany({ where: { userId: jobGateUserId } }).catch(() => {});
+    await prismaUnscoped.user.deleteMany({ where: { email: "TESTSCOPE_jobgate@hudd.test" } }).catch(() => {});
+  });
+
+  it("NotificationService.trigger is a no-op when MOD-NOTIF is disabled (tenant C's fixture default)", async () => {
+    expect((await loadEnabledModuleCodes(tenantCId)).has("MOD-NOTIF")).toBe(false);
+
+    const before = await prismaUnscoped.notification.count({ where: { userId: jobGateUserId } });
+    const result = await withTenantContext(tenantCId, () =>
+      NotificationService.trigger({
+        userId: jobGateUserId,
+        title: "Should not be created",
+        content: "Notification Engine is off for this tenant",
+        type: "MANUAL",
+        priority: ActionItemPriority.Low,
+      }),
+    );
+    const after = await prismaUnscoped.notification.count({ where: { userId: jobGateUserId } });
+
+    expect(result).toBeNull();
+    expect(after).toBe(before);
+  });
+
+  it("NotificationService.trigger dispatches once MOD-NOTIF is enabled", async () => {
+    const mod = await prismaUnscoped.module.findFirstOrThrow({ where: { code: "MOD-NOTIF" } });
+    await withTenantContext(tenantCId, () =>
+      prisma.tenantEntitlement.updateMany({ where: { moduleId: mod.id }, data: { enabled: true } }),
+    );
+    try {
+      const result = await withTenantContext(tenantCId, () =>
+        NotificationService.trigger({
+          userId: jobGateUserId,
+          title: "Notification Engine is on",
+          content: "Should be created",
+          type: "MANUAL",
+          priority: ActionItemPriority.Low,
+        }),
+      );
+      expect(result).not.toBeNull();
+      expect(result!.userId).toBe(jobGateUserId);
+    } finally {
+      await withTenantContext(tenantCId, () =>
+        prisma.tenantEntitlement.updateMany({ where: { moduleId: mod.id }, data: { enabled: false } }),
+      );
+    }
+  });
+
+  it("runAgentWorkflow refuses when MOD-AI is disabled, without writing an AgentInsight row", async () => {
+    const mod = await prismaUnscoped.module.findFirstOrThrow({ where: { code: "MOD-AI" } });
+    await withTenantContext(tenantCId, () =>
+      prisma.tenantEntitlement.updateMany({ where: { moduleId: mod.id }, data: { enabled: false } }),
+    );
+    try {
+      const before = await prismaUnscoped.agentInsight.count({ where: { tenantId: tenantCId } });
+      const result = await withTenantContext(tenantCId, () => runAgentWorkflow());
+      const after = await prismaUnscoped.agentInsight.count({ where: { tenantId: tenantCId } });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/AI Insights/i);
+      expect(after).toBe(before);
+    } finally {
+      await withTenantContext(tenantCId, () =>
+        prisma.tenantEntitlement.updateMany({ where: { moduleId: mod.id }, data: { enabled: true } }),
+      );
+    }
+  });
+
+  it("runAgentWorkflow refuses outside any resolved tenant scope", async () => {
+    await expect(runAgentWorkflow()).rejects.toThrow(/tenant scope/i);
   });
 });

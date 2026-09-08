@@ -1,5 +1,6 @@
-import { prisma, tenantStamped } from "@/lib/prisma";
+import { prisma, tenantStamped, requireTenantScope } from "@/lib/prisma";
 import { ActionItemPriority, NotificationChannel, NotificationStatus, DispatchStatus } from "@prisma/client";
+import { loadEnabledModuleCodes } from "@/lib/entitlements/lookup";
 
 export interface CreateNotificationParams {
   userId: string;
@@ -18,6 +19,19 @@ export class NotificationService {
    */
   static async trigger(params: CreateNotificationParams) {
     try {
+      // 0. Entitlement gate — the Notification Engine module (MOD-NOTIF) must
+      // be enabled for this tenant. Most callers of this method are NOT under a
+      // MOD-NOTIF route at all (KPI review decisions, action-item lifecycle
+      // events raise notifications from their own gated modules' routes), so
+      // `proxy.ts`'s route-level gate never sees these call sites — this is the
+      // one enforcement point that actually covers them.
+      const tenantId = requireTenantScope("NotificationService.trigger");
+      const enabledModules = await loadEnabledModuleCodes(tenantId);
+      if (!enabledModules.has("MOD-NOTIF")) {
+        console.log("[Notification Service] Ignored: Notification Engine module is not enabled for this tenant.");
+        return null;
+      }
+
       // 1. Check if notifications are globally enabled
       const enabled = await this.getConfigValue("SYSTEM_NOTIFICATIONS_ENABLED", "true");
       if (enabled === "false") {

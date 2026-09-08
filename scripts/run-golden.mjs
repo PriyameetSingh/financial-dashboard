@@ -16,19 +16,22 @@
  *   5. check-no-hardcoded-color — reskinned screens resolve every colour through
  *                             a Nocturne role token, so per-tenant theming keeps
  *                             working. Scope grows per reskin tranche.
- *   5. check-proxy-matcher  — every route reaches proxy.ts, where the tenant-session
+ *   6. check-proxy-matcher  — every route reaches proxy.ts, where the tenant-session
  *                             binding (Phase 2) and entitlement gate (Phase 3) live
- *   6. check-route-module-map — every route maps to a module or an always-on
+ *   7. check-route-module-map — every route maps to a module or an always-on
  *                             core module; no unmapped route, no stale rule (Phase 3)
- *   7. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
- *   8. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
- *   9. check-http-smoke     — boots the app and drives it over a real socket:
+ *   8. check-capability-deps — every `ModuleDef.dependsOn` id resolves to a real,
+ *                             non-roadmap module and the dependency graph has no
+ *                             cycles (Phase 4)
+ *   9. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
+ *  10. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
+ *  11. check-http-smoke     — boots the app and drives it over a real socket:
  *                             the proxy runs, the request-scoped tenant reaches
  *                             the chokepoint, the entitlement gate denies, and
  *                             concurrent cross-tenant traffic does not bleed.
  *                             The only leg that sees the middleware/priming
  *                             layer, where two shipped defects have now lived.
- *  10. check-a11y            — WCAG 2.1 AA over the component gallery in a real
+ *  12. check-a11y            — WCAG 2.1 AA over the component gallery in a real
  *                             browser, across both themes and both densities.
  *                             Contrast, focus and target size are properties of
  *                             computed style, so nothing short of a browser can
@@ -49,6 +52,7 @@ const legs = [
   { name: "check-no-hardcoded-color", cmd: "node", args: ["scripts/check-no-hardcoded-color.mjs"] },
   { name: "check-proxy-matcher", cmd: "node", args: ["scripts/check-proxy-matcher.mjs"] },
   { name: "check-route-module-map", cmd: "npx", args: ["tsx", "scripts/check-route-module-map.ts"] },
+  { name: "check-capability-deps", cmd: "npx", args: ["tsx", "scripts/check-capability-deps.ts"] },
   { name: "check-tenant-chokepoint", cmd: "node", args: ["scripts/check-tenant-chokepoint.mjs"] },
   {
     name: "check-tenant-integrity",

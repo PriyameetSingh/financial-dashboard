@@ -42,6 +42,36 @@ export type ModuleDef = {
   status: ModuleStatus;
   /** Commercial tier. Null until the menu-card pricing exists; never gates. */
   tier: ModuleTier | null;
+  /**
+   * Real, enforceable prerequisites this module has on another module's
+   * ENTITLEMENT STATE at runtime — not a conceptual/domain relationship, and
+   * not "this module's UI links to that one's data" if the link degrades
+   * gracefully rather than breaking. A code belongs here only if disabling the
+   * named module would break, not merely reduce, this one's behavior.
+   *
+   * Declaring one is a commitment: `resolveGrants()` (lib/entitlements/plan.ts)
+   * does not currently cross-check `dependsOn` when computing grants, because
+   * nothing has ever needed it to. Adding a real entry here means either
+   * updating `resolveGrants()` to auto-include (or refuse to enable without)
+   * the dependency, or documenting why that is deliberately not done.
+   * `scripts/check-capability-deps.ts` validates every id here resolves to a
+   * real, non-roadmap module and that the graph has no cycles — golden leg 8.
+   *
+   * INVESTIGATED, FOUND NONE as of 2026-09-08: every gated module's route
+   * handlers and background functions (agent-runner, NotificationService,
+   * report builders, the assistant) query Prisma directly for whatever tenant
+   * data they need, with no check on a sibling module's entitlement state —
+   * disabling a module blocks only its OWN routes; it neither deletes its
+   * data nor hides that data from other modules' code. The one candidate
+   * considered and rejected: `FinancialOverviewClient.tsx` (MOD-FIN)
+   * optionally fetches `/api/v1/meetings` (MOD-MTG) for a period-comparison
+   * selector, wrapped in a `response.ok` check that silently degrades to "no
+   * comparison available" if MOD-MTG is off — exactly the "conceptual, not
+   * runtime-breaking" case this field exists to exclude. Every entry below is
+   * therefore `undefined`; do not add one without citing the breaking code
+   * path, the way this comment cites the rejected candidate.
+   */
+  dependsOn?: readonly string[];
 };
 
 export const MODULE_CATALOG: readonly ModuleDef[] = [
