@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { toAuthErrorResponse, requirePermission } from "@/lib/server-rbac";
+import { toAuthErrorResponse, requirePermission, requirePermissionAndDbUser } from "@/lib/server-rbac";
 import { getTenantContext } from "@/lib/tenant-context";
 import { prisma } from "@/lib/prisma";
 import { MODULE_CATALOG } from "@/lib/entitlements/catalog";
 import { moduleWithinCeiling, planCeiling, resolveGrants } from "@/lib/entitlements/plan";
+import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
 /**
  * Entitlements admin API — the menu-card configurator's read and write path.
@@ -100,7 +101,7 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
-    await requirePermission(MANAGE);
+    const actor = await requirePermissionAndDbUser(MANAGE);
     const { tenantId } = await getTenantContext();
 
     const body = (await request.json().catch(() => null)) as { modules?: unknown } | null;
@@ -124,13 +125,21 @@ export async function PUT(request: NextRequest) {
       select: { id: true, code: true, tier: true },
     });
 
+    const before = await prisma.tenantEntitlement.findMany({
+      where: { moduleId: { in: catalogRows.map((m) => m.id) } },
+      select: { enabled: true, module: { select: { code: true } } },
+    });
+    const beforeEnabled = before.filter((r) => r.enabled).map((r) => r.module.code).sort();
+
+    const auditContext = getAuditRequestContext(request);
+
     // Upserted one at a time rather than as a bulk `updateMany`, because a
     // tenant may have no row at all for a module it has never had — the two
     // cases are "flip a flag" and "create a grant", and upsert is the only
     // operation that is both.
-    await prisma.$transaction(
-      catalogRows.map((mod) =>
-        prisma.tenantEntitlement.upsert({
+    await prisma.$transaction(async (tx) => {
+      for (const mod of catalogRows) {
+        await tx.tenantEntitlement.upsert({
           where: { tenantId_moduleId: { tenantId, moduleId: mod.id } },
           update: { enabled: enabledSet.has(mod.code) },
           create: {
@@ -139,9 +148,20 @@ export async function PUT(request: NextRequest) {
             enabled: enabledSet.has(mod.code),
             tier: mod.tier,
           },
-        }),
-      ),
-    );
+        });
+      }
+
+      await logAudit(
+        tx,
+        actor.id,
+        "entitlements.set",
+        "TenantEntitlement",
+        tenantId,
+        { enabled: beforeEnabled },
+        { enabled: [...enabled].sort(), denied },
+        auditContext,
+      );
+    });
 
     return NextResponse.json({
       planTier: ceiling,

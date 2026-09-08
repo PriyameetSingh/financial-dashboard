@@ -27,24 +27,36 @@
  */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { toAuthErrorResponse, requirePermission } from "@/lib/server-rbac";
+import { toAuthErrorResponse, requirePermission, requirePermissionAndDbUser } from "@/lib/server-rbac";
 import { getTenantContext } from "@/lib/tenant-context";
+import { prisma } from "@/lib/prisma";
 import { ODISHA_DEFAULTS } from "@/lib/tenant-config";
 import {
+  buildConfigEntriesReport,
   configKeyClass,
-  listConfigKeys,
-  overlayConfigEntries,
   validateConfigValue,
 } from "@/lib/tenant-config/registry";
 import {
   clearTenantConfigEntry,
+  readTenantConfigEntry,
   readTenantConfigEntries,
   writeTenantConfigEntry,
 } from "@/lib/tenant-config/store";
+import { getAuditRequestContext, logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
 const MANAGE = "MANAGE_TENANT_CONFIG";
+
+/**
+ * Never put a secret's material in an audit row. `logAudit`'s `before`/`after`
+ * end up in `AuditLog`, which is read by the RBAC audit screen
+ * (`app/api/v1/rbac/audit/route.ts`) — a wider audience than the config admin
+ * API itself. Presence only, same posture as the API response.
+ */
+function auditSafeValue(key: string, value: unknown): unknown {
+  return configKeyClass(key) === "secret" ? { isSet: value !== undefined && value !== null } : value;
+}
 
 /**
  * GET — the current tenant's config.
@@ -53,6 +65,17 @@ const MANAGE = "MANAGE_TENANT_CONFIG";
  * tenant has overridden it, and the EFFECTIVE value for storable keys (stored
  * value overlaid on the default, which is what the app actually renders).
  * Secret keys report `isSet` and nothing else.
+ *
+ * `customized` on each storable entry, and `customizedKeys` at the top level,
+ * are the live customized-vs-default report: which keys currently differ from
+ * `ODISHA_DEFAULTS`, computed directly from the stored rows at read time. This
+ * is deliberately NOT `isSet` — a row can exist and still hold the default
+ * value (e.g. written by onboarding, then left unchanged), which is not a
+ * customization worth surfacing. There is no separate drift store to go stale;
+ * every call recomputes against the one thing that could have moved, the DB
+ * rows, against the one baseline this codebase has, `ODISHA_DEFAULTS`. Secret
+ * keys have no default to compare against, so `customized` there just means
+ * `isSet`.
  */
 export async function GET() {
   try {
@@ -60,25 +83,9 @@ export async function GET() {
     const { tenantId } = await getTenantContext();
 
     const rows = await readTenantConfigEntries(tenantId);
-    const stored = new Map(rows.map((r) => [r.key, r.value]));
-    const effective = overlayConfigEntries(ODISHA_DEFAULTS, rows);
+    const { entries, customizedKeys } = buildConfigEntriesReport(ODISHA_DEFAULTS, rows);
 
-    const entries = listConfigKeys().map(({ key, class: cls }) => {
-      const isSet = stored.has(key);
-      if (cls === "secret") {
-        // Presence only. The material never crosses this boundary.
-        return { key, class: cls, isSet, value: null };
-      }
-      return {
-        key,
-        class: cls,
-        isSet,
-        value: (effective as Record<string, unknown>)[key] ?? null,
-        default: (ODISHA_DEFAULTS as Record<string, unknown>)[key] ?? null,
-      };
-    });
-
-    return NextResponse.json({ entries });
+    return NextResponse.json({ entries, customizedKeys });
   } catch (error) {
     const mapped = toAuthErrorResponse(error);
     if (mapped) return NextResponse.json({ detail: mapped.detail }, { status: mapped.status });
@@ -93,7 +100,7 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
-    await requirePermission(MANAGE);
+    const actor = await requirePermissionAndDbUser(MANAGE);
     const { tenantId } = await getTenantContext();
 
     const body = (await request.json().catch(() => null)) as
@@ -108,7 +115,22 @@ export async function PUT(request: NextRequest) {
     const reason = validateConfigValue(key, body.value);
     if (reason) return NextResponse.json({ detail: reason }, { status: 400 });
 
-    await writeTenantConfigEntry(tenantId, key, body.value);
+    const auditContext = getAuditRequestContext(request);
+    const before = await readTenantConfigEntry(tenantId, key);
+
+    await prisma.$transaction(async (tx) => {
+      await writeTenantConfigEntry(tenantId, key, body.value, tx);
+      await logAudit(
+        tx,
+        actor.id,
+        "tenant_config.set",
+        "TenantConfigEntry",
+        key,
+        { value: auditSafeValue(key, before?.value) },
+        { value: auditSafeValue(key, body.value) },
+        auditContext,
+      );
+    });
 
     const cls = configKeyClass(key);
     // Never echo a secret back, not even the value just written.
@@ -129,7 +151,7 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    await requirePermission(MANAGE);
+    const actor = await requirePermissionAndDbUser(MANAGE);
     const { tenantId } = await getTenantContext();
 
     const key = request.nextUrl.searchParams.get("key");
@@ -139,9 +161,27 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ detail: `Unknown or non-storable config key "${key}"` }, { status: 400 });
     }
 
+    const auditContext = getAuditRequestContext(request);
+    const before = await readTenantConfigEntry(tenantId, key);
+
     // Clearing a key this tenant never set is a no-op rather than a 404, so the
-    // endpoint is idempotent.
-    const cleared = await clearTenantConfigEntry(tenantId, key);
+    // endpoint is idempotent. Still audited even when a no-op — a call that
+    // intentionally does nothing is a fact worth recording too.
+    const cleared = await prisma.$transaction(async (tx) => {
+      const result = await clearTenantConfigEntry(tenantId, key, tx);
+      await logAudit(
+        tx,
+        actor.id,
+        "tenant_config.clear",
+        "TenantConfigEntry",
+        key,
+        { value: auditSafeValue(key, before?.value) },
+        null,
+        { ...auditContext, wasSet: before !== null },
+      );
+      return result;
+    });
+
     return NextResponse.json({ key, class: cls, cleared });
   } catch (error) {
     const mapped = toAuthErrorResponse(error);

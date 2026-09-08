@@ -103,7 +103,11 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       }
       return getCurrentUser();
     }
-    const data = (await res.json()) as { user: MeApiUser | null; enabledModules?: string[] };
+    const data = (await res.json()) as {
+      user: MeApiUser | null;
+      enabledModules?: string[];
+      isPlatformOperator?: boolean;
+    };
     if (!data.user) {
       clearCurrentUser();
       return null;
@@ -125,6 +129,7 @@ export async function refreshSessionUserFromApi(): Promise<SessionUser | null> {
       assignedSchemes: data.user.assignedSchemes,
       permissions: data.user.permissions,
       enabledModules: data.enabledModules ?? [],
+      isPlatformOperator: data.isPlatformOperator ?? false,
     };
     setCurrentUser(next);
     return next;

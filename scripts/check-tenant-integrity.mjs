@@ -26,6 +26,7 @@ const GLOBAL_MODELS = new Set([
   "TenantConfigEntry",
   "Module",
   "OnboardingToken",
+  "PlatformOperator",
 ]);
 const prisma = new PrismaClient();
 

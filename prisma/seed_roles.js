@@ -12,6 +12,7 @@ const {
   ensureBootstrapTasuAdmin,
   ensureFinanceDeskUser,
   ensureKnownUserRoleLinks,
+  ensurePlatformOperator,
 } = require("./seed_roles_core.cjs");
 
 const datasourceUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
@@ -30,8 +31,10 @@ const prisma = new PrismaClient(
 async function main() {
   await seedRolesAndPermissions(prisma);
   console.log("Roles and permissions seeded.");
-  const { email } = await ensureBootstrapTasuAdmin(prisma);
+  const { email, userId } = await ensureBootstrapTasuAdmin(prisma);
   console.log(`Bootstrap TASU admin: ${email} (MANAGE_USERS, MANAGE_PERMISSIONS — map this email in Keycloak if needed).`);
+  await ensurePlatformOperator(prisma, userId);
+  console.log(`Platform operator (Fleet Console access, Phase 5): ${email}.`);
   const fa = await ensureFinanceDeskUser(prisma);
   console.log(`Finance desk user: ${fa.email} (FA — bulk financial entry and expenditure corrections).`);
   await ensureKnownUserRoleLinks(prisma);

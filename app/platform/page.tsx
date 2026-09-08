@@ -123,6 +123,9 @@ export default async function PlatformLandingPage({ searchParams }: { searchPara
                 <a className="btn btn-secondary" href={links.onboarding}>
                   Onboard your organization
                 </a>
+                <a className="btn btn-ghost" href={links.fleet}>
+                  Fleet console
+                </a>
               </div>
               <p className="ax-lp-intro" style={{ fontSize: 13, marginTop: 20 }}>
                 No custom development · WCAG 2.1 AA · hosted with us or in your environment

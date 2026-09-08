@@ -33,6 +33,11 @@ import { Prisma } from "@prisma/client";
  *                        catalog.ts); written only by migration/seed. The grants
  *                        around it (TenantEntitlement) are tenant-scoped. Same
  *                        argument as Permission.
+ *  - PlatformOperator    Phase 5: the Fleet Console access allowlist. It exists
+ *                        to be read ACROSS tenants by construction (that is the
+ *                        whole feature) — scoping it to a tenant would be
+ *                        self-defeating. Holds only a userId and a grant
+ *                        timestamp; see lib/platform/operators.ts.
  *
  * NOTE: scripts/check-tenant-integrity.mjs keeps its own copy of this set (it
  * runs standalone against the DB). Both must be updated together.
@@ -45,6 +50,7 @@ export const GLOBAL_MODELS: ReadonlySet<string> = new Set([
   "TenantConfigEntry",
   "Module",
   "OnboardingToken",
+  "PlatformOperator",
 ]);
 
 export const TENANT_ID_FIELD = "tenantId";

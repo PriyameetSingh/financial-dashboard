@@ -43,6 +43,14 @@ export type LandingLinks = {
   demoIsExternal: boolean;
   onboarding: string;
   signIn: string;
+  /**
+   * `app/fleet/page.tsx` — Airawat staff only, gated server-side by session +
+   * `PlatformOperator` membership (404 for anyone else, not 403 — see that
+   * file's header). Linking to it from the public landing does not weaken
+   * that gate: a visitor without access still gets a 404 on click, exactly as
+   * they would from a guessed URL. This is discoverability, not authorization.
+   */
+  fleet: string;
 };
 
 export function landingLinks(): LandingLinks {
@@ -58,5 +66,6 @@ export function landingLinks(): LandingLinks {
     demoIsExternal: demo !== null,
     onboarding: withNextBasePath("/onboarding"),
     signIn: withNextBasePath("/login"),
+    fleet: withNextBasePath("/fleet"),
   };
 }

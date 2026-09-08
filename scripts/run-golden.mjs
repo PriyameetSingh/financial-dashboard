@@ -23,15 +23,18 @@
  *   8. check-capability-deps — every `ModuleDef.dependsOn` id resolves to a real,
  *                             non-roadmap module and the dependency graph has no
  *                             cycles (Phase 4)
- *   9. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
- *  10. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
- *  11. check-http-smoke     — boots the app and drives it over a real socket:
+ *   9. check-config-ui-coverage — every `lib/tenant-config/registry.ts` key is
+ *                             either edited by the tenant-config admin UI or
+ *                             named as not-yet-exposed with a reason (Phase 2)
+ *  10. check-tenant-chokepoint — no unscoped-client / raw-SQL escapes (Phase 2)
+ *  11. check-tenant-integrity  — no NULL or cross-tenant rows in the DB (Phase 2)
+ *  12. check-http-smoke     — boots the app and drives it over a real socket:
  *                             the proxy runs, the request-scoped tenant reaches
  *                             the chokepoint, the entitlement gate denies, and
  *                             concurrent cross-tenant traffic does not bleed.
  *                             The only leg that sees the middleware/priming
  *                             layer, where two shipped defects have now lived.
- *  12. check-a11y            — WCAG 2.1 AA over the component gallery in a real
+ *  13. check-a11y            — WCAG 2.1 AA over the component gallery in a real
  *                             browser, across both themes and both densities.
  *                             Contrast, focus and target size are properties of
  *                             computed style, so nothing short of a browser can
@@ -53,6 +56,7 @@ const legs = [
   { name: "check-proxy-matcher", cmd: "node", args: ["scripts/check-proxy-matcher.mjs"] },
   { name: "check-route-module-map", cmd: "npx", args: ["tsx", "scripts/check-route-module-map.ts"] },
   { name: "check-capability-deps", cmd: "npx", args: ["tsx", "scripts/check-capability-deps.ts"] },
+  { name: "check-config-ui-coverage", cmd: "npx", args: ["tsx", "scripts/check-config-ui-coverage.ts"] },
   { name: "check-tenant-chokepoint", cmd: "node", args: ["scripts/check-tenant-chokepoint.mjs"] },
   {
     name: "check-tenant-integrity",

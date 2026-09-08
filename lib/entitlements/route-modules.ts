@@ -84,6 +84,14 @@ export const ROUTE_MODULE_RULES: readonly RouteRule[] = [
   // ── Core: administration and shared reference data ────────────────────────
   { path: "/admin", module: "MOD-ADMIN" },
   { path: "/api/v1/admin", module: "MOD-ADMIN" },
+  // Fleet Console (Phase 5). Deliberately NOT under /admin — every /admin
+  // screen implicitly renders inside the CURRENT request's resolved tenant,
+  // which is the opposite of what this page does. Core for the same reason
+  // MOD-ADMIN is core: gating it on a tenant's own entitlements would be
+  // incoherent when the page's whole job is to look ACROSS tenants. The real
+  // gate is PlatformOperator membership, checked inside the page itself, not
+  // this map — see app/fleet/page.tsx.
+  { path: "/fleet", module: "MOD-ADMIN" },
   // Read-only FY reference data, consumed by Finance, KPIs and Meetings alike.
   // Core so a Finance-only tenant is not forced to buy Administration; managing
   // financial years stays under /api/v1/admin/financial-years above.

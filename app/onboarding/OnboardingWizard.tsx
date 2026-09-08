@@ -125,7 +125,14 @@ function stepIsValid(index: number, draft: OnboardingDraft, aiKey: string): bool
   return true;
 }
 
-export default function OnboardingWizard({ platformHref }: { platformHref: string }) {
+export default function OnboardingWizard({
+  platformHref,
+  devSkipEnabled = false,
+}: {
+  platformHref: string;
+  /** Dev-only convenience — see `app/onboarding/page.tsx`. Never true in production. */
+  devSkipEnabled?: boolean;
+}) {
   const [grant, setGrant] = useState<CodeGrant | null>(null);
   const [draft, setDraft] = useState<OnboardingDraft>(emptyDraft);
   const [aiKey, setAiKey] = useState("");
@@ -291,7 +298,12 @@ export default function OnboardingWizard({ platformHref }: { platformHref: strin
   if (!grant) {
     return (
       <div data-hydrated={hydrated ? "1" : undefined}>
-        <CodeGate onVerified={setGrant} platformHref={platformHref} hasDraft={resumed} />
+        <CodeGate
+          onVerified={setGrant}
+          platformHref={platformHref}
+          hasDraft={resumed}
+          devSkipEnabled={devSkipEnabled}
+        />
       </div>
     );
   }

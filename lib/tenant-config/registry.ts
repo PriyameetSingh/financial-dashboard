@@ -313,6 +313,48 @@ function mergeLabels(defaults: TenantLabels, value: unknown): TenantLabels {
 
 export type TenantConfigRow = { key: string; value: unknown };
 
+export type TenantConfigEntryReport = {
+  key: string;
+  class: ConfigKeyClass;
+  isSet: boolean;
+  customized: boolean;
+  value: unknown;
+  default?: unknown;
+};
+
+/**
+ * The customized-vs-default report (Phase 2 §2b): which keys currently differ
+ * from `defaults`, computed directly from the stored rows at read time — no
+ * separate drift store to go stale. Shared by the tenant-config admin API
+ * (`app/api/v1/admin/tenant-config/route.ts`) and Fleet Console (Phase 5,
+ * `app/fleet/page.tsx`) so there is exactly one place that decides what
+ * "customized" means; neither re-derives the comparison.
+ */
+export function buildConfigEntriesReport(
+  defaults: TenantConfig,
+  rows: readonly TenantConfigRow[],
+): { entries: TenantConfigEntryReport[]; customizedKeys: string[] } {
+  const stored = new Map(rows.map((r) => [r.key, r.value]));
+  const effective = overlayConfigEntries(defaults, rows);
+
+  const customizedKeys: string[] = [];
+  const entries = listConfigKeys().map(({ key, class: cls }) => {
+    const isSet = stored.has(key);
+    if (cls === "secret") {
+      // Presence only. The material never crosses this boundary.
+      if (isSet) customizedKeys.push(key);
+      return { key, class: cls, isSet, customized: isSet, value: null };
+    }
+    const value = (effective as Record<string, unknown>)[key] ?? null;
+    const defaultValue = (defaults as Record<string, unknown>)[key] ?? null;
+    const customized = JSON.stringify(value) !== JSON.stringify(defaultValue);
+    if (customized) customizedKeys.push(key);
+    return { key, class: cls, isSet, customized, value, default: defaultValue };
+  });
+
+  return { entries, customizedKeys };
+}
+
 /**
  * Overlay validated DB rows onto the defaults. Unknown keys, env-only keys,
  * and shape-invalid values are ignored (fall back to the default) — a

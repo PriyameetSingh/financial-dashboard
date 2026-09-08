@@ -40,14 +40,18 @@ export default function CodeGate({
   onVerified,
   platformHref,
   hasDraft,
+  devSkipEnabled = false,
 }: {
   onVerified: (grant: CodeGrant) => void;
   platformHref: string;
   hasDraft: boolean;
+  /** Dev-only convenience — see `app/onboarding/page.tsx`. Never true in production. */
+  devSkipEnabled?: boolean;
 }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [skipping, setSkipping] = useState(false);
 
   async function check() {
     const token = code.trim();
@@ -73,6 +77,31 @@ export default function CodeGate({
       setError("Could not reach the server. Check your connection and try again.");
     } finally {
       setChecking(false);
+    }
+  }
+
+  /**
+   * Mints a real, single-use onboarding token via the dev-only endpoint and
+   * carries on exactly as if it had been typed in — the token still gets
+   * consumed by `provision.ts` in the usual way. Only reachable when the
+   * server told us `devSkipEnabled`, which is itself gated by
+   * `NODE_ENV !== "production" && DEV_AUTH_ENABLED === "1"`.
+   */
+  async function skip() {
+    setSkipping(true);
+    setError(null);
+    try {
+      const response = await fetch(withNextBasePath("/api/dev/onboarding-token"), { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok || !payload?.valid) {
+        setError("Could not mint a dev onboarding token.");
+        return;
+      }
+      onVerified({ token: payload.token, tier: payload.tier, modules: payload.modules ?? [] });
+    } catch {
+      setError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      setSkipping(false);
     }
   }
 
@@ -119,6 +148,14 @@ export default function CodeGate({
           organization&rsquo;s name and address can be claimed by someone who is not them.
         </InlineAlert>
       </div>
+
+      {devSkipEnabled ? (
+        <div style={{ marginTop: 16 }}>
+          <Button variant="ghost" type="button" onClick={() => void skip()} disabled={skipping}>
+            {skipping ? "Minting a dev code…" : "Skip — dev only"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -703,6 +703,16 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ax-muted)] mb-2">Preferences</p>
                 <TextSizeToolbarControl vertical />
               </div>
+              {user?.isPlatformOperator && (
+                <div className="pt-3 pb-3 border-b border-[var(--color-divider)]">
+                  <Link
+                    href="/fleet"
+                    className="block w-full rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--ax-muted)] transition hover:bg-[var(--ax-nav-hover)] hover:text-[var(--color-text)]"
+                  >
+                    Fleet console
+                  </Link>
+                </div>
+              )}
               <div className="pt-3">
                 <LogoutButton />
               </div>

@@ -100,6 +100,12 @@ function configFromDraft(draft: OnboardingDraft): Record<string, unknown> {
     locale: draft.locale,
     timezone: draft.timezone,
     ...currency,
+    // Only the dark-ground accent: StepBranding checks contrast against
+    // `themeGround("dark")` alone, so dark is the only role the visitor's
+    // choice actually says anything about. Leaving `light` unset falls back
+    // to `PLATFORM_ROLE_DEFAULTS.light` rather than guessing a value nobody
+    // picked.
+    themeOverrides: { dark: { "--color-accent": draft.brandColor } },
   };
 }
 
@@ -237,7 +243,7 @@ export async function provisionTenant(input: ProvisionInput): Promise<ProvisionO
 }
 
 /** Named gaps, surfaced to the visitor rather than left as silence. */
-function pendingWork(draft: OnboardingDraft): string[] {
+export function pendingWork(draft: OnboardingDraft): string[] {
   const pending: string[] = [];
   if (draft.invites.length > 0) {
     pending.push(
@@ -248,6 +254,12 @@ function pendingWork(draft: OnboardingDraft): string[] {
   if (draft.starterData === "sample") {
     pending.push(
       "The sample portfolio is loaded separately by your onboarding lead — the workspace starts empty.",
+    );
+  }
+  if (draft.logoFileName) {
+    pending.push(
+      "Your logo file name was recorded, but uploading the file itself is not wired up yet. " +
+        "Your onboarding lead applies your logo after launch.",
     );
   }
   return pending;

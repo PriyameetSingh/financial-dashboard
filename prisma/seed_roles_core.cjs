@@ -278,6 +278,19 @@ async function ensureFinanceDeskUser(prisma) {
   return { email, userId: user.id };
 }
 
+/**
+ * Grant Fleet Console access (Phase 5) to a user by id. Idempotent by userId —
+ * `PlatformOperator` is a GLOBAL_MODEL (lib/tenant-scope-registry.ts), so this
+ * upsert is not tenant-scoped and needs no tenantId.
+ */
+async function ensurePlatformOperator(prisma, userId) {
+  await prisma.platformOperator.upsert({
+    where: { userId },
+    update: {},
+    create: { userId },
+  });
+}
+
 /** Link real users (e.g. after Keycloak sync) to a DB role so `/rbac/me` gets `role_permissions`. */
 async function ensureKnownUserRoleLinks(prisma) {
   const links = [];
@@ -310,4 +323,5 @@ module.exports = {
   ensureBootstrapTasuAdmin,
   ensureFinanceDeskUser,
   ensureKnownUserRoleLinks,
+  ensurePlatformOperator,
 };

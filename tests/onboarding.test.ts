@@ -17,7 +17,7 @@ import {
   judgeToken,
   looksLikeToken,
 } from "@/lib/onboarding/token";
-import { tiersReachedBy } from "@/lib/onboarding/provision";
+import { pendingWork, tiersReachedBy } from "@/lib/onboarding/provision";
 import { clientKey, rateLimit, resetRateLimits } from "@/lib/onboarding/rate-limit";
 
 /**
@@ -219,6 +219,34 @@ describe("draft validation", () => {
     expect(validateDraft(draftWith({ starterData: "demo" as never }))?.kind).toBe("field");
     expect(validateDraft(draftWith({ aiMode: "hybrid" as never }))?.kind).toBe("field");
     expect(validateDraft(draftWith({ brandColor: "rebeccapurple" }))?.kind).toBe("field");
+  });
+});
+
+describe("pendingWork — the disclosures shown on the launch screen", () => {
+  it("says nothing when there is nothing pending", () => {
+    expect(pendingWork(draftWith({ invites: [], starterData: "empty", logoFileName: "" }))).toEqual([]);
+  });
+
+  it("discloses a chosen logo was not uploaded, not just recorded", () => {
+    // StepBranding lets the visitor drop a file and shows the name back on the
+    // review screen; nothing about that UI says the bytes go nowhere. This is
+    // the same honesty the sample-portfolio and invite disclosures already
+    // practice for their own not-yet-built parts, extended to the logo.
+    const pending = pendingWork(draftWith({ logoFileName: "" }));
+    expect(pending.some((note) => /logo/i.test(note))).toBe(false);
+
+    const withLogo = pendingWork(draftWith({ logoFileName: "department-crest.svg" }));
+    expect(withLogo.some((note) => /logo/i.test(note) && /not.*upload|upload.*not/i.test(note))).toBe(
+      true,
+    );
+  });
+
+  it("still discloses the sample-portfolio and invitation gaps unchanged", () => {
+    const pending = pendingWork(
+      draftWith({ starterData: "sample", invites: [{ email: "a@example.test", role: "Viewer" }] }),
+    );
+    expect(pending.some((note) => /sample portfolio/i.test(note))).toBe(true);
+    expect(pending.some((note) => /1 invitation/i.test(note))).toBe(true);
   });
 });
 

@@ -77,6 +77,10 @@ const UNAUTHENTICATED_BY_DESIGN = new Map([
     "dev-only session minting; dead-code-eliminated from production builds (NODE_ENV is inlined)",
   ],
   [
+    "app/api/dev/onboarding-token/route.ts",
+    "dev-only onboarding-token minting; same NODE_ENV/DEV_AUTH_ENABLED gate as dev/session, 404s otherwise",
+  ],
+  [
     "app/api/onboarding/check/route.ts",
     "pre-account: validates an onboarding token. Rate limited; one message for every rejection; consumes nothing",
   ],

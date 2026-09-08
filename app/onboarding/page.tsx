@@ -20,6 +20,17 @@ export const metadata: Metadata = {
   title: "Set up your organization — Airawat",
 };
 
+/**
+ * Same two-condition gate `lib/dev-path-routing.ts` and
+ * `app/api/dev/session/route.ts` use: neither `NODE_ENV` nor
+ * `DEV_AUTH_ENABLED` alone is enough. Read server-side and passed down as a
+ * plain boolean prop — the client component never sees `DEV_AUTH_ENABLED`
+ * itself, only whether the shortcut button should render.
+ */
+function devSkipEnabled(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.DEV_AUTH_ENABLED === "1";
+}
+
 export default function OnboardingPage() {
   const links = landingLinks();
   return (
@@ -38,7 +49,7 @@ export default function OnboardingPage() {
           </div>
         </header>
         <main id="wizard">
-          <OnboardingWizard platformHref={links.platform} />
+          <OnboardingWizard platformHref={links.platform} devSkipEnabled={devSkipEnabled()} />
         </main>
       </div>
     </NocturneRoot>

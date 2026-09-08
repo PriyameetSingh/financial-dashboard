@@ -425,7 +425,7 @@ try {
     sector: "gov",
     contactEmail: "smoke@example.test",
     brandColor: "#5fa8a0",
-    logoFileName: "",
+    logoFileName: "smoke-crest.svg",
     locale: "en-IN",
     timezone: "Asia/Kolkata",
     numberFormat: "in",
@@ -496,6 +496,12 @@ try {
     createdBody.llmApiKeySet === true ? "the key appeared in the response body" : "llmApiKeySet was not true",
   );
 
+  check(
+    "the visitor is told the logo file name was recorded, not the file",
+    Array.isArray(createdBody.pending) && createdBody.pending.some((note) => /logo/i.test(note)),
+    `pending=${JSON.stringify(createdBody.pending)}`,
+  );
+
   const replay = await post("/api/onboarding/provision", {
     token: rawToken,
     draft: { ...draft, slug: `${provisionedSlug}-2` },
@@ -536,6 +542,11 @@ try {
       "config was written through the validated keys",
       byKey.get("productName") === "Smoke Test Authority" && byKey.get("timezone") === "Asia/Kolkata",
       `keys=${JSON.stringify([...byKey.keys()])}`,
+    );
+    check(
+      "the chosen brand colour reaches themeOverrides, not just the review screen",
+      JSON.stringify(byKey.get("themeOverrides")) === JSON.stringify({ dark: { "--color-accent": draft.brandColor } }),
+      `themeOverrides=${JSON.stringify(byKey.get("themeOverrides"))}`,
     );
     check(
       "the AI key is stored as a secret-class row, not in the rendered config",

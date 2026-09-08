@@ -61,6 +61,7 @@ export const RESERVED_ROOT_SEGMENTS: ReadonlySet<string> = new Set([
   "dashboard",
   "design-system",
   "financial",
+  "fleet",
   "kpis",
   "login",
   "meetings",

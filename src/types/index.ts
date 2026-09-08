@@ -46,6 +46,15 @@ export interface SessionUser {
    * direction and self-heals on mount.
    */
   enabledModules?: string[];
+  /**
+   * Phase 5: whether this user is in the `PlatformOperator` allowlist
+   * (see `lib/platform/operators.ts`) — not RBAC, a separate global grant.
+   *
+   * Nav derivation only, same rule as `enabledModules`: `app/fleet/page.tsx`
+   * re-checks this itself and 404s a non-operator regardless of what the
+   * client believes, so a visible link can never reach a route it can't use.
+   */
+  isPlatformOperator?: boolean;
 }
 
 export enum Permission {

@@ -403,9 +403,13 @@ describe("Chokepoint invariants", () => {
   //            would be circular. It holds a hash, a tier, an expiry and, once
   //            spent, the id of the tenant it produced — no tenant data).
   //            47/6 → 47/7.
-  it("47 models are tenant-scoped and 7 are deliberately global", () => {
+  //   Phase 5: +PlatformOperator (global — the Fleet Console access
+  //            allowlist; it exists to be read ACROSS tenants by design, so
+  //            scoping it to one would defeat the feature. Holds a userId and
+  //            a grant timestamp, nothing else). 47/7 → 47/8.
+  it("47 models are tenant-scoped and 8 are deliberately global", () => {
     expect(TENANT_SCOPED_MODELS.size).toBe(47);
-    expect(GLOBAL_MODELS.size).toBe(7);
+    expect(GLOBAL_MODELS.size).toBe(8);
   });
 
   it("a tenant-scoped query with NO resolved scope fails closed", async () => {

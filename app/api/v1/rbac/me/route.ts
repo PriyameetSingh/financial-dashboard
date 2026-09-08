@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isPlatformOperator } from "@/lib/platform/operators";
 import { getSessionUser } from "@/lib/server-auth";
 import { getEffectivePermissionCodesFromUserId, toAuthErrorResponse } from "@/lib/server-rbac";
 import { isSessionInvalidated } from "@/lib/session-invalidation";
@@ -112,12 +113,13 @@ export async function GET() {
     const sessionRoleFallback =
       dbUser.userRoles.length === 0 && sessionUser.role ? sessionUser.role : null;
 
-    const [schemeRows, effectiveCodes] = await Promise.all([
+    const [schemeRows, effectiveCodes, operator] = await Promise.all([
       prisma.schemeAssignment.findMany({
         where: { userId: dbUser.id },
         select: { scheme: { select: { code: true } } },
       }),
       getEffectivePermissionCodesFromUserId(dbUser.id, sessionRoleFallback),
+      isPlatformOperator(dbUser.id),
     ]);
 
     const assignedSchemes = [...new Set(schemeRows.map((r) => r.scheme.code))];
@@ -145,6 +147,7 @@ export async function GET() {
 
     return NextResponse.json({
       enabledModules,
+      isPlatformOperator: operator,
       user: {
         id: dbUser.code ?? sessionUser.id,
         dbId: dbUser.id,
